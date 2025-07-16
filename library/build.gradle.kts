@@ -1,3 +1,4 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -5,10 +6,26 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.buildkonfig)
 }
 
 group = "com.vardansoft"
 version = "1.0.0"
+
+buildkonfig {
+    packageName = ""
+    defaultConfigs {
+        listOf(
+            "AUTH_GOOGLE_ID",
+        ).forEach { key ->
+            buildConfigField(
+                type = FieldSpec.Type.STRING,
+                name = key,
+                value = project.properties[key] as? String ?: ""
+            )
+        }
+    }
+}
 
 kotlin {
     jvm()
