@@ -10,10 +10,10 @@ plugins {
 }
 
 group = "com.vardansoft"
-version = "1.0.1"
+version = "1.0.2"
 
 buildkonfig {
-    packageName = ""
+    packageName = "com.vardansoft.auth"
     defaultConfigs {
         listOf(
             "AUTH_GOOGLE_ID",
