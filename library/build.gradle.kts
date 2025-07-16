@@ -100,3 +100,11 @@ mavenPublishing {
         }
     }
 }
+
+afterEvaluate {
+    if (gradle.startParameter.taskNames.any { it.contains("publishToMavenLocal") }) {
+        tasks.withType<Sign>().configureEach {
+            enabled = false
+        }
+    }
+}
