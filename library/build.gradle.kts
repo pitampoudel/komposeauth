@@ -72,7 +72,7 @@ mavenPublishing {
 
     signAllPublications()
 
-    coordinates(group.toString(), "library", version.toString())
+    coordinates(group.toString(), "auth", version.toString())
 
     pom {
         name = "Auth"
