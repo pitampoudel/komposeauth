@@ -79,5 +79,24 @@ mavenPublishing {
         description = "Authentication library for VardanSoft"
         inceptionYear = "2025"
         url = "https://github.com/Vardan-Soft-Pvt-Ltd/AuthKMP"
+        licenses {
+            license {
+                name = "XXX"
+                url = "YYY"
+                distribution = "ZZZ"
+            }
+        }
+        developers {
+            developer {
+                id = "pitampoudel"
+                name = "Pitam Poudel"
+                url = "https://www.pitam.com.np/"
+            }
+        }
+        scm {
+            url = "XXX"
+            connection = "YYY"
+            developerConnection = "ZZZ"
+        }
     }
 }
