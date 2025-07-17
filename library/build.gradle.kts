@@ -44,7 +44,22 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                //put your multiplatform dependencies here
+                // koin
+                api(project.dependencies.platform(libs.koin.bom))
+                api(libs.koin.core)
+                api(libs.koin.compose.viewmodel)
+                // ktor client
+                implementation(libs.ktor.client.core)
+                implementation(libs.ktor.client.contentNegotiation)
+                implementation(libs.ktor.client.logging)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.auth)
+                // datastore preferences
+                implementation(libs.androidx.datastore.preferences.core)
+                // settings
+                implementation(libs.multiplatformSettings)
+                // lifecycle viewmodel
+                api(libs.jetbrains.lifecycle.viewmodel)
             }
         }
         val commonTest by getting {
