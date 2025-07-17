@@ -7,16 +7,18 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.buildkonfig)
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 group = "com.vardansoft"
-version = "1.0.5"
+version = "1.0.6"
 
 buildkonfig {
     packageName = "com.vardansoft.auth"
     defaultConfigs {
         listOf(
             "AUTH_GOOGLE_ID",
+            "AUTH_URL"
         ).forEach { key ->
             buildConfigField(
                 type = FieldSpec.Type.STRING,
@@ -39,10 +41,13 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
+//    linuxX64()
 
     sourceSets {
         val commonMain by getting {
             dependencies {
+                // kotlin
+                api(libs.kotlinx.datetime)
                 // koin
                 api(project.dependencies.platform(libs.koin.bom))
                 api(libs.koin.core)
