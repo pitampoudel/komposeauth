@@ -34,7 +34,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-mail")
 
     testImplementation("org.springframework.security:spring-security-test")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:6.0.0")
 
     compileOnly("jakarta.servlet:jakarta.servlet-api:6.1.0")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
@@ -42,13 +42,13 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
     // Phone Number
-    implementation("com.googlecode.libphonenumber:libphonenumber:9.0.6")
+    implementation("com.googlecode.libphonenumber:libphonenumber:9.0.9")
 
     // Google Cloud Platform
-    implementation("com.google.cloud:spring-cloud-gcp-storage:6.2.1")
+    implementation("com.google.cloud:spring-cloud-gcp-storage:6.2.3")
 
-    testImplementation("org.testcontainers:testcontainers:1.21.2")
-    testImplementation("org.testcontainers:junit-jupiter:1.21.2")
+    testImplementation("org.testcontainers:testcontainers:1.21.3")
+    testImplementation("org.testcontainers:junit-jupiter:1.21.3")
     testImplementation("org.testcontainers:mongodb")
 
 }

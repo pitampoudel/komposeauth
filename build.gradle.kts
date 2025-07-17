@@ -8,6 +8,14 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish) apply false
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
 }
+buildscript {
+    configurations.all {
+        resolutionStrategy {
+            force("org.apache.commons:commons-compress:1.26.2")
+        }
+    }
+}
+
 fun getLocalIpAddress(): String? {
     val networkInterfaces = NetworkInterface.getNetworkInterfaces()
     while (networkInterfaces.hasMoreElements()) {
