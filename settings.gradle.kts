@@ -14,6 +14,6 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "AuthKMP"
-include(":library")
+include(":shared")
 include(":ui")
 include(":server")

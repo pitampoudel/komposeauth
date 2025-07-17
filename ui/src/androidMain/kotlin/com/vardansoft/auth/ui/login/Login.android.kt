@@ -14,7 +14,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.vardansoft.auth.VardanSoftAuth
-import com.vardansoft.auth.login.presentation.Credential
+import com.vardansoft.auth.presentation.Credential
 
 @Composable
 actual fun rememberCredentialRetriever(clientId: String): CredentialRetriever {

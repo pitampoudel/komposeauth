@@ -29,7 +29,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 // Auth library dependency
-                api(project(":library"))
+                api(project(":shared"))
 
                 // Compose Multiplatform
                 implementation(compose.runtime)
