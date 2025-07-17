@@ -48,6 +48,16 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 implementation(libs.compose.ui.tooling.preview)
+                // CREDENTIAL MANAGER API
+                implementation(libs.androidx.credentials)
+                // optional - needed for credentials support from play services, for devices running
+                // Android 13 and below.
+                implementation(libs.androidx.credentials.playServicesAuth)
+                // Google sign In
+                implementation(libs.googleid)
+                // OTP code retriever
+                implementation(libs.play.services.auth)
+                implementation(libs.play.services.auth.api.phone)
             }
         }
 

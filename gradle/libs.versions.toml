@@ -13,6 +13,10 @@ kotlinx-serialization = "2.2.0"
 kotlinx-datetime = "0.6.2"
 compose = "1.8.2"
 compose-material3 = "1.8.2"
+androidx-credentials = "1.5.0"
+googleid = "1.1.1"
+playServicesAuth = "21.3.0"
+playServicesAuthApiPhone = "18.2.0"
 
 
 [libraries]
@@ -38,7 +42,11 @@ compose-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-to
 compose-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "compose" }
 compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-material3" }
 compose-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "compose" }
-
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "androidx-credentials" }
+androidx-credentials-playServicesAuth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "androidx-credentials" }
+googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+play-services-auth-api-phone = { module = "com.google.android.gms:play-services-auth-api-phone", version.ref = "playServicesAuthApiPhone" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
