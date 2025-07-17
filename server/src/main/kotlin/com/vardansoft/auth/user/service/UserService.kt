@@ -22,6 +22,17 @@ class UserService(
         return userRepository.findById(ObjectId(id)).orElse(null)
     }
 
+    fun findUsersBulk(ids: List<String>): List<User> {
+        val objectIds = ids.mapNotNull { id ->
+            try {
+                ObjectId(id)
+            } catch (e: Exception) {
+                null // Skip invalid IDs
+            }
+        }
+        return userRepository.findByIdIn(objectIds)
+    }
+
     fun findUserByEmail(email: String): User? {
         return userRepository.findByEmail(email)
     }

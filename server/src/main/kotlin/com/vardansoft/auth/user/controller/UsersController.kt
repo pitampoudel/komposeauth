@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestParam
 
 
 @Controller
@@ -65,6 +66,20 @@ class UsersController(
     fun getUserById(@PathVariable id: String): ResponseEntity<UserResponse> {
         val user = userService.findUser(id) ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(user.mapToResponseDto())
+    }
+
+    @GetMapping("/users/batch")
+    @PreAuthorize("hasAuthority('SCOPE_user.read.any')")
+    fun getUsersBatch(@RequestParam ids: String): ResponseEntity<List<UserResponse>> {
+        val userIds = ids.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+
+        if (userIds.isEmpty()) {
+            return ResponseEntity.badRequest().build()
+        }
+
+        val users = userService.findUsersBulk(userIds)
+        val userResponses = users.map { it.mapToResponseDto() }
+        return ResponseEntity.ok(userResponses)
     }
 
 }
