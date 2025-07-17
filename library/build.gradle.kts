@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.vardansoft"
-version = "1.0.6"
+version = "1.0.7"
 
 buildkonfig {
     packageName = "com.vardansoft.auth"
