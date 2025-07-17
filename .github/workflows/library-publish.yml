@@ -1,4 +1,4 @@
-name: Publish
+name: Publish KMP Library
 on:
   release:
     types: [released, prereleased]
