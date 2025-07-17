@@ -1,12 +1,15 @@
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.util.Properties
+import org.gradle.plugins.signing.Sign
 
 plugins {
     alias(libs.plugins.androidLibrary) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.vanniktech.mavenPublish) apply false
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
+    alias(libs.plugins.jetbrains.compose) apply false
+    alias(libs.plugins.compose.compiler) apply false
 }
 buildscript {
     configurations.all {
@@ -41,3 +44,45 @@ props.forEach {
     extra[it.key.toString()] = it.value
 }
 if (!extra.has("AUTH_URL")) extra["AUTH_URL"] = "http://" + getLocalIpAddress() + ":8080"
+
+subprojects {
+    afterEvaluate {
+        if (plugins.hasPlugin("com.vanniktech.maven.publish")) {
+            configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
+                publishToMavenCentral()
+                signAllPublications()
+
+                pom {
+                    inceptionYear = "2025"
+                    url = "https://github.com/Vardan-Soft-Pvt-Ltd/AuthKMP"
+                    licenses {
+                        license {
+                            name = "XXX"
+                            url = "YYY"
+                            distribution = "ZZZ"
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = "pitampoudel"
+                            name = "Pitam Poudel"
+                            url = "https://www.pitam.com.np/"
+                        }
+                    }
+                    scm {
+                        url = "XXX"
+                        connection = "YYY"
+                        developerConnection = "ZZZ"
+                    }
+                }
+            }
+
+            // Disable signing for local publishing
+            if (gradle.startParameter.taskNames.any { it.contains("publishToMavenLocal") }) {
+                tasks.withType<Sign>().configureEach {
+                    enabled = false
+                }
+            }
+        }
+    }
+}

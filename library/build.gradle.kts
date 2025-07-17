@@ -87,43 +87,10 @@ android {
 }
 
 mavenPublishing {
-    publishToMavenCentral()
-
-    signAllPublications()
-
     coordinates(group.toString(), "auth", version.toString())
 
     pom {
         name = "Auth"
         description = "Authentication library for VardanSoft"
-        inceptionYear = "2025"
-        url = "https://github.com/Vardan-Soft-Pvt-Ltd/AuthKMP"
-        licenses {
-            license {
-                name = "XXX"
-                url = "YYY"
-                distribution = "ZZZ"
-            }
-        }
-        developers {
-            developer {
-                id = "pitampoudel"
-                name = "Pitam Poudel"
-                url = "https://www.pitam.com.np/"
-            }
-        }
-        scm {
-            url = "XXX"
-            connection = "YYY"
-            developerConnection = "ZZZ"
-        }
-    }
-}
-
-afterEvaluate {
-    if (gradle.startParameter.taskNames.any { it.contains("publishToMavenLocal") }) {
-        tasks.withType<Sign>().configureEach {
-            enabled = false
-        }
     }
 }
