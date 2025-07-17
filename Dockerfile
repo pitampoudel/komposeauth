@@ -16,7 +16,7 @@ RUN addgroup -S spring && adduser -S spring -G spring && chown spring:spring /ap
 USER spring:spring
 
 # Copy fat JAR
-COPY --from=server-build /home/gradle/server/build/libs/app.jar app.jar
+COPY --from=server-build /home/gradle/src/server/build/libs/app.jar app.jar
 
 # Optimize JVM settings for containerized environment
 # - XX:+UseContainerSupport: Enable container support
