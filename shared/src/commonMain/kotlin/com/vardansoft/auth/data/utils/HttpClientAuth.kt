@@ -10,7 +10,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.core.scope.Scope
 
-fun AuthConfig.vardanSoftBearer(scope: Scope, clientId: String) {
+fun AuthConfig.applyVardanSoftBearer(scope: Scope, clientId: String) {
     val loginPreferences = scope.getOrNull<LoginPreferences>()
 
     return bearer {
