@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: "Auth"
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_OAUTH_CLIENT_ID}
+            client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET}
+            scope: openid, profile, email
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
+      database: auth
+      auto-index-creation: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          from: ${SMTP_FROM}
+          auth: true
+        starttls:
+          enable: true
+  main:
+    lazy-initialization: true
+    banner-mode: off
+  jmx:
+    enabled: false
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.vardansoft.auth.core.service: DEBUG
+
+
+server:
+  address: 0.0.0.0
+  forward-headers-strategy: framework
+app:
+  baseUrl: ${BASE_URL}
+  gcpBucketName: auth-data
+  sms-api-key: ${SMS_API_KEY}
+

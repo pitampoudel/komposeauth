@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: "Auth-Test"
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-client-id
+            client-secret: test-client-secret
+            scope: openid, profile, email
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017
+      database: auth-test
+      auto-index-creation: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: test@example.com
+    password: test-password
+    properties:
+      mail:
+        smtp:
+          from: test@example.com
+          auth: true
+        starttls:
+          enable: true
+  main:
+    lazy-initialization: true
+    banner-mode: off
+  jmx:
+    enabled: false
+
+server:
+  address: 0.0.0.0
+  port: 8080
+  forward-headers-strategy: framework
+app:
+  baseUrl: http://localhost:8080
+  gcpBucketName: mock-bucket

@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create your Vardan Soft account securely. Join our platform and start managing your services.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#2563eb">
+
+    <title>Sign Up - Vardan Soft</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="https://vardansoft.com/favicon.svg">
+    <link rel="icon" type="image/png" href="https://vardansoft.com/favicon.png">
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://vardansoft.com/logo.svg" as="image">
+
+    <style>
+        /* Critical CSS - Inline for performance */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #111827;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .signup-card {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+        }
+
+        .title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .form-input:invalid {
+            border-color: #ef4444;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .error-icon {
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.875rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #1d4ed8;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-loading {
+            color: transparent;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid #ffffff;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        .divider span {
+            padding: 0 1rem;
+        }
+
+        .signin-link {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .signin-link a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .signin-link a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.75rem;
+        }
+
+        .password-requirements {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .password-requirements.valid {
+            color: #059669;
+        }
+
+        .password-requirements.invalid {
+            color: #dc2626;
+        }
+
+        /* Responsive design */
+        @media (max-width: 480px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .signup-card {
+                padding: 1.5rem;
+            }
+
+            .title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Accessibility improvements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus styles for better accessibility */
+        .btn-primary:focus,
+        a:focus {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: more) {
+            .signup-card {
+                border: 2px solid #000;
+            }
+
+            .form-input {
+                border: 2px solid #000;
+            }
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="container" role="main">
+        <div class="signup-card">
+            <!-- Logo and Header -->
+            <header class="logo-section">
+                <img src="https://vardansoft.com/logo.svg" alt="Vardan Soft Logo" class="logo" loading="eager">
+                <h1 class="title">Welcome</h1>
+                <p class="subtitle">Create your account to get started</p>
+            </header>
+
+            <!-- Error Message -->
+            <div th:if="${param.error}" class="error-message" role="alert" aria-live="polite">
+                <svg class="error-icon" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                          clip-rule="evenodd"/>
+                </svg>
+                <span>Failed to create your account. Please try again.</span>
+            </div>
+
+            <!-- Signup Form -->
+            <form method="post" action="/users" novalidate aria-label="Sign up form" id="signupForm">
+                <!-- First Name Field -->
+                <div class="form-group">
+                    <label for="firstName" class="form-label">
+                        First Name
+                        <span class="sr-only">(required)</span>
+                    </label>
+                    <input
+                            type="text"
+                            id="firstName"
+                            name="firstName"
+                            class="form-input"
+                            required
+                            autocomplete="given-name"
+                            aria-describedby="firstName-error"
+                            placeholder="Enter your first name"
+                            minlength="2"
+                    >
+                    <div id="firstName-error" class="sr-only" aria-live="polite"></div>
+                </div>
+
+                <!-- Last Name Field -->
+                <div class="form-group">
+                    <label for="lastName" class="form-label">
+                        Last Name
+                        <span class="sr-only">(required)</span>
+                    </label>
+                    <input
+                            type="text"
+                            id="lastName"
+                            name="lastName"
+                            class="form-input"
+                            required
+                            autocomplete="family-name"
+                            aria-describedby="lastName-error"
+                            placeholder="Enter your last name"
+                            minlength="2"
+                    >
+                    <div id="lastName-error" class="sr-only" aria-live="polite"></div>
+                </div>
+
+                <!-- Email Field -->
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        Email address
+                        <span class="sr-only">(required)</span>
+                    </label>
+                    <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            class="form-input"
+                            required
+                            autocomplete="email"
+                            aria-describedby="email-error"
+                            placeholder="Enter your email address"
+                    >
+                    <div id="email-error" class="sr-only" aria-live="polite"></div>
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label for="password" class="form-label">
+                        Password
+                        <span class="sr-only">(required)</span>
+                    </label>
+                    <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-input"
+                            required
+                            autocomplete="new-password"
+                            aria-describedby="password-error password-requirements"
+                            placeholder="Enter your password"
+                            minlength="6"
+                    >
+                    <div id="password-requirements" class="password-requirements">
+                        Password must be at least 6 characters long
+                    </div>
+                    <div id="password-error" class="sr-only" aria-live="polite"></div>
+                </div>
+
+                <!-- Confirm Password Field -->
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">
+                        Confirm Password
+                        <span class="sr-only">(required)</span>
+                    </label>
+                    <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            class="form-input"
+                            required
+                            autocomplete="new-password"
+                            aria-describedby="confirmPassword-error"
+                            placeholder="Confirm your password"
+                            minlength="6"
+                    >
+                    <div id="confirmPassword-error" class="sr-only" aria-live="polite"></div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-primary" id="submitBtn" aria-describedby="submit-status">
+                    <span id="submit-text">Create Account</span>
+                </button>
+                <div id="submit-status" class="sr-only" aria-live="polite"></div>
+            </form>
+
+            <!-- Divider -->
+            <div class="divider" role="separator" aria-label="or">
+                <span>or</span>
+            </div>
+
+            <!-- Sign In Link -->
+            <div class="signin-link">
+                Already have an account?
+                <a th:href="@{/login}" aria-label="Sign in to your existing account">Sign in</a>
+            </div>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <p>&copy; 2025 Vardan Soft. All rights reserved.</p>
+            </footer>
+        </div>
+    </main>
+
+    <script>
+        // Enhanced form handling with loading states and validation
+        (function () {
+            'use strict';
+
+            const form = document.getElementById('signupForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submit-text');
+            const submitStatus = document.getElementById('submit-status');
+
+            // Form submission handling
+            form.addEventListener('submit', function (e) {
+                // Show loading state
+                submitBtn.disabled = true;
+                submitBtn.classList.add('btn-loading');
+                submitText.textContent = 'Creating Account...';
+                submitStatus.textContent = 'Processing your request...';
+
+                // Basic client-side validation
+                const firstName = document.getElementById('firstName');
+                const lastName = document.getElementById('lastName');
+                const email = document.getElementById('email');
+                const password = document.getElementById('password');
+                const confirmPassword = document.getElementById('confirmPassword');
+
+                if (firstName.value.trim().length < 2) {
+                    e.preventDefault();
+                    resetSubmitButton();
+                    showFieldError('firstName-error', 'First name must be at least 2 characters long');
+                    firstName.focus();
+                    return;
+                }
+
+                if (lastName.value.trim().length < 2) {
+                    e.preventDefault();
+                    resetSubmitButton();
+                    showFieldError('lastName-error', 'Last name must be at least 2 characters long');
+                    lastName.focus();
+                    return;
+                }
+
+                if (!email.validity.valid) {
+                    e.preventDefault();
+                    resetSubmitButton();
+                    showFieldError('email-error', 'Please enter a valid email address');
+                    email.focus();
+                    return;
+                }
+
+                if (password.value.length < 6) {
+                    e.preventDefault();
+                    resetSubmitButton();
+                    showFieldError('password-error', 'Password must be at least 6 characters long');
+                    password.focus();
+                    return;
+                }
+
+                if (password.value !== confirmPassword.value) {
+                    e.preventDefault();
+                    resetSubmitButton();
+                    showFieldError('confirmPassword-error', 'Passwords do not match');
+                    confirmPassword.focus();
+                    return;
+                }
+            });
+
+            // Reset submit button state
+            function resetSubmitButton() {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('btn-loading');
+                submitText.textContent = 'Create Account';
+                submitStatus.textContent = '';
+            }
+
+            // Show field-specific error
+            function showFieldError(errorId, message) {
+                const errorElement = document.getElementById(errorId);
+                errorElement.textContent = message;
+                errorElement.classList.remove('sr-only');
+                setTimeout(() => {
+                    errorElement.classList.add('sr-only');
+                }, 5000);
+            }
+
+            // Password validation feedback
+            const passwordInput = document.getElementById('password');
+            const passwordRequirements = document.getElementById('password-requirements');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+
+            passwordInput.addEventListener('input', function () {
+                document.getElementById('password-error').classList.add('sr-only');
+
+                if (this.value.length >= 6) {
+                    passwordRequirements.textContent = 'Password meets requirements';
+                    passwordRequirements.className = 'password-requirements valid';
+                } else {
+                    passwordRequirements.textContent = 'Password must be at least 6 characters long';
+                    passwordRequirements.className = 'password-requirements invalid';
+                }
+            });
+
+            // Confirm password validation
+            confirmPasswordInput.addEventListener('input', function () {
+                document.getElementById('confirmPassword-error').classList.add('sr-only');
+            });
+
+            // Clear errors on input for other fields
+            document.getElementById('firstName').addEventListener('input', function () {
+                document.getElementById('firstName-error').classList.add('sr-only');
+            });
+
+            document.getElementById('lastName').addEventListener('input', function () {
+                document.getElementById('lastName-error').classList.add('sr-only');
+            });
+
+            document.getElementById('email').addEventListener('input', function () {
+                document.getElementById('email-error').classList.add('sr-only');
+            });
+
+            // Handle back button navigation
+            window.addEventListener('pageshow', function (event) {
+                if (event.persisted) {
+                    resetSubmitButton();
+                }
+            });
+
+            // Keyboard navigation improvements
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'BUTTON' && e.target.type !== 'submit') {
+                    const form = e.target.closest('form');
+                    if (form) {
+                        const submitButton = form.querySelector('button[type="submit"]');
+                        if (submitButton && !submitButton.disabled) {
+                            submitButton.click();
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
