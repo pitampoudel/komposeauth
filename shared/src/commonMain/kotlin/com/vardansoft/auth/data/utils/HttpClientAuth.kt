@@ -28,7 +28,7 @@ fun AuthConfig.applyVardanSoftBearer(scope: Scope, clientId: String) {
                 clientId = clientId,
                 client = HttpClient {
                     install(ContentNegotiation) {
-                        json(Json {})
+                        json(Json)
                     }
                 },
                 loginPreferences = loginPreferences

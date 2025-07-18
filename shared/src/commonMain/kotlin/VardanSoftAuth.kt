@@ -1,12 +1,12 @@
 package com.vardansoft.auth
 
-import com.vardansoft.auth.di.loginModule
+import com.vardansoft.auth.di.authModule
 import org.koin.core.module.Module
 
 object VardanSoftAuth {
 
     fun getAllModules(): List<Module> {
-        return listOf(loginModule)
+        return listOf(authModule)
     }
 
     val GOOGLE_ID = BuildKonfig.AUTH_GOOGLE_ID
@@ -19,6 +19,10 @@ object VardanSoftAuth {
 
         const val TOKEN = "oauth2/token"
         const val USER_INFO = "userinfo"
+        const val UPDATE_PHONE_NUMBER = "phone-number/update"
+        const val VERIFY_PHONE_NUMBER = "phone-number/verify"
+
+
     }
 
 }

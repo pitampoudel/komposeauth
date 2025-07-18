@@ -59,6 +59,14 @@ class LoginPreferencesImpl(
         settings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(token))
     }
 
+    override suspend fun updateUserInformation(info: UserInfo) {
+        dataStore.updateData {
+            it.toMutablePreferences().apply {
+                set(KEYS.USER_INFO, Json.encodeToString(info))
+            }
+        }
+    }
+
     override suspend fun clear() {
         settings.remove(KEYS.OAUTH2_TOKEN_DATA)
         dataStore.updateData {

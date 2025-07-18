@@ -36,6 +36,7 @@ kotlin {
                 implementation(compose.foundation)
                 implementation(compose.ui)
                 implementation(libs.compose.material3)
+                implementation(compose.materialIconsExtended)
                 implementation(compose.components.resources)
 
                 // Koin for Compose
@@ -61,6 +62,9 @@ kotlin {
                 // OTP code retriever
                 implementation(libs.play.services.auth)
                 implementation(libs.play.services.auth.api.phone)
+
+                // Country Code Picker
+                implementation(libs.ccp)
             }
         }
 

@@ -1,20 +1,25 @@
 package com.vardansoft.auth.data
 
 import com.vardansoft.auth.VardanSoftAuth.EndPoints.TOKEN
+import com.vardansoft.auth.VardanSoftAuth.EndPoints.UPDATE_PHONE_NUMBER
 import com.vardansoft.auth.VardanSoftAuth.EndPoints.USER_INFO
+import com.vardansoft.auth.VardanSoftAuth.EndPoints.VERIFY_PHONE_NUMBER
 import com.vardansoft.auth.VardanSoftAuth.EndPoints.apiUrl
 import com.vardansoft.auth.data.utils.asResource
 import com.vardansoft.auth.data.utils.safeApiCall
-import com.vardansoft.auth.domain.LoginClient
+import com.vardansoft.auth.domain.AuthClient
 import com.vardansoft.auth.presentation.Credential
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.Parameters
 
-class LoginClientImpl(val httpClient: HttpClient) : LoginClient {
+class AuthClientImpl(val httpClient: HttpClient) : AuthClient {
 
     override suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2TokenData> {
         return safeApiCall {
@@ -34,11 +39,27 @@ class LoginClientImpl(val httpClient: HttpClient) : LoginClient {
     }
 
 
-    override suspend fun fetchUserInfo(accessToken: String): Result<UserInfo> {
+    override suspend fun fetchUserInfo(accessToken: String?): Result<UserInfo> {
         return safeApiCall {
             httpClient.get(apiUrl(USER_INFO)) {
-                bearerAuth(accessToken)
+                accessToken?.let { bearerAuth(accessToken) }
             }.asResource { body() }
+        }
+    }
+
+    override suspend fun verifyPhoneOtp(req: VerifyPhoneOtpRequest): Result<HttpResponse> {
+        return safeApiCall {
+            httpClient.post(apiUrl(VERIFY_PHONE_NUMBER)) {
+                setBody(req)
+            }.asResource { this }
+        }
+    }
+
+    override suspend fun sendPhoneOtp(request: UpdatePhoneNumberRequest): Result<HttpResponse> {
+        return safeApiCall {
+            httpClient.post(apiUrl(UPDATE_PHONE_NUMBER)) {
+                setBody(request)
+            }.asResource { this }
         }
     }
 

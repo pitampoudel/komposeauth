@@ -12,6 +12,8 @@ interface LoginPreferences {
     )
 
     suspend fun updateTokenData(token: OAuth2TokenData)
+    suspend fun updateUserInformation(info: UserInfo)
     fun oAuth2TokenData(): OAuth2TokenData?
     suspend fun clear()
+
 }

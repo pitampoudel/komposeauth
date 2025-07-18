@@ -17,6 +17,8 @@ androidx-credentials = "1.5.0"
 googleid = "1.1.1"
 playServicesAuth = "21.3.0"
 playServicesAuthApiPhone = "18.2.0"
+ccp = "2.7.3"
+
 
 
 [libraries]
@@ -48,6 +50,7 @@ androidx-credentials-playServicesAuth = { module = "androidx.credentials:credent
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-auth-api-phone = { module = "com.google.android.gms:play-services-auth-api-phone", version.ref = "playServicesAuthApiPhone" }
+ccp = { module = "com.hbb20:ccp", version.ref = "ccp" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
