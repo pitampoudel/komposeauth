@@ -13,6 +13,8 @@ GCP_PROJECT_ID="$1"
 SERVICE_NAME="$2"
 REGION="$3"
 
+gcloud config set project $GCP_PROJECT_ID
+
 gcloud auth configure-docker "$REGION"-docker.pkg.dev --quiet
 
 # Build Docker image
