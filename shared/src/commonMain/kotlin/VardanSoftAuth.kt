@@ -10,7 +10,7 @@ object VardanSoftAuth {
     }
 
     val GOOGLE_ID = BuildKonfig.AUTH_GOOGLE_ID
-    internal val URL = BuildKonfig.AUTH_URL
+    val URL = BuildKonfig.AUTH_URL
 
     object EndPoints {
         fun apiUrl(endPoint: String): String {
