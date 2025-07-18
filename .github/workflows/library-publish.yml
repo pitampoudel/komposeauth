@@ -2,31 +2,37 @@ name: Publish KMP Library
 on:
   release:
     types: [ released, prereleased ]
+env:
+  ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+  ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+  ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
+  JAVA_DISTRIBUTION: 'zulu'
+  JAVA_VERSION: 21
+  GRADLE_COMMAND: './gradlew publishToMavenCentral --no-configuration-cache'
+
 jobs:
   try-self-hosted:
     name: Publish with Self Hosted Runner
     runs-on: self-hosted
     continue-on-error: true
     outputs:
-      success: ${{ steps.check.outputs.success }}
+      success: ${{ steps.publish.outputs.success }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-      - name: Set up JDK 21
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: 21
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
       - name: Publish to MavenCentral
+        id: publish
         run: |
-         ./gradlew publishToMavenCentral --no-configuration-cache
+          ${{ env.GRADLE_COMMAND }}
           echo "success=true" >> $GITHUB_OUTPUT
-        env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
+          
   publish-with-ubuntu:
     name: Publish with Ubuntu Runner
     needs: try-self-hosted
@@ -35,17 +41,11 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-      - name: Set up JDK 21
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: 21
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
       - name: Publish to MavenCentral
-        run: ./gradlew publishToMavenCentral --no-configuration-cache
-        env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
+        run: ${{ env.GRADLE_COMMAND }}
 
