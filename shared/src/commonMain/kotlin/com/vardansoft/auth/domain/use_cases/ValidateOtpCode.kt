@@ -14,6 +14,6 @@ class ValidateOtpCode {
     }
 
     companion object {
-        const val OTP_LENGTH = 4
+        const val OTP_LENGTH = 6
     }
 }

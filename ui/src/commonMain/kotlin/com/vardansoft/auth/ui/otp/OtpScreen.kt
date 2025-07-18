@@ -6,20 +6,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -95,7 +90,7 @@ fun EnterMobilePage(
             .padding(horizontal = 24.dp, vertical = 32.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
             Text(
                 text = "Enter your mobile number",
                 style = MaterialTheme.typography.headlineSmall,
@@ -152,6 +147,7 @@ fun FillTheCodePage(
             onEvent(OtpEvent.CodeChanged(it))
         }
     }
+
     LaunchedEffect(isRegistered) {
         if (isRegistered != null) {
             state.req?.let {
@@ -162,67 +158,65 @@ fun FillTheCodePage(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(horizontal = 24.dp, vertical = 32.dp),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            Text(
+                text = "Fill The Code",
+                style = MaterialTheme.typography.headlineSmall
+            )
 
-        Text(
-            text = "Fill The Code",
-            style = MaterialTheme.typography.headlineLarge
-        )
-        Text(
-            textAlign = TextAlign.Center,
-            text = "An otp code has just been sent to ${state.req?.phoneNumber}",
-            style = MaterialTheme.typography.titleMedium
-        )
+            Text(
+                text = "An OTP has been sent to ${state.req?.phoneNumber}",
+                style = MaterialTheme.typography.bodyLarge
+            )
 
-        OTPTextField(state.code, onValueChange = { onEvent(OtpEvent.CodeChanged(it)) })
+            OTPTextField(state.code) { onEvent(OtpEvent.CodeChanged(it)) }
+
+        }
 
         Button(
-            enabled = !state.containsError(),
             onClick = { onEvent(OtpEvent.Verify) },
-            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.containsError(),
+            modifier = Modifier.fillMaxWidth().height(48.dp)
         ) {
             Text("Verify")
         }
-
-
     }
 }
+
 
 @Composable
 fun OTPTextField(value: String, onValueChange: (String) -> Unit) {
     BasicTextField(
         value = value,
         onValueChange = {
-            if (it.length <= OTP_LENGTH) {
-                onValueChange(it)
-            }
+            if (it.length <= OTP_LENGTH) onValueChange(it)
         },
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.NumberPassword
-        )
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword)
+    ) { innerTextField ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
             repeat(OTP_LENGTH) { index ->
                 Box(
-                    modifier = Modifier.background(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = MaterialTheme.shapes.small
-                    ).padding(5.dp).size(40.dp),
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(6.dp)
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = when {
-                            index >= value.length -> ""
-                            else -> value[index].toString()
-                        },
+                        text = value.getOrNull(index)?.toString() ?: "",
                         style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-
             }
         }
     }

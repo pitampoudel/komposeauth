@@ -21,13 +21,13 @@ import com.google.android.gms.auth.api.phone.SmsRetrieverClient
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.tasks.Task
+import com.vardansoft.auth.domain.use_cases.ValidateOtpCode.Companion.OTP_LENGTH
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 
 private fun extractOtpFromSms(message: String): String? {
-    // This will match any 4 digit number in the message
-    val pattern: Pattern = Pattern.compile("(|^)\\d{4}")
+    val pattern: Pattern = Pattern.compile("(|^)\\d{$OTP_LENGTH}")
     val matcher: Matcher = pattern.matcher(message)
     return if (matcher.find()) matcher.group(0) else null
 }
