@@ -8,10 +8,6 @@ env:
   ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
   ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
   ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
-  JAVA_DISTRIBUTION: 'zulu'
-  JAVA_VERSION: 21
-  GRADLE_COMMAND: './gradlew publishToMavenCentral --no-configuration-cache'
-
 jobs:
   publish:
     name: Publish with Ubuntu Runner
@@ -22,8 +18,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
-          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'zulu'
+          java-version: 21
       - name: Publish to MavenCentral
-        run: ${{ env.GRADLE_COMMAND }}
+        run: ./gradlew publishToMavenCentral --no-configuration-cache
 
