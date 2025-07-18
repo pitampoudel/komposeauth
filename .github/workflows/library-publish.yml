@@ -13,31 +13,9 @@ env:
   GRADLE_COMMAND: './gradlew publishToMavenCentral --no-configuration-cache'
 
 jobs:
-  try-self-hosted:
-    name: Publish with Self Hosted Runner
-    runs-on: self-hosted
-    continue-on-error: true
-    outputs:
-      success: ${{ steps.publish.outputs.success }}
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
-          java-version: ${{ env.JAVA_VERSION }}
-      - name: Publish to MavenCentral
-        id: publish
-        run: |
-          ${{ env.GRADLE_COMMAND }}
-          echo "success=true" >> $GITHUB_OUTPUT
-          
-  publish-with-ubuntu:
+  publish:
     name: Publish with Ubuntu Runner
-    needs: try-self-hosted
-    if: needs.try-self-hosted.outputs.success != 'true'
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted,ubuntu-latest ]
     steps:
       - name: Check out code
         uses: actions/checkout@v4
