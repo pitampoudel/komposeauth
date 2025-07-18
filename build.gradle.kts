@@ -45,6 +45,9 @@ props.forEach {
 }
 if (!extra.has("AUTH_URL")) extra["AUTH_URL"] = "http://" + getLocalIpAddress() + ":8080"
 
+group = "com.vardansoft"
+version = "1.0.9"
+
 subprojects {
     afterEvaluate {
         if (plugins.hasPlugin("com.vanniktech.maven.publish")) {

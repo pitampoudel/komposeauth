@@ -9,9 +9,6 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
-group = "com.vardansoft"
-version = "1.0.1"
-
 kotlin {
     jvm()
     androidTarget {
