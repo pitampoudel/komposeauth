@@ -1,4 +1,4 @@
-package com.vardansoft.auth.presentation.otp
+package com.vardansoft.auth.ui.otp
 
 import com.vardansoft.auth.data.UpdatePhoneNumberRequest
 import com.vardansoft.auth.data.VerifyPhoneOtpRequest

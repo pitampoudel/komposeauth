@@ -1,4 +1,4 @@
-package com.vardansoft.auth.presentation
+package com.vardansoft.auth.com.vardansoft.auth.domain
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

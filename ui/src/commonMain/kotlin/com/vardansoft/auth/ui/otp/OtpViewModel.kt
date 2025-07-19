@@ -1,4 +1,4 @@
-package com.vardansoft.auth.presentation.otp
+package com.vardansoft.auth.ui.otp
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

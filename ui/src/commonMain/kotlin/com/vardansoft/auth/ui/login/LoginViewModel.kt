@@ -2,6 +2,7 @@ package com.vardansoft.auth.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vardansoft.auth.com.vardansoft.auth.domain.Credential
 import com.vardansoft.auth.domain.AuthClient
 import com.vardansoft.auth.domain.LoginPreferences
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -48,9 +48,8 @@ kotlin {
                 // koin
                 api(project.dependencies.platform(libs.koin.bom))
                 api(libs.koin.core)
-                api(libs.koin.compose.viewmodel)
                 // ktor client
-                implementation(libs.ktor.client.core)
+                api(libs.ktor.client.core)
                 implementation(libs.ktor.client.contentNegotiation)
                 implementation(libs.ktor.client.logging)
                 implementation(libs.ktor.serialization.kotlinx.json)

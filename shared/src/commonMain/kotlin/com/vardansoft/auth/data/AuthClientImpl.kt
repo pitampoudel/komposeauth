@@ -5,10 +5,10 @@ import com.vardansoft.auth.VardanSoftAuth.EndPoints.UPDATE_PHONE_NUMBER
 import com.vardansoft.auth.VardanSoftAuth.EndPoints.USER_INFO
 import com.vardansoft.auth.VardanSoftAuth.EndPoints.VERIFY_PHONE_NUMBER
 import com.vardansoft.auth.VardanSoftAuth.EndPoints.apiUrl
+import com.vardansoft.auth.com.vardansoft.auth.domain.Credential
 import com.vardansoft.auth.data.utils.asResource
 import com.vardansoft.auth.data.utils.safeApiCall
 import com.vardansoft.auth.domain.AuthClient
-import com.vardansoft.auth.presentation.Credential
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth

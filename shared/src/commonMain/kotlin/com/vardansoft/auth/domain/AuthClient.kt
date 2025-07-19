@@ -1,10 +1,10 @@
 package com.vardansoft.auth.domain
 
+import com.vardansoft.auth.com.vardansoft.auth.domain.Credential
 import com.vardansoft.auth.data.OAuth2TokenData
 import com.vardansoft.auth.data.UpdatePhoneNumberRequest
 import com.vardansoft.auth.data.UserInfo
 import com.vardansoft.auth.data.VerifyPhoneOtpRequest
-import com.vardansoft.auth.presentation.Credential
 import io.ktor.client.statement.HttpResponse
 
 interface AuthClient {

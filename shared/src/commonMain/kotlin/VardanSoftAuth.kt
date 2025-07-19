@@ -1,13 +1,6 @@
 package com.vardansoft.auth
 
-import com.vardansoft.auth.di.authModule
-import org.koin.core.module.Module
-
 object VardanSoftAuth {
-
-    fun getAllModules(): List<Module> {
-        return listOf(authModule)
-    }
 
     val GOOGLE_ID = BuildKonfig.AUTH_GOOGLE_ID
     val URL = BuildKonfig.AUTH_URL

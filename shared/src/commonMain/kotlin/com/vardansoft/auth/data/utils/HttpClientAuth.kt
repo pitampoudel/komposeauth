@@ -34,6 +34,9 @@ fun AuthConfig.applyVardanSoftBearer(scope: Scope, clientId: String) {
                 loginPreferences = loginPreferences
             )
         }
+        sendWithoutRequest {
+            it.url.host.contains("vardansoft.com")
+        }
     }
 
 }

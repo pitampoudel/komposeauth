@@ -29,13 +29,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vardansoft.auth.data.UpdatePhoneNumberRequest
 import com.vardansoft.auth.domain.use_cases.ValidateOtpCode.Companion.OTP_LENGTH
-import com.vardansoft.auth.presentation.otp.OtpEvent
-import com.vardansoft.auth.presentation.otp.OtpState
-import com.vardansoft.auth.presentation.otp.OtpUiEvent
 import com.vardansoft.auth.ui.core.components.CountryPicker
 import com.vardansoft.auth.ui.core.wrapper.screenstate.ScreenStateWrapper
 import kotlin.reflect.KFunction1
