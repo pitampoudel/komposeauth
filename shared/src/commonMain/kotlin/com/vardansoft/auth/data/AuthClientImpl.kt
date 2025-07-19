@@ -1,10 +1,10 @@
 package com.vardansoft.auth.data
 
-import com.vardansoft.auth.VardanSoftAuth.EndPoints.TOKEN
-import com.vardansoft.auth.VardanSoftAuth.EndPoints.UPDATE_PHONE_NUMBER
-import com.vardansoft.auth.VardanSoftAuth.EndPoints.USER_INFO
-import com.vardansoft.auth.VardanSoftAuth.EndPoints.VERIFY_PHONE_NUMBER
-import com.vardansoft.auth.VardanSoftAuth.EndPoints.apiUrl
+import com.vardansoft.auth.EndPoints.TOKEN
+import com.vardansoft.auth.EndPoints.UPDATE_PHONE_NUMBER
+import com.vardansoft.auth.EndPoints.USER_INFO
+import com.vardansoft.auth.EndPoints.VERIFY_PHONE_NUMBER
+import com.vardansoft.auth.EndPoints.apiUrl
 import com.vardansoft.auth.com.vardansoft.auth.domain.Credential
 import com.vardansoft.auth.data.utils.asResource
 import com.vardansoft.auth.data.utils.safeApiCall

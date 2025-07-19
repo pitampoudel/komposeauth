@@ -1,7 +1,7 @@
 package com.vardansoft.auth.data.utils
 
-import com.vardansoft.auth.VardanSoftAuth.EndPoints.TOKEN
-import com.vardansoft.auth.VardanSoftAuth.EndPoints.apiUrl
+import com.vardansoft.auth.EndPoints.TOKEN
+import com.vardansoft.auth.EndPoints.apiUrl
 import com.vardansoft.auth.data.OAuth2TokenData
 import com.vardansoft.auth.domain.LoginPreferences
 import io.ktor.client.HttpClient

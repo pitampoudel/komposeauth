@@ -7,7 +7,7 @@ import com.vardansoft.auth.domain.LoginPreferences
 import com.vardansoft.auth.domain.use_cases.ValidateOtpCode
 import org.koin.dsl.module
 
-val authModule = module {
+val authSharedModule = module {
     single<LoginPreferences> {
         LoginPreferencesImpl(get(), get())
     }
