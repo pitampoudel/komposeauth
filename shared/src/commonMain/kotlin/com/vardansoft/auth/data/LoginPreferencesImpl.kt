@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.russhwolf.settings.Settings
+import com.vardansoft.auth.domain.LazyState
 import com.vardansoft.auth.domain.LoginPreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -30,8 +31,8 @@ class LoginPreferencesImpl(
         }
     }
 
-    override val userInfo: Flow<UserInfo?> = dataStore.data.map {
-        it[KEYS.USER_INFO]?.let { string ->
+    override val userInfo: Flow<LazyState<UserInfo>> = dataStore.data.map {
+        val info: UserInfo? = it[KEYS.USER_INFO]?.let { string ->
             try {
                 Json.decodeFromString(string)
             } catch (e: Exception) {
@@ -39,7 +40,7 @@ class LoginPreferencesImpl(
                 null
             }
         }
-
+        LazyState.Loaded(info)
     }
 
 

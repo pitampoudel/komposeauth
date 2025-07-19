@@ -5,7 +5,7 @@ import com.vardansoft.auth.data.UserInfo
 import kotlinx.coroutines.flow.Flow
 
 interface LoginPreferences {
-    val userInfo: Flow<UserInfo?>
+    val userInfo: Flow<LazyState<UserInfo>>
     suspend fun saveLoggedInDetails(
         token: OAuth2TokenData,
         userInfo: UserInfo
