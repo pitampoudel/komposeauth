@@ -22,6 +22,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.client.RestTemplate
 import java.time.Instant
 import java.util.*
+import javax.security.auth.login.AccountNotFoundException
 
 @Configuration
 class SecurityConfig() {
@@ -43,7 +44,8 @@ class SecurityConfig() {
                 return null
             }
             val issuedAt = Instant.now()
-            val expiresAt = issuedAt.plus(context.registeredClient.tokenSettings.refreshTokenTimeToLive)
+            val expiresAt =
+                issuedAt.plus(context.registeredClient.tokenSettings.refreshTokenTimeToLive)
             return OAuth2RefreshToken(this.refreshTokenGenerator.generateKey(), issuedAt, expiresAt)
         }
 
@@ -76,10 +78,15 @@ class SecurityConfig() {
                 else -> {
                     val principal = context.getPrincipal<UsernamePasswordAuthenticationToken>()
                     if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN) {
-                        context.claims.claim("authorities", principal.authorities.map { it.authority })
+                        context.claims.claim(
+                            "authorities",
+                            principal.authorities.map { it.authority }
+                        )
                         val user = userService.findUser(principal.name)
-                        context.claims.claim("first_name", user?.firstName)
-                        context.claims.claim("last_name", user?.lastName)
+                            ?: throw AccountNotFoundException("User not found")
+                        context.claims.claim("first_name", user.firstName)
+                        if (user.lastName != null)
+                            context.claims.claim("last_name", user.lastName)
 
                     }
                 }
