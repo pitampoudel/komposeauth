@@ -38,4 +38,4 @@ jobs:
 
       - name: Run Deployment Script
         run: |
-          ./deploy.sh ${{ env.GCP_PROJECT_ID }} ${{ env.SERVICE_NAME }} ${{ env.REGION }}
+          ./deploy.sh ${{ env.GCP_PROJECT_ID }} ${{ env.SERVICE_NAME }}

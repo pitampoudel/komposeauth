@@ -3,15 +3,15 @@
 set -e
 
 # Check if all required arguments are provided
-if [ "$#" -ne 3 ]; then
-  echo "Usage: $0 <GCP_PROJECT_ID> <SERVICE_NAME> <REGION>"
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <GCP_PROJECT_ID> <SERVICE_NAME>"
   exit 1
 fi
 
 # Assign arguments to variables
 GCP_PROJECT_ID="$1"
 SERVICE_NAME="$2"
-REGION="$3"
+REGION="us-central1"
 
 gcloud config set project $GCP_PROJECT_ID
 

@@ -1,9 +1,15 @@
 package com.vardansoft.auth.user.service
 
 import com.vardansoft.auth.core.utils.parsePhoneNumber
-import com.vardansoft.auth.user.dto.*
+import com.vardansoft.auth.user.dto.CreateUserRequest
+import com.vardansoft.auth.user.dto.UpdatePhoneNumberRequest
+import com.vardansoft.auth.user.dto.UpdateUserRequest
+import com.vardansoft.auth.user.dto.UserResponse
+import com.vardansoft.auth.user.dto.VerifyPhoneOtpRequest
+import com.vardansoft.auth.user.dto.mapToEntity
+import com.vardansoft.auth.user.dto.mapToResponseDto
+import com.vardansoft.auth.user.dto.update
 import com.vardansoft.auth.user.entity.User
-import com.vardansoft.auth.user.repository.PhoneOtpRepository
 import com.vardansoft.auth.user.repository.UserRepository
 import jakarta.validation.Valid
 import org.bson.types.ObjectId
@@ -58,7 +64,7 @@ class UserService(
     fun findOrCreateUserByEmail(
         email: String,
         firstName: String,
-        lastName: String,
+        lastName: String?,
         picture: String?
     ): User {
         return findUserByEmail(email) ?: createUser(

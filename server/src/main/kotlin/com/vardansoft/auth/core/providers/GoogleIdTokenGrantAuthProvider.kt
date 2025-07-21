@@ -43,7 +43,7 @@ class GoogleIdTokenGrantAuthProvider(
         val user = userService.findOrCreateUserByEmail(
             email = payload["email"] as String,
             firstName = payload["given_name"] as String,
-            lastName = payload["family_name"] as String,
+            lastName = payload["family_name"] as String?,
             picture = payload["picture"] as? String
         )
         if (payload["email_verified"] == true) {
