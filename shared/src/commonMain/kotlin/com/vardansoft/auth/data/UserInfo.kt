@@ -9,7 +9,7 @@ data class UserInfo(
     @SerialName("firstName")
     val firstName: String,
     @SerialName("lastName")
-    val lastName: String,
+    val lastName: String?,
     @SerialName("email")
     val email: String,
     @SerialName("phoneNumber")
