@@ -10,6 +10,8 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.GetCredentialProviderConfigurationException
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -70,7 +72,14 @@ actual fun rememberCredentialRetriever(clientId: String): CredentialRetriever {
 
                 } catch (e: GetCredentialException) {
                     e.printStackTrace()
-                    return Result.failure(e)
+                    val userMessage = when (e) {
+                        is GetCredentialProviderConfigurationException ->
+                            "Google Play services on this device is missing, out of date, or not compatible to sign in with Google. Please update/install Google Play services and try again."
+                        is NoCredentialException ->
+                            "No Google account available for sign-in on this device. Please add a Google account and try again."
+                        else -> e.message ?: "Unable to retrieve credentials at the moment. Please try again."
+                    }
+                    return Result.failure(Exception(userMessage))
                 }
             }
 
