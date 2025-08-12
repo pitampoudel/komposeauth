@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,7 +44,8 @@ fun OtpScreen(
     state: OtpState,
     uiEvents: kotlinx.coroutines.flow.Flow<OtpUiEvent>,
     onEvent: KFunction1<OtpEvent, Unit>,
-    popBackStack: () -> Unit
+    popBackStack: () -> Unit,
+    onSkip: () -> Unit = {}
 ) {
     LaunchedEffect(Unit) {
         uiEvents.collect {
@@ -59,12 +61,17 @@ fun OtpScreen(
     ) {
         Scaffold { paddingValues ->
             if (state.req == null) {
-                return@Scaffold EnterMobilePage(paddingValues, onEvent)
+                return@Scaffold EnterMobilePage(
+                    paddingValues = paddingValues,
+                    onEvent = onEvent,
+                    onSkip = onSkip
+                )
             }
             FillTheCodePage(
                 modifier = Modifier.fillMaxSize().padding(paddingValues),
                 state = state,
-                onEvent = onEvent
+                onEvent = onEvent,
+                onSkip = onSkip
             )
         }
     }
@@ -74,7 +81,8 @@ fun OtpScreen(
 @Composable
 fun EnterMobilePage(
     paddingValues: PaddingValues,
-    onEvent: (OtpEvent) -> Unit
+    onEvent: (OtpEvent) -> Unit,
+    onSkip: () -> Unit = {}
 ) {
     var phoneNumber by remember { mutableStateOf("") }
     var countryCode by remember { mutableStateOf("") }
@@ -110,23 +118,32 @@ fun EnterMobilePage(
             )
         }
 
-        Button(
-            onClick = {
-                onEvent(
-                    OtpEvent.SubmitPhoneNumber(
-                        UpdatePhoneNumberRequest(
-                            phoneNumber = phoneNumber,
-                            countryCode = countryCode
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = {
+                    onEvent(
+                        OtpEvent.SubmitPhoneNumber(
+                            UpdatePhoneNumberRequest(
+                                phoneNumber = phoneNumber,
+                                countryCode = countryCode
+                            )
                         )
                     )
-                )
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            enabled = phoneNumber.length >= 6
-        ) {
-            Text("Send OTP")
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                enabled = phoneNumber.length >= 6
+            ) {
+                Text("Send OTP")
+            }
+            TextButton(onClick = { onSkip() }) {
+                Text("Skip")
+            }
         }
     }
 }
@@ -136,7 +153,8 @@ fun EnterMobilePage(
 fun FillTheCodePage(
     modifier: Modifier = Modifier,
     state: OtpState,
-    onEvent: KFunction1<OtpEvent, Unit>
+    onEvent: KFunction1<OtpEvent, Unit>,
+    onSkip: () -> Unit = {}
 ) {
     val isRegistered = registerSmsOtpRetriever {
         if (it.length == OTP_LENGTH) {
@@ -173,12 +191,21 @@ fun FillTheCodePage(
 
         }
 
-        Button(
-            onClick = { onEvent(OtpEvent.Verify) },
-            enabled = !state.containsError(),
-            modifier = Modifier.fillMaxWidth().height(48.dp)
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Verify")
+            Button(
+                onClick = { onEvent(OtpEvent.Verify) },
+                enabled = !state.containsError(),
+                modifier = Modifier.fillMaxWidth().height(48.dp)
+            ) {
+                Text("Verify")
+            }
+            TextButton(onClick = { onSkip() }) {
+                Text("Skip")
+            }
         }
     }
 }
