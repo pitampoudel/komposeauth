@@ -49,7 +49,7 @@ class SamayaSmsService(
     }
 
     override fun sendOtp(user: User, phoneNumber: String, otpCode: String): Boolean {
-        return sendSms(phoneNumber, "Hi ${user.firstName}, Your OTP is $otpCode")
+        return sendSms(phoneNumber, "Hi ${user.firstName}, Your OTP is $otpCode for Vardan Soft Pvt Ltd")
     }
 
     private fun buildFormData(phoneNumber: String, message: String): MultiValueMap<String, String> {
