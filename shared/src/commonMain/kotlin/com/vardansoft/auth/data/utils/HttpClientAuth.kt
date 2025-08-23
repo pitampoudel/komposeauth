@@ -1,5 +1,6 @@
 package com.vardansoft.auth.data.utils
 
+import com.vardansoft.auth.VardanSoftAuth.RESOURCE_SERVERS
 import com.vardansoft.auth.domain.LoginPreferences
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.auth.AuthConfig
@@ -36,7 +37,7 @@ fun AuthConfig.applyVardanSoftBearer(scope: Scope, clientId: String) {
         }
         sendWithoutRequest {
             val host = it.url.host
-            host.endsWith("vardansoft.com") || isIpAddress(host)
+            RESOURCE_SERVERS.contains(host) || isIpAddress(host)
         }
     }
 

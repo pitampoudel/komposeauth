@@ -1,10 +1,10 @@
-# VardanSoft Auth KMP
+# Auth KMP
 
-A Kotlin Multiplatform library for authentication and user management in mobile and web applications.
+A Kotlin Multiplatform project for authentication and user management in mobile and web applications.
 
 ## Overview
 
-VardanSoft Auth KMP provides a complete authentication solution for Kotlin Multiplatform projects. It offers two main artifacts:
+Auth KMP provides a complete authentication solution for Kotlin Multiplatform projects. It offers two main artifacts:
 
 1. **auth** - Core authentication module
 
@@ -12,7 +12,7 @@ VardanSoft Auth KMP provides a complete authentication solution for Kotlin Multi
 
 ## Installation
 
-Add the VardanSoft Auth KMP dependencies to your project:
+Add the Auth KMP dependencies to your project:
 
 ```kotlin
 // In your build.gradle.kts

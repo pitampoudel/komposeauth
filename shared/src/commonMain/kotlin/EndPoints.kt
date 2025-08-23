@@ -2,7 +2,7 @@ package com.vardansoft.auth
 
 object EndPoints {
     fun apiUrl(endPoint: String): String {
-        return "${VardanSoftAuth.URL}/$endPoint"
+        return "${VardanSoftAuth.AUTH_BASE_URL}/$endPoint"
     }
 
     const val TOKEN = "oauth2/token"
