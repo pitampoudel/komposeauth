@@ -1,12 +1,9 @@
 package com.vardansoft.auth.ui.login
 
-import androidx.compose.runtime.Composable
-
-
-@Composable
+@androidx.compose.runtime.Composable
 actual fun rememberCredentialRetriever(
     clientId: String,
     googleAuthClientId: String
-): CredentialRetriever {
+): com.vardansoft.auth.ui.login.CredentialRetriever {
     TODO("Not yet implemented")
 }

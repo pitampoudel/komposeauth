@@ -6,7 +6,7 @@ import com.vardansoft.auth.ui.otp.OtpViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-fun getAuthModules() = listOf(authSharedModule) + module {
+fun getAuthModules(authUrl: String) = listOf(authSharedModule(authUrl)) + module {
     viewModel<OtpViewModel> {
         OtpViewModel(get(), get(), get())
     }

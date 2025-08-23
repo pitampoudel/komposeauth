@@ -15,11 +15,13 @@ import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
-import com.vardansoft.auth.VardanSoftAuth
 import com.vardansoft.auth.com.vardansoft.auth.domain.Credential
 
 @Composable
-actual fun rememberCredentialRetriever(clientId: String): CredentialRetriever {
+actual fun rememberCredentialRetriever(
+    clientId: String,
+    googleAuthClientId: String
+): CredentialRetriever {
     val activity = LocalActivity.current ?: throw Exception("No activity found")
     val credentialManager = remember {
         CredentialManager.create(activity)
@@ -29,7 +31,7 @@ actual fun rememberCredentialRetriever(clientId: String): CredentialRetriever {
             override suspend fun getCredential(): Result<Credential> {
                 val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId(VardanSoftAuth.GOOGLE_ID)
+                    .setServerClientId(googleAuthClientId)
                     .build()
 
                 val request = GetCredentialRequest.Builder()
@@ -75,9 +77,12 @@ actual fun rememberCredentialRetriever(clientId: String): CredentialRetriever {
                     val userMessage = when (e) {
                         is GetCredentialProviderConfigurationException ->
                             "Google Play services on this device is missing, out of date, or not compatible to sign in with Google. Please update/install Google Play services and try again."
+
                         is NoCredentialException ->
                             "No Google account available for sign-in on this device. Please add a Google account and try again."
-                        else -> e.message ?: "Unable to retrieve credentials at the moment. Please try again."
+
+                        else -> e.message
+                            ?: "Unable to retrieve credentials at the moment. Please try again."
                     }
                     return Result.failure(Exception(userMessage))
                 }

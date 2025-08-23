@@ -8,4 +8,7 @@ interface CredentialRetriever {
 }
 
 @Composable
-expect fun rememberCredentialRetriever(clientId: String): CredentialRetriever
+expect fun rememberCredentialRetriever(
+    clientId: String,
+    googleAuthClientId: String
+): CredentialRetriever

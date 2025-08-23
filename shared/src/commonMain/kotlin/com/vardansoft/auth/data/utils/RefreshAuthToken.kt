@@ -1,7 +1,6 @@
 package com.vardansoft.auth.data.utils
 
 import com.vardansoft.auth.EndPoints.TOKEN
-import com.vardansoft.auth.EndPoints.apiUrl
 import com.vardansoft.auth.data.OAuth2TokenData
 import com.vardansoft.auth.domain.LoginPreferences
 import io.ktor.client.HttpClient
@@ -23,6 +22,7 @@ import kotlin.time.ExperimentalTime
 
 
 suspend fun RefreshTokensParams.tryTokenRefresh(
+    authUrl: String,
     clientId: String,
     client: HttpClient,
     loginPreferences: LoginPreferences?
@@ -42,7 +42,7 @@ suspend fun RefreshTokensParams.tryTokenRefresh(
 
     val resource = safeApiCall<OAuth2TokenData> {
         client.submitForm(
-            apiUrl(TOKEN),
+            "$authUrl/$TOKEN",
             formParameters = Parameters.build {
                 append("refresh_token", refreshToken)
                 append("client_id", clientId)

@@ -1,6 +1,5 @@
 package com.vardansoft.auth.data.utils
 
-import com.vardansoft.auth.VardanSoftAuth.RESOURCE_SERVERS
 import com.vardansoft.auth.domain.LoginPreferences
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.auth.AuthConfig
@@ -11,7 +10,12 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.core.scope.Scope
 
-fun AuthConfig.applyVardanSoftBearer(scope: Scope, clientId: String) {
+fun AuthConfig.applyAuthBearer(
+    scope: Scope,
+    clientId: String,
+    authUrl: String,
+    hosts: List<String>
+) {
     val loginPreferences = scope.getOrNull<LoginPreferences>()
 
     return bearer {
@@ -32,12 +36,13 @@ fun AuthConfig.applyVardanSoftBearer(scope: Scope, clientId: String) {
                         json(Json)
                     }
                 },
-                loginPreferences = loginPreferences
+                loginPreferences = loginPreferences,
+                authUrl = authUrl
             )
         }
         sendWithoutRequest {
             val host = it.url.host
-            RESOURCE_SERVERS.contains(host) || isIpAddress(host)
+            hosts.contains(host) || isIpAddress(host)
         }
     }
 

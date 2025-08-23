@@ -35,6 +35,9 @@ dependencies {
 
    ```kotlin
    // In your application initialization
+   // Set your auth server base URL once (optional; can also be set later)
+   VardanSoftAuth.init(baseUrl = "https://auth.yourdomain.com")
+
    startKoin {
        modules(
            // Your other modules
@@ -45,12 +48,13 @@ dependencies {
 
 2. **Configure Ktor client with authentication**
 
-   Set up your Ktor client with VardanSoft authentication:
+   Set up your Ktor client with authentication:
 
    ```kotlin
    val httpClient = HttpClient {
        install(Auth) {
-           applyVardanSoftBearer(this@single, Constants.AUTH_VARDAN_SOFT_ID)
+           // Pass your OAuth2 public client ID
+           applyVardanSoftBearer(this@single, YOUR_CLIENT_ID)
        }
        // Other configurations
    }
