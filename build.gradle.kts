@@ -45,8 +45,8 @@ props.forEach {
 }
 if (!extra.has("AUTH_URL")) extra["AUTH_URL"] = "http://" + getLocalIpAddress() + ":8080"
 
-group = "com.vardansoft"
-version = "1.0.9"
+group = (findProperty("group") as String)
+version = (findProperty("version") as String)
 
 subprojects {
     afterEvaluate {
@@ -60,9 +60,9 @@ subprojects {
                     url = "https://github.com/Vardan-Soft-Pvt-Ltd/AuthKMP"
                     licenses {
                         license {
-                            name = "XXX"
-                            url = "YYY"
-                            distribution = "ZZZ"
+                            name = "The Apache License, Version 2.0"
+                            url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                            distribution = "repo"
                         }
                     }
                     developers {
@@ -73,9 +73,9 @@ subprojects {
                         }
                     }
                     scm {
-                        url = "XXX"
-                        connection = "YYY"
-                        developerConnection = "ZZZ"
+                        url = "https://github.com/Vardan-Soft-Pvt-Ltd/AuthKMP"
+                        connection = "scm:git:https://github.com/Vardan-Soft-Pvt-Ltd/AuthKMP.git"
+                        developerConnection = "scm:git:ssh://git@github.com/Vardan-Soft-Pvt-Ltd/AuthKMP.git"
                     }
                 }
             }

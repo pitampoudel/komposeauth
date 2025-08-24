@@ -96,6 +96,6 @@ mavenPublishing {
 
     pom {
         name = "Auth UI"
-        description = "Compose Multiplatform UI components for VardanSoft Authentication"
+        description = "Compose Multiplatform UI components for the Auth KMP library"
     }
 }

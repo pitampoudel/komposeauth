@@ -69,6 +69,6 @@ mavenPublishing {
 
     pom {
         name = "Auth"
-        description = "Authentication library by VardanSoft"
+        description = "Kotlin Multiplatform authentication library"
     }
 }

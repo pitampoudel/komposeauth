@@ -27,64 +27,71 @@ dependencies {
 
 ## Setup
 
-### Core Auth Module
+### Server (Spring Boot)
 
-1. **Initialize Koin modules**
+Configure via environment variables:
+- BASE_URL: Public base URL where the auth server is reachable (e.g., https://auth.example.com).
+- MONGODB_URI: Mongo connection string.
+- GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET: For Google sign-in (optional if unused).
+- SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM: For email features (optional if unused).
+- SMS_API_KEY: For SMS OTP (optional if unused).
 
-   Include the auth module when initializing Koin:
+application.yml already references these variables with sensible defaults. Run locally:
+- Gradle: ./gradlew :server:bootRun
+- Docker: use Dockerfile and set env vars.
 
-   ```kotlin
-   // In your application initialization
-   // Set your auth server base URL once (optional; can also be set later)
-   VardanSoftAuth.init(baseUrl = "https://auth.yourdomain.com")
+### Core Auth Library (KMP)
 
-   startKoin {
-       modules(
-           // Your other modules
-           authSharedModule
-       )
-   }
-   ```
+1) Add Koin modules providing the auth base URL used by the shared library:
 
-2. **Configure Ktor client with authentication**
+```kotlin
+val AUTH_URL = "https://auth.yourdomain.com"
 
-   Set up your Ktor client with authentication:
+startKoin {
+    modules(
+        com.vardansoft.auth.di.authSharedModule(authUrl = AUTH_URL)
+    )
+}
+```
 
-   ```kotlin
-   val httpClient = HttpClient {
-       install(Auth) {
-           // Pass your OAuth2 public client ID
-           applyVardanSoftBearer(this@single, YOUR_CLIENT_ID)
-       }
-       // Other configurations
-   }
-   ```
+2) Configure your Ktor HttpClient to use the bearer authenticator that refreshes tokens automatically. The helper needs:
+- Koin scope to access LoginPreferences
+- Your public OAuth client ID (registered on the auth server)
+- The auth server base URL
+- Hosts list to which the Authorization header should be sent
 
-### UI Module
+```kotlin
+val AUTH_URL = "https://auth.yourdomain.com"
+val PUBLIC_CLIENT_ID = "your-public-client-id"
 
-1. **Initialize Koin modules**
+val httpClient = io.ktor.client.HttpClient {
+    install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
+        io.ktor.serialization.kotlinx.json.json()
+    }
+    install(io.ktor.client.plugins.auth.Auth) {
+        com.vardansoft.auth.data.utils.applyAuthBearer(
+            scope = org.koin.core.context.GlobalContext.get().koin.scopeRegistry.rootScope,
+            clientId = PUBLIC_CLIENT_ID,
+            authUrl = AUTH_URL,
+            hosts = listOf(java.net.URI(AUTH_URL).host)
+        )
+    }
+}
+```
 
-   Include both auth and UI modules:
+### UI Module (Compose Multiplatform)
 
-   ```kotlin
-   startKoin {
-       modules(
-           // Your other modules
-           getAuthModules() // This includes both auth and UI modules
-       )
-   }
-   ```
+Initialize both auth and UI modules with the same AUTH_URL:
 
-2. **Set up user information provider**
+```kotlin
+val AUTH_URL = "https://auth.yourdomain.com"
 
-   Wrap your UI with the user information provider:
+startKoin {
+    modules(com.vardansoft.auth.ui.core.di.getAuthModules(authUrl = AUTH_URL))
+}
+```
 
-   ```kotlin
-   ProvideUserInfo {
-       // Your app content
-       val user = LocalUserInfo.current // Access user info anywhere in this scope
-   }
-   ```
+Use provided view models and screens (e.g., OtpScreen, Login flow with rememberCredentialRetriever).
 
 
 ### UI Components
