@@ -1,3 +1,10 @@
 package com.vardansoft.authx.data
 
-data class ConfigResponse(val googleClientId: String)
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class ConfigResponse(
+    @SerialName("googleClientId")
+    val googleClientId: String
+)
