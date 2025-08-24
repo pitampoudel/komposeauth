@@ -19,8 +19,7 @@ import com.vardansoft.authx.domain.Credential
 
 @Composable
 actual fun rememberCredentialRetriever(
-    clientId: String,
-    googleAuthClientId: String
+    clientId: String
 ): CredentialRetriever {
     val activity = LocalActivity.current ?: throw Exception("No activity found")
     val credentialManager = remember {
@@ -29,6 +28,10 @@ actual fun rememberCredentialRetriever(
     return remember {
         object : CredentialRetriever {
             override suspend fun getCredential(): Result<Credential> {
+                // Fetch Google OAuth client-id dynamically from server
+                val authClient = org.koin.java.KoinJavaComponent.getKoin().get<com.vardansoft.authx.domain.AuthClient>()
+                val googleAuthClientId = authClient.fetchConfig().getOrElse { throw it }
+
                 val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
                     .setServerClientId(googleAuthClientId)

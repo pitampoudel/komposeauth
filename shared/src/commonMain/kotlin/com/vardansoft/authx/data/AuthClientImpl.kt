@@ -4,6 +4,7 @@ import com.vardansoft.authx.EndPoints.TOKEN
 import com.vardansoft.authx.EndPoints.UPDATE_PHONE_NUMBER
 import com.vardansoft.authx.EndPoints.USER_INFO
 import com.vardansoft.authx.EndPoints.VERIFY_PHONE_NUMBER
+import com.vardansoft.authx.EndPoints.CONFIG
 import com.vardansoft.authx.domain.Credential
 import com.vardansoft.authx.data.utils.asResource
 import com.vardansoft.authx.data.utils.safeApiCall
@@ -19,6 +20,13 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.Parameters
 
 class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClient {
+
+    override suspend fun fetchConfig(): Result<ConfigResponse> {
+        return safeApiCall {
+            httpClient.get("$authUrl/$CONFIG")
+                .asResource { body<ConfigResponse>() }
+        }
+    }
 
     override suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2TokenData> {
         return safeApiCall {

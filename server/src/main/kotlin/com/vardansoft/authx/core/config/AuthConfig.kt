@@ -56,7 +56,7 @@ class AuthConfig(
                 auth
                     .requestMatchers("/oauth2/clients/**").hasRole("ADMIN")
                     .requestMatchers(
-                        "/login", "/token", "/signup","/users", "/assets/**", "/reset-password"
+                        "/login", "/token", "/signup","/users", "/assets/**", "/reset-password", "/config/**"
                     ).permitAll()
                     .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
                     .anyRequest().authenticated()

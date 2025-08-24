@@ -5,4 +5,5 @@ object EndPoints {
     const val USER_INFO = "userinfo"
     const val UPDATE_PHONE_NUMBER = "phone-number/update"
     const val VERIFY_PHONE_NUMBER = "phone-number/verify"
+    const val CONFIG = "config"
 }

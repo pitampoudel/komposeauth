@@ -9,6 +9,5 @@ interface CredentialRetriever {
 
 @Composable
 expect fun rememberCredentialRetriever(
-    clientId: String,
-    googleAuthClientId: String
+    clientId: String
 ): CredentialRetriever
