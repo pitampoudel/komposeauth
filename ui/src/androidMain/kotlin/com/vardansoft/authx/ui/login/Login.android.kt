@@ -30,7 +30,7 @@ actual fun rememberCredentialRetriever(
             override suspend fun getCredential(): Result<Credential> {
                 // Fetch Google OAuth client-id dynamically from server
                 val authClient = org.koin.java.KoinJavaComponent.getKoin().get<com.vardansoft.authx.domain.AuthClient>()
-                val googleAuthClientId = authClient.fetchConfig().getOrElse { throw it }
+                val googleAuthClientId = authClient.fetchConfig() .getOrElse { throw it }.googleClientId
 
                 val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
