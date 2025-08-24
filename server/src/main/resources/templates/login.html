@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sign in to your Vardan Soft account securely.">
+    <meta name="description" content="Sign in to your account securely."
+          th:content="|Sign in to your ${@appProperties.name} account securely.|">
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#2563eb">
 
-    <title>Sign In - Vardan Soft</title>
+    <title th:text="|Sign In - ${@appProperties.name}|">Sign In</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="https://vardansoft.com/favicon.svg">
@@ -310,7 +311,7 @@
     <div class="login-card">
         <!-- Logo and Header -->
         <header class="logo-section">
-            <img src="https://vardansoft.com/logo.svg" alt="Vardan Soft Logo" class="logo" loading="eager">
+            <img src="https://vardansoft.com/logo.svg" alt="Logo" th:alt="|${@appProperties.name} Logo|" class="logo" loading="eager">
             <h1 class="title">Welcome Back</h1>
             <p class="subtitle">Sign in to your account to continue</p>
         </header>
@@ -411,7 +412,7 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>&copy; 2025 Vardan Soft. All rights reserved.</p>
+            <p>&copy; 2025 <span th:text="${@appProperties.name}">AuthX</span>. All rights reserved.</p>
         </footer>
     </div>
 </main>

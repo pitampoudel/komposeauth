@@ -1,6 +1,6 @@
 spring:
   application:
-    name: "Auth-Test"
+    name: "AuthX-Test"
   security:
     oauth2:
       client:

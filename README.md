@@ -1,27 +1,29 @@
 # AuthX
 
-A Kotlin Multiplatform project for authentication and user management in mobile and web applications.
+A Kotlin Multiplatform project for authentication.
 
 ## Overview
 
-Auth KMP provides a complete authentication solution for Kotlin Multiplatform projects. It offers two main artifacts:
+AuthX provides a complete authentication solution for Kotlin Multiplatform projects. It offers two main client artifacts:
 
 1. **auth** - Core authentication module
 
 2. **auth-ui** - UI components for authentication flows
 
+and a server module
+
 ## Installation
 
-Add the Auth KMP dependencies to your project:
+Add the AuthX dependencies to your project:
 
 ```kotlin
 // In your build.gradle.kts
 dependencies {
     // Core auth module
-    implementation("com.vardansoft:auth:x.y.z")
+    implementation("com.vardansoft:authx:x.y.z")
     
     // Optional UI components
-    implementation("com.vardansoft:auth-ui:x.y.z")
+    implementation("com.vardansoft:authx-ui:x.y.z")
 }
 ```
 

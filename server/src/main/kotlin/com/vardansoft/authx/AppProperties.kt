@@ -9,4 +9,5 @@ class AppProperties {
     lateinit var baseUrl: String
     lateinit var gcpBucketName: String
     lateinit var smsApiKey: String
+    lateinit var name: String
 }

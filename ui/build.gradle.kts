@@ -95,7 +95,7 @@ mavenPublishing {
     coordinates(group.toString(), "authx-ui", version.toString())
 
     pom {
-        name = "Auth UI"
+        name = "AuthX UI"
         description = "Compose Multiplatform UI components for the AuthX library"
     }
 }

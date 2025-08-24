@@ -46,6 +46,7 @@ data class User(
         )
     )
 
+    // TODO remove hardcode
     fun roleAuthority() = "ROLE_${if (email == "pitampoudelsaipu@gmail.com") "ADMIN" else "USER"}"
     val fullName: String
         get() = "$firstName $lastName"

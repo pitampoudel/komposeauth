@@ -45,4 +45,5 @@ app:
   baseUrl: ${BASE_URL}
   gcpBucketName: auth-data
   sms-api-key: ${SMS_API_KEY}
+  name: ${APP_NAME:AuthX}
 
