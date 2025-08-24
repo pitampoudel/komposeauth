@@ -23,6 +23,7 @@ Configure via environment variables:
 - SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM: For email features (optional if unused).
 - SMS_API_KEY: For SMS OTP (optional if unused).
 - APP_NAME: name of the app to be displayed
+- GCP_BUCKET_NAME: name of the storage bucket
 
 
 ## Client
