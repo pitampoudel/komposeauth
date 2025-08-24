@@ -12,8 +12,20 @@ AuthX provides a complete authentication solution for Kotlin Multiplatform proje
 
 and a server module
 
-## Installation
+## Setup
 
+### Server (Spring Boot)
+
+Configure via environment variables:
+- BASE_URL: Public base URL where the auth server is reachable (e.g., https://auth.example.com).
+- MONGODB_URI: Mongo connection string.
+- GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET: For Google sign-in (optional if unused).
+- SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM: For email features (optional if unused).
+- SMS_API_KEY: For SMS OTP (optional if unused).
+- APP_NAME: name of the app to be displayed
+
+
+## Client
 Add the AuthX dependencies to your project:
 
 ```kotlin
@@ -26,21 +38,6 @@ dependencies {
     implementation("com.vardansoft:authx-ui:x.y.z")
 }
 ```
-
-## Setup
-
-### Server (Spring Boot)
-
-Configure via environment variables:
-- BASE_URL: Public base URL where the auth server is reachable (e.g., https://auth.example.com).
-- MONGODB_URI: Mongo connection string.
-- GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET: For Google sign-in (optional if unused).
-- SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM: For email features (optional if unused).
-- SMS_API_KEY: For SMS OTP (optional if unused).
-
-application.yml already references these variables with sensible defaults. Run locally:
-- Gradle: ./gradlew :server:bootRun
-- Docker: use Dockerfile and set env vars.
 
 ### Core Auth Library (KMP)
 
@@ -83,7 +80,7 @@ val httpClient = io.ktor.client.HttpClient {
 
 ### UI Module (Compose Multiplatform)
 
-Initialize both auth and UI modules with the same AUTH_URL:
+Initialize UI modules with the AUTH_URL:
 
 ```kotlin
 val AUTH_URL = "https://auth.yourdomain.com"
@@ -127,19 +124,3 @@ LaunchedEffect(Unit) {
     }
 }
 ```
-
-## API Reference
-
-### UI Module
-
-- **OtpScreen** - UI component for OTP verification
-- **CredentialRetriever** - Platform-specific interface for retrieving credentials
-- **ProvideUserInfo** - Composable for providing user information to the UI
-- **LocalUserInfo** - CompositionLocal for accessing user information
-
-## Platform Support
-
-- Android
-- iOS
-- JVM (Desktop)
-- Web (JS)
