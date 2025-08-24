@@ -13,7 +13,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AuthKMP"
+rootProject.name = "AuthX"
 include(":shared")
 include(":ui")
 include(":server")

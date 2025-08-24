@@ -1,4 +1,4 @@
-# Auth KMP
+# AuthX
 
 A Kotlin Multiplatform project for authentication and user management in mobile and web applications.
 

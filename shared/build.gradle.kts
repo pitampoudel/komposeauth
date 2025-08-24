@@ -53,7 +53,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.vardansoft.auth"
+    namespace = "com.vardansoft.authx"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -65,10 +65,10 @@ android {
 }
 
 mavenPublishing {
-    coordinates(group.toString(), "auth", version.toString())
+    coordinates(group.toString(), "authx", version.toString())
 
     pom {
-        name = "Auth"
+        name = "AuthX"
         description = "Kotlin Multiplatform authentication library"
     }
 }

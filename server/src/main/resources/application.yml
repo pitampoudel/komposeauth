@@ -1,6 +1,6 @@
 spring:
   application:
-    name: "Auth"
+    name: "AuthX"
   security:
     oauth2:
       client:
@@ -35,7 +35,7 @@ spring:
 logging:
   level:
     org.springframework.security: DEBUG
-    com.vardansoft.auth.core.service: DEBUG
+    com.vardansoft.authx.core.service: DEBUG
 
 
 server:

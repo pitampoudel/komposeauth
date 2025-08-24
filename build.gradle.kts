@@ -1,8 +1,3 @@
-import java.net.Inet4Address
-import java.net.NetworkInterface
-import java.util.Properties
-import org.gradle.plugins.signing.Sign
-
 plugins {
     alias(libs.plugins.androidLibrary) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
@@ -19,32 +14,6 @@ buildscript {
     }
 }
 
-fun getLocalIpAddress(): String? {
-    val networkInterfaces = NetworkInterface.getNetworkInterfaces()
-    while (networkInterfaces.hasMoreElements()) {
-        val networkInterface = networkInterfaces.nextElement()
-        val inetAddresses = networkInterface.inetAddresses
-        while (inetAddresses.hasMoreElements()) {
-            val inetAddress = inetAddresses.nextElement()
-            if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
-                return "${inetAddress.hostAddress}"
-            }
-        }
-    }
-    return null
-}
-
-val propsFile = file("public.properties")
-val props = Properties()
-if (propsFile.exists()) {
-    propsFile.inputStream().use { props.load(it) }
-}
-
-props.forEach {
-    extra[it.key.toString()] = it.value
-}
-if (!extra.has("AUTH_URL")) extra["AUTH_URL"] = "http://" + getLocalIpAddress() + ":8080"
-
 group = (findProperty("group") as String)
 version = (findProperty("version") as String)
 
@@ -57,7 +26,7 @@ subprojects {
 
                 pom {
                     inceptionYear = "2025"
-                    url = "https://github.com/Vardan-Soft-Pvt-Ltd/AuthKMP"
+                    url = "https://github.com/pitampoudel/AuthX"
                     licenses {
                         license {
                             name = "The Apache License, Version 2.0"
@@ -73,9 +42,9 @@ subprojects {
                         }
                     }
                     scm {
-                        url = "https://github.com/Vardan-Soft-Pvt-Ltd/AuthKMP"
-                        connection = "scm:git:https://github.com/Vardan-Soft-Pvt-Ltd/AuthKMP.git"
-                        developerConnection = "scm:git:ssh://git@github.com/Vardan-Soft-Pvt-Ltd/AuthKMP.git"
+                        url = "https://github.com/pitampoudel/AuthX"
+                        connection = "scm:git:https://github.com/pitampoudel/AuthX.git"
+                        developerConnection = "scm:git:ssh://git@github.com:pitampoudel/AuthX.git"
                     }
                 }
             }

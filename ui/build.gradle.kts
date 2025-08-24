@@ -80,7 +80,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.vardansoft.auth.ui"
+    namespace = "com.vardansoft.authx.ui"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -92,10 +92,10 @@ android {
 }
 
 mavenPublishing {
-    coordinates(group.toString(), "auth-ui", version.toString())
+    coordinates(group.toString(), "authx-ui", version.toString())
 
     pom {
         name = "Auth UI"
-        description = "Compose Multiplatform UI components for the Auth KMP library"
+        description = "Compose Multiplatform UI components for the AuthX library"
     }
 }
