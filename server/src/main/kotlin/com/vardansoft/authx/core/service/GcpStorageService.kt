@@ -2,7 +2,7 @@ package com.vardansoft.authx.core.service
 
 import com.google.cloud.storage.Bucket
 import com.google.cloud.storage.StorageOptions
-import org.springframework.beans.factory.annotation.Value
+import com.vardansoft.authx.AppProperties
 import org.springframework.stereotype.Service
 
 interface StorageService {
@@ -14,12 +14,11 @@ interface StorageService {
 
 @Service
 class GcpStorageService(
-    @Value("\${app.gcpBucketName}")
-    val gcpBucketName: String
+    val appProperties: AppProperties
 ) : StorageService {
     private val bucket by lazy {
-        StorageOptions.getDefaultInstance().service.get(gcpBucketName) ?: error(
-            "Bucket $gcpBucketName does not exist."
+        StorageOptions.getDefaultInstance().service.get(appProperties.gcpBucketName) ?: error(
+            "Bucket ${appProperties.gcpBucketName} does not exist."
         )
     }
 

@@ -1,9 +1,13 @@
 package com.vardansoft.authx.core.service
 
+import com.vardansoft.authx.AppProperties
 import org.apache.coyote.BadRequestException
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatusCode
-import org.springframework.security.oauth2.jwt.*
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.jwt.JwtClaimsSet
+import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.security.oauth2.jwt.JwtEncoder
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
@@ -12,8 +16,7 @@ import kotlin.time.Duration.Companion.days
 
 @Service
 class JwtService(
-    @Value("\${app.baseUrl}")
-    val baseUrl: String,
+    val appProperties: AppProperties,
     private val jwtEncoder: JwtEncoder,
     private val jwtDecoder: JwtDecoder
 ) {
@@ -34,7 +37,7 @@ class JwtService(
         val jwt = jwtEncoder.encode(
             JwtEncoderParameters.from(
                 JwtClaimsSet.builder()
-                    .issuer(baseUrl)
+                    .issuer(appProperties.baseUrl)
                     .issuedAt(now)
                     .claims { it.putAll(claims) }
                     .expiresAt(expiresAt)
@@ -60,22 +63,22 @@ class JwtService(
 
     fun generateEmailVerificationLink(userId: String): String {
         val token = generateToken(
-            audience = baseUrl,
+            audience = appProperties.baseUrl,
             userId = userId,
             claims = mapOf("type" to TokenType.VERIFY_EMAIL.name),
             validity = 1.days
         )
-        return "${baseUrl}/verify-email?token=$token"
+        return "${appProperties.baseUrl}/verify-email?token=$token"
     }
 
     fun generateResetPasswordLink(userId: String): String {
         val token = generateToken(
-            audience = baseUrl,
+            audience = appProperties.baseUrl,
             userId = userId,
             claims = mapOf("type" to TokenType.RESET_PASSWORD.name),
             validity = 1.days
         )
-        return "${baseUrl}/reset-password?token=$token"
+        return "${appProperties.baseUrl}/reset-password?token=$token"
     }
 
 

@@ -1,7 +1,7 @@
 package com.vardansoft.authx.core.config
 
+import com.vardansoft.authx.AppProperties
 import com.vardansoft.authx.user.service.UserService
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.lang.Nullable
@@ -17,11 +17,17 @@ import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
-import org.springframework.security.oauth2.server.authorization.token.*
+import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
+import org.springframework.security.oauth2.server.authorization.token.JwtGenerator
+import org.springframework.security.oauth2.server.authorization.token.OAuth2AccessTokenGenerator
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.web.client.RestTemplate
 import java.time.Instant
-import java.util.*
+import java.util.Base64
 import javax.security.auth.login.AccountNotFoundException
 
 @Configuration
@@ -111,11 +117,10 @@ class SecurityConfig() {
 
     @Bean
     fun authorizationServerSettings(
-        @Value("\${app.baseUrl}")
-        baseUrl: String
+        appProperties: AppProperties
     ): AuthorizationServerSettings {
         return AuthorizationServerSettings.builder()
-            .issuer(baseUrl)
+            .issuer(appProperties.baseUrl)
             .build()
     }
 
