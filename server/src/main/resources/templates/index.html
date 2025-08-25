@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AuthX - Home</title>
+    <title th:text="|${@appProperties.name} - Home|">Home</title>
     <style>
         body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #f7f7f8; color: #222; }
         header { background: #2b6cb0; color: #fff; padding: 16px; }
@@ -21,7 +21,7 @@
 </head>
 <body>
 <header>
-    <h1>AuthX</h1>
+    <h1 th:text="${@appProperties.name}">AuthX</h1>
 </header>
 <main>
     <h2>Welcome<span th:if="${fullName != null}">, <span th:text="${fullName}">User</span></span>!</h2>
@@ -29,11 +29,6 @@
 
     <div class="card">
         <p>This is a simple index page shown after login.</p>
-        <p>Explore protected APIs with your access token, or manage users and credentials via REST endpoints.</p>
-        <ul>
-            <li>GET <code>/userinfo</code> (requires bearer token)</li>
-            <li>GET <code>/credentials</code> (requires bearer token)</li>
-        </ul>
     </div>
 
     <div class="row">
