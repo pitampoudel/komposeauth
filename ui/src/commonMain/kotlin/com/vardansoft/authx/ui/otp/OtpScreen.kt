@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,12 +36,28 @@ import com.vardansoft.authx.data.UpdatePhoneNumberRequest
 import com.vardansoft.authx.domain.use_cases.ValidateOtpCode.Companion.OTP_LENGTH
 import com.vardansoft.authx.ui.core.components.CountryPicker
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.reflect.KFunction1
 
+@Composable
+fun OtpScreen(
+    popBackStack: () -> Unit,
+    onSkip: () -> Unit = {}
+) {
+    val vm = koinViewModel<OtpViewModel>()
+    val state = vm.state.collectAsState().value
+    OtpPage(
+        state = state,
+        onEvent = vm::onEvent,
+        popBackStack = popBackStack,
+        uiEvents = vm.uiEvents,
+        onSkip = onSkip
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OtpScreen(
+private fun OtpPage(
     state: OtpState,
     uiEvents: kotlinx.coroutines.flow.Flow<OtpUiEvent>,
     onEvent: KFunction1<OtpEvent, Unit>,
@@ -79,7 +96,7 @@ fun OtpScreen(
 
 
 @Composable
-fun EnterMobilePage(
+private fun EnterMobilePage(
     paddingValues: PaddingValues,
     onEvent: (OtpEvent) -> Unit,
     onSkip: () -> Unit = {}
@@ -150,7 +167,7 @@ fun EnterMobilePage(
 
 
 @Composable
-fun FillTheCodePage(
+private fun FillTheCodePage(
     modifier: Modifier = Modifier,
     state: OtpState,
     onEvent: KFunction1<OtpEvent, Unit>,

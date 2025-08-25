@@ -21,7 +21,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 
-suspend fun RefreshTokensParams.tryTokenRefresh(
+internal suspend fun RefreshTokensParams.tryTokenRefresh(
     authUrl: String,
     clientId: String,
     client: HttpClient,
@@ -97,7 +97,7 @@ private fun isRefreshTokenExpired(refreshToken: String): Boolean {
 }
 
 @OptIn(ExperimentalEncodingApi::class)
-fun decodeJWTPayload(token: String): JsonObject {
+private fun decodeJWTPayload(token: String): JsonObject {
     val parts = token.split(".")
     if (parts.size != 3) {
         throw IllegalArgumentException("Invalid JWT token format")

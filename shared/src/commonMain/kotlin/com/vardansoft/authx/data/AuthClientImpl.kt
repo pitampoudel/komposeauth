@@ -5,7 +5,7 @@ import com.vardansoft.authx.EndPoints.UPDATE_PHONE_NUMBER
 import com.vardansoft.authx.EndPoints.USER_INFO
 import com.vardansoft.authx.EndPoints.VERIFY_PHONE_NUMBER
 import com.vardansoft.authx.EndPoints.CONFIG
-import com.vardansoft.authx.domain.Credential
+import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.data.utils.asResource
 import com.vardansoft.authx.data.utils.safeApiCall
 import com.vardansoft.authx.domain.AuthClient

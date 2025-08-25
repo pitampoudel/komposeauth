@@ -6,8 +6,8 @@ A Kotlin Multiplatform authentication solution: Authorization Server (Spring Boo
 
 AuthX provides end-to-end authentication for Kotlin Multiplatform apps.
 - Server: OAuth 2.1 Authorization Server with OIDC userinfo, Google sign-in grant, user management, phone OTP, email verification, credentials, and client registration
-- Shared (KMP) library: typed client, token refresh utilities, Koin modules
-- UI library (Compose Multiplatform): drop-in OTP and Login flows with platform-specific credential retrieval
+- Shared (KMP) library: exposes AuthX, AuthClient, LoginPreferences (with token refresh utilities and Koin modules)
+- UI library (Compose Multiplatform): provides LoginViewModel, LogoutHandler, OTP screen, and a Local Composition to access the current user; plus platform-specific credential retrieval
 
 Modules in this repository:
 1. shared (artifact: authx) – Core auth client for KMP
@@ -55,92 +55,70 @@ Add the AuthX dependencies to your project (replace 1.1.3 with the version you n
 ```kotlin
 // In your build.gradle.kts
 dependencies {
-    // Core auth module
+    // Core auth module (for shared)
     implementation("com.vardansoft:authx:1.1.3")
 
-    // Optional UI components
+    // Optional UI components (for composeApp)
     implementation("com.vardansoft:authx-ui:1.1.3")
 }
 ```
 
-### Shared library setup
-1) Provide Koin modules with your auth base URL:
+1) Initialize with your AUTH_URL, public client id, and hosts list:
 ```kotlin
-val AUTH_URL = "https://auth.yourdomain.com"
-
-startKoin {
-    modules(
-        com.vardansoft.authx.di.authSharedModule(authUrl = AUTH_URL)
+koinConfiguration {
+    configureAuthX(
+        authUrl = Constants.AUTH_SERVER_URL,
+        clientId = Constants.AUTH_CLIENT_ID,
+        hosts = listOf(
+            Constants.Server.SERVER_URL
+        )
     )
 }
+
 ```
 
-2) Configure your Ktor HttpClient to use the bearer authenticator with auto-refresh. The helper needs:
-- Koin scope to access LoginPreferences
-- Your public OAuth client ID (registered on the auth server)
-- The auth server base URL
-- Hosts list that should receive the Authorization header
+2) Configure your Ktor HttpClient to use the bearer authenticator with auto-refresh by delegating to AuthX from Koin.
 
 ```kotlin
-val AUTH_URL = "https://auth.yourdomain.com"
-val PUBLIC_CLIENT_ID = "your-public-client-id"
-
 val httpClient = io.ktor.client.HttpClient {
-    install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
-        io.ktor.serialization.kotlinx.json.json()
-    }
-    install(io.ktor.client.plugins.auth.Auth) {
-        com.vardansoft.authx.data.utils.applyAuthXBearer(
-            scope = org.koin.core.context.GlobalContext.get().koin.scopeRegistry.rootScope,
-            clientId = PUBLIC_CLIENT_ID,
-            authUrl = AUTH_URL,
-            hosts = listOf(java.net.URI(AUTH_URL).host)
-        )
+    install(Auth) {
+        val authX = get<AuthX>()
+        authX.configureBearer(this)
     }
 }
 ```
 
-The shared module also publishes these endpoint constants you can use:
-```kotlin
-com.vardansoft.authx.EndPoints.TOKEN         // "oauth2/token"
-com.vardansoft.authx.EndPoints.USER_INFO     // "userinfo"
-com.vardansoft.authx.EndPoints.UPDATE_PHONE_NUMBER // "phone-number/update"
-com.vardansoft.authx.EndPoints.VERIFY_PHONE_NUMBER // "phone-number/verify"
-com.vardansoft.authx.EndPoints.CONFIG        // "config"
-```
-
-## UI Module (Compose Multiplatform)
-Initialize UI modules with your AUTH_URL:
-```kotlin
-val AUTH_URL = "https://auth.yourdomain.com"
-
-startKoin {
-    modules(com.vardansoft.authx.ui.core.di.getAuthModules(authUrl = AUTH_URL))
-}
-```
 
 Use provided view models and screens (e.g., OtpScreen, and a Login flow with rememberCredentialRetriever).
 
 ### UI Components
 
+#### Current user Local Composition
+```kotlin
+ProvideUserInfo {
+    val userInfoState = LocalUserInfoState.current
+    // use userInfoState (LazyState<UserInfo>) to render UI
+}
+```
+
+#### LogoutHandler
+```kotlin
+val logoutHandler = rememberLogoutHandler()
+// e.g., inside a Button onClick:
+logoutHandler.logout()
+```
+
 #### OTP Screen
 ```kotlin
 composable<Screen.Otp> {
-    val vm = koinViewModel<OtpViewModel>()
-    val state = vm.state.collectAsState().value
-    OtpScreen(
-        state = state,
-        onEvent = vm::onEvent,
-        popBackStack = navController::popBackStack,
-        uiEvents = vm.uiEvents
-    )
+    OtpScreen()
 }
 ```
 
 #### Login
 ```kotlin
 // Platform-specific credential retriever
-val credentialRetriever = rememberCredentialRetriever(clientId = "your-client-id")
+val credentialRetriever = rememberCredentialRetriever()
 
 // Use in your login flow
 LaunchedEffect(Unit) {
@@ -151,8 +129,18 @@ LaunchedEffect(Unit) {
 }
 ```
 
+#### LoginViewModel
+```kotlin
+// Alternatively, dispatch an event to LoginViewModel
+val viewModel = koinViewModel<LoginViewModel>()
+LaunchedEffect(Unit) {
+    val credentialResult = credentialRetriever.getCredential()
+    viewModel.onEvent(LoginEvent.Login(credentialResult))
+}
+```
+
 ## Testing
-- Run all tests: ./gradlew server:test
+- Run all tests: ./gradlew :server:test
 - Recommended: keep a local Mongo instance running for integration tests that use Testcontainers (otherwise they pull automatically).
 
 ## Notes & Tips

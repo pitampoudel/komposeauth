@@ -1,6 +1,6 @@
 package com.vardansoft.authx.domain.use_cases
 
-import com.vardansoft.authx.domain.ValidationResult
+import com.vardansoft.authx.domain.use_cases.ValidationResult
 
 class ValidatePhoneNumber() {
     operator fun invoke(phoneNumber: String, countryNameCode: String): ValidationResult {

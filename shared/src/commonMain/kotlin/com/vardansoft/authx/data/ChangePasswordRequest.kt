@@ -1,6 +1,6 @@
 package com.vardansoft.authx.data
 
-import com.vardansoft.authx.domain.ValidationResult
+import com.vardansoft.authx.domain.use_cases.ValidationResult
 import com.vardansoft.authx.domain.use_cases.ValidateConfirmPassword
 import com.vardansoft.authx.domain.use_cases.ValidatePassword
 import kotlinx.serialization.SerialName

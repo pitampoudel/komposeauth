@@ -4,8 +4,6 @@ import androidx.compose.runtime.Composable
 
 
 @Composable
-actual fun rememberCredentialRetriever(
-    clientId: String
-): CredentialRetriever {
+actual fun rememberCredentialRetriever(): CredentialRetriever {
     TODO("Not yet implemented")
 }

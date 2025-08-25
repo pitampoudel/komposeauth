@@ -4,7 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.russhwolf.settings.Settings
-import com.vardansoft.authx.domain.LazyState
+import com.vardansoft.authx.data.LazyState
 import com.vardansoft.authx.domain.LoginPreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

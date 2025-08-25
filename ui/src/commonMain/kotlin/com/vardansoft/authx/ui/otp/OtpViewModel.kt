@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class OtpViewModel(
+internal class OtpViewModel(
     val validateOtpCode: ValidateOtpCode,
     val client: AuthClient,
     val preferences: LoginPreferences

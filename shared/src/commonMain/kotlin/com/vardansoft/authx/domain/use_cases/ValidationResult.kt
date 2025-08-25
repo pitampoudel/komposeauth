@@ -1,4 +1,4 @@
-package com.vardansoft.authx.domain
+package com.vardansoft.authx.domain.use_cases
 
 sealed class ValidationResult {
     data object Success : ValidationResult()

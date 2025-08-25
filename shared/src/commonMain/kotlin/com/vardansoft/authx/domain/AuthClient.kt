@@ -1,6 +1,7 @@
 package com.vardansoft.authx.domain
 
 import com.vardansoft.authx.data.ConfigResponse
+import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.data.OAuth2TokenData
 import com.vardansoft.authx.data.UpdatePhoneNumberRequest
 import com.vardansoft.authx.data.UserInfo

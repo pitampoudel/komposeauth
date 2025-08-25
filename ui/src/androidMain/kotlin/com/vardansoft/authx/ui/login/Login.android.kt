@@ -15,12 +15,12 @@ import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
-import com.vardansoft.authx.domain.Credential
+import com.vardansoft.authx.data.AuthXImpl
+import com.vardansoft.authx.data.Credential
+import com.vardansoft.authx.domain.AuthX
 
 @Composable
-actual fun rememberCredentialRetriever(
-    clientId: String
-): CredentialRetriever {
+actual fun rememberCredentialRetriever(): CredentialRetriever {
     val activity = LocalActivity.current ?: throw Exception("No activity found")
     val credentialManager = remember {
         CredentialManager.create(activity)
@@ -34,6 +34,7 @@ actual fun rememberCredentialRetriever(
                 val googleAuthClientId = authClient.fetchConfig().getOrElse {
                     return Result.failure(it)
                 }.googleClientId
+                val clientId = org.koin.java.KoinJavaComponent.getKoin().get<AuthX>().clientId
 
                 val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
