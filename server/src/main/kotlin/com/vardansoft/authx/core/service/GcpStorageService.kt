@@ -3,6 +3,7 @@ package com.vardansoft.authx.core.service
 import com.google.cloud.storage.Bucket
 import com.google.cloud.storage.StorageOptions
 import com.vardansoft.authx.AppProperties
+import com.vardansoft.authx.core.utils.getGcpProjectId
 import org.springframework.stereotype.Service
 
 interface StorageService {
@@ -16,8 +17,12 @@ interface StorageService {
 class GcpStorageService(
     val appProperties: AppProperties
 ) : StorageService {
+    private val storage by lazy {
+        StorageOptions.newBuilder().setProjectId(getGcpProjectId()).build().service
+    }
+
     private val bucket by lazy {
-        StorageOptions.getDefaultInstance().service.get(appProperties.gcpBucketName) ?: error(
+        storage.get(appProperties.gcpBucketName) ?: error(
             "Bucket ${appProperties.gcpBucketName} does not exist."
         )
     }
@@ -51,7 +56,8 @@ class GcpStorageService(
 
         // Check if it's a GCP Storage URL (mediaLink format)
         // Example: https://storage.googleapis.com/download/storage/v1/b/bucket-name/o/blob-name?generation=123&alt=media
-        val mediaLinkRegex = Regex("https://storage\\.googleapis\\.com/download/storage/v1/b/([^/]+)/o/([^?]+)")
+        val mediaLinkRegex =
+            Regex("https://storage\\.googleapis\\.com/download/storage/v1/b/([^/]+)/o/([^?]+)")
         val mediaLinkMatch = mediaLinkRegex.find(url)
 
         if (mediaLinkMatch != null) {
