@@ -10,4 +10,5 @@ class AppProperties {
     lateinit var gcpBucketName: String
     lateinit var smsApiKey: String
     lateinit var name: String
+    lateinit var expectedGcpProjectId: String
 }

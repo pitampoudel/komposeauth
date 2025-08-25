@@ -3,7 +3,6 @@ package com.vardansoft.authx.core.service
 import com.google.cloud.storage.Bucket
 import com.google.cloud.storage.StorageOptions
 import com.vardansoft.authx.AppProperties
-import com.vardansoft.authx.core.utils.getGcpProjectId
 import org.springframework.stereotype.Service
 
 interface StorageService {
@@ -18,7 +17,7 @@ class GcpStorageService(
     val appProperties: AppProperties
 ) : StorageService {
     private val storage by lazy {
-        StorageOptions.newBuilder().setProjectId(getGcpProjectId()).build().service
+        StorageOptions.getDefaultInstance().service
     }
 
     private val bucket by lazy {

@@ -46,4 +46,5 @@ app:
   gcpBucketName: ${GCP_BUCKET_NAME}
   sms-api-key: ${SMS_API_KEY}
   name: ${APP_NAME:AuthX}
+  expectedGcpProjectId: ${GCP_PROJECT_ID}
 
