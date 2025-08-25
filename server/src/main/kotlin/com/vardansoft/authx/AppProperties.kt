@@ -11,4 +11,5 @@ class AppProperties {
     lateinit var smsApiKey: String
     lateinit var name: String
     lateinit var expectedGcpProjectId: String
+    lateinit var logoUrl: String
 }

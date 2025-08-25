@@ -39,3 +39,4 @@ server:
 app:
   baseUrl: http://localhost:8080
   gcpBucketName: mock-bucket
+  logoUrl: https://vardansoft.com/logo.svg

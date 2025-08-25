@@ -47,4 +47,5 @@ app:
   sms-api-key: ${SMS_API_KEY}
   name: ${APP_NAME:AuthX}
   expectedGcpProjectId: ${GCP_PROJECT_ID}
+  logoUrl: ${APP_LOGO_URL}
 

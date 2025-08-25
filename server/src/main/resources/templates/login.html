@@ -15,7 +15,7 @@
     <link rel="icon" type="image/png" href="https://vardansoft.com/favicon.png">
 
     <!-- Preload critical resources -->
-    <link rel="preload" href="https://vardansoft.com/logo.svg" as="image">
+    <link rel="preload" th:href="${@appProperties.logoUrl}" as="image">
 
     <style>
         /* Critical CSS - Inline for performance */
@@ -311,7 +311,8 @@
     <div class="login-card">
         <!-- Logo and Header -->
         <header class="logo-section">
-            <img src="https://vardansoft.com/logo.svg" alt="Logo" th:alt="|${@appProperties.name} Logo|" class="logo" loading="eager">
+            <img src="https://vardansoft.com/logo.svg" th:src="${@appProperties.logoUrl}" alt="Logo"
+                 th:alt="|${@appProperties.name} Logo|" class="logo" loading="eager">
             <h1 class="title">Welcome Back</h1>
             <p class="subtitle">Sign in to your account to continue</p>
         </header>
@@ -376,7 +377,8 @@
             </div>
 
             <!-- Submit Button -->
-            <button type="submit" class="btn-primary" id="submitBtn" aria-describedby="submit-status">
+            <button type="submit" class="btn-primary" id="submitBtn"
+                    aria-describedby="submit-status">
                 <span id="submit-text">Sign In</span>
             </button>
             <div id="submit-status" class="sr-only" aria-live="polite"></div>
@@ -412,7 +414,8 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>&copy; 2025 <span th:text="${@appProperties.name}">AuthX</span>. All rights reserved.</p>
+            <p>&copy; 2025 <span th:text="${@appProperties.name}">AuthX</span>. All rights reserved.
+            </p>
         </footer>
     </div>
 </main>
