@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
-import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestTemplate
@@ -18,7 +17,6 @@ interface SmsService {
 }
 
 
-@Service
 class SamayaSmsService(
     private val appProperties: AppProperties,
     private val restTemplate: RestTemplate

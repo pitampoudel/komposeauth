@@ -44,7 +44,12 @@ server:
 app:
   baseUrl: ${BASE_URL}
   gcpBucketName: ${GCP_BUCKET_NAME}
-  sms-api-key: ${SMS_API_KEY}
+  # Optional
+  sms-api-key: ${SMS_API_KEY:}
+  # Twilio configuration (optional)
+  twilio-account-sid: ${TWILIO_ACCOUNT_SID:}
+  twilio-auth-token: ${TWILIO_AUTH_TOKEN:}
+  twilio-from-number: ${TWILIO_FROM_NUMBER:}
   name: ${APP_NAME:AuthX}
   expectedGcpProjectId: ${GCP_PROJECT_ID}
   logoUrl: ${APP_LOGO_URL}
