@@ -42,7 +42,7 @@ server:
   address: 0.0.0.0
   forward-headers-strategy: framework
 app:
-  baseUrl: ${BASE_URL}
+  baseUrl: ${BASE_URL:}
   gcpBucketName: ${GCP_BUCKET_NAME}
   # Optional
   sms-api-key: ${SMS_API_KEY:}

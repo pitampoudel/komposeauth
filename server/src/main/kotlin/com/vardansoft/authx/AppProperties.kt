@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ConfigurationProperties(prefix = "app")
 class AppProperties {
-    lateinit var baseUrl: String
+    var baseUrl: String? = null
     lateinit var gcpBucketName: String
     lateinit var name: String
     lateinit var expectedGcpProjectId: String
