@@ -18,7 +18,7 @@ class AuthXImpl(
     override val clientId: String,
     override val serverUrls: List<String>
 ) : AuthX {
-    val hosts = serverUrls.map {
+    val hosts = (serverUrls+authUrl).map {
         Url(it).host
     }
 
