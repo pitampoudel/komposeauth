@@ -12,7 +12,7 @@ fun KoinApplication.configureAuthX(authUrl: String, clientId: String, hosts: Lis
         authXSharedModule(
             authUrl = authUrl,
             clientId = clientId,
-            hosts = hosts
+            serverUrls = hosts
         ) + module {
             viewModel<OtpViewModel> {
                 OtpViewModel(get(), get(), get())

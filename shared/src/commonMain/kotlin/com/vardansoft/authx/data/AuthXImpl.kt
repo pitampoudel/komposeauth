@@ -8,6 +8,7 @@ import io.ktor.client.plugins.auth.AuthConfig
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.http.Url
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -15,8 +16,12 @@ class AuthXImpl(
     private val loginPreferences: LoginPreferences,
     override val authUrl: String,
     override val clientId: String,
-    override val hosts: List<String>
+    override val serverUrls: List<String>
 ) : AuthX {
+    val hosts = serverUrls.map {
+        Url(it).host
+    }
+
     override fun configureBearer(auth: AuthConfig) {
         auth.bearer {
             loadTokens {

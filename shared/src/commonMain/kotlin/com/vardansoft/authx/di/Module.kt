@@ -9,7 +9,7 @@ import com.vardansoft.authx.domain.LoginPreferences
 import com.vardansoft.authx.domain.use_cases.ValidateOtpCode
 import org.koin.dsl.module
 
-fun authXSharedModule(authUrl: String, clientId: String, hosts: List<String>) = module {
+fun authXSharedModule(authUrl: String, clientId: String, serverUrls: List<String>) = module {
     single<LoginPreferences> {
         LoginPreferencesImpl(get(), get())
     }
@@ -21,7 +21,7 @@ fun authXSharedModule(authUrl: String, clientId: String, hosts: List<String>) = 
             loginPreferences = get<LoginPreferences>(),
             authUrl = authUrl,
             clientId = clientId,
-            hosts = hosts
+            serverUrls = serverUrls
         )
     }
     single<AuthClient> {
