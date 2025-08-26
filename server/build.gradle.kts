@@ -33,6 +33,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-mail")
 
+    // Load .env into Spring Environment so application.yml can use ${VAR}
+    implementation("me.paulschwarz:spring-dotenv:4.0.0")
+
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.0.0")
 

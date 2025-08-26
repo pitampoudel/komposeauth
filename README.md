@@ -17,18 +17,9 @@ Modules in this repository:
 ## Server (Spring Boot)
 
 ### Configuration (Environment Variables)
-Set the following variables before running the server:
-- BASE_URL: Public base URL where the auth server is reachable (e.g., https://auth.example.com)
-- MONGODB_URI: Mongo connection URI
-- GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET: Enable Google sign-in (optional)
-- SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM: Enable email features (optional)
-- SMS_API_KEY: Enable SMS OTP (optional)
-- APP_NAME: App display name (default: AuthX)
-- GCP_BUCKET_NAME: GCP storage bucket name
-- GCP_PROJECT_ID: Expected GCP Project ID
-- APP_LOGO_URL: Full URL to app logo
+You can set real environment variables or place them in a `.env` file in the project root (or the `server` module directory) for local development.
 
-These map to Spring configuration (see server/src/main/resources/application.yml) and AppProperties.
+For convenience, copy `.env.example` to `.env` and fill in your environment-specific values.
 
 
 ### API Overview
