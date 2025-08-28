@@ -21,36 +21,17 @@ You can set real environment variables or place them in a `.env` file in the pro
 
 For convenience, copy `.env.example` to `.env` and fill in your environment-specific values.
 
-
-### API Overview
-Public endpoints:
-- POST /oauth2/token – Token endpoint (supports public client and custom Google ID token grant)
-- GET /config – Returns { googleClientId: String } for client apps
-- GET /login, GET /signup, POST /users – HTML forms and user creation
-
-Protected endpoints (require JWT Access Token with scopes):
-- GET /userinfo – OIDC userinfo built from your user data
-- GET /users/{id}, GET /users/batch – Requires SCOPE_user.read.any
-- GET /credentials – Current user’s credentials
-- GET /credentials/{userId} – Requires SCOPE_user.read.any
-- POST /credentials/{userId} – Requires SCOPE_user.write.any
-- POST /phone-number/update – Initiate phone update (sends OTP)
-- POST /phone-number/verify – Verify OTP and finalize update
-- /oauth2/clients – Client registration/management (ADMIN role)
-
-CORS is enabled for standard methods. See AuthConfig.kt for details and exact rules.
-
 ## Client Integration (KMP)
-Add the AuthX dependencies to your project (replace 1.1.3 with the version you need):
+Add the AuthX dependencies to your project:
 
 ```kotlin
 // In your build.gradle.kts
 dependencies {
     // Core auth module (for shared)
-    implementation("com.vardansoft:authx:1.1.3")
+    implementation("com.vardansoft:authx:x.x.x")
 
     // Optional UI components (for composeApp)
-    implementation("com.vardansoft:authx-ui:1.1.3")
+    implementation("com.vardansoft:authx-ui:x.x.x")
 }
 ```
 
@@ -68,10 +49,10 @@ koinConfiguration {
 
 ```
 
-2) Configure your Ktor HttpClient to use the bearer authenticator with auto-refresh by delegating to AuthX from Koin.
+2) Configure your Ktor HttpClient to use the bearer authenticator with auto-refresh by delegating to AuthX.
 
 ```kotlin
-val httpClient = io.ktor.client.HttpClient {
+val httpClient = HttpClient {
     install(Auth) {
         val authX = get<AuthX>()
         authX.configureBearer(this)
@@ -101,28 +82,13 @@ logoutHandler.logout()
 
 #### OTP Screen
 ```kotlin
-composable<Screen.Otp> {
-    OtpScreen()
-}
+   OtpScreen()
 ```
 
-#### Login
-```kotlin
-// Platform-specific credential retriever
-val credentialRetriever = rememberCredentialRetriever()
-
-// Use in your login flow
-LaunchedEffect(Unit) {
-    val credentialResult = credentialRetriever.getCredential()
-    credentialResult.onSuccess { credential ->
-        viewModel.login(credential)
-    }
-}
-```
 
 #### LoginViewModel
 ```kotlin
-// Alternatively, dispatch an event to LoginViewModel
+val credentialRetriever = rememberCredentialRetriever()
 val viewModel = koinViewModel<LoginViewModel>()
 LaunchedEffect(Unit) {
     val credentialResult = credentialRetriever.getCredential()
