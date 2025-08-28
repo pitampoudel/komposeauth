@@ -2,7 +2,7 @@ package com.vardansoft.authx.data.utils
 
 import com.vardansoft.authx.EndPoints.TOKEN
 import com.vardansoft.authx.data.OAuth2TokenData
-import com.vardansoft.authx.domain.LoginPreferences
+import com.vardansoft.authx.domain.AuthXPreferences
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.auth.providers.BearerTokens
@@ -25,18 +25,18 @@ internal suspend fun RefreshTokensParams.tryTokenRefresh(
     authUrl: String,
     clientId: String,
     client: HttpClient,
-    loginPreferences: LoginPreferences?
+    authXPreferences: AuthXPreferences?
 ): BearerTokens? {
     val refreshToken = this.oldTokens?.refreshToken
 
     if (refreshToken.isNullOrEmpty()) {
-        loginPreferences?.clear()
+        authXPreferences?.clear()
         return null
     }
 
     // Check if refresh token is expired
     if (isRefreshTokenExpired(refreshToken)) {
-        loginPreferences?.clear()
+        authXPreferences?.clear()
         return null
     }
 
@@ -60,7 +60,7 @@ internal suspend fun RefreshTokensParams.tryTokenRefresh(
     return when {
         resource.isSuccess -> {
             // Save new tokens
-            loginPreferences?.updateTokenData(resource.getOrThrow())
+            authXPreferences?.updateTokenData(resource.getOrThrow())
 
             BearerTokens(
                 accessToken = resource.getOrThrow().accessToken,

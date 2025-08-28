@@ -4,16 +4,15 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.russhwolf.settings.Settings
-import com.vardansoft.authx.data.LazyState
-import com.vardansoft.authx.domain.LoginPreferences
+import com.vardansoft.authx.domain.AuthXPreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 
-class LoginPreferencesImpl(
+class AuthXPreferencesImpl(
     private val settings: Settings,
     private val dataStore: DataStore<Preferences>
-) : LoginPreferences {
+) : AuthXPreferences {
 
     private object KEYS {
         const val OAUTH2_TOKEN_DATA = "oauth2_token_data"

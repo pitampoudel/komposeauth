@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.domain.AuthClient
-import com.vardansoft.authx.domain.LoginPreferences
+import com.vardansoft.authx.domain.AuthXPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class LoginViewModel(
     val authClient: AuthClient,
-    val loginPreferences: LoginPreferences
+    val authXPreferences: AuthXPreferences
 ) : ViewModel() {
     private val _state = MutableStateFlow(LoginState())
     val state = _state.asStateFlow()
@@ -59,7 +59,7 @@ class LoginViewModel(
                     }
 
                     userInfoRes.isSuccess -> {
-                        loginPreferences.saveLoggedInDetails(
+                        authXPreferences.saveLoggedInDetails(
                             token = res.getOrThrow(),
                             userInfo = userInfoRes.getOrThrow()
                         )

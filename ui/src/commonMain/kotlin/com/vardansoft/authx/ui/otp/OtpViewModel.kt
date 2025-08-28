@@ -3,7 +3,7 @@ package com.vardansoft.authx.ui.otp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.domain.AuthClient
-import com.vardansoft.authx.domain.LoginPreferences
+import com.vardansoft.authx.domain.AuthXPreferences
 import com.vardansoft.authx.domain.use_cases.ValidateOtpCode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 internal class OtpViewModel(
     val validateOtpCode: ValidateOtpCode,
     val client: AuthClient,
-    val preferences: LoginPreferences
+    val authXPreferences: AuthXPreferences
 ) : ViewModel() {
     private val _state = MutableStateFlow(OtpState())
     val state = _state.asStateFlow()
@@ -63,7 +63,7 @@ internal class OtpViewModel(
                                     }
 
                                     res.isSuccess -> {
-                                        preferences.updateUserInformation(res.getOrThrow())
+                                        authXPreferences.updateUserInformation(res.getOrThrow())
                                         uiEventChannel.send(OtpUiEvent.Verified)
                                     }
                                 }
