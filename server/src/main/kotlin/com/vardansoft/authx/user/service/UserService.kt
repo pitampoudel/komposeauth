@@ -91,14 +91,18 @@ class UserService(
         userId: ObjectId,
         @Valid req: VerifyPhoneOtpRequest
     ): UserResponse {
+        val parsedPhoneNumber =
+            parsePhoneNumber(req.countryCode, req.otp)?.fullNumberInInternationalFormat
+                ?: throw IllegalArgumentException("Invalid phone number format")
         val user = userRepository.findById(userId).orElse(null)
             ?: throw IllegalStateException("User not found")
-        val verified = phoneNumberVerificationService.verify(req.phoneNumber, req.otp)
+        val verified = phoneNumberVerificationService.verify(
+            parsedPhoneNumber,
+            req.otp
+        )
         if (!verified) throw IllegalArgumentException("Invalid or expired OTP")
-        val parsedPhone = parsePhoneNumber(null, req.phoneNumber)
-            ?: throw IllegalArgumentException("Invalid phone number format")
         val updatedUser = user.copy(
-            phoneNumber = parsedPhone.fullNumberInInternationalFormat,
+            phoneNumber = parsedPhoneNumber,
             phoneNumberVerified = true,
             updatedAt = Instant.now()
         )
