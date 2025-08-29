@@ -11,7 +11,11 @@ internal data class OtpState(
     val codeError: String? = null
 ) {
     fun containsError() = codeError != null
-    fun verifyParam() = if (containsError()) null else VerifyPhoneOtpRequest(otp = code)
+    fun verifyParam() = if (containsError() || req == null) null else VerifyPhoneOtpRequest(
+        phoneNumber = req.phoneNumber,
+        countryCode = req.countryCode,
+        otp = code
+    )
 
 }
 
