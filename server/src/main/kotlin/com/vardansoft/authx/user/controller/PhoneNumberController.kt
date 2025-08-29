@@ -35,6 +35,7 @@ class PhoneNumberController(
         return try {
             ResponseEntity.ok(userService.verifyPhoneNumberUpdate(user.id, request))
         } catch (e: IllegalArgumentException) {
+            e.printStackTrace()
             ResponseEntity.badRequest().build()
         }
     }
