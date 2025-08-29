@@ -9,6 +9,13 @@ import java.net.NetworkInterface
 @ConfigurationProperties(prefix = "app")
 class AppProperties {
     var baseUrl: String? = null
+        get() {
+            val raw = field?.trim().orEmpty()
+            if (raw.isNotEmpty()) return raw
+            val port = "8080"
+            val ip = getLocalIpAddress() ?: "localhost"
+            return "http://$ip:$port"
+        }
     lateinit var gcpBucketName: String
     lateinit var name: String
     lateinit var expectedGcpProjectId: String
@@ -33,17 +40,5 @@ class AppProperties {
             }
         }
         return null
-    }
-
-    init {
-        // Ensure baseUrl has a sensible default as early as possible in the lifecycle
-        if (baseUrl.isNullOrBlank()) {
-            // We don't have access to server.port property directly here during binding, so default to 8080
-            val port = "8080"
-            // Avoid complex networking early; prefer localhost to ensure deterministic behavior
-            val ip = getLocalIpAddress() ?: "localhost"
-            val computed = "http://$ip:$port"
-            baseUrl = computed
-        }
     }
 }
