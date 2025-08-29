@@ -79,7 +79,7 @@ class UserService(
         )
     }
 
-    fun initiatePhoneNumberUpdate(user: User, @Valid req: UpdatePhoneNumberRequest): Boolean {
+    fun initiatePhoneNumberUpdate(@Valid req: UpdatePhoneNumberRequest): Boolean {
         val parsedPhone = parsePhoneNumber(req.countryCode, req.phoneNumber)
             ?: throw IllegalArgumentException("Invalid phone number format")
         return phoneNumberVerificationService.initiate(
@@ -91,9 +91,12 @@ class UserService(
         userId: ObjectId,
         @Valid req: VerifyPhoneOtpRequest
     ): UserResponse {
-        val parsedPhoneNumber =
-            parsePhoneNumber(req.countryCode, req.otp)?.fullNumberInInternationalFormat
-                ?: throw IllegalArgumentException("Invalid phone number format")
+        val parsedPhoneNumber = parsePhoneNumber(
+            countryNameCode = req.countryCode,
+            phoneNumber = req.phoneNumber
+        )?.fullNumberInInternationalFormat ?: throw IllegalArgumentException(
+            "Invalid phone number format"
+        )
         val user = userRepository.findById(userId).orElse(null)
             ?: throw IllegalStateException("User not found")
         val verified = phoneNumberVerificationService.verify(

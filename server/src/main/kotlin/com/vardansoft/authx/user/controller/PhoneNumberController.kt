@@ -19,7 +19,7 @@ class PhoneNumberController(
     @PostMapping("/update")
     fun initiatePhoneNumberUpdate(@Valid @RequestBody request: UpdatePhoneNumberRequest): ResponseEntity<*> {
         val user = userContextService.getCurrentUser()
-        val success = userService.initiatePhoneNumberUpdate(user, request)
+        val success = userService.initiatePhoneNumberUpdate(request)
         return if (success) {
             ResponseEntity.ok(mapOf("message" to "An OTP has just been sent to ${request.phoneNumber}"))
         } else {
