@@ -1,7 +1,6 @@
-package com.vardansoft.authx.core.service
+package com.vardansoft.authx.core.service.sms
 
 import com.vardansoft.authx.AppProperties
-import com.vardansoft.authx.user.entity.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
@@ -10,12 +9,6 @@ import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestTemplate
-
-interface SmsService {
-    fun sendSms(phoneNumber: String, message: String): Boolean
-    fun sendOtp(user: User, phoneNumber: String, otpCode: String): Boolean
-}
-
 
 class SamayaSmsService(
     private val appProperties: AppProperties,
@@ -46,13 +39,9 @@ class SamayaSmsService(
         }
     }
 
-    override fun sendOtp(user: User, phoneNumber: String, otpCode: String): Boolean {
-        return sendSms(phoneNumber, "Hi ${user.firstName}, Your OTP is $otpCode for ${appProperties.name}")
-    }
-
     private fun buildFormData(phoneNumber: String, message: String): MultiValueMap<String, String> {
         val formData: MultiValueMap<String, String> = LinkedMultiValueMap()
-        formData.add("key", appProperties.smsApiKey)
+        formData.add("key", appProperties.samayeApiKey)
         formData.add("campaign", "8238")
         formData.add("routeid", "135")
         formData.add("type", "text")

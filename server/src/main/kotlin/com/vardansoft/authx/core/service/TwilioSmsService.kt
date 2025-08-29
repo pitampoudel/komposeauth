@@ -1,7 +1,7 @@
 package com.vardansoft.authx.core.service
 
 import com.vardansoft.authx.AppProperties
-import com.vardansoft.authx.user.entity.User
+import com.vardansoft.authx.core.service.sms.SmsService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
@@ -11,7 +11,7 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestTemplate
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Base64
 
 class TwilioSmsService(
     private val appProperties: AppProperties,
@@ -54,9 +54,5 @@ class TwilioSmsService(
             logger.debug("Twilio SMS sending failed: ${e.message}")
             false
         }
-    }
-
-    override fun sendOtp(user: User, phoneNumber: String, otpCode: String): Boolean {
-        return sendSms(phoneNumber, "Hi ${user.firstName}, Your OTP is $otpCode for ${appProperties.name}")
     }
 }

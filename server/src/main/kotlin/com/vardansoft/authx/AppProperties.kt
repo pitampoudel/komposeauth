@@ -12,8 +12,9 @@ class AppProperties {
     lateinit var expectedGcpProjectId: String
     lateinit var logoUrl: String
 
-    var smsApiKey: String? = null
+    var samayeApiKey: String? = null
     var twilioAccountSid: String? = null
     var twilioAuthToken: String? = null
     var twilioFromNumber: String? = null
+    var twilioVerifyServiceSid: String? = null
 }

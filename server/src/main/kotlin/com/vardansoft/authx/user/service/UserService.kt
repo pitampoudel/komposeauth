@@ -1,5 +1,6 @@
 package com.vardansoft.authx.user.service
 
+import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
 import com.vardansoft.authx.core.utils.parsePhoneNumber
 import com.vardansoft.authx.user.dto.CreateUserRequest
 import com.vardansoft.authx.user.dto.UpdatePhoneNumberRequest
@@ -21,7 +22,7 @@ import java.time.Instant
 class UserService(
     private val userRepository: UserRepository,
     val passwordEncoder: PasswordEncoder,
-    private val phoneOtpService: PhoneOtpService
+    private val phoneNumberVerificationService: PhoneNumberVerificationService
 ) {
 
     fun findUser(id: String): User? {
@@ -48,7 +49,8 @@ class UserService(
     }
 
     fun updateUser(userId: ObjectId, @Valid req: UpdateUserRequest): UserResponse {
-        val existingUser = userRepository.findById(userId).orElse(null) ?: throw IllegalStateException("User not found")
+        val existingUser = userRepository.findById(userId).orElse(null)
+            ?: throw IllegalStateException("User not found")
         val result = userRepository.save(existingUser.update(req, passwordEncoder))
         return result.mapToResponseDto()
     }
@@ -80,8 +82,7 @@ class UserService(
     fun initiatePhoneNumberUpdate(user: User, @Valid req: UpdatePhoneNumberRequest): Boolean {
         val parsedPhone = parsePhoneNumber(req.countryCode, req.phoneNumber)
             ?: throw IllegalArgumentException("Invalid phone number format")
-        return phoneOtpService.generateAndSendOtp(
-            user = user,
+        return phoneNumberVerificationService.initiate(
             phoneNumber = parsedPhone.fullNumberInInternationalFormat
         )
     }
@@ -90,13 +91,14 @@ class UserService(
         userId: ObjectId,
         @Valid req: VerifyPhoneOtpRequest
     ): UserResponse {
-        val user = userRepository.findById(userId).orElse(null) ?: throw IllegalStateException("User not found")
-        val phoneOtp = phoneOtpService.verifyOtp(userId, req.otp) ?: run {
-            throw IllegalArgumentException("Invalid or expired OTP")
-        }
-
+        val user = userRepository.findById(userId).orElse(null)
+            ?: throw IllegalStateException("User not found")
+        val verified = phoneNumberVerificationService.verify(req.phoneNumber, req.otp)
+        if (!verified) throw IllegalArgumentException("Invalid or expired OTP")
+        val parsedPhone = parsePhoneNumber(null, req.phoneNumber)
+            ?: throw IllegalArgumentException("Invalid phone number format")
         val updatedUser = user.copy(
-            phoneNumber = phoneOtp.phoneNumber,
+            phoneNumber = parsedPhone.fullNumberInInternationalFormat,
             phoneNumberVerified = true,
             updatedAt = Instant.now()
         )

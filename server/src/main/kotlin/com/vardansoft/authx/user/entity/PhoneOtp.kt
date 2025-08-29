@@ -13,7 +13,6 @@ import java.time.Instant
 data class PhoneOtp(
     @Id
     val id: ObjectId = ObjectId(),
-    val userId: ObjectId,
     val phoneNumber: String,
     val otp: String,
     @CreatedDate

@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface PhoneOtpRepository : MongoRepository<PhoneOtp, ObjectId> {
-    fun findByUserIdOrderByCreatedAtDesc(userId: ObjectId): List<PhoneOtp>
-    fun deleteByUserId(userId: ObjectId)
+    fun findByPhoneNumberOrderByCreatedAtDesc(phoneNumber: String): List<PhoneOtp>
+    fun deleteByPhoneNumber(phoneNumber: String)
 }

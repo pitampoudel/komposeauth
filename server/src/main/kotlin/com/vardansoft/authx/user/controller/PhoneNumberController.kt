@@ -21,7 +21,7 @@ class PhoneNumberController(
         val user = userContextService.getCurrentUser()
         val success = userService.initiatePhoneNumberUpdate(user, request)
         return if (success) {
-            ResponseEntity.ok(mapOf("message" to "OTP sent to your phone number"))
+            ResponseEntity.ok(mapOf("message" to "An OTP has just been sent to ${request.phoneNumber}"))
         } else {
             ResponseEntity.badRequest().body(mapOf("error" to "Failed to send OTP"))
         }
