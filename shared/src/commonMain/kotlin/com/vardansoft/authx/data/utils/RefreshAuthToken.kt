@@ -68,7 +68,10 @@ internal suspend fun RefreshTokensParams.tryTokenRefresh(
             )
         }
 
-        else -> null
+        else -> {
+            authXPreferences?.clear()
+            null
+        }
     }
 
 
