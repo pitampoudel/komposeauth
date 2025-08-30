@@ -1,7 +1,5 @@
 package com.vardansoft.authx.domain.use_cases
 
-import com.vardansoft.authx.domain.use_cases.ValidationResult
-
 class ValidateOtpCode {
     operator fun invoke(code: String): ValidationResult {
         return if (code.isBlank()) {

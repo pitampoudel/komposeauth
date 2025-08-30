@@ -1,6 +1,6 @@
 package com.vardansoft.authx.domain
 
-import com.vardansoft.authx.data.LazyState
+import com.vardansoft.authx.domain.LazyState
 import com.vardansoft.authx.data.OAuth2TokenData
 import com.vardansoft.authx.data.UserInfo
 import kotlinx.coroutines.flow.Flow

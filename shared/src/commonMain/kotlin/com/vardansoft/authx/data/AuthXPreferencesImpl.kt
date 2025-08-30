@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.russhwolf.settings.Settings
 import com.vardansoft.authx.domain.AuthXPreferences
+import com.vardansoft.authx.domain.LazyState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json

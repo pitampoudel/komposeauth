@@ -1,4 +1,4 @@
-package com.vardansoft.authx.data
+package com.vardansoft.authx.domain
 
 sealed class LazyState<out T> {
     object Loading : LazyState<Nothing>()
