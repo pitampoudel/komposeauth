@@ -11,6 +11,7 @@ import com.vardansoft.authx.domain.use_cases.ValidateEmail
 import com.vardansoft.authx.domain.use_cases.ValidateOtpCode
 import com.vardansoft.authx.domain.use_cases.ValidatePassword
 import com.vardansoft.authx.domain.use_cases.ValidatePhoneNumber
+import com.vardansoft.authx.domain.use_cases.ValidateNotBlank
 import org.koin.dsl.module
 
 fun authXSharedModule(authUrl: String, clientId: String, serverUrls: List<String>) = module {
@@ -31,6 +32,9 @@ fun authXSharedModule(authUrl: String, clientId: String, serverUrls: List<String
     }
     single<ValidateEmail> {
         ValidateEmail()
+    }
+    single<ValidateNotBlank> {
+        ValidateNotBlank()
     }
     single<AuthX> {
         AuthXImpl(
