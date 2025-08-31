@@ -1,7 +1,7 @@
 package com.vardansoft.authx.kyc.service
 
-import com.vardansoft.authx.kyc.dto.CreateKycRequest
-import com.vardansoft.authx.kyc.dto.KycResponse
+import com.vardansoft.authx.data.CreateKycRequest
+import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.kyc.dto.toResponse
 import com.vardansoft.authx.kyc.entity.KycVerification
 import com.vardansoft.authx.kyc.repository.KycVerificationRepository
@@ -29,10 +29,10 @@ class KycService(
                 documentFrontUrl = data.documentFrontUrl,
                 documentBackUrl = data.documentBackUrl,
                 selfieUrl = data.selfieUrl,
-                status = KycVerification.Status.PENDING,
+                status = KycResponse.Status.PENDING,
             )
         } else {
-            if (existing.status == KycVerification.Status.APPROVED) {
+            if (existing.status == KycResponse.Status.APPROVED) {
                 throw IllegalStateException("KYC already approved; cannot resubmit")
             }
             existing.copy(
@@ -43,7 +43,7 @@ class KycService(
                 documentFrontUrl = data.documentFrontUrl,
                 documentBackUrl = data.documentBackUrl,
                 selfieUrl = data.selfieUrl,
-                status = KycVerification.Status.PENDING,
+                status = KycResponse.Status.PENDING,
                 remarks = null
             )
         }
@@ -52,13 +52,17 @@ class KycService(
 
     @Transactional
     fun approve(kycId: ObjectId): KycResponse =
-        updateStatus(kycId, KycVerification.Status.APPROVED, null)
+        updateStatus(kycId, KycResponse.Status.APPROVED, null)
 
     @Transactional
     fun reject(kycId: ObjectId, reason: String?): KycResponse =
-        updateStatus(kycId, KycVerification.Status.REJECTED, reason)
+        updateStatus(kycId, KycResponse.Status.REJECTED, reason)
 
-    private fun updateStatus(kycId: ObjectId, status: KycVerification.Status, remarks: String?): KycResponse =
+    private fun updateStatus(
+        kycId: ObjectId,
+        status: KycResponse.Status,
+        remarks: String?
+    ): KycResponse =
         kycRepo.findById(kycId).map { current ->
             kycRepo.save(current.copy(status = status, remarks = remarks)).toResponse()
         }.orElseThrow { IllegalArgumentException("KYC not found") }

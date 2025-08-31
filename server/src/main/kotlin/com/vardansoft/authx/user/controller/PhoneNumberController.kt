@@ -1,13 +1,16 @@
 package com.vardansoft.authx.user.controller
 
 import com.vardansoft.authx.core.config.UserContextService
-import com.vardansoft.authx.user.dto.UpdatePhoneNumberRequest
+import com.vardansoft.authx.data.UpdatePhoneNumberRequest
+import com.vardansoft.authx.data.VerifyPhoneOtpRequest
 import com.vardansoft.authx.user.dto.UserResponse
-import com.vardansoft.authx.user.dto.VerifyPhoneOtpRequest
 import com.vardansoft.authx.user.service.UserService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/phone-number")

@@ -1,5 +1,6 @@
 package com.vardansoft.authx.kyc.entity
 
+import com.vardansoft.authx.data.KycResponse
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
@@ -18,7 +19,7 @@ data class KycVerification(
     val documentType: String,
     val documentNumber: String,
     val country: String,
-    val status: Status = Status.PENDING,
+    val status: KycResponse.Status = KycResponse.Status.PENDING,
     val remarks: String? = null,
     val documentFrontUrl: String? = null,
     val documentBackUrl: String? = null,
@@ -27,5 +28,4 @@ data class KycVerification(
     @LastModifiedDate val updatedAt: Instant = Instant.now()
 ) {
 
-    enum class Status { PENDING, APPROVED, REJECTED }
 }

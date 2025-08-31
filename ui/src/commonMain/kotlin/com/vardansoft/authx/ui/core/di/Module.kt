@@ -3,6 +3,7 @@ package com.vardansoft.authx.ui.core.di
 import com.vardansoft.authx.di.authXSharedModule
 import com.vardansoft.authx.ui.login.LoginViewModel
 import com.vardansoft.authx.ui.otp.OtpViewModel
+import com.vardansoft.authx.ui.kyc.KycViewModel
 import org.koin.core.KoinApplication
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -19,6 +20,9 @@ fun KoinApplication.configureAuthX(authUrl: String, clientId: String, hosts: Lis
             }
             viewModel<LoginViewModel> {
                 LoginViewModel(get(), get())
+            }
+            viewModel<KycViewModel> {
+                KycViewModel(get())
             }
         }
     )

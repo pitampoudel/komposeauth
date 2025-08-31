@@ -1,5 +1,6 @@
 package com.vardansoft.authx.kyc.dto
 
+import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.kyc.entity.KycVerification
 
 fun KycVerification.toResponse() = KycResponse(

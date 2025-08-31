@@ -1,6 +1,6 @@
 package com.vardansoft.authx.data.utils
 
-import com.vardansoft.authx.data.AuthClientImpl.EndPoints.TOKEN
+import com.vardansoft.authx.data.ApiEndpoints.TOKEN
 import com.vardansoft.authx.data.OAuth2TokenData
 import com.vardansoft.authx.domain.AuthXPreferences
 import io.ktor.client.HttpClient

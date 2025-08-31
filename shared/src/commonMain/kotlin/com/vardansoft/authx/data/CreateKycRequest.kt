@@ -1,15 +1,12 @@
-package com.vardansoft.authx.kyc.dto
+package com.vardansoft.authx.data
 
-import jakarta.validation.constraints.NotBlank
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class CreateKycRequest(
-    @field:NotBlank
     val fullName: String,
-    @field:NotBlank
     val documentType: String,
-    @field:NotBlank
     val documentNumber: String,
-    @field:NotBlank
     val country: String,
     val documentFrontUrl: String? = null,
     val documentBackUrl: String? = null,

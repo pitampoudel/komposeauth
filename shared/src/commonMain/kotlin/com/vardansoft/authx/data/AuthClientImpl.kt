@@ -1,10 +1,11 @@
 package com.vardansoft.authx.data
 
-import com.vardansoft.authx.data.AuthClientImpl.EndPoints.CONFIG
-import com.vardansoft.authx.data.AuthClientImpl.EndPoints.TOKEN
-import com.vardansoft.authx.data.AuthClientImpl.EndPoints.UPDATE_PHONE_NUMBER
-import com.vardansoft.authx.data.AuthClientImpl.EndPoints.USER_INFO
-import com.vardansoft.authx.data.AuthClientImpl.EndPoints.VERIFY_PHONE_NUMBER
+import com.vardansoft.authx.data.ApiEndpoints.CONFIG
+import com.vardansoft.authx.data.ApiEndpoints.TOKEN
+import com.vardansoft.authx.data.ApiEndpoints.UPDATE_PHONE_NUMBER
+import com.vardansoft.authx.data.ApiEndpoints.USER_INFO
+import com.vardansoft.authx.data.ApiEndpoints.VERIFY_PHONE_NUMBER
+import com.vardansoft.authx.data.ApiEndpoints.KYC
 import com.vardansoft.authx.data.utils.asResource
 import com.vardansoft.authx.data.utils.safeApiCall
 import com.vardansoft.authx.domain.AuthClient
@@ -19,13 +20,6 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.Parameters
 
 class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClient {
-    internal object EndPoints {
-        const val TOKEN = "oauth2/token"
-        const val USER_INFO = "userinfo"
-        const val UPDATE_PHONE_NUMBER = "phone-number/update"
-        const val VERIFY_PHONE_NUMBER = "phone-number/verify"
-        const val CONFIG = "config"
-    }
 
     override suspend fun fetchConfig(): Result<ConfigResponse> {
         return safeApiCall {
@@ -76,5 +70,19 @@ class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClie
         }
     }
 
+    override suspend fun fetchMyKyc(): Result<KycResponse?> {
+        return safeApiCall {
+            httpClient.get("$authUrl/$KYC")
+                .asResource { body<KycResponse?>() }
+        }
+    }
+
+    override suspend fun submitKyc(body: CreateKycRequest): Result<KycResponse> {
+        return safeApiCall {
+            httpClient.post("$authUrl/$KYC") {
+                setBody(body)
+            }.asResource { body<KycResponse>() }
+        }
+    }
 
 }
