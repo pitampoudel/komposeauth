@@ -2,7 +2,7 @@ package com.vardansoft.authx.kyc.controller
 
 import com.vardansoft.authx.core.config.UserContextService
 import com.vardansoft.authx.data.ApiEndpoints
-import com.vardansoft.authx.data.CreateKycRequest
+import com.vardansoft.authx.data.UpdateKycRequest
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.kyc.service.KycService
 import org.bson.types.ObjectId
@@ -32,7 +32,7 @@ class KycController(
     }
 
     @PostMapping
-    fun submit(@Validated @RequestBody data: CreateKycRequest): ResponseEntity<KycResponse> {
+    fun submit(@Validated @RequestBody data: UpdateKycRequest): ResponseEntity<KycResponse> {
         val user = userContextService.getCurrentUser()
         return ResponseEntity.ok(kycService.submit(user.id, data))
     }

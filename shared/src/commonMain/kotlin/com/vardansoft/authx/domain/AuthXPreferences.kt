@@ -1,19 +1,18 @@
 package com.vardansoft.authx.domain
 
-import com.vardansoft.authx.domain.LazyState
 import com.vardansoft.authx.data.OAuth2TokenData
-import com.vardansoft.authx.data.UserInfo
+import com.vardansoft.authx.data.UserInfoResponse
 import kotlinx.coroutines.flow.Flow
 
 interface AuthXPreferences {
-    val userInfo: Flow<LazyState<UserInfo>>
+    val userInfoResponse: Flow<LazyState<UserInfoResponse>>
     suspend fun saveLoggedInDetails(
         token: OAuth2TokenData,
-        userInfo: UserInfo
+        userInfoResponse: UserInfoResponse
     )
 
     suspend fun updateTokenData(token: OAuth2TokenData)
-    suspend fun updateUserInformation(info: UserInfo)
+    suspend fun updateUserInformation(info: UserInfoResponse)
     fun oAuth2TokenData(): OAuth2TokenData?
     suspend fun clear()
 

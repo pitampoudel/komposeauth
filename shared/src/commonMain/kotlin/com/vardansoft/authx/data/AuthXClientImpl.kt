@@ -8,7 +8,7 @@ import com.vardansoft.authx.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import com.vardansoft.authx.data.ApiEndpoints.KYC
 import com.vardansoft.authx.data.utils.asResource
 import com.vardansoft.authx.data.utils.safeApiCall
-import com.vardansoft.authx.domain.AuthClient
+import com.vardansoft.authx.domain.AuthXClient
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -19,7 +19,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.Parameters
 
-class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClient {
+class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXClient {
 
     override suspend fun fetchConfig(): Result<ConfigResponse> {
         return safeApiCall {
@@ -46,7 +46,7 @@ class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClie
     }
 
 
-    override suspend fun fetchUserInfo(accessToken: String?): Result<UserInfo> {
+    override suspend fun fetchUserInfo(accessToken: String?): Result<UserInfoResponse> {
         return safeApiCall {
             httpClient.get("$authUrl/$USER_INFO") {
                 accessToken?.let { bearerAuth(accessToken) }
@@ -77,7 +77,7 @@ class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClie
         }
     }
 
-    override suspend fun submitKyc(body: CreateKycRequest): Result<KycResponse> {
+    override suspend fun submitKyc(body: UpdateKycRequest): Result<KycResponse> {
         return safeApiCall {
             httpClient.post("$authUrl/$KYC") {
                 setBody(body)

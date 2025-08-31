@@ -3,7 +3,7 @@ package com.vardansoft.authx.ui.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.data.Credential
-import com.vardansoft.authx.domain.AuthClient
+import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.AuthXPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class LoginViewModel(
-    val authClient: AuthClient,
+    val authXClient: AuthXClient,
     val authXPreferences: AuthXPreferences
 ) : ViewModel() {
     private val _state = MutableStateFlow(LoginState())
@@ -45,14 +45,14 @@ class LoginViewModel(
     }
 
     suspend fun login(cred: Credential) {
-        val res = authClient.exchangeCredentialForToken(cred)
+        val res = authXClient.exchangeCredentialForToken(cred)
         when {
             res.isFailure -> _state.update {
                 it.copy(infoMsg = res.exceptionOrNull()?.message)
             }
 
             res.isSuccess -> {
-                val userInfoRes = authClient.fetchUserInfo(res.getOrThrow().accessToken)
+                val userInfoRes = authXClient.fetchUserInfo(res.getOrThrow().accessToken)
                 when {
                     userInfoRes.isFailure -> _state.update {
                         it.copy(infoMsg = userInfoRes.exceptionOrNull()?.message)
@@ -61,7 +61,7 @@ class LoginViewModel(
                     userInfoRes.isSuccess -> {
                         authXPreferences.saveLoggedInDetails(
                             token = res.getOrThrow(),
-                            userInfo = userInfoRes.getOrThrow()
+                            userInfoResponse = userInfoRes.getOrThrow()
                         )
                     }
                 }

@@ -4,18 +4,18 @@ import com.vardansoft.authx.data.ConfigResponse
 import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.data.OAuth2TokenData
 import com.vardansoft.authx.data.UpdatePhoneNumberRequest
-import com.vardansoft.authx.data.UserInfo
+import com.vardansoft.authx.data.UserInfoResponse
 import com.vardansoft.authx.data.VerifyPhoneOtpRequest
-import com.vardansoft.authx.data.CreateKycRequest
+import com.vardansoft.authx.data.UpdateKycRequest
 import com.vardansoft.authx.data.KycResponse
 import io.ktor.client.statement.HttpResponse
 
-interface AuthClient {
+interface AuthXClient {
     suspend fun fetchConfig(): Result<ConfigResponse>
     suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2TokenData>
-    suspend fun fetchUserInfo(accessToken: String? = null): Result<UserInfo>
+    suspend fun fetchUserInfo(accessToken: String? = null): Result<UserInfoResponse>
     suspend fun verifyPhoneOtp(req: VerifyPhoneOtpRequest): Result<HttpResponse>
     suspend fun sendPhoneOtp(request: UpdatePhoneNumberRequest): Result<HttpResponse>
     suspend fun fetchMyKyc(): Result<KycResponse?>
-    suspend fun submitKyc(body: CreateKycRequest): Result<KycResponse>
+    suspend fun submitKyc(body: UpdateKycRequest): Result<KycResponse>
 }

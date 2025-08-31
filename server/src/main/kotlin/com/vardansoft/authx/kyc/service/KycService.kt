@@ -1,6 +1,6 @@
 package com.vardansoft.authx.kyc.service
 
-import com.vardansoft.authx.data.CreateKycRequest
+import com.vardansoft.authx.data.UpdateKycRequest
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.kyc.dto.toResponse
 import com.vardansoft.authx.kyc.entity.KycVerification
@@ -17,7 +17,7 @@ class KycService(
     fun find(userId: ObjectId): KycResponse? = kycRepo.findByUserId(userId)?.toResponse()
 
     @Transactional
-    fun submit(userId: ObjectId, data: CreateKycRequest): KycResponse {
+    fun submit(userId: ObjectId, data: UpdateKycRequest): KycResponse {
         val existing = kycRepo.findByUserId(userId)
         val entity = if (existing == null) {
             KycVerification(

@@ -2,7 +2,7 @@ package com.vardansoft.authx.ui.otp
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vardansoft.authx.domain.AuthClient
+import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.AuthXPreferences
 import com.vardansoft.authx.domain.use_cases.ValidateOtpCode
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 internal class OtpViewModel(
     val validateOtpCode: ValidateOtpCode,
-    val client: AuthClient,
+    val client: AuthXClient,
     val authXPreferences: AuthXPreferences
 ) : ViewModel() {
     private val _state = MutableStateFlow(OtpState())

@@ -3,7 +3,7 @@ package com.vardansoft.authx.data
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CreateKycRequest(
+data class UpdateKycRequest(
     val fullName: String,
     val documentType: String,
     val documentNumber: String,

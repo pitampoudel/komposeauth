@@ -31,8 +31,8 @@ class AuthXPreferencesImpl(
         }
     }
 
-    override val userInfo: Flow<LazyState<UserInfo>> = dataStore.data.map {
-        val info: UserInfo? = it[KEYS.USER_INFO]?.let { string ->
+    override val userInfoResponse: Flow<LazyState<UserInfoResponse>> = dataStore.data.map {
+        val info: UserInfoResponse? = it[KEYS.USER_INFO]?.let { string ->
             try {
                 Json.decodeFromString(string)
             } catch (e: Exception) {
@@ -46,12 +46,12 @@ class AuthXPreferencesImpl(
 
     override suspend fun saveLoggedInDetails(
         token: OAuth2TokenData,
-        userInfo: UserInfo
+        userInfoResponse: UserInfoResponse
     ) {
         settings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(token))
         dataStore.updateData {
             it.toMutablePreferences().apply {
-                set(KEYS.USER_INFO, Json.encodeToString(userInfo))
+                set(KEYS.USER_INFO, Json.encodeToString(userInfoResponse))
             }
         }
     }
@@ -60,7 +60,7 @@ class AuthXPreferencesImpl(
         settings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(token))
     }
 
-    override suspend fun updateUserInformation(info: UserInfo) {
+    override suspend fun updateUserInformation(info: UserInfoResponse) {
         dataStore.updateData {
             it.toMutablePreferences().apply {
                 set(KEYS.USER_INFO, Json.encodeToString(info))
