@@ -11,7 +11,7 @@ data class KycResponse(
     val documentNumber: String,
     val country: String,
     val status: Status,
-    val rejectionReason: String? = null,
+    val remarks: String? = null,
     val documentFrontUrl: String? = null,
     val documentBackUrl: String? = null,
     val selfieUrl: String? = null,
