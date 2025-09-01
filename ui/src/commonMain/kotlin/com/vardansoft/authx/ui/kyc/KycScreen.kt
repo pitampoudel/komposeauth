@@ -26,12 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun KycScreen(
     onSkip: () -> Unit = {}
 ) {
-    val vm = org.koin.compose.viewmodel.koinViewModel<KycViewModel>()
+    val vm = koinViewModel<KycViewModel>()
     val state by vm.state.collectAsState()
     KycPage(
         state = state,

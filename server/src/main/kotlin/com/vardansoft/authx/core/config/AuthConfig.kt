@@ -6,6 +6,8 @@ import com.vardansoft.authx.core.converters.GoogleIdTokenGrantAuthConverter
 import com.vardansoft.authx.core.converters.OAuth2PublicClientAuthConverter
 import com.vardansoft.authx.core.providers.GoogleIdTokenGrantAuthProvider
 import com.vardansoft.authx.core.providers.OAuth2PublicClientAuthProvider
+import com.vardansoft.authx.data.KycResponse
+import com.vardansoft.authx.kyc.service.KycService
 import com.vardansoft.authx.user.service.UserService
 import jakarta.servlet.DispatcherType
 import org.springframework.beans.factory.annotation.Value
@@ -40,7 +42,8 @@ class AuthConfig(
     val authSuccessHandler: AuthSuccessHandler,
     val jwtAuthenticationConverter: JwtAuthenticationConverter,
     val userService: UserService,
-    val passwordEncoder: PasswordEncoder
+    val passwordEncoder: PasswordEncoder,
+    val kycService: KycService
 ) {
     @Bean
     @Order(2)
@@ -56,9 +59,16 @@ class AuthConfig(
                 auth
                     .requestMatchers("/oauth2/clients/**").hasRole("ADMIN")
                     .requestMatchers(
-                        "/login", "/token", "/signup","/users", "/assets/**", "/reset-password", "/config/**"
+                        "/login",
+                        "/token",
+                        "/signup",
+                        "/users",
+                        "/assets/**",
+                        "/reset-password",
+                        "/config/**"
                     ).permitAll()
-                    .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
+                    .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD)
+                    .permitAll()
                     .anyRequest().authenticated()
             }
             .formLogin { form ->
@@ -147,6 +157,10 @@ class AuthConfig(
                                 .claim("emailVerified", user.emailVerified)
                                 .claim("phoneNumber", user.phoneNumber)
                                 .claim("phoneNumberVerified", user.phoneNumberVerified)
+                                .claim(
+                                    "kycVerified",
+                                    (kycService.find(user.id)?.status == KycResponse.Status.APPROVED)
+                                )
                                 .claim("socialLinks", user.socialLinks)
                                 .claim("firstName", user.firstName)
                                 .claim("lastName", user.lastName)

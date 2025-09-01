@@ -41,7 +41,6 @@ import kotlin.reflect.KFunction1
 
 @Composable
 fun OtpScreen(
-    popBackStack: () -> Unit,
     onSkip: () -> Unit = {}
 ) {
     val vm = koinViewModel<OtpViewModel>()
@@ -49,7 +48,6 @@ fun OtpScreen(
     OtpPage(
         state = state,
         onEvent = vm::onEvent,
-        popBackStack = popBackStack,
         uiEvents = vm.uiEvents,
         onSkip = onSkip
     )
@@ -61,13 +59,12 @@ private fun OtpPage(
     state: OtpState,
     uiEvents: kotlinx.coroutines.flow.Flow<OtpUiEvent>,
     onEvent: KFunction1<OtpEvent, Unit>,
-    popBackStack: () -> Unit,
     onSkip: () -> Unit = {}
 ) {
     LaunchedEffect(Unit) {
         uiEvents.collect {
             when (it) {
-                is OtpUiEvent.Verified -> popBackStack()
+                is OtpUiEvent.Verified -> onSkip()
             }
         }
     }

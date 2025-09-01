@@ -18,6 +18,8 @@ data class UserInfoResponse(
     val emailVerified: Boolean,
     @SerialName("phoneNumberVerified")
     val phoneNumberVerified: Boolean,
+    @SerialName("kycVerified")
+    val kycVerified: Boolean = false,
     @SerialName("picture")
     val picture: String?,
     @SerialName("id")
