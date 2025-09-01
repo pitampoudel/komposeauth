@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- OTP -->
+    <string name="otp_enter_mobile_title">तपाईंको मोबाइल नम्बर लेख्नुहोस्</string>
+    <string name="otp_phone_label">फोन नम्बर</string>
+    <string name="otp_phone_placeholder">जस्तै ९८१२३४५६७८</string>
+    <string name="otp_send_button">ओटीपी पठाउनुहोस्</string>
+    <string name="otp_fill_code_title">कोड भर्नुहोस्</string>
+    <string name="otp_sent_to">ओटीपी %1$s मा पठाइएको छ</string>
+    <string name="otp_verify_button">प्रमाणित गर्नुहोस्</string>
+    <string name="common_skip">छोड्नुहोस्</string>
+
+    <!-- KYC -->
+    <string name="kyc_title">केवाईसी प्रमाणीकरण</string>
+    <string name="kyc_provide_details">आफ्नो विवरण प्रदान गर्नुहोस्</string>
+    <string name="kyc_subtitle">हामी तपाईंको खाताको सुरक्षा सुनिश्चित गर्न तपाईंको पहिचान सुरक्षित रूपमा प्रमाणित गर्छौं।</string>
+    <string name="kyc_current_status">हालको स्थिति: %1$s</string>
+    <string name="kyc_remarks">टिप्पणी: %1$s</string>
+    <string name="kyc_full_name_label">पूरा नाम</string>
+    <string name="kyc_full_name_placeholder">तपाईंको कानुनी पूरा नाम लेख्नुहोस्</string>
+    <string name="kyc_document_type_label">कागजात प्रकार</string>
+    <string name="kyc_document_type_placeholder">उदाहरण: राहदानी, चालक अनुमतिपत्र</string>
+    <string name="kyc_document_number_label">कागजात नम्बर</string>
+    <string name="kyc_document_number_placeholder">कागजात नम्बर लेख्नुहोस्</string>
+    <string name="kyc_country_label">देश</string>
+    <string name="kyc_country_placeholder">जारी देश</string>
+    <string name="kyc_doc_front_label">कागजात अगाडिको यूआरएल (ऐच्छिक)</string>
+    <string name="kyc_doc_front_placeholder">अगाडिको तस्बिरको लिङ्क</string>
+    <string name="kyc_doc_back_label">कागजात पछाडिको यूआरएल (ऐच्छिक)</string>
+    <string name="kyc_doc_back_placeholder">पछाडिको तस्बिरको लिङ्क</string>
+    <string name="kyc_selfie_label">सेल्फी यूआरएल (ऐच्छिक)</string>
+    <string name="kyc_selfie_placeholder">प्रमाणीकरणका लागि सेल्फीको लिङ्क</string>
+    <string name="kyc_submit">समिक्षाका लागि बुझाउनुहोस्</string>
+    <string name="kyc_submission_in_progress">बुझाउने प्रक्रिया जारी वा सम्पन्न भएको छ</string>
+</resources>

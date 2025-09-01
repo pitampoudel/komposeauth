@@ -26,6 +26,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper
+import com.vardansoft.ui.generated.resources.Res
+import com.vardansoft.ui.generated.resources.common_skip
+import com.vardansoft.ui.generated.resources.kyc_current_status
+import com.vardansoft.ui.generated.resources.kyc_provide_details
+import com.vardansoft.ui.generated.resources.kyc_remarks
+import com.vardansoft.ui.generated.resources.kyc_subtitle
+import com.vardansoft.ui.generated.resources.kyc_title
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -62,11 +70,11 @@ private fun KycPage(
                 TopAppBar(
                     actions = {
                         TextButton(onClick = onSkip) {
-                            Text("Skip")
+                            Text(stringResource(Res.string.common_skip))
                         }
                     },
 
-                    title = { Text("KYC Verification") }
+                    title = { Text(stringResource(Res.string.kyc_title)) }
                 )
             }
         ) { innerPadding ->
@@ -81,12 +89,12 @@ private fun KycPage(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Provide your details",
+                    text = stringResource(Res.string.kyc_provide_details),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "We securely verify your identity to keep your account safe.",
+                    text = stringResource(Res.string.kyc_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -97,12 +105,12 @@ private fun KycPage(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            "Current status: ${existing.status}",
+                            stringResource(Res.string.kyc_current_status, existing.status),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         existing.remarks?.let {
                             Text(
-                                "Remarks: $it",
+                                stringResource(Res.string.kyc_remarks, it),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error
                             )

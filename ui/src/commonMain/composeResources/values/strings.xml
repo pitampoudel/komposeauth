@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- OTP -->
+    <string name="otp_enter_mobile_title">Enter your mobile number</string>
+    <string name="otp_phone_label">Phone Number</string>
+    <string name="otp_phone_placeholder">e.g. 9812345678</string>
+    <string name="otp_send_button">Send OTP</string>
+    <string name="otp_fill_code_title">Fill The Code</string>
+    <string name="otp_sent_to">An OTP has been sent to %1$s</string>
+    <string name="otp_verify_button">Verify</string>
+    <string name="common_skip">Skip</string>
+
+    <!-- KYC -->
+    <string name="kyc_title">KYC Verification</string>
+    <string name="kyc_provide_details">Provide your details</string>
+    <string name="kyc_subtitle">We securely verify your identity to keep your account safe.</string>
+    <string name="kyc_current_status">Current status: %1$s</string>
+    <string name="kyc_remarks">Remarks: %1$s</string>
+    <string name="kyc_full_name_label">Full name</string>
+    <string name="kyc_full_name_placeholder">Enter your full legal name</string>
+    <string name="kyc_document_type_label">Document type</string>
+    <string name="kyc_document_type_placeholder">e.g., Passport, Driver License</string>
+    <string name="kyc_document_number_label">Document number</string>
+    <string name="kyc_document_number_placeholder">Enter document number</string>
+    <string name="kyc_country_label">Country</string>
+    <string name="kyc_country_placeholder">Issuing country</string>
+    <string name="kyc_doc_front_label">Document front URL (optional)</string>
+    <string name="kyc_doc_front_placeholder">Link to front image</string>
+    <string name="kyc_doc_back_label">Document back URL (optional)</string>
+    <string name="kyc_doc_back_placeholder">Link to back image</string>
+    <string name="kyc_selfie_label">Selfie URL (optional)</string>
+    <string name="kyc_selfie_placeholder">Link to a selfie for verification</string>
+    <string name="kyc_submit">Submit for Review</string>
+    <string name="kyc_submission_in_progress">Submission in progress or completed</string>
+</resources>

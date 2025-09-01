@@ -38,6 +38,16 @@ import com.vardansoft.authx.ui.core.components.CountryPicker
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.reflect.KFunction1
+import com.vardansoft.ui.generated.resources.Res
+import com.vardansoft.ui.generated.resources.common_skip
+import com.vardansoft.ui.generated.resources.otp_enter_mobile_title
+import com.vardansoft.ui.generated.resources.otp_fill_code_title
+import com.vardansoft.ui.generated.resources.otp_phone_label
+import com.vardansoft.ui.generated.resources.otp_phone_placeholder
+import com.vardansoft.ui.generated.resources.otp_send_button
+import com.vardansoft.ui.generated.resources.otp_sent_to
+import com.vardansoft.ui.generated.resources.otp_verify_button
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun OtpScreen(
@@ -110,7 +120,7 @@ private fun EnterMobilePage(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
             Text(
-                text = "Enter your mobile number",
+                text = stringResource(Res.string.otp_enter_mobile_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -119,8 +129,8 @@ private fun EnterMobilePage(
                 value = phoneNumber,
                 onValueChange = { phoneNumber = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Phone Number") },
-                placeholder = { Text("e.g. 9812345678") },
+                label = { Text(stringResource(Res.string.otp_phone_label)) },
+                placeholder = { Text(stringResource(Res.string.otp_phone_placeholder)) },
                 leadingIcon = {
                     CountryPicker(
                         countryNameCode = countryCode,
@@ -153,10 +163,10 @@ private fun EnterMobilePage(
                     .height(48.dp),
                 enabled = phoneNumber.length >= 6
             ) {
-                Text("Send OTP")
+                Text(stringResource(Res.string.otp_send_button))
             }
             TextButton(onClick = { onSkip() }) {
-                Text("Skip")
+                Text(stringResource(Res.string.common_skip))
             }
         }
     }
@@ -192,12 +202,12 @@ private fun FillTheCodePage(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
             Text(
-                text = "Fill The Code",
+                text = stringResource(Res.string.otp_fill_code_title),
                 style = MaterialTheme.typography.headlineSmall
             )
 
             Text(
-                text = "An OTP has been sent to ${state.req?.phoneNumber}",
+                text = stringResource(Res.string.otp_sent_to, state.req?.phoneNumber ?: ""),
                 style = MaterialTheme.typography.bodyLarge
             )
 
@@ -215,10 +225,10 @@ private fun FillTheCodePage(
                 enabled = !state.containsError(),
                 modifier = Modifier.fillMaxWidth().height(48.dp)
             ) {
-                Text("Verify")
+                Text(stringResource(Res.string.otp_verify_button))
             }
             TextButton(onClick = { onSkip() }) {
-                Text("Skip")
+                Text(stringResource(Res.string.common_skip))
             }
         }
     }
