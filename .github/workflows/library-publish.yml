@@ -1,5 +1,6 @@
 name: Publish KMP Library
 on:
+  workflow_dispatch:
   release:
     types: [ released, prereleased ]
 env:
