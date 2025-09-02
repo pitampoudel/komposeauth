@@ -72,8 +72,12 @@ class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXCl
 
     override suspend fun fetchMyKyc(): Result<KycResponse?> {
         return safeApiCall {
-            httpClient.get("$authUrl/$KYC")
-                .asResource { body<KycResponse?>() }
+            val response = httpClient.get("$authUrl/$KYC")
+            if (response.status.value == 404) {
+                Result.success(null)
+            } else {
+                response.asResource { body<KycResponse?>() }
+            }
         }
     }
 
