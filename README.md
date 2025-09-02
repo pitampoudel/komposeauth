@@ -2,6 +2,11 @@
 
 A Kotlin Multiplatform authentication solution: Authorization Server (Spring Boot) + KMP Client Library + Compose Multiplatform UI.
 
+## Maven Central
+
+- [authx on Maven Central](https://search.maven.org/artifact/com.vardansoft/authx)
+- [authx-ui on Maven Central](https://search.maven.org/artifact/com.vardansoft/authx-ui)
+
 ## Overview
 
 AuthX provides end-to-end authentication for Kotlin Multiplatform apps.
@@ -60,7 +65,6 @@ val httpClient = HttpClient {
 }
 ```
 
-
 Use provided view models and screens (e.g., OtpScreen, and a Login flow with rememberCredentialRetriever).
 
 ### UI Components
@@ -84,7 +88,6 @@ logoutHandler.logout()
 ```kotlin
    OtpScreen()
 ```
-
 
 #### LoginViewModel
 ```kotlin
