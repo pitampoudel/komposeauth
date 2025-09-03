@@ -2,10 +2,8 @@ package com.vardansoft.authx.ui.kyc
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -25,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vardansoft.authx.ui.core.components.rememberFilePicker
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper
 import com.vardansoft.ui.generated.resources.Res
 import com.vardansoft.ui.generated.resources.common_skip
@@ -78,14 +77,27 @@ private fun KycPage(
                 )
             }
         ) { innerPadding ->
-            val enabled = !state.isApproved && !state.isPending
+            val enabled = !state.isApproved && !state.isPending && state.progress == null
+            val onPickFront = rememberFilePicker("image/*,application/pdf") {
+                onEvent(
+                    KycEvent.DocumentFrontSelected(it)
+                )
+            }
+            val onPickBack = rememberFilePicker("image/*,application/pdf") {
+                onEvent(
+                    KycEvent.DocumentBackSelected(it)
+                )
+            }
+            val onPickSelfie = rememberFilePicker("image/*") {
+                onEvent(KycEvent.SelfieSelected(it))
+            }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
                     .verticalScroll(rememberScrollState())
                     .imePadding()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
@@ -101,7 +113,7 @@ private fun KycPage(
 
                 state.existing?.let { existing ->
                     Column(
-                        Modifier.fillMaxWidth().padding(8.dp),
+                        Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
@@ -120,7 +132,7 @@ private fun KycPage(
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     OutlinedTextField(
                         value = state.fullName,
@@ -147,7 +159,7 @@ private fun KycPage(
                         enabled = enabled,
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Document type") },
-                        placeholder = { Text("e.g., Passport, Driver License") },
+                        placeholder = { Text("E.g., passport, driver license") },
                         isError = state.documentTypeError != null,
                         singleLine = true,
                         supportingText = {
@@ -166,7 +178,7 @@ private fun KycPage(
                         enabled = enabled,
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Document number") },
-                        placeholder = { Text("Enter document number") },
+                        placeholder = { Text("Enter your document number") },
                         isError = state.documentNumberError != null,
                         singleLine = true,
                         supportingText = {
@@ -185,7 +197,7 @@ private fun KycPage(
                         enabled = enabled,
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Country") },
-                        placeholder = { Text("Issuing country") },
+                        placeholder = { Text("Enter issuing country") },
                         isError = state.countryError != null,
                         singleLine = true,
                         supportingText = {
@@ -198,33 +210,38 @@ private fun KycPage(
                             }
                         }
                     )
-                    OutlinedTextField(
-                        value = state.documentFrontUrl,
-                        onValueChange = { onEvent(KycEvent.DocumentFrontUrlChanged(it)) },
-                        enabled = enabled,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Document front URL (optional)") },
-                        placeholder = { Text("Link to front image") },
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = state.documentBackUrl,
-                        onValueChange = { onEvent(KycEvent.DocumentBackUrlChanged(it)) },
-                        enabled = enabled,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Document back URL (optional)") },
-                        placeholder = { Text("Link to back image") },
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = state.selfieUrl,
-                        onValueChange = { onEvent(KycEvent.SelfieUrlChanged(it)) },
-                        enabled = enabled,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Selfie URL (optional)") },
-                        placeholder = { Text("Link to a selfie for verification") },
-                        singleLine = true
-                    )
+
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text(
+                            text = "Documents",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        FileInput(
+                            title = "Document front",
+                            hint = "Upload the front side (JPG, PNG, PDF)",
+                            hasFile = state.documentFront != null,
+                            enabled = enabled,
+                            onClick = { onPickFront.launch() }
+                        )
+
+                        FileInput(
+                            title = "Document back",
+                            hint = "Upload the back side (JPG, PNG, PDF)",
+                            hasFile = state.documentBack != null,
+                            enabled = enabled,
+                            onClick = { onPickBack.launch() }
+                        )
+
+                        FileInput(
+                            title = "Selfie",
+                            hint = "Upload a selfie for verification",
+                            hasFile = state.selfie != null,
+                            enabled = enabled,
+                            onClick = { onPickSelfie.launch() }
+                        )
+                    }
                 }
 
                 Button(
@@ -232,12 +249,51 @@ private fun KycPage(
                     enabled = enabled,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (enabled) "Submit for Review" else "Submission in progress or completed")
+                    val label = when {
+                        state.progress != null -> "Submitting..."
+                        state.isPending -> "Submission pending review"
+                        state.isApproved -> "KYC approved"
+                        else -> "Submit for review"
+                    }
+                    Text(label)
                 }
 
-                Spacer(Modifier.height(8.dp))
             }
         }
     }
 }
 
+
+@Composable
+private fun FileInput(
+    title: String,
+    hint: String,
+    hasFile: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = hint,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = if (hasFile) "File selected" else "No file selected",
+            style = MaterialTheme.typography.bodySmall,
+            color = if (hasFile) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        TextButton(onClick = onClick, enabled = enabled) {
+            Text(if (hasFile) "Change file" else "Choose file")
+        }
+    }
+}
