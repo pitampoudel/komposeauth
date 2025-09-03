@@ -2,6 +2,7 @@ package com.vardansoft.authx.ui.kyc
 
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.UpdateKycRequest
+import com.vardansoft.core.domain.KmpFile
 
 data class KycState(
     val fullName: String = "",
@@ -12,9 +13,9 @@ data class KycState(
     val documentNumberError: String? = null,
     val country: String = "",
     val countryError: String? = null,
-    val documentFrontUrl: String = "",
-    val documentBackUrl: String = "",
-    val selfieUrl: String = "",
+    val documentFront: KmpFile? = null,
+    val documentBack: KmpFile? = null,
+    val selfie: KmpFile? = null,
     val progress: Float? = null,
     val infoMsg: String? = null,
     val existing: KycResponse? = null
@@ -29,9 +30,9 @@ data class KycState(
             documentType = documentType,
             documentNumber = documentNumber,
             country = country,
-            documentFrontUrl = documentFrontUrl.ifBlank { null },
-            documentBackUrl = documentBackUrl.ifBlank { null },
-            selfieUrl = selfieUrl.ifBlank { null }
+            documentFront = documentFront?.toEncodedData(),
+            documentBack = documentBack?.toEncodedData(),
+            selfie = selfie?.toEncodedData()
         )
     }
 

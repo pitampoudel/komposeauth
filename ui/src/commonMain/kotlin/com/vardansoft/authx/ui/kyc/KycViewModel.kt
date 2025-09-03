@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.use_cases.ValidateNotBlank
+import com.vardansoft.core.data.download
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -52,16 +53,16 @@ class KycViewModel(
                     )
                 }
 
-                is KycEvent.DocumentFrontUrlChanged -> _state.update {
-                    it.copy(documentFrontUrl = event.value)
+                is KycEvent.DocumentFrontSelected -> _state.update {
+                    it.copy(documentFront = event.file)
                 }
 
-                is KycEvent.DocumentBackUrlChanged -> _state.update {
-                    it.copy(documentBackUrl = event.value)
+                is KycEvent.DocumentBackSelected -> _state.update {
+                    it.copy(documentBack = event.file)
                 }
 
-                is KycEvent.SelfieUrlChanged -> _state.update {
-                    it.copy(selfieUrl = event.value)
+                is KycEvent.SelfieSelected -> _state.update {
+                    it.copy(selfie = event.file)
                 }
 
                 is KycEvent.Submit -> submit()
@@ -81,6 +82,32 @@ class KycViewModel(
 
             res.isSuccess -> {
                 val current = res.getOrNull()
+                val documentFront = current?.documentFrontUrl?.let {
+                    download(url = it)
+                }
+                val documentBack = current?.documentBackUrl?.let {
+                    download(url = it)
+                }
+                val selfie = current?.selfieUrl?.let {
+                    download(url = it)
+                }
+
+                if (documentFront != null && documentFront.isFailure) {
+                    _state.update {
+                        it.copy(infoMsg = documentFront.exceptionOrNull()?.message)
+                    }
+                }
+                if (documentBack != null && documentBack.isFailure) {
+                    _state.update {
+                        it.copy(infoMsg = documentBack.exceptionOrNull()?.message)
+                    }
+                }
+                if (selfie != null && selfie.isFailure) {
+                    _state.update {
+                        it.copy(infoMsg = selfie.exceptionOrNull()?.message)
+                    }
+                }
+
                 _state.update { s ->
                     s.copy(
                         existing = current,
@@ -88,9 +115,9 @@ class KycViewModel(
                         documentType = current?.documentType ?: s.documentType,
                         documentNumber = current?.documentNumber ?: s.documentNumber,
                         country = current?.country ?: s.country,
-                        documentFrontUrl = current?.documentFrontUrl ?: s.documentFrontUrl,
-                        documentBackUrl = current?.documentBackUrl ?: s.documentBackUrl,
-                        selfieUrl = current?.selfieUrl ?: s.selfieUrl,
+                        documentFront = documentFront?.getOrNull() ?: s.documentFront,
+                        documentBack = documentBack?.getOrNull() ?: s.documentBack,
+                        selfie = selfie?.getOrNull() ?: s.selfie
                     )
                 }
             }
