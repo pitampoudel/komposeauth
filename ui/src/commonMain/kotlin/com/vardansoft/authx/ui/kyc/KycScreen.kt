@@ -23,42 +23,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.vardansoft.authx.ui.core.components.rememberFilePicker
+import com.vardansoft.authx.ui.core.components.FileInputField
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper
 import com.vardansoft.ui.generated.resources.Res
-import com.vardansoft.ui.generated.resources.change_file
-import com.vardansoft.ui.generated.resources.choose_file
 import com.vardansoft.ui.generated.resources.common_skip
-import com.vardansoft.ui.generated.resources.file_not_selected
-import com.vardansoft.ui.generated.resources.file_selected
-import com.vardansoft.ui.generated.resources.kyc_current_status
-import com.vardansoft.ui.generated.resources.kyc_provide_details
-import com.vardansoft.ui.generated.resources.kyc_remarks
-import com.vardansoft.ui.generated.resources.kyc_subtitle
-import com.vardansoft.ui.generated.resources.kyc_title
-import com.vardansoft.ui.generated.resources.kyc_full_name_label
-import com.vardansoft.ui.generated.resources.kyc_full_name_placeholder
-import com.vardansoft.ui.generated.resources.kyc_document_type_label
-import com.vardansoft.ui.generated.resources.kyc_document_type_placeholder
-import com.vardansoft.ui.generated.resources.kyc_document_number_label
-import com.vardansoft.ui.generated.resources.kyc_document_number_placeholder
 import com.vardansoft.ui.generated.resources.kyc_country_label
 import com.vardansoft.ui.generated.resources.kyc_country_placeholder
-import com.vardansoft.ui.generated.resources.kyc_documents_section_title
-import com.vardansoft.ui.generated.resources.kyc_document_front_title
-import com.vardansoft.ui.generated.resources.kyc_document_front_hint
-import com.vardansoft.ui.generated.resources.kyc_document_back_title
+import com.vardansoft.ui.generated.resources.kyc_current_status
 import com.vardansoft.ui.generated.resources.kyc_document_back_hint
-import com.vardansoft.ui.generated.resources.kyc_selfie_title
+import com.vardansoft.ui.generated.resources.kyc_document_back_title
+import com.vardansoft.ui.generated.resources.kyc_document_front_hint
+import com.vardansoft.ui.generated.resources.kyc_document_front_title
+import com.vardansoft.ui.generated.resources.kyc_document_number_label
+import com.vardansoft.ui.generated.resources.kyc_document_number_placeholder
+import com.vardansoft.ui.generated.resources.kyc_document_type_label
+import com.vardansoft.ui.generated.resources.kyc_document_type_placeholder
+import com.vardansoft.ui.generated.resources.kyc_documents_section_title
+import com.vardansoft.ui.generated.resources.kyc_full_name_label
+import com.vardansoft.ui.generated.resources.kyc_full_name_placeholder
+import com.vardansoft.ui.generated.resources.kyc_provide_details
+import com.vardansoft.ui.generated.resources.kyc_remarks
 import com.vardansoft.ui.generated.resources.kyc_selfie_hint
-import com.vardansoft.ui.generated.resources.kyc_file_selected
-import com.vardansoft.ui.generated.resources.kyc_file_not_selected
-import com.vardansoft.ui.generated.resources.kyc_change_file
-import com.vardansoft.ui.generated.resources.kyc_choose_file
-import com.vardansoft.ui.generated.resources.kyc_submit_progress
-import com.vardansoft.ui.generated.resources.kyc_submit_pending
-import com.vardansoft.ui.generated.resources.kyc_submit_approved
+import com.vardansoft.ui.generated.resources.kyc_selfie_title
 import com.vardansoft.ui.generated.resources.kyc_submit_action
+import com.vardansoft.ui.generated.resources.kyc_submit_approved
+import com.vardansoft.ui.generated.resources.kyc_submit_pending
+import com.vardansoft.ui.generated.resources.kyc_submit_progress
+import com.vardansoft.ui.generated.resources.kyc_subtitle
+import com.vardansoft.ui.generated.resources.kyc_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -105,19 +97,6 @@ private fun KycPage(
             }
         ) { innerPadding ->
             val enabled = !state.isApproved && !state.isPending && state.progress == null
-            val onPickFront = rememberFilePicker("image/*,application/pdf") {
-                onEvent(
-                    KycEvent.DocumentFrontSelected(it)
-                )
-            }
-            val onPickBack = rememberFilePicker("image/*,application/pdf") {
-                onEvent(
-                    KycEvent.DocumentBackSelected(it)
-                )
-            }
-            val onPickSelfie = rememberFilePicker("image/*") {
-                onEvent(KycEvent.SelfieSelected(it))
-            }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -245,28 +224,37 @@ private fun KycPage(
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        FileInput(
+                        FileInputField(
                             title = stringResource(Res.string.kyc_document_front_title),
                             hint = stringResource(Res.string.kyc_document_front_hint),
-                            hasFile = state.documentFront != null,
+                            mimeType = "image/*",
+                            file = state.documentFront,
                             enabled = enabled,
-                            onClick = { onPickFront.launch() }
-                        )
+                            onSelected = {
+                                onEvent(KycEvent.DocumentFrontSelected(it))
+                            })
 
-                        FileInput(
+                        FileInputField(
                             title = stringResource(Res.string.kyc_document_back_title),
                             hint = stringResource(Res.string.kyc_document_back_hint),
-                            hasFile = state.documentBack != null,
+                            mimeType = "image/*",
+                            file = state.documentBack,
                             enabled = enabled,
-                            onClick = { onPickBack.launch() }
+                            onSelected = {
+                                onEvent(KycEvent.DocumentBackSelected(it))
+                            }
                         )
 
-                        FileInput(
+                        FileInputField(
                             title = stringResource(Res.string.kyc_selfie_title),
                             hint = stringResource(Res.string.kyc_selfie_hint),
-                            hasFile = state.selfie != null,
+                            mimeType = "image/*",
+                            file = state.selfie,
                             enabled = enabled,
-                            onClick = { onPickSelfie.launch() }
+                            onSelected = {
+                                onEvent(KycEvent.SelfieSelected(it))
+                            }
+
                         )
                     }
                 }
@@ -286,41 +274,6 @@ private fun KycPage(
                 }
 
             }
-        }
-    }
-}
-
-
-@Composable
-private fun FileInput(
-    title: String,
-    hint: String,
-    hasFile: Boolean,
-    enabled: Boolean,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = hint,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = if (hasFile) stringResource(Res.string.file_selected) else stringResource(Res.string.file_not_selected),
-            style = MaterialTheme.typography.bodySmall,
-            color = if (hasFile) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        TextButton(onClick = onClick, enabled = enabled) {
-            Text(if (hasFile) stringResource(Res.string.change_file) else stringResource(Res.string.choose_file))
         }
     }
 }
