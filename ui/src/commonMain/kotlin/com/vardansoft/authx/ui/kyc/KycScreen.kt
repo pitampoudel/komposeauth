@@ -26,12 +26,39 @@ import androidx.compose.ui.unit.dp
 import com.vardansoft.authx.ui.core.components.rememberFilePicker
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper
 import com.vardansoft.ui.generated.resources.Res
+import com.vardansoft.ui.generated.resources.change_file
+import com.vardansoft.ui.generated.resources.choose_file
 import com.vardansoft.ui.generated.resources.common_skip
+import com.vardansoft.ui.generated.resources.file_not_selected
+import com.vardansoft.ui.generated.resources.file_selected
 import com.vardansoft.ui.generated.resources.kyc_current_status
 import com.vardansoft.ui.generated.resources.kyc_provide_details
 import com.vardansoft.ui.generated.resources.kyc_remarks
 import com.vardansoft.ui.generated.resources.kyc_subtitle
 import com.vardansoft.ui.generated.resources.kyc_title
+import com.vardansoft.ui.generated.resources.kyc_full_name_label
+import com.vardansoft.ui.generated.resources.kyc_full_name_placeholder
+import com.vardansoft.ui.generated.resources.kyc_document_type_label
+import com.vardansoft.ui.generated.resources.kyc_document_type_placeholder
+import com.vardansoft.ui.generated.resources.kyc_document_number_label
+import com.vardansoft.ui.generated.resources.kyc_document_number_placeholder
+import com.vardansoft.ui.generated.resources.kyc_country_label
+import com.vardansoft.ui.generated.resources.kyc_country_placeholder
+import com.vardansoft.ui.generated.resources.kyc_documents_section_title
+import com.vardansoft.ui.generated.resources.kyc_document_front_title
+import com.vardansoft.ui.generated.resources.kyc_document_front_hint
+import com.vardansoft.ui.generated.resources.kyc_document_back_title
+import com.vardansoft.ui.generated.resources.kyc_document_back_hint
+import com.vardansoft.ui.generated.resources.kyc_selfie_title
+import com.vardansoft.ui.generated.resources.kyc_selfie_hint
+import com.vardansoft.ui.generated.resources.kyc_file_selected
+import com.vardansoft.ui.generated.resources.kyc_file_not_selected
+import com.vardansoft.ui.generated.resources.kyc_change_file
+import com.vardansoft.ui.generated.resources.kyc_choose_file
+import com.vardansoft.ui.generated.resources.kyc_submit_progress
+import com.vardansoft.ui.generated.resources.kyc_submit_pending
+import com.vardansoft.ui.generated.resources.kyc_submit_approved
+import com.vardansoft.ui.generated.resources.kyc_submit_action
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -139,8 +166,8 @@ private fun KycPage(
                         onValueChange = { onEvent(KycEvent.FullNameChanged(it)) },
                         enabled = enabled,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Full name") },
-                        placeholder = { Text("Enter your full legal name") },
+                        label = { Text(stringResource(Res.string.kyc_full_name_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_full_name_placeholder)) },
                         isError = state.fullNameError != null,
                         singleLine = true,
                         supportingText = {
@@ -158,8 +185,8 @@ private fun KycPage(
                         onValueChange = { onEvent(KycEvent.DocumentTypeChanged(it)) },
                         enabled = enabled,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Document type") },
-                        placeholder = { Text("E.g., passport, driver license") },
+                        label = { Text(stringResource(Res.string.kyc_document_type_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_document_type_placeholder)) },
                         isError = state.documentTypeError != null,
                         singleLine = true,
                         supportingText = {
@@ -177,8 +204,8 @@ private fun KycPage(
                         onValueChange = { onEvent(KycEvent.DocumentNumberChanged(it)) },
                         enabled = enabled,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Document number") },
-                        placeholder = { Text("Enter your document number") },
+                        label = { Text(stringResource(Res.string.kyc_document_number_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_document_number_placeholder)) },
                         isError = state.documentNumberError != null,
                         singleLine = true,
                         supportingText = {
@@ -196,8 +223,8 @@ private fun KycPage(
                         onValueChange = { onEvent(KycEvent.CountryChanged(it)) },
                         enabled = enabled,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Country") },
-                        placeholder = { Text("Enter issuing country") },
+                        label = { Text(stringResource(Res.string.kyc_country_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_country_placeholder)) },
                         isError = state.countryError != null,
                         singleLine = true,
                         supportingText = {
@@ -213,30 +240,30 @@ private fun KycPage(
 
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Text(
-                            text = "Documents",
+                            text = stringResource(Res.string.kyc_documents_section_title),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
                         FileInput(
-                            title = "Document front",
-                            hint = "Upload the front side (JPG, PNG, PDF)",
+                            title = stringResource(Res.string.kyc_document_front_title),
+                            hint = stringResource(Res.string.kyc_document_front_hint),
                             hasFile = state.documentFront != null,
                             enabled = enabled,
                             onClick = { onPickFront.launch() }
                         )
 
                         FileInput(
-                            title = "Document back",
-                            hint = "Upload the back side (JPG, PNG, PDF)",
+                            title = stringResource(Res.string.kyc_document_back_title),
+                            hint = stringResource(Res.string.kyc_document_back_hint),
                             hasFile = state.documentBack != null,
                             enabled = enabled,
                             onClick = { onPickBack.launch() }
                         )
 
                         FileInput(
-                            title = "Selfie",
-                            hint = "Upload a selfie for verification",
+                            title = stringResource(Res.string.kyc_selfie_title),
+                            hint = stringResource(Res.string.kyc_selfie_hint),
                             hasFile = state.selfie != null,
                             enabled = enabled,
                             onClick = { onPickSelfie.launch() }
@@ -250,10 +277,10 @@ private fun KycPage(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     val label = when {
-                        state.progress != null -> "Submitting..."
-                        state.isPending -> "Submission pending review"
-                        state.isApproved -> "KYC approved"
-                        else -> "Submit for review"
+                        state.progress != null -> stringResource(Res.string.kyc_submit_progress)
+                        state.isPending -> stringResource(Res.string.kyc_submit_pending)
+                        state.isApproved -> stringResource(Res.string.kyc_submit_approved)
+                        else -> stringResource(Res.string.kyc_submit_action)
                     }
                     Text(label)
                 }
@@ -288,12 +315,12 @@ private fun FileInput(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = if (hasFile) "File selected" else "No file selected",
+            text = if (hasFile) stringResource(Res.string.file_selected) else stringResource(Res.string.file_not_selected),
             style = MaterialTheme.typography.bodySmall,
             color = if (hasFile) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
         )
         TextButton(onClick = onClick, enabled = enabled) {
-            Text(if (hasFile) "Change file" else "Choose file")
+            Text(if (hasFile) stringResource(Res.string.change_file) else stringResource(Res.string.choose_file))
         }
     }
 }

@@ -32,4 +32,19 @@
     <string name="kyc_selfie_placeholder">Link to a selfie for verification</string>
     <string name="kyc_submit">Submit for Review</string>
     <string name="kyc_submission_in_progress">Submission in progress or completed</string>
+    <string name="kyc_documents_section_title">Documents</string>
+    <string name="kyc_document_front_title">Document front</string>
+    <string name="kyc_document_front_hint">Upload the front side (JPG, PNG, PDF)</string>
+    <string name="kyc_document_back_title">Document back</string>
+    <string name="kyc_document_back_hint">Upload the back side (JPG, PNG, PDF)</string>
+    <string name="kyc_selfie_title">Selfie</string>
+    <string name="kyc_selfie_hint">Upload a selfie for verification</string>
+    <string name="file_selected">File selected</string>
+    <string name="file_not_selected">No file selected</string>
+    <string name="change_file">Change file</string>
+    <string name="choose_file">Choose file</string>
+    <string name="kyc_submit_progress">Submitting...</string>
+    <string name="kyc_submit_pending">Submission pending review</string>
+    <string name="kyc_submit_approved">KYC approved</string>
+    <string name="kyc_submit_action">Submit for review</string>
 </resources>

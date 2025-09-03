@@ -32,4 +32,19 @@
     <string name="kyc_selfie_placeholder">प्रमाणीकरणका लागि सेल्फीको लिङ्क</string>
     <string name="kyc_submit">समिक्षाका लागि बुझाउनुहोस्</string>
     <string name="kyc_submission_in_progress">बुझाउने प्रक्रिया जारी वा सम्पन्न भएको छ</string>
+    <string name="kyc_documents_section_title">कागजातहरू</string>
+    <string name="kyc_document_front_title">कागजात अगाडिल्लो भाग</string>
+    <string name="kyc_document_front_hint">अगाडिल्लो भाग अपलोड गर्नुहोस् (JPG, PNG, PDF)</string>
+    <string name="kyc_document_back_title">कागजात पछाडिल्लो भाग</string>
+    <string name="kyc_document_back_hint">पछाडिल्लो भाग अपलोड गर्नुहोस् (JPG, PNG, PDF)</string>
+    <string name="kyc_selfie_title">सेल्फी</string>
+    <string name="kyc_selfie_hint">प्रमाणीकरणका लागि सेल्फी अपलोड गर्नुहोस्</string>
+    <string name="file_selected">फाइल चयन गरियो</string>
+    <string name="file_not_selected">कुनै फाइल चयन गरिएको छैन</string>
+    <string name="change_file">फाइल परिवर्तन गर्नुहोस्</string>
+    <string name="choose_file">फाइल छान्नुहोस्</string>
+    <string name="kyc_submit_progress">बुझाउँदै...</string>
+    <string name="kyc_submit_pending">समिक्षा पर्खँदै</string>
+    <string name="kyc_submit_approved">केवाईसी स्वीकृत</string>
+    <string name="kyc_submit_action">समिक्षाका लागि बुझाउनुहोस्</string>
 </resources>
