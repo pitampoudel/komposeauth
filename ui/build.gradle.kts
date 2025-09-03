@@ -36,6 +36,10 @@ kotlin {
                 implementation(compose.materialIconsExtended)
                 implementation(compose.components.resources)
 
+                // Coil 3 (Multiplatform Compose image loading)
+                implementation(libs.coil3.compose)
+                implementation(libs.coil3.network.ktor3)
+
                 // Koin for Compose
                 implementation(project.dependencies.platform(libs.koin.bom))
                 implementation(libs.koin.compose)
