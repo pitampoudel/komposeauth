@@ -170,7 +170,7 @@ private fun KycPage(
                             onEvent(KycEvent.DocumentTypeChanged(documentType))
                         },
                         enabled = enabled,
-                        modifier = Modifier.fillMaxWidth(),
+                        textFieldModifier = Modifier.fillMaxWidth(),
                         label = { Text(stringResource(Res.string.kyc_document_type_label)) },
                         placeholder = { Text(stringResource(Res.string.kyc_document_type_placeholder)) },
                         isError = state.documentTypeError != null,
