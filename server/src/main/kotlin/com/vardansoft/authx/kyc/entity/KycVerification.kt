@@ -1,5 +1,6 @@
 package com.vardansoft.authx.kyc.entity
 
+import com.vardansoft.authx.data.DocumentType
 import com.vardansoft.authx.data.KycResponse
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.CreatedDate
@@ -16,7 +17,7 @@ data class KycVerification(
     @Id val id: ObjectId = ObjectId.get(),
     @Indexed(unique = true) val userId: ObjectId,
     val fullName: String,
-    val documentType: String,
+    val documentType: DocumentType,
     val documentNumber: String,
     val country: String,
     val status: KycResponse.Status = KycResponse.Status.PENDING,

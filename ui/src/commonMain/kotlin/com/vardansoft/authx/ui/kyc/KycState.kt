@@ -1,5 +1,6 @@
 package com.vardansoft.authx.ui.kyc
 
+import com.vardansoft.authx.data.DocumentType
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.UpdateKycRequest
 import com.vardansoft.core.domain.KmpFile
@@ -7,7 +8,7 @@ import com.vardansoft.core.domain.KmpFile
 data class KycState(
     val fullName: String = "",
     val fullNameError: String? = null,
-    val documentType: String = "",
+    val documentType: DocumentType? = null,
     val documentTypeError: String? = null,
     val documentNumber: String = "",
     val documentNumberError: String? = null,
@@ -27,7 +28,7 @@ data class KycState(
         require(!containsError()) { "Form contains errors" }
         return UpdateKycRequest(
             fullName = fullName,
-            documentType = documentType,
+            documentType = documentType!!,
             documentNumber = documentNumber,
             country = country,
             documentFront = documentFront?.toEncodedData(),

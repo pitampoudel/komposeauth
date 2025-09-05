@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UpdateKycRequest(
     val fullName: String,
-    val documentType: String,
+    val documentType: DocumentType,
     val documentNumber: String,
     val country: String,
     val documentFront: EncodedData? = null,

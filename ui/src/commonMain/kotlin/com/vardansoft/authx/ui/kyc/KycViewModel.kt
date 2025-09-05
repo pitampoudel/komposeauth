@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.use_cases.ValidateNotBlank
+import com.vardansoft.authx.domain.use_cases.ValidateNotNull
 import com.vardansoft.core.data.download
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,7 +13,8 @@ import kotlinx.coroutines.launch
 
 class KycViewModel(
     private val client: AuthXClient,
-    val validateNotBlank: ValidateNotBlank
+    val validateNotBlank: ValidateNotBlank,
+    val validateNotNull: ValidateNotNull
 ) : ViewModel() {
     private val _state = MutableStateFlow(KycState())
     val state = _state.asStateFlow()
@@ -131,7 +133,7 @@ class KycViewModel(
         _state.update { it.copy(progress = 0.0f) }
         val current = _state.value
         val fullNameErr = validateNotBlank(current.fullName).errorMessage()
-        val docTypeErr = validateNotBlank(current.documentType).errorMessage()
+        val docTypeErr = validateNotNull(current.documentType).errorMessage()
         val docNumberErr = validateNotBlank(current.documentNumber).errorMessage()
         val countryErr = validateNotBlank(current.country).errorMessage()
 

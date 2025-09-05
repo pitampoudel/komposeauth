@@ -7,7 +7,7 @@ data class KycResponse(
     val id: String,
     val userId: String,
     val fullName: String,
-    val documentType: String,
+    val documentType: DocumentType,
     val documentNumber: String,
     val country: String,
     val status: Status,

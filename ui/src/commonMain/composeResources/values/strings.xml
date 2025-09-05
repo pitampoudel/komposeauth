@@ -47,4 +47,7 @@
     <string name="kyc_submit_pending">Submission pending review</string>
     <string name="kyc_submit_approved">KYC approved</string>
     <string name="kyc_submit_action">Submit for review</string>
+    <string name="kyc_document_type_passport">Passport</string>
+    <string name="kyc_document_type_driver_license">Driver license</string>
+    <string name="kyc_document_type_national_id">National ID</string>
 </resources>

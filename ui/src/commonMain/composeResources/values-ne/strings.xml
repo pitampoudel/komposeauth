@@ -47,4 +47,7 @@
     <string name="kyc_submit_pending">समिक्षा पर्खँदै</string>
     <string name="kyc_submit_approved">केवाईसी स्वीकृत</string>
     <string name="kyc_submit_action">समिक्षाका लागि बुझाउनुहोस्</string>
+    <string name="kyc_document_type_passport">राहदानी</string>
+    <string name="kyc_document_type_driver_license">चालक अनुमतिपत्र</string>
+    <string name="kyc_document_type_national_id">राष्ट्रिय परिचयपत्र</string>
 </resources>

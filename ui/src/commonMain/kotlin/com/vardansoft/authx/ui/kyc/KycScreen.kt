@@ -23,7 +23,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vardansoft.authx.data.DocumentType
 import com.vardansoft.authx.ui.core.components.FileInputField
+import com.vardansoft.authx.ui.core.components.EnumField
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper
 import com.vardansoft.ui.generated.resources.Res
 import com.vardansoft.ui.generated.resources.common_skip
@@ -159,15 +161,20 @@ private fun KycPage(
                             }
                         }
                     )
-                    OutlinedTextField(
+                    EnumField(
                         value = state.documentType,
-                        onValueChange = { onEvent(KycEvent.DocumentTypeChanged(it)) },
+                        asString = {
+                            this?.let { stringResource(it.toStringRes()) }
+                        },
+                        onValueChange = { documentType ->
+                            onEvent(KycEvent.DocumentTypeChanged(documentType))
+                        },
                         enabled = enabled,
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text(stringResource(Res.string.kyc_document_type_label)) },
                         placeholder = { Text(stringResource(Res.string.kyc_document_type_placeholder)) },
                         isError = state.documentTypeError != null,
-                        singleLine = true,
+                        options = DocumentType.entries,
                         supportingText = {
                             state.documentTypeError?.let { err ->
                                 Text(
