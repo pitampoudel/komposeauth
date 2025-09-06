@@ -54,4 +54,7 @@
     <string name="kyc_personal_info_section_title">व्यक्तिगत जानकारी</string>
     <string name="kyc_document_details_section_title">कागजात विवरण</string>
     <string name="file_selected_size">फाइल चयन गरियो - %1$s KB</string>
+    <string name="kyc_status_approved">स्वीकृत</string>
+    <string name="kyc_status_pending">पेन्डिङ</string>
+    <string name="kyc_status_rejected">अस्वीकृत</string>
 </resources>

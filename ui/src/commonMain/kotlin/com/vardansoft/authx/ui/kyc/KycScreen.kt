@@ -2,8 +2,10 @@ package com.vardansoft.authx.ui.kyc
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -24,16 +26,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vardansoft.authx.data.DocumentType
-import com.vardansoft.authx.ui.core.components.FileInputField
 import com.vardansoft.authx.ui.core.components.EnumField
+import com.vardansoft.authx.ui.core.components.FileInputField
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper
 import com.vardansoft.ui.generated.resources.Res
 import com.vardansoft.ui.generated.resources.common_skip
 import com.vardansoft.ui.generated.resources.kyc_country_label
 import com.vardansoft.ui.generated.resources.kyc_country_placeholder
-import com.vardansoft.ui.generated.resources.kyc_current_status
 import com.vardansoft.ui.generated.resources.kyc_document_back_hint
 import com.vardansoft.ui.generated.resources.kyc_document_back_title
+import com.vardansoft.ui.generated.resources.kyc_document_details_section_title
 import com.vardansoft.ui.generated.resources.kyc_document_front_hint
 import com.vardansoft.ui.generated.resources.kyc_document_front_title
 import com.vardansoft.ui.generated.resources.kyc_document_number_label
@@ -43,8 +45,8 @@ import com.vardansoft.ui.generated.resources.kyc_document_type_placeholder
 import com.vardansoft.ui.generated.resources.kyc_documents_section_title
 import com.vardansoft.ui.generated.resources.kyc_full_name_label
 import com.vardansoft.ui.generated.resources.kyc_full_name_placeholder
+import com.vardansoft.ui.generated.resources.kyc_personal_info_section_title
 import com.vardansoft.ui.generated.resources.kyc_provide_details
-import com.vardansoft.ui.generated.resources.kyc_remarks
 import com.vardansoft.ui.generated.resources.kyc_selfie_hint
 import com.vardansoft.ui.generated.resources.kyc_selfie_title
 import com.vardansoft.ui.generated.resources.kyc_submit_action
@@ -89,12 +91,16 @@ private fun KycPage(
             topBar = {
                 TopAppBar(
                     actions = {
+
+
                         TextButton(onClick = onSkip) {
                             Text(stringResource(Res.string.common_skip))
                         }
                     },
 
-                    title = { Text(stringResource(Res.string.kyc_title)) }
+                    title = {
+                        Text(stringResource(Res.string.kyc_title))
+                    }
                 )
             }
         ) { innerPadding ->
@@ -105,7 +111,7 @@ private fun KycPage(
                     .padding(innerPadding)
                     .verticalScroll(rememberScrollState())
                     .imePadding()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
@@ -118,30 +124,17 @@ private fun KycPage(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
-                state.existing?.let { existing ->
-                    Column(
-                        Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            stringResource(Res.string.kyc_current_status, existing.status),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        existing.remarks?.let {
-                            Text(
-                                stringResource(Res.string.kyc_remarks, it),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
-
+                Spacer(Modifier.height(8.dp))
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    Text(
+                        text = stringResource(Res.string.kyc_personal_info_section_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
                     OutlinedTextField(
                         value = state.fullName,
                         onValueChange = { onEvent(KycEvent.FullNameChanged(it)) },
@@ -161,6 +154,40 @@ private fun KycPage(
                             }
                         }
                     )
+
+                    OutlinedTextField(
+                        value = state.country,
+                        onValueChange = { onEvent(KycEvent.CountryChanged(it)) },
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(Res.string.kyc_country_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_country_placeholder)) },
+                        isError = state.countryError != null,
+                        singleLine = true,
+                        supportingText = {
+                            state.countryError?.let { err ->
+                                Text(
+                                    text = err,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    )
+                }
+
+
+                Spacer(Modifier.height(8.dp))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(Res.string.kyc_document_details_section_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+
                     EnumField(
                         value = state.documentType,
                         asString = {
@@ -185,6 +212,7 @@ private fun KycPage(
                             }
                         }
                     )
+
                     OutlinedTextField(
                         value = state.documentNumber,
                         onValueChange = { onEvent(KycEvent.DocumentNumberChanged(it)) },
@@ -204,66 +232,51 @@ private fun KycPage(
                             }
                         }
                     )
-                    OutlinedTextField(
-                        value = state.country,
-                        onValueChange = { onEvent(KycEvent.CountryChanged(it)) },
+                }
+
+                Spacer(Modifier.height(8.dp))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(Res.string.kyc_documents_section_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+
+                    FileInputField(
+                        title = stringResource(Res.string.kyc_document_front_title),
+                        hint = stringResource(Res.string.kyc_document_front_hint),
+                        mimeType = "image/*",
+                        file = state.documentFront,
                         enabled = enabled,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.kyc_country_label)) },
-                        placeholder = { Text(stringResource(Res.string.kyc_country_placeholder)) },
-                        isError = state.countryError != null,
-                        singleLine = true,
-                        supportingText = {
-                            state.countryError?.let { err ->
-                                Text(
-                                    text = err,
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
+                        onSelected = {
+                            onEvent(KycEvent.DocumentFrontSelected(it))
                         }
                     )
 
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text(
-                            text = stringResource(Res.string.kyc_documents_section_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                    FileInputField(
+                        title = stringResource(Res.string.kyc_document_back_title),
+                        hint = stringResource(Res.string.kyc_document_back_hint),
+                        mimeType = "image/*",
+                        file = state.documentBack,
+                        enabled = enabled,
+                        onSelected = {
+                            onEvent(KycEvent.DocumentBackSelected(it))
+                        }
+                    )
 
-                        FileInputField(
-                            title = stringResource(Res.string.kyc_document_front_title),
-                            hint = stringResource(Res.string.kyc_document_front_hint),
-                            mimeType = "image/*",
-                            file = state.documentFront,
-                            enabled = enabled,
-                            onSelected = {
-                                onEvent(KycEvent.DocumentFrontSelected(it))
-                            })
-
-                        FileInputField(
-                            title = stringResource(Res.string.kyc_document_back_title),
-                            hint = stringResource(Res.string.kyc_document_back_hint),
-                            mimeType = "image/*",
-                            file = state.documentBack,
-                            enabled = enabled,
-                            onSelected = {
-                                onEvent(KycEvent.DocumentBackSelected(it))
-                            }
-                        )
-
-                        FileInputField(
-                            title = stringResource(Res.string.kyc_selfie_title),
-                            hint = stringResource(Res.string.kyc_selfie_hint),
-                            mimeType = "image/*",
-                            file = state.selfie,
-                            enabled = enabled,
-                            onSelected = {
-                                onEvent(KycEvent.SelfieSelected(it))
-                            }
-
-                        )
-                    }
+                    FileInputField(
+                        title = stringResource(Res.string.kyc_selfie_title),
+                        hint = stringResource(Res.string.kyc_selfie_hint),
+                        mimeType = "image/*",
+                        file = state.selfie,
+                        enabled = enabled,
+                        onSelected = {
+                            onEvent(KycEvent.SelfieSelected(it))
+                        }
+                    )
                 }
 
                 Button(
