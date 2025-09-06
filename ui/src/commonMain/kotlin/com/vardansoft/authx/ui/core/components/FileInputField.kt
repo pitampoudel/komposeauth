@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,8 +21,8 @@ import com.vardansoft.core.domain.KmpFile
 import com.vardansoft.ui.generated.resources.Res
 import com.vardansoft.ui.generated.resources.change_file
 import com.vardansoft.ui.generated.resources.choose_file
-import com.vardansoft.ui.generated.resources.file_selected
 import com.vardansoft.ui.generated.resources.file_not_selected
+import com.vardansoft.ui.generated.resources.file_selected
 import com.vardansoft.ui.generated.resources.file_selected_size
 import org.jetbrains.compose.resources.stringResource
 
@@ -37,8 +36,8 @@ fun FileInputField(
     enabled: Boolean,
     onSelected: (KmpFile?) -> Unit
 ) {
-    val launcher = rememberFilePicker(mimeType) { selectedFile ->
-        onSelected(selectedFile)
+    val launcher = rememberFilePicker(mimeType, SelectionMode.SINGLE) { selectedFiles ->
+        onSelected(selectedFiles.firstOrNull())
     }
 
     Card(modifier = Modifier.fillMaxWidth()) {

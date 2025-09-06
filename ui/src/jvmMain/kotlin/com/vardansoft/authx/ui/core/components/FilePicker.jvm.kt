@@ -11,7 +11,8 @@ import java.nio.file.Files
 @Composable
 actual fun rememberFilePicker(
     input: String,
-    onPicked: (KmpFile) -> Unit
+    selectionMode: SelectionMode,
+    onPicked: (List<KmpFile>) -> Unit
 ): FilePicker {
     return remember {
         object : FilePicker {
@@ -24,7 +25,7 @@ actual fun rememberFilePicker(
                     val f = File(dir, file)
                     val bytes = Files.readAllBytes(f.toPath())
                     val mime = Files.probeContentType(f.toPath())
-                    onPicked(KmpFile(bytes, mime))
+                    onPicked(listOf(KmpFile(bytes, mime)))
                 }
             }
         }

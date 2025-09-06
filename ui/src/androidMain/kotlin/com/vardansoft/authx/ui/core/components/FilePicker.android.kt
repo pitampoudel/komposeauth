@@ -10,24 +10,39 @@ import com.vardansoft.core.domain.KmpFile
 @Composable
 actual fun rememberFilePicker(
     input: String,
-    onPicked: (KmpFile) -> Unit
+    selectionMode: SelectionMode,
+    onPicked: (List<KmpFile>) -> Unit
 ): FilePicker {
     val context = LocalContext.current
-    val launcher = rememberLauncherForActivityResult(
+    val singleLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
             val mime = context.contentResolver.getType(uri)
             if (bytes != null) {
-                onPicked(KmpFile(bytes, mime))
+                onPicked(listOf(KmpFile(bytes, mime)))
             }
         }
+    }
+
+    val multipleLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetMultipleContents()
+    ) { uris ->
+        val files = uris.mapNotNull { uri ->
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            val mime = context.contentResolver.getType(uri)
+            if (bytes != null) KmpFile(bytes, mime) else null
+        }
+        onPicked(files)
     }
     return remember {
         object : FilePicker {
             override fun launch() {
-                launcher.launch(input)
+                when (selectionMode) {
+                    SelectionMode.SINGLE -> singleLauncher.launch(input)
+                    SelectionMode.MULTIPLE -> multipleLauncher.launch(input)
+                }
             }
         }
     }

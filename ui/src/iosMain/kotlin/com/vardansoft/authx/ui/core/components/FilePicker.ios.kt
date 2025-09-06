@@ -6,7 +6,8 @@ import com.vardansoft.core.domain.KmpFile
 @Composable
 actual fun rememberFilePicker(
     input: String,
-    onPicked: (KmpFile) -> Unit
+    selectionMode: SelectionMode,
+    onPicked: (List<KmpFile>) -> Unit
 ): FilePicker {
     TODO("Not yet implemented")
 }
