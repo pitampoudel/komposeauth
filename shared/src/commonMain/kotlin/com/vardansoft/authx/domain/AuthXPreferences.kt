@@ -5,7 +5,7 @@ import com.vardansoft.authx.data.UserInfoResponse
 import kotlinx.coroutines.flow.Flow
 
 interface AuthXPreferences {
-    val userInfoResponse: Flow<LazyState<UserInfoResponse>>
+    val userInfoResponse: Flow<UserInfoResponse?>
     suspend fun saveLoggedInDetails(
         token: OAuth2TokenData,
         userInfoResponse: UserInfoResponse
