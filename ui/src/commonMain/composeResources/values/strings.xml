@@ -50,4 +50,5 @@
     <string name="kyc_document_type_passport">Passport</string>
     <string name="kyc_document_type_driver_license">Driver license</string>
     <string name="kyc_document_type_national_id">National ID</string>
+    <string name="kyc_document_type_citizenship">Citizenship</string>
 </resources>

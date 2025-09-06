@@ -50,4 +50,5 @@
     <string name="kyc_document_type_passport">राहदानी</string>
     <string name="kyc_document_type_driver_license">चालक अनुमतिपत्र</string>
     <string name="kyc_document_type_national_id">राष्ट्रिय परिचयपत्र</string>
+    <string name="kyc_document_type_citizenship">नागरिकता</string>
 </resources>
