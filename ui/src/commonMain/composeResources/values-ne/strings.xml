@@ -51,4 +51,7 @@
     <string name="kyc_document_type_driver_license">चालक अनुमतिपत्र</string>
     <string name="kyc_document_type_national_id">राष्ट्रिय परिचयपत्र</string>
     <string name="kyc_document_type_citizenship">नागरिकता</string>
+    <string name="kyc_personal_info_section_title">व्यक्तिगत जानकारी</string>
+    <string name="kyc_document_details_section_title">कागजात विवरण</string>
+    <string name="file_selected_size">फाइल चयन गरियो - %1$s KB</string>
 </resources>

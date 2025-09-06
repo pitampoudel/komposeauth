@@ -51,4 +51,7 @@
     <string name="kyc_document_type_driver_license">Driver license</string>
     <string name="kyc_document_type_national_id">National ID</string>
     <string name="kyc_document_type_citizenship">Citizenship</string>
+    <string name="kyc_personal_info_section_title">Personal Information</string>
+    <string name="kyc_document_details_section_title">Document Details</string>
+    <string name="file_selected_size">File selected - %1$s KB</string>
 </resources>
