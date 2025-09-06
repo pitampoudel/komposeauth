@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.russhwolf.settings.Settings
 import com.vardansoft.authx.domain.AuthXPreferences
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 
@@ -30,16 +31,16 @@ class AuthXPreferencesImpl(
         }
     }
 
-    override val userInfoResponse: Flow<UserInfoResponse?> = dataStore.data.map {
-        it[KEYS.USER_INFO]?.let { string ->
+    override val userInfoResponse: Flow<UserInfoResponse?> = dataStore.data.map { preferences ->
+        preferences[KEYS.USER_INFO]?.let { string ->
             try {
-                Json.decodeFromString(string)
+                Json.decodeFromString<UserInfoResponse>(string)
             } catch (e: Exception) {
                 e.printStackTrace()
                 null
             }
         }
-    }
+    }.distinctUntilChanged()
 
 
     override suspend fun saveLoggedInDetails(
