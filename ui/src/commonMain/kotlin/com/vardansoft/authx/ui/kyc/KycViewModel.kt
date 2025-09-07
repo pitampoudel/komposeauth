@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 
 class KycViewModel(
     private val client: AuthXClient,
@@ -52,6 +53,27 @@ class KycViewModel(
                     it.copy(
                         country = event.value,
                         countryError = null
+                    )
+                }
+
+                is KycEvent.DocumentIssuedDateChanged -> _state.update {
+                    it.copy(
+                        documentIssuedDate = event.value,
+                        documentIssuedDateError = null
+                    )
+                }
+
+                is KycEvent.DocumentExpiryDateChanged -> _state.update {
+                    it.copy(
+                        documentExpiryDate = event.value,
+                        documentExpiryDateError = null
+                    )
+                }
+
+                is KycEvent.DocumentIssuedPlaceChanged -> _state.update {
+                    it.copy(
+                        documentIssuedPlace = event.value,
+                        documentIssuedPlaceError = null
                     )
                 }
 
@@ -117,6 +139,9 @@ class KycViewModel(
                         documentType = current?.documentType ?: s.documentType,
                         documentNumber = current?.documentNumber ?: s.documentNumber,
                         country = current?.country ?: s.country,
+                        documentIssuedDate = current?.documentIssuedDate ?: s.documentIssuedDate,
+                        documentExpiryDate = current?.documentExpiryDate ?: s.documentExpiryDate,
+                        documentIssuedPlace = current?.documentIssuedPlace ?: s.documentIssuedPlace,
                         documentFront = documentFront?.getOrNull() ?: s.documentFront,
                         documentBack = documentBack?.getOrNull() ?: s.documentBack,
                         selfie = selfie?.getOrNull() ?: s.selfie
@@ -136,13 +161,19 @@ class KycViewModel(
         val docTypeErr = validateNotNull(current.documentType).errorMessage()
         val docNumberErr = validateNotBlank(current.documentNumber).errorMessage()
         val countryErr = validateNotBlank(current.country).errorMessage()
+        val documentIssuedDateErr = validateNotNull(current.documentIssuedDate).errorMessage()
+        val documentExpiryDateErr = validateNotNull(current.documentExpiryDate).errorMessage()
+        val documentIssuedPlaceErr = validateNotBlank(current.documentIssuedPlace).errorMessage()
 
         _state.update {
             it.copy(
                 fullNameError = fullNameErr,
                 documentTypeError = docTypeErr,
                 documentNumberError = docNumberErr,
-                countryError = countryErr
+                countryError = countryErr,
+                documentIssuedDateError = documentIssuedDateErr,
+                documentExpiryDateError = documentExpiryDateErr,
+                documentIssuedPlaceError = documentIssuedPlaceErr
             )
         }
 

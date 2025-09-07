@@ -4,6 +4,7 @@ import com.vardansoft.authx.data.DocumentType
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.UpdateKycRequest
 import com.vardansoft.core.domain.KmpFile
+import kotlinx.datetime.LocalDate
 
 data class KycState(
     val fullName: String = "",
@@ -14,6 +15,12 @@ data class KycState(
     val documentNumberError: String? = null,
     val country: String = "",
     val countryError: String? = null,
+    val documentIssuedDate: LocalDate? = null,
+    val documentIssuedDateError: String? = null,
+    val documentExpiryDate: LocalDate? = null,
+    val documentExpiryDateError: String? = null,
+    val documentIssuedPlace: String = "",
+    val documentIssuedPlaceError: String? = null,
     val documentFront: KmpFile? = null,
     val documentBack: KmpFile? = null,
     val selfie: KmpFile? = null,
@@ -23,6 +30,7 @@ data class KycState(
 ) {
     fun containsError() = fullNameError != null || documentTypeError != null
             || documentNumberError != null || countryError != null
+            || documentIssuedDateError != null || documentExpiryDateError != null || documentIssuedPlaceError != null
 
     fun updateKycRequest(): UpdateKycRequest {
         require(!containsError()) { "Form contains errors" }
@@ -31,6 +39,9 @@ data class KycState(
             documentType = documentType!!,
             documentNumber = documentNumber,
             country = country,
+            documentIssuedDate = documentIssuedDate!!,
+            documentExpiryDate = documentExpiryDate!!,
+            documentIssuedPlace = documentIssuedPlace,
             documentFront = documentFront?.toEncodedData(),
             documentBack = documentBack?.toEncodedData(),
             selfie = selfie?.toEncodedData()
