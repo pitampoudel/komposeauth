@@ -53,8 +53,14 @@
     <string name="kyc_document_type_citizenship">Citizenship</string>
     <string name="kyc_personal_info_section_title">Personal Information</string>
     <string name="kyc_document_details_section_title">Document Details</string>
+    <string name="kyc_document_issue_date_label">Document Issue Date</string>
+    <string name="kyc_document_expiry_date_label">Document Expiry Date</string>
+    <string name="kyc_document_issued_place_label">Document Issued Place</string>
+    <string name="kyc_document_issued_place_placeholder">Enter document issued place</string>
     <string name="file_selected_size">File selected - %1$s KB</string>
     <string name="kyc_status_approved">Approved</string>
     <string name="kyc_status_pending">Pending</string>
     <string name="kyc_status_rejected">Rejected</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 </resources>

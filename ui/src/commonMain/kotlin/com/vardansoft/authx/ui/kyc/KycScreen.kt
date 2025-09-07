@@ -26,8 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vardansoft.authx.data.DocumentType
+import com.vardansoft.authx.ui.core.components.DateTimeField
+import com.vardansoft.authx.ui.core.components.DateTimeFieldType
 import com.vardansoft.authx.ui.core.components.EnumField
 import com.vardansoft.authx.ui.core.components.FileInputField
+import com.vardansoft.authx.ui.core.toSystemLocalDate
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper
 import com.vardansoft.ui.generated.resources.Res
 import com.vardansoft.ui.generated.resources.common_skip
@@ -36,7 +39,11 @@ import com.vardansoft.ui.generated.resources.kyc_country_placeholder
 import com.vardansoft.ui.generated.resources.kyc_document_back_hint
 import com.vardansoft.ui.generated.resources.kyc_document_back_title
 import com.vardansoft.ui.generated.resources.kyc_document_details_section_title
+import com.vardansoft.ui.generated.resources.kyc_document_expiry_date_label
 import com.vardansoft.ui.generated.resources.kyc_document_front_hint
+import com.vardansoft.ui.generated.resources.kyc_document_issue_date_label
+import com.vardansoft.ui.generated.resources.kyc_document_issued_place_label
+import com.vardansoft.ui.generated.resources.kyc_document_issued_place_placeholder
 import com.vardansoft.ui.generated.resources.kyc_document_front_title
 import com.vardansoft.ui.generated.resources.kyc_document_number_label
 import com.vardansoft.ui.generated.resources.kyc_document_number_placeholder
@@ -55,6 +62,8 @@ import com.vardansoft.ui.generated.resources.kyc_submit_pending
 import com.vardansoft.ui.generated.resources.kyc_submit_progress
 import com.vardansoft.ui.generated.resources.kyc_subtitle
 import com.vardansoft.ui.generated.resources.kyc_title
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -224,6 +233,76 @@ private fun KycPage(
                         singleLine = true,
                         supportingText = {
                             state.documentNumberError?.let { err ->
+                                Text(
+                                    text = err,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    )
+
+                    DateTimeField(
+                        value = state.documentIssuedDate?.atStartOfDayIn(TimeZone.currentSystemDefault()),
+                        onValueChange = { instant ->
+                            onEvent(
+                                KycEvent.DocumentIssuedDateChanged(
+                                    instant?.toSystemLocalDate()
+                                )
+                            )
+                        },
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(Res.string.kyc_document_issue_date_label)) },
+                        type = DateTimeFieldType.DATE,
+                        isError = state.documentIssuedDateError != null,
+                        supportingText = {
+                            state.documentIssuedDateError?.let { err ->
+                                Text(
+                                    text = err,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    )
+
+                    DateTimeField(
+                        value = state.documentExpiryDate?.atStartOfDayIn(TimeZone.currentSystemDefault()),
+                        onValueChange = { instant ->
+                            onEvent(
+                                KycEvent.DocumentExpiryDateChanged(
+                                    instant?.toSystemLocalDate()
+                                )
+                            )
+                        },
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(Res.string.kyc_document_expiry_date_label)) },
+                        type = DateTimeFieldType.DATE,
+                        isError = state.documentExpiryDateError != null,
+                        supportingText = {
+                            state.documentExpiryDateError?.let { err ->
+                                Text(
+                                    text = err,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    )
+
+                    OutlinedTextField(
+                        value = state.documentIssuedPlace,
+                        onValueChange = { onEvent(KycEvent.DocumentIssuedPlaceChanged(it)) },
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(Res.string.kyc_document_issued_place_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_document_issued_place_placeholder)) },
+                        isError = state.documentIssuedPlaceError != null,
+                        singleLine = true,
+                        supportingText = {
+                            state.documentIssuedPlaceError?.let { err ->
                                 Text(
                                     text = err,
                                     color = MaterialTheme.colorScheme.error,
