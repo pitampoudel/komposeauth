@@ -10,14 +10,14 @@ import com.vardansoft.authx.domain.AuthXPreferences
 import kotlinx.coroutines.flow.map
 import org.koin.compose.koinInject
 
-val LocalUserInfoResponseState = compositionLocalOf<LazyState<UserInfoResponse>> {
+val LocalUserState = compositionLocalOf<LazyState<UserInfoResponse>> {
     LazyState.Loading
 }
 
 @Composable
-fun ProvideUserInfo(content: @Composable () -> Unit) {
+fun ProvideAuthX(content: @Composable () -> Unit) {
     CompositionLocalProvider(
-        value = LocalUserInfoResponseState provides koinInject<AuthXPreferences>().userInfoResponse.map {
+        value = LocalUserState provides koinInject<AuthXPreferences>().userInfoResponse.map {
             LazyState.Loaded(it)
         }.collectAsStateWithLifecycle(LazyState.Loading).value,
         content = content
