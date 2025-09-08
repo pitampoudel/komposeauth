@@ -63,4 +63,26 @@
     <string name="kyc_status_rejected">Rejected</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="sign_in_to_continue">Sign in to continue</string>
+    <string name="label_first_name">First Name</string>
+    <string name="label_last_name">Last Name</string>
+    <string name="label_email">Email</string>
+    <string name="label_password">Password</string>
+    <string name="label_phone_number">Phone Number</string>
+    <string name="label_confirm_password">Confirm Password</string>
+    <string name="dont_know_password_what">Don\'t know password?</string>
+    <string name="title_reset_password">Reset Password</string>
+    <string name="button_email_sign_in">Sign In with Email</string>
+    <string name="or">Or</string>
+    <string name="dont_have_account_">Don\'t have an account?</string>
+    <string name="button_sign_in">Sign in</string>
+    <string name="welcome_back">Welcome back!</string>
+    <string name="sign_in_to_access">Sign in to access your account</string>
+    <string name="sign_in_security_note">Secure authentication with Google</string>
+    <string name="sign_in_terms_and_conditions">By signing in, you agree to our Terms of Service and
+        Privacy Policy
+    </string>
+    <string name="button_signup">Create New Account</string>
+    <string name="title_signup">Signup</string>
+    <string name="button_reset">Reset</string>
 </resources>
