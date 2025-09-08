@@ -21,7 +21,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import com.vardansoft.authx.ui.core.asDisplayDate
 import com.vardansoft.authx.ui.core.asDisplayDateTime
+import com.vardansoft.authx.ui.core.asDisplayTime
 import com.vardansoft.authx.ui.core.toSystemLocalDateTime
 import com.vardansoft.ui.generated.resources.Res
 import com.vardansoft.ui.generated.resources.cancel
@@ -142,7 +144,11 @@ fun DateTimeField(
         },
         enabled = enabled,
         isError = isError,
-        value = valueAsLocalDateTime?.asDisplayDateTime().orEmpty(),
+        value = when (type) {
+            DateTimeFieldType.DATE -> valueAsLocalDateTime?.date?.asDisplayDate().orEmpty()
+            DateTimeFieldType.TIME -> valueAsLocalDateTime?.time?.asDisplayTime().orEmpty()
+            DateTimeFieldType.DATE_AND_TIME -> valueAsLocalDateTime?.asDisplayDateTime().orEmpty()
+        },
         onValueChange = {},
         readOnly = true,
         label = label,
