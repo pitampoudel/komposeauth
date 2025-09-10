@@ -17,25 +17,44 @@ import java.time.Instant
 data class KycVerification(
     @Id val id: ObjectId = ObjectId.get(),
     @Indexed(unique = true) val userId: ObjectId,
+    // PERSONAL
     val nationality: String,
     val firstName: String,
     val middleName: String?,
     val lastName: String,
     val dateOfBirth: LocalDate,
     val gender: KycResponse.Gender,
+    // FAMILY
     val fatherName: String,
     val motherName: String,
     val maritalStatus: KycResponse.MaritalStatus,
+    // DOCUMENT
     val documentType: DocumentType,
     val documentNumber: String,
     val documentIssuedDate: LocalDate,
     val documentExpiryDate: LocalDate,
     val documentIssuedPlace: String,
+    val documentFrontUrl: String,
+    val documentBackUrl: String,
+    val selfieUrl: String,
+    // ADDRESS
+    // PERMANENT
+    val permanentAddressTole: String,
+    val permanentAddressWardNo: String,
+    val permanentAddressLocalUnit: String,
+    val permanentAddressDistrict: String,
+    val permanentAddressProvince: String,
+    val permanentAddressCountry: String,
+    // CURRENT
+    val currentAddressTole: String,
+    val currentAddressWardNo: String,
+    val currentAddressLocalUnit: String,
+    val currentAddressDistrict: String,
+    val currentAddressProvince: String,
+    val currentAddressCountry: String,
+    // OTHER
     val status: KycResponse.Status = KycResponse.Status.PENDING,
     val remarks: String? = null,
-    val documentFrontUrl: String? = null,
-    val documentBackUrl: String? = null,
-    val selfieUrl: String? = null,
     @CreatedDate val createdAt: Instant = Instant.now(),
     @LastModifiedDate val updatedAt: Instant = Instant.now()
 )

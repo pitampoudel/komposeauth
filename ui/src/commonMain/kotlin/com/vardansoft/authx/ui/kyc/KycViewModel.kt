@@ -29,114 +29,283 @@ class KycViewModel(
 
                 is KycEvent.NationalityChanged -> _state.update {
                     it.copy(
-                        nationality = event.value,
-                        nationalityError = null
+                        personalInfo = it.personalInfo.copy(
+                            nationality = event.value,
+                            nationalityError = null
+                        )
                     )
                 }
 
                 is KycEvent.FirstNameChanged -> _state.update {
                     it.copy(
-                        firstName = event.value,
-                        firstNameError = null
+                        personalInfo = it.personalInfo.copy(
+                            firstName = event.value,
+                            firstNameError = null
+                        )
                     )
                 }
 
                 is KycEvent.MiddleNameChanged -> _state.update {
                     it.copy(
-                        middleName = event.value,
-                        middleNameError = null
+                        personalInfo = it.personalInfo.copy(
+                            middleName = event.value,
+                            middleNameError = null
+                        )
                     )
                 }
 
                 is KycEvent.LastNameChanged -> _state.update {
                     it.copy(
-                        lastName = event.value,
-                        lastNameError = null
+                        personalInfo = it.personalInfo.copy(
+                            lastName = event.value,
+                            lastNameError = null
+                        )
                     )
                 }
 
                 is KycEvent.DateOfBirthChanged -> _state.update {
                     it.copy(
-                        dateOfBirth = event.value,
-                        dateOfBirthError = null
+                        personalInfo = it.personalInfo.copy(
+                            dateOfBirth = event.value,
+                            dateOfBirthError = null
+                        )
                     )
                 }
 
                 is KycEvent.GenderChanged -> _state.update {
                     it.copy(
-                        gender = event.value,
-                        genderError = null
+                        personalInfo = it.personalInfo.copy(
+                            gender = event.value,
+                            genderError = null
+                        )
                     )
                 }
 
                 is KycEvent.FatherNameChanged -> _state.update {
                     it.copy(
-                        fatherName = event.value,
-                        fatherNameError = null
+                        familyInfo = it.familyInfo.copy(
+                            fatherName = event.value,
+                            fatherNameError = null
+                        )
                     )
                 }
 
                 is KycEvent.MotherNameChanged -> _state.update {
                     it.copy(
-                        motherName = event.value,
-                        motherNameError = null
+                        familyInfo = it.familyInfo.copy(
+                            motherName = event.value,
+                            motherNameError = null
+                        )
                     )
                 }
 
                 is KycEvent.MaritalStatusChanged -> _state.update {
                     it.copy(
-                        maritalStatus = event.value,
-                        maritalStatusError = null
+                        familyInfo = it.familyInfo.copy(
+                            maritalStatus = event.value,
+                            maritalStatusError = null
+                        )
                     )
                 }
 
+                // Current Address Events
+                is KycEvent.CurrentAddressCountryChanged -> _state.update { s ->
+                    s.copy(
+                        currentAddress = s.currentAddress.copy(
+                            country = event.value,
+                            countryError = null
+                        )
+                    )
+                }
+
+                is KycEvent.CurrentAddressProvinceChanged -> _state.update { s ->
+                    s.copy(
+                        currentAddress = s.currentAddress.copy(
+                            province = event.value,
+                            provinceError = null
+                        )
+                    )
+                }
+
+                is KycEvent.CurrentAddressDistrictChanged -> _state.update { s ->
+                    s.copy(
+                        currentAddress = s.currentAddress.copy(
+                            district = event.value,
+                            districtError = null
+                        )
+                    )
+                }
+
+                is KycEvent.CurrentAddressLocalUnitChanged -> _state.update { s ->
+                    s.copy(
+                        currentAddress = s.currentAddress.copy(
+                            localUnit = event.value,
+                            localUnitError = null
+                        )
+                    )
+                }
+
+                is KycEvent.CurrentAddressWardNoChanged -> _state.update { s ->
+                    s.copy(
+                        currentAddress = s.currentAddress.copy(
+                            wardNo = event.value,
+                            wardNoError = null
+                        )
+                    )
+                }
+
+                is KycEvent.CurrentAddressToleChanged -> _state.update { s ->
+                    s.copy(
+                        currentAddress = s.currentAddress.copy(
+                            tole = event.value,
+                            toleError = null
+                        )
+                    )
+                }
+
+                // Permanent Address Events
+                is KycEvent.PermanentAddressCountryChanged -> _state.update { s ->
+                    s.copy(
+                        permanentAddress = s.permanentAddress.copy(
+                            country = event.value,
+                            countryError = null
+                        )
+                    )
+                }
+
+                is KycEvent.PermanentAddressProvinceChanged -> _state.update { s ->
+                    s.copy(
+                        permanentAddress = s.permanentAddress.copy(
+                            province = event.value,
+                            provinceError = null
+                        )
+                    )
+                }
+
+                is KycEvent.PermanentAddressDistrictChanged -> _state.update { s ->
+                    s.copy(
+                        permanentAddress = s.permanentAddress.copy(
+                            district = event.value,
+                            districtError = null
+                        )
+                    )
+                }
+
+                is KycEvent.PermanentAddressLocalUnitChanged -> _state.update { s ->
+                    s.copy(
+                        permanentAddress = s.permanentAddress.copy(
+                            localUnit = event.value,
+                            localUnitError = null
+                        )
+                    )
+                }
+
+                is KycEvent.PermanentAddressWardNoChanged -> _state.update { s ->
+                    s.copy(
+                        permanentAddress = s.permanentAddress.copy(
+                            wardNo = event.value,
+                            wardNoError = null
+                        )
+                    )
+                }
+
+                is KycEvent.PermanentAddressToleChanged -> _state.update { s ->
+                    s.copy(
+                        permanentAddress = s.permanentAddress.copy(
+                            tole = event.value,
+                            toleError = null
+                        )
+                    )
+                }
+
+                is KycEvent.CurrentAddressSameAsPermanentChanged -> _state.update { s ->
+                    val newState = s.copy(currentAddressSameAsPermanent = event.value)
+                    if (event.value) {
+                        newState.copy(
+                            currentAddress = s.currentAddress.copy(
+                                countryError = null,
+                                provinceError = null,
+                                districtError = null,
+                                localUnitError = null,
+                                wardNoError = null,
+                                toleError = null
+                            )
+                        )
+                    } else {
+                        newState
+                    }
+                }
 
                 is KycEvent.DocumentTypeChanged -> _state.update {
                     it.copy(
-                        documentType = event.value,
-                        documentTypeError = null
+                        documentInfo = it.documentInfo.copy(
+                            documentType = event.value,
+                            documentTypeError = null
+                        )
                     )
                 }
 
                 is KycEvent.DocumentNumberChanged -> _state.update {
                     it.copy(
-                        documentNumber = event.value,
-                        documentNumberError = null
+                        documentInfo = it.documentInfo.copy(
+                            documentNumber = event.value,
+                            documentNumberError = null
+                        )
                     )
                 }
 
-
                 is KycEvent.DocumentIssuedDateChanged -> _state.update {
                     it.copy(
-                        documentIssuedDate = event.value,
-                        documentIssuedDateError = null
+                        documentInfo = it.documentInfo.copy(
+                            documentIssuedDate = event.value,
+                            documentIssuedDateError = null
+                        )
                     )
                 }
 
                 is KycEvent.DocumentExpiryDateChanged -> _state.update {
                     it.copy(
-                        documentExpiryDate = event.value,
-                        documentExpiryDateError = null
+                        documentInfo = it.documentInfo.copy(
+                            documentExpiryDate = event.value,
+                            documentExpiryDateError = null
+                        )
                     )
                 }
 
                 is KycEvent.DocumentIssuedPlaceChanged -> _state.update {
                     it.copy(
-                        documentIssuedPlace = event.value,
-                        documentIssuedPlaceError = null
+                        documentInfo = it.documentInfo.copy(
+                            documentIssuedPlace = event.value,
+                            documentIssuedPlaceError = null
+                        )
                     )
                 }
 
                 is KycEvent.DocumentFrontSelected -> _state.update {
-                    it.copy(documentFront = event.file)
+                    it.copy(
+                        documentInfo = it.documentInfo.copy(
+                            documentFront = event.file,
+                            documentFrontError = null
+                        )
+                    )
                 }
 
                 is KycEvent.DocumentBackSelected -> _state.update {
-                    it.copy(documentBack = event.file)
+                    it.copy(
+                        documentInfo = it.documentInfo.copy(
+                            documentBack = event.file,
+                            documentBackError = null
+                        )
+                    )
                 }
 
                 is KycEvent.SelfieSelected -> _state.update {
-                    it.copy(selfie = event.file)
+                    it.copy(
+                        documentInfo = it.documentInfo.copy(
+                            selfie = event.file,
+                            selfieError = null
+                        )
+                    )
                 }
 
                 is KycEvent.Submit -> submit()
@@ -156,13 +325,13 @@ class KycViewModel(
 
             res.isSuccess -> {
                 val current = res.getOrNull()
-                val documentFront = current?.documentFrontUrl?.let {
+                val documentFront = current?.documentInformation?.documentFrontUrl?.let {
                     download(url = it)
                 }
-                val documentBack = current?.documentBackUrl?.let {
+                val documentBack = current?.documentInformation?.documentBackUrl?.let {
                     download(url = it)
                 }
-                val selfie = current?.selfieUrl?.let {
+                val selfie = current?.documentInformation?.selfieUrl?.let {
                     download(url = it)
                 }
 
@@ -185,23 +354,49 @@ class KycViewModel(
                 _state.update { s ->
                     s.copy(
                         existing = current,
-                        nationality = current?.nationality ?: s.nationality,
-                        firstName = current?.firstName ?: s.firstName,
-                        middleName = current?.middleName ?: s.middleName,
-                        lastName = current?.lastName ?: s.lastName,
-                        dateOfBirth = current?.dateOfBirth ?: s.dateOfBirth,
-                        gender = current?.gender ?: s.gender,
-                        fatherName = current?.fatherName ?: s.fatherName,
-                        motherName = current?.motherName ?: s.motherName,
-                        maritalStatus = current?.maritalStatus ?: s.maritalStatus,
-                        documentType = current?.documentType ?: s.documentType,
-                        documentNumber = current?.documentNumber ?: s.documentNumber,
-                        documentIssuedDate = current?.documentIssuedDate ?: s.documentIssuedDate,
-                        documentExpiryDate = current?.documentExpiryDate ?: s.documentExpiryDate,
-                        documentIssuedPlace = current?.documentIssuedPlace ?: s.documentIssuedPlace,
-                        documentFront = documentFront?.getOrNull() ?: s.documentFront,
-                        documentBack = documentBack?.getOrNull() ?: s.documentBack,
-                        selfie = selfie?.getOrNull() ?: s.selfie
+                        personalInfo = s.personalInfo.copy(
+                            nationality = current?.personalInformation?.nationality
+                                ?: s.personalInfo.nationality,
+                            firstName = current?.personalInformation?.firstName
+                                ?: s.personalInfo.firstName,
+                            middleName = current?.personalInformation?.middleName
+                                ?: s.personalInfo.middleName,
+                            lastName = current?.personalInformation?.lastName
+                                ?: s.personalInfo.lastName,
+                            dateOfBirth = current?.personalInformation?.dateOfBirth
+                                ?: s.personalInfo.dateOfBirth,
+                            gender = current?.personalInformation?.gender ?: s.personalInfo.gender
+                        ),
+                        familyInfo = s.familyInfo.copy(
+                            fatherName = current?.familyInformation?.fatherName
+                                ?: s.familyInfo.fatherName,
+                            motherName = current?.familyInformation?.motherName
+                                ?: s.familyInfo.motherName,
+                            maritalStatus = current?.familyInformation?.maritalStatus
+                                ?: s.familyInfo.maritalStatus
+                        ),
+                        currentAddress = current?.currentAddress?.let {
+                            AddressState.fromData(it)
+                        } ?: s.currentAddress,
+                        permanentAddress = current?.permanentAddress?.let {
+                            AddressState.fromData(it)
+                        } ?: s.permanentAddress,
+                        documentInfo = s.documentInfo.copy(
+                            documentType = current?.documentInformation?.documentType
+                                ?: s.documentInfo.documentType,
+                            documentNumber = current?.documentInformation?.documentNumber
+                                ?: s.documentInfo.documentNumber,
+                            documentIssuedDate = current?.documentInformation?.documentIssuedDate
+                                ?: s.documentInfo.documentIssuedDate,
+                            documentExpiryDate = current?.documentInformation?.documentExpiryDate
+                                ?: s.documentInfo.documentExpiryDate,
+                            documentIssuedPlace = current?.documentInformation?.documentIssuedPlace
+                                ?: s.documentInfo.documentIssuedPlace,
+                            documentFront = documentFront?.getOrNull()
+                                ?: s.documentInfo.documentFront,
+                            documentBack = documentBack?.getOrNull() ?: s.documentInfo.documentBack,
+                            selfie = selfie?.getOrNull() ?: s.documentInfo.selfie
+                        )
                     )
                 }
             }
@@ -213,36 +408,99 @@ class KycViewModel(
 
     private suspend fun submit() {
         _state.update { it.copy(progress = 0.0f) }
-        val current = _state.value
-        val nationalityErr = validateNotBlank(current.nationality).errorMessage()
-        val firstNameErr = validateNotBlank(current.firstName).errorMessage()
-        val lastNameErr = validateNotBlank(current.lastName).errorMessage()
-        val dateOfBirthErr = validateNotNull(current.dateOfBirth).errorMessage()
-        val genderErr = validateNotNull(current.gender).errorMessage()
-        val fatherNameErr = validateNotBlank(current.fatherName).errorMessage()
-        val motherNameErr = validateNotBlank(current.motherName).errorMessage()
-        val maritalStatusErr = validateNotNull(current.maritalStatus).errorMessage()
-        val docTypeErr = validateNotNull(current.documentType).errorMessage()
-        val docNumberErr = validateNotBlank(current.documentNumber).errorMessage()
-        val documentIssuedDateErr = validateNotNull(current.documentIssuedDate).errorMessage()
-        val documentExpiryDateErr = validateNotNull(current.documentExpiryDate).errorMessage()
-        val documentIssuedPlaceErr = validateNotBlank(current.documentIssuedPlace).errorMessage()
 
-        _state.update {
-            it.copy(
-                nationalityError = nationalityErr,
-                firstNameError = firstNameErr,
-                lastNameError = lastNameErr,
-                dateOfBirthError = dateOfBirthErr,
-                genderError = genderErr,
-                fatherNameError = fatherNameErr,
-                motherNameError = motherNameErr,
-                maritalStatusError = maritalStatusErr,
-                documentTypeError = docTypeErr,
-                documentNumberError = docNumberErr,
-                documentIssuedDateError = documentIssuedDateErr,
-                documentExpiryDateError = documentExpiryDateErr,
-                documentIssuedPlaceError = documentIssuedPlaceErr
+        // Validate personal info
+        val nationalityValidation = validateNotBlank(_state.value.personalInfo.nationality)
+        val firstNameValidation = validateNotBlank(_state.value.personalInfo.firstName)
+        val lastNameValidation = validateNotBlank(_state.value.personalInfo.lastName)
+        val dateOfBirthValidation = validateNotNull(_state.value.personalInfo.dateOfBirth)
+        val genderValidation = validateNotNull(_state.value.personalInfo.gender)
+
+        // Validate family info
+        val fatherNameValidation = validateNotBlank(_state.value.familyInfo.fatherName)
+        val motherNameValidation = validateNotBlank(_state.value.familyInfo.motherName)
+        val maritalStatusValidation = validateNotNull(_state.value.familyInfo.maritalStatus)
+
+        // Validate current address
+        val currentAddressCountryValidation = validateNotBlank(_state.value.currentAddress.country)
+        val currentAddressProvinceValidation =
+            validateNotBlank(_state.value.currentAddress.province)
+        val currentAddressDistrictValidation =
+            validateNotBlank(_state.value.currentAddress.district)
+        val currentAddressLocalUnitValidation =
+            validateNotBlank(_state.value.currentAddress.localUnit)
+        val currentAddressWardNoValidation = validateNotBlank(_state.value.currentAddress.wardNo)
+        val currentAddressToleValidation = validateNotBlank(_state.value.currentAddress.tole)
+
+        val permanentAddressCountryValidation =
+            validateNotBlank(_state.value.permanentAddress.country)
+        val permanentAddressProvinceValidation =
+            validateNotBlank(_state.value.permanentAddress.province)
+
+        val permanentAddressDistrictValidation =
+            validateNotBlank(_state.value.permanentAddress.district)
+
+        val permanentAddressLocalUnitValidation =
+            validateNotBlank(_state.value.permanentAddress.localUnit)
+
+        val permanentAddressWardNoValidation =
+            validateNotBlank(_state.value.permanentAddress.wardNo)
+        val permanentAddressToleValidation = validateNotBlank(_state.value.permanentAddress.tole)
+
+
+        // Validate document info
+        val documentTypeValidation = validateNotNull(_state.value.documentInfo.documentType)
+        val documentNumberValidation = validateNotBlank(_state.value.documentInfo.documentNumber)
+        val documentIssuedDateValidation =
+            validateNotNull(_state.value.documentInfo.documentIssuedDate)
+        val documentExpiryDateValidation =
+            validateNotNull(_state.value.documentInfo.documentExpiryDate)
+        val documentIssuedPlaceValidation =
+            validateNotBlank(_state.value.documentInfo.documentIssuedPlace)
+        val documentFrontValidation = validateNotNull(_state.value.documentInfo.documentFront)
+        val documentBackValidation = validateNotNull(_state.value.documentInfo.documentBack)
+        val selfieValidation = validateNotNull(_state.value.documentInfo.selfie)
+
+        _state.update { s ->
+            s.copy(
+                personalInfo = s.personalInfo.copy(
+                    nationalityError = nationalityValidation.errorMessage(),
+                    firstNameError = firstNameValidation.errorMessage(),
+                    lastNameError = lastNameValidation.errorMessage(),
+                    dateOfBirthError = dateOfBirthValidation.errorMessage(),
+                    genderError = genderValidation.errorMessage()
+                ),
+                familyInfo = s.familyInfo.copy(
+                    fatherNameError = fatherNameValidation.errorMessage(),
+                    motherNameError = motherNameValidation.errorMessage(),
+                    maritalStatusError = maritalStatusValidation.errorMessage()
+                ),
+                permanentAddress = s.permanentAddress.copy(
+                    countryError = permanentAddressCountryValidation.errorMessage(),
+                    provinceError = permanentAddressProvinceValidation.errorMessage(),
+                    districtError = permanentAddressDistrictValidation.errorMessage(),
+                    localUnitError = permanentAddressLocalUnitValidation.errorMessage(),
+                    wardNoError = permanentAddressWardNoValidation.errorMessage(),
+                    toleError = permanentAddressToleValidation.errorMessage()
+                ),
+                currentAddress = s.currentAddress.copy(
+                    countryError = if (!s.currentAddressSameAsPermanent) currentAddressCountryValidation.errorMessage() else null,
+                    provinceError = if (!s.currentAddressSameAsPermanent) currentAddressProvinceValidation.errorMessage() else null,
+                    districtError = if (!s.currentAddressSameAsPermanent) currentAddressDistrictValidation.errorMessage() else null,
+                    localUnitError = if (!s.currentAddressSameAsPermanent) currentAddressLocalUnitValidation.errorMessage() else null,
+                    wardNoError = if (!s.currentAddressSameAsPermanent) currentAddressWardNoValidation.errorMessage() else null,
+                    toleError = if (!s.currentAddressSameAsPermanent) currentAddressToleValidation.errorMessage() else null
+                ),
+                documentInfo = s.documentInfo.copy(
+                    documentTypeError = documentTypeValidation.errorMessage(),
+                    documentNumberError = documentNumberValidation.errorMessage(),
+                    documentIssuedDateError = documentIssuedDateValidation.errorMessage(),
+                    documentExpiryDateError = documentExpiryDateValidation.errorMessage(),
+                    documentIssuedPlaceError = documentIssuedPlaceValidation.errorMessage(),
+                    documentFrontError = documentFrontValidation.errorMessage(),
+                    documentBackError = documentBackValidation.errorMessage(),
+                    selfieError = selfieValidation.errorMessage()
+                )
             )
         }
 

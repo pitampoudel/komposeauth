@@ -110,4 +110,19 @@
     <string name="kyc_gender_other">Other</string>
     <string name="kyc_marital_status_married">Married</string>
     <string name="kyc_marital_status_unmarried">Unmarried</string>
+    <string name="kyc_current_address_title">Current Address</string>
+    <string name="kyc_temporary_address_title">Temporary Address</string>
+    <string name="kyc_address_country_label">Country</string>
+    <string name="kyc_address_country_placeholder">Enter country</string>
+    <string name="kyc_address_province_label">Province</string>
+    <string name="kyc_address_province_placeholder">Enter province</string>
+    <string name="kyc_address_district_label">District</string>
+    <string name="kyc_address_district_placeholder">Enter district</string>
+    <string name="kyc_address_municipality_label">Municipality/City</string>
+    <string name="kyc_address_municipality_placeholder">Enter municipality/city</string>
+    <string name="kyc_address_ward_no_label">Ward No.</string>
+    <string name="kyc_address_ward_no_placeholder">Enter ward number</string>
+    <string name="kyc_address_tole_label">Tole/Street</string>
+    <string name="kyc_address_tole_placeholder">Enter tole/street</string>
+    <string name="kyc_temporary_address_same_as_permanent">Same as Permanent Address</string>
 </resources>
