@@ -57,4 +57,9 @@
     <string name="kyc_status_approved">स्वीकृत</string>
     <string name="kyc_status_pending">पेन्डिङ</string>
     <string name="kyc_status_rejected">अस्वीकृत</string>
+    <string name="kyc_gender_male">पुरुष</string>
+    <string name="kyc_gender_female">महिला</string>
+    <string name="kyc_gender_other">अन्य</string>
+    <string name="kyc_marital_status_married">विवाहित</string>
+    <string name="kyc_marital_status_unmarried">अविवाहित</string>
 </resources>

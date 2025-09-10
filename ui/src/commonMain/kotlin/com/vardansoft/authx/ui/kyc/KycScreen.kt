@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vardansoft.authx.data.DocumentType
+import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.ui.core.components.DateTimeField
 import com.vardansoft.authx.ui.core.components.DateTimeFieldType
 import com.vardansoft.authx.ui.core.components.EnumField
@@ -34,24 +35,22 @@ import com.vardansoft.authx.ui.core.toSystemLocalDate
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper
 import com.vardansoft.ui.generated.resources.Res
 import com.vardansoft.ui.generated.resources.common_skip
-import com.vardansoft.ui.generated.resources.kyc_country_label
-import com.vardansoft.ui.generated.resources.kyc_country_placeholder
 import com.vardansoft.ui.generated.resources.kyc_document_back_hint
 import com.vardansoft.ui.generated.resources.kyc_document_back_title
 import com.vardansoft.ui.generated.resources.kyc_document_details_section_title
 import com.vardansoft.ui.generated.resources.kyc_document_expiry_date_label
 import com.vardansoft.ui.generated.resources.kyc_document_front_hint
+import com.vardansoft.ui.generated.resources.kyc_document_front_title
 import com.vardansoft.ui.generated.resources.kyc_document_issue_date_label
 import com.vardansoft.ui.generated.resources.kyc_document_issued_place_label
 import com.vardansoft.ui.generated.resources.kyc_document_issued_place_placeholder
-import com.vardansoft.ui.generated.resources.kyc_document_front_title
 import com.vardansoft.ui.generated.resources.kyc_document_number_label
 import com.vardansoft.ui.generated.resources.kyc_document_number_placeholder
 import com.vardansoft.ui.generated.resources.kyc_document_type_label
 import com.vardansoft.ui.generated.resources.kyc_document_type_placeholder
 import com.vardansoft.ui.generated.resources.kyc_documents_section_title
-import com.vardansoft.ui.generated.resources.kyc_full_name_label
-import com.vardansoft.ui.generated.resources.kyc_full_name_placeholder
+import com.vardansoft.ui.generated.resources.kyc_nationality_label
+import com.vardansoft.ui.generated.resources.kyc_nationality_placeholder
 import com.vardansoft.ui.generated.resources.kyc_personal_info_section_title
 import com.vardansoft.ui.generated.resources.kyc_provide_details
 import com.vardansoft.ui.generated.resources.kyc_selfie_hint
@@ -62,6 +61,22 @@ import com.vardansoft.ui.generated.resources.kyc_submit_pending
 import com.vardansoft.ui.generated.resources.kyc_submit_progress
 import com.vardansoft.ui.generated.resources.kyc_subtitle
 import com.vardansoft.ui.generated.resources.kyc_title
+import com.vardansoft.ui.generated.resources.kyc_first_name_label
+import com.vardansoft.ui.generated.resources.kyc_first_name_placeholder
+import com.vardansoft.ui.generated.resources.kyc_middle_name_label
+import com.vardansoft.ui.generated.resources.kyc_middle_name_placeholder
+import com.vardansoft.ui.generated.resources.kyc_last_name_label
+import com.vardansoft.ui.generated.resources.kyc_last_name_placeholder
+import com.vardansoft.ui.generated.resources.kyc_date_of_birth_label
+import com.vardansoft.ui.generated.resources.kyc_gender_label
+import com.vardansoft.ui.generated.resources.kyc_gender_placeholder
+import com.vardansoft.ui.generated.resources.kyc_family_details_title
+import com.vardansoft.ui.generated.resources.kyc_father_name_label
+import com.vardansoft.ui.generated.resources.kyc_father_name_placeholder
+import com.vardansoft.ui.generated.resources.kyc_mother_name_label
+import com.vardansoft.ui.generated.resources.kyc_mother_name_placeholder
+import com.vardansoft.ui.generated.resources.kyc_marital_status_label
+import com.vardansoft.ui.generated.resources.kyc_marital_status_placeholder
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import org.jetbrains.compose.resources.stringResource
@@ -145,16 +160,16 @@ private fun KycPage(
                     )
 
                     OutlinedTextField(
-                        value = state.fullName,
-                        onValueChange = { onEvent(KycEvent.FullNameChanged(it)) },
+                        value = state.nationality,
+                        onValueChange = { onEvent(KycEvent.NationalityChanged(it)) },
                         enabled = enabled,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.kyc_full_name_label)) },
-                        placeholder = { Text(stringResource(Res.string.kyc_full_name_placeholder)) },
-                        isError = state.fullNameError != null,
+                        label = { Text(stringResource(Res.string.kyc_nationality_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_nationality_placeholder)) },
+                        isError = state.nationalityError != null,
                         singleLine = true,
                         supportingText = {
-                            state.fullNameError?.let { err ->
+                            state.nationalityError?.let { err ->
                                 Text(
                                     text = err,
                                     color = MaterialTheme.colorScheme.error,
@@ -165,16 +180,16 @@ private fun KycPage(
                     )
 
                     OutlinedTextField(
-                        value = state.country,
-                        onValueChange = { onEvent(KycEvent.CountryChanged(it)) },
+                        value = state.firstName,
+                        onValueChange = { onEvent(KycEvent.FirstNameChanged(it)) },
                         enabled = enabled,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.kyc_country_label)) },
-                        placeholder = { Text(stringResource(Res.string.kyc_country_placeholder)) },
-                        isError = state.countryError != null,
+                        label = { Text(stringResource(Res.string.kyc_first_name_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_first_name_placeholder)) },
+                        isError = state.firstNameError != null,
                         singleLine = true,
                         supportingText = {
-                            state.countryError?.let { err ->
+                            state.firstNameError?.let { err ->
                                 Text(
                                     text = err,
                                     color = MaterialTheme.colorScheme.error,
@@ -183,36 +198,84 @@ private fun KycPage(
                             }
                         }
                     )
-                }
 
+                    OutlinedTextField(
+                        value = state.middleName,
+                        onValueChange = { onEvent(KycEvent.MiddleNameChanged(it)) },
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(Res.string.kyc_middle_name_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_middle_name_placeholder)) },
+                        isError = state.middleNameError != null,
+                        singleLine = true,
+                        supportingText = {
+                            state.middleNameError?.let { err ->
+                                Text(
+                                    text = err,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    )
 
-                Spacer(Modifier.height(8.dp))
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = stringResource(Res.string.kyc_document_details_section_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                    OutlinedTextField(
+                        value = state.lastName,
+                        onValueChange = { onEvent(KycEvent.LastNameChanged(it)) },
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(Res.string.kyc_last_name_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_last_name_placeholder)) },
+                        isError = state.lastNameError != null,
+                        singleLine = true,
+                        supportingText = {
+                            state.lastNameError?.let { err ->
+                                Text(
+                                    text = err,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    )
+
+                    DateTimeField(
+                        value = state.dateOfBirth?.atStartOfDayIn(TimeZone.currentSystemDefault()),
+                        onValueChange = { instant ->
+                            onEvent(KycEvent.DateOfBirthChanged(instant?.toSystemLocalDate()))
+                        },
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(Res.string.kyc_date_of_birth_label)) },
+                        type = DateTimeFieldType.DATE,
+                        isError = state.dateOfBirthError != null,
+                        supportingText = {
+                            state.dateOfBirthError?.let { err ->
+                                Text(
+                                    text = err,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
                     )
 
                     EnumField(
-                        value = state.documentType,
+                        options = KycResponse.Gender.entries,
                         asString = {
-                            this?.let { stringResource(it.toStringRes()) }
+                            this?.toStringRes()?.let {
+                                stringResource(it)
+                            }
                         },
-                        onValueChange = { documentType ->
-                            onEvent(KycEvent.DocumentTypeChanged(documentType))
-                        },
+                        value = state.gender,
+                        onValueChange = { onEvent(KycEvent.GenderChanged(it)) },
                         enabled = enabled,
                         textFieldModifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.kyc_document_type_label)) },
-                        placeholder = { Text(stringResource(Res.string.kyc_document_type_placeholder)) },
-                        isError = state.documentTypeError != null,
-                        options = DocumentType.entries,
+                        label = { Text(stringResource(Res.string.kyc_gender_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_gender_placeholder)) },
+                        isError = state.genderError != null,
                         supportingText = {
-                            state.documentTypeError?.let { err ->
+                            state.genderError?.let { err ->
                                 Text(
                                     text = err,
                                     color = MaterialTheme.colorScheme.error,
@@ -222,156 +285,265 @@ private fun KycPage(
                         }
                     )
 
-                    OutlinedTextField(
-                        value = state.documentNumber,
-                        onValueChange = { onEvent(KycEvent.DocumentNumberChanged(it)) },
-                        enabled = enabled,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.kyc_document_number_label)) },
-                        placeholder = { Text(stringResource(Res.string.kyc_document_number_placeholder)) },
-                        isError = state.documentNumberError != null,
-                        singleLine = true,
-                        supportingText = {
-                            state.documentNumberError?.let { err ->
-                                Text(
-                                    text = err,
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
-                    )
-
-                    DateTimeField(
-                        value = state.documentIssuedDate?.atStartOfDayIn(TimeZone.currentSystemDefault()),
-                        onValueChange = { instant ->
-                            onEvent(
-                                KycEvent.DocumentIssuedDateChanged(
-                                    instant?.toSystemLocalDate()
-                                )
-                            )
-                        },
-                        enabled = enabled,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.kyc_document_issue_date_label)) },
-                        type = DateTimeFieldType.DATE,
-                        isError = state.documentIssuedDateError != null,
-                        supportingText = {
-                            state.documentIssuedDateError?.let { err ->
-                                Text(
-                                    text = err,
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
-                    )
-
-                    DateTimeField(
-                        value = state.documentExpiryDate?.atStartOfDayIn(TimeZone.currentSystemDefault()),
-                        onValueChange = { instant ->
-                            onEvent(
-                                KycEvent.DocumentExpiryDateChanged(
-                                    instant?.toSystemLocalDate()
-                                )
-                            )
-                        },
-                        enabled = enabled,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.kyc_document_expiry_date_label)) },
-                        type = DateTimeFieldType.DATE,
-                        isError = state.documentExpiryDateError != null,
-                        supportingText = {
-                            state.documentExpiryDateError?.let { err ->
-                                Text(
-                                    text = err,
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
-                    )
-
-                    OutlinedTextField(
-                        value = state.documentIssuedPlace,
-                        onValueChange = { onEvent(KycEvent.DocumentIssuedPlaceChanged(it)) },
-                        enabled = enabled,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.kyc_document_issued_place_label)) },
-                        placeholder = { Text(stringResource(Res.string.kyc_document_issued_place_placeholder)) },
-                        isError = state.documentIssuedPlaceError != null,
-                        singleLine = true,
-                        supportingText = {
-                            state.documentIssuedPlaceError?.let { err ->
-                                Text(
-                                    text = err,
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
-                    )
-                }
-
-                Spacer(Modifier.height(8.dp))
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
+                    Spacer(Modifier.height(8.dp))
                     Text(
-                        text = stringResource(Res.string.kyc_documents_section_title),
+                        text = stringResource(Res.string.kyc_family_details_title),
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    FileInputField(
-                        title = stringResource(Res.string.kyc_document_front_title),
-                        hint = stringResource(Res.string.kyc_document_front_hint),
-                        mimeType = "image/*",
-                        file = state.documentFront,
+                    OutlinedTextField(
+                        value = state.fatherName,
+                        onValueChange = { onEvent(KycEvent.FatherNameChanged(it)) },
                         enabled = enabled,
-                        onSelected = {
-                            onEvent(KycEvent.DocumentFrontSelected(it))
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(Res.string.kyc_father_name_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_father_name_placeholder)) },
+                        isError = state.fatherNameError != null,
+                        singleLine = true,
+                        supportingText = {
+                            state.fatherNameError?.let { err ->
+                                Text(
+                                    text = err,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
                         }
                     )
 
-                    FileInputField(
-                        title = stringResource(Res.string.kyc_document_back_title),
-                        hint = stringResource(Res.string.kyc_document_back_hint),
-                        mimeType = "image/*",
-                        file = state.documentBack,
+                    OutlinedTextField(
+                        value = state.motherName,
+                        onValueChange = { onEvent(KycEvent.MotherNameChanged(it)) },
                         enabled = enabled,
-                        onSelected = {
-                            onEvent(KycEvent.DocumentBackSelected(it))
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(Res.string.kyc_mother_name_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_mother_name_placeholder)) },
+                        isError = state.motherNameError != null,
+                        singleLine = true,
+                        supportingText = {
+                            state.motherNameError?.let { err ->
+                                Text(
+                                    text = err,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
                         }
                     )
 
-                    FileInputField(
-                        title = stringResource(Res.string.kyc_selfie_title),
-                        hint = stringResource(Res.string.kyc_selfie_hint),
-                        mimeType = "image/*",
-                        file = state.selfie,
+                    EnumField(
+                        options = KycResponse.MaritalStatus.entries,
+                        asString = {
+                            this?.toStringRes()?.let {
+                                stringResource(it)
+                            }
+                        },
+                        value = state.maritalStatus,
+                        onValueChange = { onEvent(KycEvent.MaritalStatusChanged(it)) },
                         enabled = enabled,
-                        onSelected = {
-                            onEvent(KycEvent.SelfieSelected(it))
+                        textFieldModifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(Res.string.kyc_marital_status_label)) },
+                        placeholder = { Text(stringResource(Res.string.kyc_marital_status_placeholder)) },
+                        isError = state.maritalStatusError != null,
+                        supportingText = {
+                            state.maritalStatusError?.let { err ->
+                                Text(
+                                    text = err,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
                         }
                     )
-                }
 
-                Button(
-                    onClick = { onEvent(KycEvent.Submit) },
-                    enabled = enabled,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    val label = when {
-                        state.progress != null -> stringResource(Res.string.kyc_submit_progress)
-                        state.isPending -> stringResource(Res.string.kyc_submit_pending)
-                        state.isApproved -> stringResource(Res.string.kyc_submit_approved)
-                        else -> stringResource(Res.string.kyc_submit_action)
+                    Spacer(Modifier.height(8.dp))
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.kyc_document_details_section_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+
+                        EnumField(
+                            value = state.documentType,
+                            asString = {
+                                this?.let { stringResource(it.toStringRes()) }
+                            },
+                            onValueChange = { documentType ->
+                                onEvent(KycEvent.DocumentTypeChanged(documentType))
+                            },
+                            enabled = enabled,
+                            textFieldModifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(Res.string.kyc_document_type_label)) },
+                            placeholder = { Text(stringResource(Res.string.kyc_document_type_placeholder)) },
+                            isError = state.documentTypeError != null,
+                            options = DocumentType.entries,
+                            supportingText = {
+                                state.documentTypeError?.let { err ->
+                                    Text(
+                                        text = err,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        )
+
+                        OutlinedTextField(
+                            value = state.documentNumber,
+                            onValueChange = { onEvent(KycEvent.DocumentNumberChanged(it)) },
+                            enabled = enabled,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(Res.string.kyc_document_number_label)) },
+                            placeholder = { Text(stringResource(Res.string.kyc_document_number_placeholder)) },
+                            isError = state.documentNumberError != null,
+                            singleLine = true,
+                            supportingText = {
+                                state.documentNumberError?.let { err ->
+                                    Text(
+                                        text = err,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        )
+
+                        DateTimeField(
+                            value = state.documentIssuedDate?.atStartOfDayIn(TimeZone.currentSystemDefault()),
+                            onValueChange = { instant ->
+                                onEvent(
+                                    KycEvent.DocumentIssuedDateChanged(
+                                        instant?.toSystemLocalDate()
+                                    )
+                                )
+                            },
+                            enabled = enabled,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(Res.string.kyc_document_issue_date_label)) },
+                            type = DateTimeFieldType.DATE,
+                            isError = state.documentIssuedDateError != null,
+                            supportingText = {
+                                state.documentIssuedDateError?.let { err ->
+                                    Text(
+                                        text = err,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        )
+
+                        DateTimeField(
+                            value = state.documentExpiryDate?.atStartOfDayIn(TimeZone.currentSystemDefault()),
+                            onValueChange = { instant ->
+                                onEvent(
+                                    KycEvent.DocumentExpiryDateChanged(
+                                        instant?.toSystemLocalDate()
+                                    )
+                                )
+                            },
+                            enabled = enabled,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(Res.string.kyc_document_expiry_date_label)) },
+                            type = DateTimeFieldType.DATE,
+                            isError = state.documentExpiryDateError != null,
+                            supportingText = {
+                                state.documentExpiryDateError?.let { err ->
+                                    Text(
+                                        text = err,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        )
+
+                        OutlinedTextField(
+                            value = state.documentIssuedPlace,
+                            onValueChange = { onEvent(KycEvent.DocumentIssuedPlaceChanged(it)) },
+                            enabled = enabled,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(Res.string.kyc_document_issued_place_label)) },
+                            placeholder = { Text(stringResource(Res.string.kyc_document_issued_place_placeholder)) },
+                            isError = state.documentIssuedPlaceError != null,
+                            singleLine = true,
+                            supportingText = {
+                                state.documentIssuedPlaceError?.let { err ->
+                                    Text(
+                                        text = err,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        )
                     }
-                    Text(label)
-                }
 
+                    Spacer(Modifier.height(8.dp))
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.kyc_documents_section_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+
+                        FileInputField(
+                            title = stringResource(Res.string.kyc_document_front_title),
+                            hint = stringResource(Res.string.kyc_document_front_hint),
+                            mimeType = "image/*",
+                            file = state.documentFront,
+                            enabled = enabled,
+                            onSelected = {
+                                onEvent(KycEvent.DocumentFrontSelected(it))
+                            }
+                        )
+
+                        FileInputField(
+                            title = stringResource(Res.string.kyc_document_back_title),
+                            hint = stringResource(Res.string.kyc_document_back_hint),
+                            mimeType = "image/*",
+                            file = state.documentBack,
+                            enabled = enabled,
+                            onSelected = {
+                                onEvent(KycEvent.DocumentBackSelected(it))
+                            }
+                        )
+
+                        FileInputField(
+                            title = stringResource(Res.string.kyc_selfie_title),
+                            hint = stringResource(Res.string.kyc_selfie_hint),
+                            mimeType = "image/*",
+                            file = state.selfie,
+                            enabled = enabled,
+                            onSelected = {
+                                onEvent(KycEvent.SelfieSelected(it))
+                            }
+                        )
+                    }
+
+                    Button(
+                        onClick = { onEvent(KycEvent.Submit) },
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        val label = when {
+                            state.progress != null -> stringResource(Res.string.kyc_submit_progress)
+                            state.isPending -> stringResource(Res.string.kyc_submit_pending)
+                            state.isApproved -> stringResource(Res.string.kyc_submit_approved)
+                            else -> stringResource(Res.string.kyc_submit_action)
+                        }
+                        Text(label)
+                    }
+
+                }
             }
         }
     }

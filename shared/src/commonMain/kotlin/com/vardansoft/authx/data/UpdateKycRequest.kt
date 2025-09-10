@@ -6,8 +6,15 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UpdateKycRequest(
-    val fullName: String,
-    val country: String,
+    val nationality: String,
+    val firstName: String,
+    val middleName: String?,
+    val lastName: String,
+    val dateOfBirth: LocalDate,
+    val gender: KycResponse.Gender,
+    val fatherName: String,
+    val motherName: String,
+    val maritalStatus: KycResponse.MaritalStatus,
     val documentType: DocumentType,
     val documentNumber: String,
     val documentIssuedDate: LocalDate,

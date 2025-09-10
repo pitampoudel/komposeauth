@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
 
 class KycViewModel(
     private val client: AuthXClient,
@@ -28,12 +27,69 @@ class KycViewModel(
                     it.copy(infoMsg = null)
                 }
 
-                is KycEvent.FullNameChanged -> _state.update {
+                is KycEvent.NationalityChanged -> _state.update {
                     it.copy(
-                        fullName = event.value,
-                        fullNameError = null
+                        nationality = event.value,
+                        nationalityError = null
                     )
                 }
+
+                is KycEvent.FirstNameChanged -> _state.update {
+                    it.copy(
+                        firstName = event.value,
+                        firstNameError = null
+                    )
+                }
+
+                is KycEvent.MiddleNameChanged -> _state.update {
+                    it.copy(
+                        middleName = event.value,
+                        middleNameError = null
+                    )
+                }
+
+                is KycEvent.LastNameChanged -> _state.update {
+                    it.copy(
+                        lastName = event.value,
+                        lastNameError = null
+                    )
+                }
+
+                is KycEvent.DateOfBirthChanged -> _state.update {
+                    it.copy(
+                        dateOfBirth = event.value,
+                        dateOfBirthError = null
+                    )
+                }
+
+                is KycEvent.GenderChanged -> _state.update {
+                    it.copy(
+                        gender = event.value,
+                        genderError = null
+                    )
+                }
+
+                is KycEvent.FatherNameChanged -> _state.update {
+                    it.copy(
+                        fatherName = event.value,
+                        fatherNameError = null
+                    )
+                }
+
+                is KycEvent.MotherNameChanged -> _state.update {
+                    it.copy(
+                        motherName = event.value,
+                        motherNameError = null
+                    )
+                }
+
+                is KycEvent.MaritalStatusChanged -> _state.update {
+                    it.copy(
+                        maritalStatus = event.value,
+                        maritalStatusError = null
+                    )
+                }
+
 
                 is KycEvent.DocumentTypeChanged -> _state.update {
                     it.copy(
@@ -49,12 +105,6 @@ class KycViewModel(
                     )
                 }
 
-                is KycEvent.CountryChanged -> _state.update {
-                    it.copy(
-                        country = event.value,
-                        countryError = null
-                    )
-                }
 
                 is KycEvent.DocumentIssuedDateChanged -> _state.update {
                     it.copy(
@@ -135,10 +185,17 @@ class KycViewModel(
                 _state.update { s ->
                     s.copy(
                         existing = current,
-                        fullName = current?.fullName ?: s.fullName,
+                        nationality = current?.nationality ?: s.nationality,
+                        firstName = current?.firstName ?: s.firstName,
+                        middleName = current?.middleName ?: s.middleName,
+                        lastName = current?.lastName ?: s.lastName,
+                        dateOfBirth = current?.dateOfBirth ?: s.dateOfBirth,
+                        gender = current?.gender ?: s.gender,
+                        fatherName = current?.fatherName ?: s.fatherName,
+                        motherName = current?.motherName ?: s.motherName,
+                        maritalStatus = current?.maritalStatus ?: s.maritalStatus,
                         documentType = current?.documentType ?: s.documentType,
                         documentNumber = current?.documentNumber ?: s.documentNumber,
-                        country = current?.country ?: s.country,
                         documentIssuedDate = current?.documentIssuedDate ?: s.documentIssuedDate,
                         documentExpiryDate = current?.documentExpiryDate ?: s.documentExpiryDate,
                         documentIssuedPlace = current?.documentIssuedPlace ?: s.documentIssuedPlace,
@@ -157,20 +214,32 @@ class KycViewModel(
     private suspend fun submit() {
         _state.update { it.copy(progress = 0.0f) }
         val current = _state.value
-        val fullNameErr = validateNotBlank(current.fullName).errorMessage()
+        val nationalityErr = validateNotBlank(current.nationality).errorMessage()
+        val firstNameErr = validateNotBlank(current.firstName).errorMessage()
+        val lastNameErr = validateNotBlank(current.lastName).errorMessage()
+        val dateOfBirthErr = validateNotNull(current.dateOfBirth).errorMessage()
+        val genderErr = validateNotNull(current.gender).errorMessage()
+        val fatherNameErr = validateNotBlank(current.fatherName).errorMessage()
+        val motherNameErr = validateNotBlank(current.motherName).errorMessage()
+        val maritalStatusErr = validateNotNull(current.maritalStatus).errorMessage()
         val docTypeErr = validateNotNull(current.documentType).errorMessage()
         val docNumberErr = validateNotBlank(current.documentNumber).errorMessage()
-        val countryErr = validateNotBlank(current.country).errorMessage()
         val documentIssuedDateErr = validateNotNull(current.documentIssuedDate).errorMessage()
         val documentExpiryDateErr = validateNotNull(current.documentExpiryDate).errorMessage()
         val documentIssuedPlaceErr = validateNotBlank(current.documentIssuedPlace).errorMessage()
 
         _state.update {
             it.copy(
-                fullNameError = fullNameErr,
+                nationalityError = nationalityErr,
+                firstNameError = firstNameErr,
+                lastNameError = lastNameErr,
+                dateOfBirthError = dateOfBirthErr,
+                genderError = genderErr,
+                fatherNameError = fatherNameErr,
+                motherNameError = motherNameErr,
+                maritalStatusError = maritalStatusErr,
                 documentTypeError = docTypeErr,
                 documentNumberError = docNumberErr,
-                countryError = countryErr,
                 documentIssuedDateError = documentIssuedDateErr,
                 documentExpiryDateError = documentExpiryDateErr,
                 documentIssuedPlaceError = documentIssuedPlaceErr
