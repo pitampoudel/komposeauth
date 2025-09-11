@@ -1,6 +1,7 @@
 package com.vardansoft.authx.user.dto
 
 import com.vardansoft.authx.core.utils.parsePhoneNumber
+import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.user.entity.User
 import jakarta.validation.Valid
 import org.bson.types.ObjectId

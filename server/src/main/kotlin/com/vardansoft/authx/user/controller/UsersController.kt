@@ -3,7 +3,7 @@ package com.vardansoft.authx.user.controller
 import com.vardansoft.authx.core.service.EmailService
 import com.vardansoft.authx.core.service.JwtService
 import com.vardansoft.authx.core.utils.acceptsHtml
-import com.vardansoft.authx.user.dto.CreateUserRequest
+import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.user.dto.UserResponse
 import com.vardansoft.authx.user.dto.mapToResponseDto
 import com.vardansoft.authx.user.service.UserService

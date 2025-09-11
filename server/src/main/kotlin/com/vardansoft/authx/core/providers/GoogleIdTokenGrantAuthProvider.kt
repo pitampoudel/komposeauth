@@ -2,7 +2,7 @@ package com.vardansoft.authx.core.providers
 
 import com.vardansoft.authx.authorizations.service.MongoOAuth2AuthorizationService
 import com.vardansoft.authx.core.providers.utils.*
-import com.vardansoft.authx.user.dto.CreateUserRequest
+import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.user.service.UserService
 import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.core.Authentication

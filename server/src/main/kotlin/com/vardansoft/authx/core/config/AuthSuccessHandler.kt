@@ -1,6 +1,6 @@
 package com.vardansoft.authx.core.config
 
-import com.vardansoft.authx.user.dto.CreateUserRequest
+import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.user.entity.User
 import com.vardansoft.authx.user.service.UserService
 import jakarta.servlet.http.HttpServletRequest

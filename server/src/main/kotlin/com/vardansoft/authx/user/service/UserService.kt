@@ -4,7 +4,7 @@ import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
 import com.vardansoft.authx.core.utils.parsePhoneNumber
 import com.vardansoft.authx.data.UpdatePhoneNumberRequest
 import com.vardansoft.authx.data.VerifyPhoneOtpRequest
-import com.vardansoft.authx.user.dto.CreateUserRequest
+import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.user.dto.UpdateUserRequest
 import com.vardansoft.authx.user.dto.UserResponse
 import com.vardansoft.authx.user.dto.mapToEntity
