@@ -64,7 +64,13 @@ class UserService(
     }
 
     fun findOrCreateUser(req: CreateUserRequest): User {
-        return findUserByEmailOrPhone(req.email ?: req.phoneNumber!!) ?: createUser(req)
+        val emailOrPhone = req.email ?: req.phoneNumber?.let {
+            parsePhoneNumber(
+                countryNameCode = null,
+                phoneNumber = it
+            )?.fullNumberInInternationalFormat
+        }
+        return emailOrPhone?.let { findUserByEmailOrPhone(emailOrPhone) } ?: createUser(req)
     }
 
     fun initiatePhoneNumberUpdate(@Valid req: UpdatePhoneNumberRequest): Boolean {
