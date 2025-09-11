@@ -39,7 +39,7 @@ fun User.mapToResponseDto(): UserResponse {
         lastName = this.lastName,
         email = this.email,
         emailVerified = this.emailVerified,
-        phoneNumber = phoneNumber,
+        phoneNumber = this.phoneNumber,
         phoneNumberVerified = phoneNumberVerified,
         photoUrl = this.picture,
         createdAt = this.createdAt,

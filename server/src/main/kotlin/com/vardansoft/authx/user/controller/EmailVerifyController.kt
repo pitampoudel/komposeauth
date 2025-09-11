@@ -19,6 +19,12 @@ class EmailVerifyController(
     @PostMapping
     fun sendVerificationEmail(): ResponseEntity<*> {
         val user = userContextService.getCurrentUser()
+
+        // Check if user email exists
+        if (user.email == null) {
+            return ResponseEntity.badRequest().body("User email is not set.")
+        }
+
         val link = jwtService.generateEmailVerificationLink(userId = user.id.toHexString())
 
         emailService.sendSimpleMail(
@@ -34,7 +40,8 @@ class EmailVerifyController(
     fun verifyEmail(@RequestParam("token") token: String): ResponseEntity<*> {
         val claims = jwtService.retrieveClaimsIfValidEmailVerificationToken(token)
 
-        val user = userService.findUser(claims.subject) ?: return ResponseEntity.notFound().build<String>()
+        val user =
+            userService.findUser(claims.subject) ?: return ResponseEntity.notFound().build<String>()
 
         if (user.emailVerified) {
             return ResponseEntity.ok("Email already verified")

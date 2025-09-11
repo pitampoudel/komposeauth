@@ -11,7 +11,7 @@ data class CreateUserRequest(
     @NotBlank(message = "Last name is required")
     val lastName: String?,
     @Email(message = "Invalid email address")
-    val email: String,
+    val email: String? = null,
     val phoneNumber: String? = null,
     @field:Pattern(
         regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$",
@@ -25,5 +25,6 @@ data class CreateUserRequest(
         require(password == confirmPassword) {
             "Password and confirmation password must match"
         }
+        require(email != null || phoneNumber != null)
     }
 }

@@ -43,7 +43,7 @@ class UsersController(
     ): ResponseEntity<*> {
         val createdUser = userService.createUser(request)
         val userResponse = createdUser.mapToResponseDto()
-        emailService.sendSimpleMail(
+        if (createdUser.email != null) emailService.sendSimpleMail(
             to = createdUser.email,
             subject = "Email Verification",
             text = "Please click the link to verify your email address: ${
