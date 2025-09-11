@@ -45,6 +45,9 @@ dependencies {
 
     // Load .env into Spring Environment so application.yml can use ${VAR}
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
+    
+    // Sentry for error tracking
+    implementation("io.sentry:sentry-spring-boot-starter-jakarta:7.14.0")
 
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.0.0")

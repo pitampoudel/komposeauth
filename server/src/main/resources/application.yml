@@ -37,12 +37,18 @@ logging:
     org.springframework.security: DEBUG
     com.vardansoft.authx.core.service: DEBUG
 
+sentry:
+  dsn: ${SENTRY_DSN}
+  traces-sample-rate: 1.0
+  logging:
+    minimum-event-level: warn
+    minimum-breadcrumb-level: info
+
 
 server:
   address: 0.0.0.0
   forward-headers-strategy: framework
 app:
-  sentry-dsn: ${SENTRY_DSN}
   baseUrl: ${BASE_URL:}
   gcpBucketName: ${GCP_BUCKET_NAME}
   # Optional
