@@ -34,10 +34,11 @@ class AuthSuccessHandler(
                     principal.getAttribute<Boolean>("emailVerified") == true
                 user = userService.findOrCreateUser(
                     CreateUserRequest(
-                        id = email,
+                        id = null,
                         firstName = firstName,
                         lastName = lastName,
-                        email = picture
+                        email = email,
+                        picture = picture
                     )
                 )
                 if (emailVerified) userService.emailVerified(user.id)

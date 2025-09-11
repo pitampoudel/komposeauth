@@ -4,7 +4,6 @@ import com.vardansoft.authx.AppProperties
 import com.vardansoft.authx.user.service.UserService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.lang.Nullable
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -44,7 +43,6 @@ class SecurityConfig() {
             Base64.getUrlEncoder().withoutPadding(), 96
         )
 
-        @Nullable
         override fun generate(context: OAuth2TokenContext): OAuth2RefreshToken? {
             if (OAuth2TokenType.REFRESH_TOKEN != context.tokenType) {
                 return null
@@ -82,8 +80,8 @@ class SecurityConfig() {
                 }
 
                 else -> {
-                    val principal = context.getPrincipal<UsernamePasswordAuthenticationToken>()
                     if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN) {
+                        val principal = context.getPrincipal<UsernamePasswordAuthenticationToken>()
                         context.claims.claim(
                             "authorities",
                             principal.authorities.map { it.authority }
@@ -93,7 +91,6 @@ class SecurityConfig() {
                         context.claims.claim("first_name", user.firstName)
                         if (user.lastName != null)
                             context.claims.claim("last_name", user.lastName)
-
                     }
                 }
             }
