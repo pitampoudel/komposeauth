@@ -1,5 +1,6 @@
 package com.vardansoft.authx.core.config
 
+import com.vardansoft.authx.user.dto.CreateUserRequest
 import com.vardansoft.authx.user.entity.User
 import com.vardansoft.authx.user.service.UserService
 import jakarta.servlet.http.HttpServletRequest
@@ -31,12 +32,19 @@ class AuthSuccessHandler(
                 val picture: String = principal.getAttribute<String>("picture").orEmpty()
                 val emailVerified: Boolean =
                     principal.getAttribute<Boolean>("emailVerified") == true
-                user = userService.findOrCreateUserByEmail(email, firstName, lastName, picture)
+                user = userService.findOrCreateUser(
+                    CreateUserRequest(
+                        id = email,
+                        firstName = firstName,
+                        lastName = lastName,
+                        email = picture
+                    )
+                )
                 if (emailVerified) userService.emailVerified(user.id)
             }
 
             is UserDetails -> {
-                user = userService.findUserByEmail(principal.username)
+                user = userService.findUserByEmailOrPhone(principal.username)
                     ?: throw IllegalStateException("User not found with email: ${principal.username}")
             }
 

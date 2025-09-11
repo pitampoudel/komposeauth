@@ -40,8 +40,8 @@ class UserService(
         return userRepository.findByIdIn(objectIds)
     }
 
-    fun findUserByEmail(email: String): User? {
-        return userRepository.findByEmail(email)
+    fun findUserByEmailOrPhone(value: String): User? {
+        return userRepository.findByEmail(value) ?: userRepository.findByPhoneNumber(value)
     }
 
     fun createUser(@Valid req: CreateUserRequest): User {
@@ -63,20 +63,8 @@ class UserService(
         )
     }
 
-    fun findOrCreateUserByEmail(
-        email: String,
-        firstName: String,
-        lastName: String?,
-        picture: String?
-    ): User {
-        return findUserByEmail(email) ?: createUser(
-            CreateUserRequest(
-                firstName = firstName,
-                lastName = lastName,
-                email = email,
-                picture = picture
-            )
-        )
+    fun findOrCreateUser(req: CreateUserRequest): User {
+        return findUserByEmailOrPhone(req.email ?: req.phoneNumber!!) ?: createUser(req)
     }
 
     fun initiatePhoneNumberUpdate(@Valid req: UpdatePhoneNumberRequest): Boolean {

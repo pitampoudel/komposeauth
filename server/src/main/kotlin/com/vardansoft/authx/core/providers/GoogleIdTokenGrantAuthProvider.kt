@@ -2,6 +2,7 @@ package com.vardansoft.authx.core.providers
 
 import com.vardansoft.authx.authorizations.service.MongoOAuth2AuthorizationService
 import com.vardansoft.authx.core.providers.utils.*
+import com.vardansoft.authx.user.dto.CreateUserRequest
 import com.vardansoft.authx.user.service.UserService
 import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.core.Authentication
@@ -40,11 +41,13 @@ class GoogleIdTokenGrantAuthProvider(
             clientId = googleClientId,
             googleIdTokenAuthToken.idToken
         )
-        val user = userService.findOrCreateUserByEmail(
-            email = payload["email"] as String,
-            firstName = payload["given_name"] as String,
-            lastName = payload["family_name"] as String?,
-            picture = payload["picture"] as? String
+        val user = userService.findOrCreateUser(
+            CreateUserRequest(
+                email = payload["email"] as String,
+                firstName = payload["given_name"] as String,
+                lastName = payload["family_name"] as String?,
+                picture = payload["picture"] as? String
+            )
         )
         if (payload["email_verified"] == true) {
             userService.emailVerified(user.id)

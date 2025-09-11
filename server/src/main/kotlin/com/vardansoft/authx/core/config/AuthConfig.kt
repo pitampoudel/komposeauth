@@ -79,7 +79,7 @@ class AuthConfig(
             }
             .authenticationProvider(
                 object : DaoAuthenticationProvider(UserDetailsService { email ->
-                    val user = userService.findUserByEmail(email)
+                    val user = userService.findUserByEmailOrPhone(email)
                         ?: throw UsernameNotFoundException("User not found with email: $email")
                     User.withUsername(user.email).password(user.passwordHash).build()
                 }) {

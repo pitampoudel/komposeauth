@@ -41,9 +41,9 @@ class UsersController(
         @ModelAttribute request: CreateUserRequest,
         httpRequest: HttpServletRequest
     ): ResponseEntity<*> {
-        val createdUser = userService.createUser(request)
+        val createdUser = userService.findOrCreateUser(request)
         val userResponse = createdUser.mapToResponseDto()
-        if (createdUser.email != null) emailService.sendSimpleMail(
+        if (createdUser.email != null && !createdUser.emailVerified) emailService.sendSimpleMail(
             to = createdUser.email,
             subject = "Email Verification",
             text = "Please click the link to verify your email address: ${
