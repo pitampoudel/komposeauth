@@ -8,6 +8,7 @@ import java.net.NetworkInterface
 @Configuration
 @ConfigurationProperties(prefix = "app")
 class AppProperties {
+    lateinit var sentryDsn: String
     var baseUrl: String? = null
         get() {
             val raw = field?.trim().orEmpty()

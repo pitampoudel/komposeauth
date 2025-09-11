@@ -42,6 +42,7 @@ server:
   address: 0.0.0.0
   forward-headers-strategy: framework
 app:
+  sentry-dsn: ${SENTRY_DSN}
   baseUrl: ${BASE_URL:}
   gcpBucketName: ${GCP_BUCKET_NAME}
   # Optional
