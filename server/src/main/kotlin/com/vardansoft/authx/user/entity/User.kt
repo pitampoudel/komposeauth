@@ -24,10 +24,10 @@ data class User(
     @field:NotBlank(message = "Last name is required")
     val lastName: String?,
     @field:Email(message = "Invalid email address")
-    @field:Indexed(unique = true, partialFilter = "{ 'email': { '\$exists': true, '\$ne': null } }")
+    @field:Indexed(unique = true, partialFilter = "{ 'email': { '\$type': 'string' } }")
     val email: String?,
     val emailVerified: Boolean = false,
-    @field:Indexed(unique = true, partialFilter = "{ 'phoneNumber': { '\$exists': true, '\$ne': null } }")
+    @field:Indexed(unique = true, partialFilter = "{ 'phoneNumber': { '\$type': 'string' } }")
     val phoneNumber: String?,
     val phoneNumberVerified: Boolean = false,
     @field:URL(message = "Picture must be a valid URL")
