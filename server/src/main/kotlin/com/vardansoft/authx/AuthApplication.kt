@@ -1,13 +1,30 @@
 package com.vardansoft.authx
 
 import com.vardansoft.authx.core.utils.GcpUtils
+import io.sentry.Sentry
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
+import javax.annotation.PostConstruct
 
 @SpringBootApplication
 class AuthApplication {
+
+    @PostConstruct
+    fun initSentry() {
+        // Ensure Sentry is initialized and ready to capture exceptions
+        Sentry.configureScope { scope ->
+            scope.setTag("component", "AuthX-Server")
+            scope.setTag("environment", System.getenv("SPRING_PROFILES_ACTIVE") ?: "default")
+        }
+        
+        // Set global exception handler for uncaught exceptions
+        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
+            Sentry.captureException(exception)
+            Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(thread, exception)
+        }
+    }
 
     @Bean
     fun startupChecks(appProperties: AppProperties): ApplicationRunner = ApplicationRunner {
