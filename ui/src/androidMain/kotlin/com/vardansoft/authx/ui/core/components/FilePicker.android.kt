@@ -20,7 +20,7 @@ actual fun rememberFilePicker(
         if (uri != null) {
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
             val mime = context.contentResolver.getType(uri)
-            if (bytes != null) {
+            if (bytes != null && mime != null) {
                 onPicked(listOf(KmpFile(bytes, mime)))
             }
         }
@@ -32,7 +32,7 @@ actual fun rememberFilePicker(
         val files = uris.mapNotNull { uri ->
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
             val mime = context.contentResolver.getType(uri)
-            if (bytes != null) KmpFile(bytes, mime) else null
+            if (bytes != null && mime != null) KmpFile(bytes, mime) else null
         }
         onPicked(files)
     }

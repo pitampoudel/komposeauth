@@ -4,7 +4,9 @@ import com.vardansoft.authx.data.utils.safeApiCall
 import com.vardansoft.core.domain.KmpFile
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readRawBytes
+import io.ktor.http.contentType
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -19,7 +21,11 @@ suspend fun downloadAll(
         coroutineScope {
             deferredList = urls.map { imageUrl ->
                 async {
-                    KmpFile(client.get(imageUrl).readRawBytes())
+                    val response: HttpResponse = client.get(imageUrl)
+                    KmpFile(
+                        byteArray = response.readRawBytes(),
+                        mimeType = response.contentType()?.toString() ?: "application/octet-stream"
+                    )
                 }
             }
         }
@@ -31,9 +37,12 @@ suspend fun download(
     url: String
 ): Result<KmpFile> {
     val res = safeApiCall {
+        val client = HttpClient()
+        val response: HttpResponse = client.get(url)
         Result.success(
             KmpFile(
-                HttpClient().get(url).readRawBytes()
+                byteArray = response.readRawBytes(),
+                mimeType = response.contentType()?.toString() ?: "application/octet-stream"
             )
         )
     }
