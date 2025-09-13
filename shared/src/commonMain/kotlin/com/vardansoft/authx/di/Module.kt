@@ -1,5 +1,7 @@
 package com.vardansoft.authx.di
 
+import com.russhwolf.settings.ObservableSettings
+import com.russhwolf.settings.Settings
 import com.vardansoft.authx.data.AuthXClientImpl
 import com.vardansoft.authx.data.AuthXImpl
 import com.vardansoft.authx.data.AuthXPreferencesImpl
@@ -16,8 +18,11 @@ import com.vardansoft.authx.domain.use_cases.ValidateNotNull
 import org.koin.dsl.module
 
 fun authXSharedModule(authUrl: String, clientId: String, serverUrls: List<String>) = module {
+    single<ObservableSettings> {
+        Settings() as ObservableSettings
+    }
     single<AuthXPreferences> {
-        AuthXPreferencesImpl(get(), get())
+        AuthXPreferencesImpl(get())
     }
     single<ValidateOtpCode> {
         ValidateOtpCode()

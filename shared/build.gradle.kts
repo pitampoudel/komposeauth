@@ -40,10 +40,10 @@ kotlin {
                 implementation(libs.ktor.client.logging)
                 api(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.auth)
-                // datastore preferences
-                implementation(libs.androidx.datastore.preferences.core)
                 // settings
-                implementation(libs.multiplatformSettings)
+                implementation(libs.multiplatformSettings.noArg)
+                implementation(libs.multiplatformSettings.coroutines)
+                implementation(libs.multiplatform.settings.serialization)
                 // lifecycle viewmodel
                 api(libs.jetbrains.lifecycle.viewmodel)
             }

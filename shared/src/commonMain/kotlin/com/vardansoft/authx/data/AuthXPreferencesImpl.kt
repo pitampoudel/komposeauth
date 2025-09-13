@@ -1,79 +1,70 @@
 package com.vardansoft.authx.data
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.stringPreferencesKey
-import com.russhwolf.settings.Settings
+import com.russhwolf.settings.ExperimentalSettingsApi
+import com.russhwolf.settings.ObservableSettings
+import com.russhwolf.settings.coroutines.getStringOrNullFlow
+import com.russhwolf.settings.coroutines.toSuspendSettings
 import com.vardansoft.authx.domain.AuthXPreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 
+@OptIn(ExperimentalSettingsApi::class)
 class AuthXPreferencesImpl(
-    private val settings: Settings,
-    private val dataStore: DataStore<Preferences>
+    private val settings: ObservableSettings
 ) : AuthXPreferences {
+
+    private val suspendSettings = settings.toSuspendSettings()
 
     private object KEYS {
         const val OAUTH2_TOKEN_DATA = "oauth2_token_data"
-        val USER_INFO = stringPreferencesKey("user_info")
+        const val USER_INFO = "user_info"
     }
 
-    override fun oAuth2TokenData(): OAuth2TokenData? {
-        return settings.getStringOrNull(KEYS.OAUTH2_TOKEN_DATA)?.let {
-            try {
-                Json.decodeFromString(it)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
+    override val userInfoResponse: Flow<UserInfoResponse?> =
+        settings.getStringOrNullFlow(KEYS.USER_INFO).map { stringValue ->
+            stringValue?.let {
+                try {
+                    Json.decodeFromString<UserInfoResponse>(it)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
             }
-        }
-    }
-
-    override val userInfoResponse: Flow<UserInfoResponse?> = dataStore.data.map { preferences ->
-        preferences[KEYS.USER_INFO]?.let { string ->
-            try {
-                Json.decodeFromString<UserInfoResponse>(string)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        }
-    }.distinctUntilChanged()
+        }.distinctUntilChanged()
 
 
     override suspend fun saveLoggedInDetails(
         token: OAuth2TokenData,
         userInfoResponse: UserInfoResponse
     ) {
-        settings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(token))
-        dataStore.updateData {
-            it.toMutablePreferences().apply {
-                set(KEYS.USER_INFO, Json.encodeToString(userInfoResponse))
-            }
-        }
+        suspendSettings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(token))
+        suspendSettings.putString(KEYS.USER_INFO, Json.encodeToString(userInfoResponse))
     }
 
     override suspend fun updateTokenData(token: OAuth2TokenData) {
-        settings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(token))
+        suspendSettings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(token))
     }
 
     override suspend fun updateUserInformation(info: UserInfoResponse) {
-        dataStore.updateData {
-            it.toMutablePreferences().apply {
-                set(KEYS.USER_INFO, Json.encodeToString(info))
+        suspendSettings.putString(KEYS.USER_INFO, Json.encodeToString(info))
+    }
+
+    override fun oAuth2TokenData(): OAuth2TokenData? {
+        return settings.getStringOrNull(KEYS.OAUTH2_TOKEN_DATA)?.let {
+            try {
+                Json.decodeFromString<OAuth2TokenData>(it)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
             }
         }
     }
 
     override suspend fun clear() {
-        settings.remove(KEYS.OAUTH2_TOKEN_DATA)
-        dataStore.updateData {
-            it.toMutablePreferences().apply {
-                remove(KEYS.USER_INFO)
-            }
-        }
+        suspendSettings.remove(KEYS.OAUTH2_TOKEN_DATA)
+        suspendSettings.remove(KEYS.USER_INFO)
     }
 
 }

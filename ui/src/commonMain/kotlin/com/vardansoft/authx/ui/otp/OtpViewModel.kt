@@ -6,7 +6,6 @@ import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.AuthXPreferences
 import com.vardansoft.authx.domain.use_cases.ValidateOtpCode
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,7 +24,7 @@ internal class OtpViewModel(
     private val uiEventChannel = Channel<OtpUiEvent>()
     val uiEvents = uiEventChannel.receiveAsFlow()
     fun onEvent(event: OtpEvent) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.Default) {
             when (event) {
                 is OtpEvent.DismissInfoMsg -> _state.update {
                     it.copy(infoMsg = null)
