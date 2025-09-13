@@ -18,8 +18,8 @@ import com.vardansoft.authx.domain.use_cases.ValidateNotNull
 import org.koin.dsl.module
 
 fun authXSharedModule(authUrl: String, clientId: String, serverUrls: List<String>) = module {
-    single<ObservableSettings> {
-        Settings() as ObservableSettings
+    single<Settings> {
+        Settings()
     }
     single<AuthXPreferences> {
         AuthXPreferencesImpl(get())

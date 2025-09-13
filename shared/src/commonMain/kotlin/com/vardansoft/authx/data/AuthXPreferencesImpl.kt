@@ -2,6 +2,7 @@ package com.vardansoft.authx.data
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ObservableSettings
+import com.russhwolf.settings.Settings
 import com.russhwolf.settings.coroutines.getStringOrNullFlow
 import com.russhwolf.settings.coroutines.toSuspendSettings
 import com.vardansoft.authx.domain.AuthXPreferences
@@ -12,9 +13,9 @@ import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalSettingsApi::class)
 class AuthXPreferencesImpl(
-    private val settings: ObservableSettings
+    private val settings: Settings
 ) : AuthXPreferences {
-
+    private val observableSettings = settings as ObservableSettings
     private val suspendSettings = settings.toSuspendSettings()
 
     private object KEYS {
@@ -23,7 +24,7 @@ class AuthXPreferencesImpl(
     }
 
     override val userInfoResponse: Flow<UserInfoResponse?> =
-        settings.getStringOrNullFlow(KEYS.USER_INFO).map { stringValue ->
+        observableSettings.getStringOrNullFlow(KEYS.USER_INFO).map { stringValue ->
             stringValue?.let {
                 try {
                     Json.decodeFromString<UserInfoResponse>(it)
@@ -39,7 +40,7 @@ class AuthXPreferencesImpl(
         token: OAuth2TokenData,
         userInfoResponse: UserInfoResponse
     ) {
-        suspendSettings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(token))
+        settings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(token))
         suspendSettings.putString(KEYS.USER_INFO, Json.encodeToString(userInfoResponse))
     }
 
