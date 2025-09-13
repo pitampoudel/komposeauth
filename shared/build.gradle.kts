@@ -34,7 +34,7 @@ kotlin {
                 api(libs.ktor.client.core)
                 implementation(libs.ktor.client.contentNegotiation)
                 implementation(libs.ktor.client.logging)
-                implementation(libs.ktor.serialization.kotlinx.json)
+                api(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.auth)
                 // datastore preferences
                 implementation(libs.androidx.datastore.preferences.core)
