@@ -17,6 +17,8 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.domain.AuthX
+import com.vardansoft.authx.domain.AuthXClient
+import org.koin.java.KoinJavaComponent.getKoin
 
 @Composable
 actual fun rememberCredentialRetriever(): CredentialRetriever {
@@ -28,12 +30,11 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
         object : CredentialRetriever {
             override suspend fun getCredential(): Result<Credential> {
                 // Fetch Google OAuth client-id dynamically from server
-                val authXClient = org.koin.java.KoinJavaComponent.getKoin()
-                    .get<com.vardansoft.authx.domain.AuthXClient>()
+                val authXClient = getKoin().get<AuthXClient>()
                 val googleAuthClientId = authXClient.fetchConfig().getOrElse {
                     return Result.failure(it)
                 }.googleClientId
-                val clientId = org.koin.java.KoinJavaComponent.getKoin().get<AuthX>().clientId
+                val clientId = getKoin().get<AuthX>().clientId
 
                 val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)

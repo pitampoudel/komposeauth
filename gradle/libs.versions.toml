@@ -19,6 +19,12 @@ playServicesAuth = "21.4.0"
 playServicesAuthApiPhone = "18.2.0"
 ccp = "2.7.3"
 uiTooling = "1.9.0"
+google-api-client = "2.7.2"
+google-oauth-client = "1.39.0"
+google-oauth-client-java6 = "1.39.0"
+google-oauth-client-jetty = "1.39.0"
+google-api-services-oauth2 = "v2-rev20200213-2.0.0"
+
 
 
 
@@ -55,6 +61,12 @@ play-services-auth = { module = "com.google.android.gms:play-services-auth", ver
 play-services-auth-api-phone = { module = "com.google.android.gms:play-services-auth-api-phone", version.ref = "playServicesAuthApiPhone" }
 ccp = { module = "com.hbb20:ccp", version.ref = "ccp" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
+google-api-client = { group = "com.google.api-client", name = "google-api-client", version.ref = "google-api-client" }
+google-oauth-client = { group = "com.google.oauth-client", name = "google-oauth-client", version.ref = "google-oauth-client" }
+google-oauth-client-java6 = { group = "com.google.oauth-client", name = "google-oauth-client-java6", version.ref = "google-oauth-client-java6" }
+google-oauth-client-jetty = { group = "com.google.oauth-client", name = "google-oauth-client-jetty", version.ref = "google-oauth-client-jetty" }
+google-api-services-oauth2 = { group = "com.google.apis", name = "google-api-services-oauth2", version.ref = "google-api-services-oauth2" }
+
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }

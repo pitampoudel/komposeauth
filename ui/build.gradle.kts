@@ -72,6 +72,11 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
+                implementation(libs.google.api.client)
+                implementation(libs.google.oauth.client)
+                implementation(libs.google.oauth.client.java6)
+                implementation(libs.google.oauth.client.jetty)
+                implementation(libs.google.api.services.oauth2)
             }
         }
 
