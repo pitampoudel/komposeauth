@@ -1,9 +1,10 @@
 package com.vardansoft.authx.ui.core
 
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 
-actual fun kotlinx.datetime.LocalDate.asDisplayDate(): String {
+actual fun LocalDate.asDisplayDate(): String {
     TODO("Not yet implemented")
 }
 
