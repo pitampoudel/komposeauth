@@ -18,7 +18,7 @@ data class KmpFile(val byteArray: ByteArray, val mimeType: String) {
     }
 
     fun toEncodedData() = EncodedData(
-        data = byteArray.encodeBase64(),
+        base64EncodedData = byteArray.encodeBase64(),
         mimeType = mimeType
     )
 }

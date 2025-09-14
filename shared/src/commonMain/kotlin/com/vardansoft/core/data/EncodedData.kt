@@ -7,10 +7,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class EncodedData(
-    @SerialName("data")
-    val data: String,
+    @SerialName("base64EncodedData")
+    val base64EncodedData: String,
     @SerialName("mime_type")
     val mimeType: String
 ) {
-    fun toKmpFile() = KmpFile(data.decodeBase64Bytes(), mimeType)
+    fun toKmpFile() = KmpFile(base64EncodedData.decodeBase64Bytes(), mimeType)
 }
