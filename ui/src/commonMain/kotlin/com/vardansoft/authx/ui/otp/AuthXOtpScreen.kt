@@ -50,12 +50,12 @@ import com.vardansoft.ui.generated.resources.otp_verify_button
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun OtpScreen(
+fun AuthXOtpScreen(
     onSkip: () -> Unit = {}
 ) {
     val vm = koinViewModel<OtpViewModel>()
     val state = vm.state.collectAsState().value
-    OtpPage(
+    AuthXOtpPage(
         state = state,
         onEvent = vm::onEvent,
         uiEvents = vm.uiEvents,
@@ -65,7 +65,7 @@ fun OtpScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun OtpPage(
+private fun AuthXOtpPage(
     state: OtpState,
     uiEvents: kotlinx.coroutines.flow.Flow<OtpUiEvent>,
     onEvent: KFunction1<OtpEvent, Unit>,

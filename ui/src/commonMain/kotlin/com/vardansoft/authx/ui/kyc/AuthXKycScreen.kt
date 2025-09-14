@@ -90,12 +90,12 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.ExperimentalTime
 
 @Composable
-fun KycScreen(
+fun AuthXKycScreen(
     onSkip: () -> Unit = {}
 ) {
     val vm = koinViewModel<KycViewModel>()
     val state by vm.state.collectAsState()
-    KycPage(
+    AuthXKycPage(
         state = state,
         onEvent = vm::onEvent,
         onSkip = onSkip
@@ -104,7 +104,7 @@ fun KycScreen(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
-private fun KycPage(
+private fun AuthXKycPage(
     state: KycState,
     onEvent: (KycEvent) -> Unit,
     onSkip: () -> Unit

@@ -95,7 +95,7 @@ fun BoxScope.Background() {
 }
 
 @Composable
-fun LoginScreen(
+fun AuthXLoginScreen(
     logoDrawable: DrawableResource,
     appName: String,
     state: LoginState,
