@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.AuthXPreferences
-import com.vardansoft.core.data.NetworkResult
+import com.vardansoft.core.domain.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -26,11 +26,11 @@ class LoginViewModel(
                         it.copy(progress = 0.0F)
                     }
                     when {
-                        event.credential is NetworkResult.Error -> _state.update {
+                        event.credential is Result.Error -> _state.update {
                             it.copy(infoMsg = event.credential.message)
                         }
 
-                        event.credential is NetworkResult.Success -> login(event.credential.data)
+                        event.credential is Result.Success -> login(event.credential.data)
                     }
 
                     _state.update {
@@ -48,18 +48,18 @@ class LoginViewModel(
     suspend fun login(cred: Credential) {
         val res = authXClient.exchangeCredentialForToken(cred)
         when (res) {
-            is NetworkResult.Error -> _state.update {
+            is Result.Error -> _state.update {
                 it.copy(infoMsg = res.message)
             }
 
-            is NetworkResult.Success -> {
+            is Result.Success -> {
                 val userInfoRes = authXClient.fetchUserInfo(res.data.accessToken)
                 when (userInfoRes) {
-                    is NetworkResult.Error -> _state.update {
+                    is Result.Error -> _state.update {
                         it.copy(infoMsg = userInfoRes.message)
                     }
 
-                    is NetworkResult.Success -> {
+                    is Result.Success -> {
                         authXPreferences.saveLoggedInDetails(
                             token = res.data,
                             userInfoResponse = userInfoRes.data

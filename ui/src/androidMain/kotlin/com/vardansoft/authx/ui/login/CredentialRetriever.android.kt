@@ -18,7 +18,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingExcept
 import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.domain.AuthX
 import com.vardansoft.authx.domain.AuthXClient
-import com.vardansoft.core.data.NetworkResult
+import com.vardansoft.core.domain.Result
 import org.koin.java.KoinJavaComponent.getKoin
 
 @Composable
@@ -29,13 +29,13 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
     }
     return remember {
         object : CredentialRetriever {
-            override suspend fun getCredential(): NetworkResult<Credential> {
+            override suspend fun getCredential(): Result<Credential> {
                 // Fetch Google OAuth client-id dynamically from server
                 val authXClient = getKoin().get<AuthXClient>()
                 val res = authXClient.fetchConfig()
                 when (res) {
-                    is NetworkResult.Error -> return res
-                    is NetworkResult.Success -> {
+                    is Result.Error -> return res
+                    is Result.Success -> {
                         val googleAuthClientId = res.data.googleClientId
 
                         val clientId = getKoin().get<AuthX>().clientId
@@ -54,35 +54,35 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                                 context = activity,
                                 request = request
                             )
-                            val credential: NetworkResult<Credential> =
+                            val credential: Result<Credential> =
                                 when (val credential = result.credential) {
                                     is CustomCredential -> {
                                         if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                                             try {
                                                 val googleIdTokenCredential =
                                                     GoogleIdTokenCredential.createFrom(credential.data)
-                                                NetworkResult.Success(
+                                                Result.Success(
                                                     Credential.GoogleId(
                                                         clientId = clientId,
                                                         idToken = googleIdTokenCredential.idToken
                                                     )
                                                 )
                                             } catch (e: GoogleIdTokenParsingException) {
-                                                NetworkResult.Error(e.message.orEmpty())
+                                                Result.Error(e.message.orEmpty())
                                             }
                                         } else {
-                                            NetworkResult.Error("Unexpected type of credential")
+                                            Result.Error("Unexpected type of credential")
                                         }
 
                                     }
 
-                                    else -> NetworkResult.Error("Unknown credential type")
+                                    else -> Result.Error("Unknown credential type")
                                 }
                             credentialManager.clearCredentialState(ClearCredentialStateRequest())
                             return credential
                         } catch (e: GetCredentialCancellationException) {
                             e.printStackTrace()
-                            return NetworkResult.Error(e.message.orEmpty())
+                            return Result.Error(e.message.orEmpty())
 
                         } catch (e: GetCredentialException) {
                             e.printStackTrace()
@@ -96,7 +96,7 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                                 else -> e.message
                                     ?: "Unable to retrieve credentials at the moment. Please try again."
                             }
-                            return NetworkResult.Error(userMessage)
+                            return Result.Error(userMessage)
                         }
                     }
                 }

@@ -7,7 +7,7 @@ import com.vardansoft.authx.data.ApiEndpoints.UPDATE_PHONE_NUMBER
 import com.vardansoft.authx.data.ApiEndpoints.USER_INFO
 import com.vardansoft.authx.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import com.vardansoft.authx.domain.AuthXClient
-import com.vardansoft.core.data.NetworkResult
+import com.vardansoft.core.domain.Result
 import com.vardansoft.core.data.asResource
 import com.vardansoft.core.data.safeApiCall
 import io.ktor.client.HttpClient
@@ -22,14 +22,14 @@ import io.ktor.http.Parameters
 
 class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXClient {
 
-    override suspend fun fetchConfig(): NetworkResult<ConfigResponse> {
+    override suspend fun fetchConfig(): Result<ConfigResponse> {
         return safeApiCall {
             httpClient.get("$authUrl/$CONFIG")
                 .asResource { body<ConfigResponse>() }
         }
     }
 
-    override suspend fun exchangeCredentialForToken(credential: Credential): NetworkResult<OAuth2TokenData> {
+    override suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2TokenData> {
         return safeApiCall {
             httpClient.submitForm(
                 "$authUrl/$TOKEN",
@@ -47,7 +47,7 @@ class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXCl
     }
 
 
-    override suspend fun fetchUserInfo(accessToken: String?): NetworkResult<UserInfoResponse> {
+    override suspend fun fetchUserInfo(accessToken: String?): Result<UserInfoResponse> {
         return safeApiCall {
             httpClient.get("$authUrl/$USER_INFO") {
                 accessToken?.let { bearerAuth(accessToken) }
@@ -55,7 +55,7 @@ class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXCl
         }
     }
 
-    override suspend fun verifyPhoneOtp(req: VerifyPhoneOtpRequest): NetworkResult<HttpResponse> {
+    override suspend fun verifyPhoneOtp(req: VerifyPhoneOtpRequest): Result<HttpResponse> {
         return safeApiCall {
             httpClient.post("$authUrl/$VERIFY_PHONE_NUMBER") {
                 setBody(req)
@@ -63,7 +63,7 @@ class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXCl
         }
     }
 
-    override suspend fun sendPhoneOtp(request: UpdatePhoneNumberRequest): NetworkResult<HttpResponse> {
+    override suspend fun sendPhoneOtp(request: UpdatePhoneNumberRequest): Result<HttpResponse> {
         return safeApiCall {
             httpClient.post("$authUrl/$UPDATE_PHONE_NUMBER") {
                 setBody(request)
@@ -71,18 +71,18 @@ class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXCl
         }
     }
 
-    override suspend fun fetchMyKyc(): NetworkResult<KycResponse?> {
+    override suspend fun fetchMyKyc(): Result<KycResponse?> {
         return safeApiCall {
             val response = httpClient.get("$authUrl/$KYC")
             if (response.status.value == 404) {
-                NetworkResult.Success(null)
+                Result.Success(null)
             } else {
                 response.asResource { body<KycResponse?>() }
             }
         }
     }
 
-    override suspend fun submitKyc(body: UpdateKycRequest): NetworkResult<KycResponse> {
+    override suspend fun submitKyc(body: UpdateKycRequest): Result<KycResponse> {
         return safeApiCall {
             httpClient.post("$authUrl/$KYC") {
                 setBody(body)

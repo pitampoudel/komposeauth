@@ -3,7 +3,7 @@ package com.vardansoft.authx.data.utils
 import com.vardansoft.authx.data.ApiEndpoints.TOKEN
 import com.vardansoft.authx.data.OAuth2TokenData
 import com.vardansoft.authx.domain.AuthXPreferences
-import com.vardansoft.core.data.NetworkResult
+import com.vardansoft.core.domain.Result
 import com.vardansoft.core.data.asResource
 import com.vardansoft.core.data.safeApiCall
 import io.ktor.client.HttpClient
@@ -61,7 +61,7 @@ internal suspend fun RefreshTokensParams.tryTokenRefresh(
     }
 
     return when (resource) {
-        is NetworkResult.Success -> {
+        is Result.Success -> {
             // Save new tokens
             authXPreferences?.updateTokenData(resource.data)
 

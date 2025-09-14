@@ -1,9 +1,9 @@
 package com.vardansoft.authx.ui.login
 
 import com.vardansoft.authx.data.Credential
-import com.vardansoft.core.data.NetworkResult
+import com.vardansoft.core.domain.Result
 
 sealed interface LoginEvent {
-    data class Login(val credential: NetworkResult<Credential>) : LoginEvent
+    data class Login(val credential: Result<Credential>) : LoginEvent
     data object DismissInfoMsg : LoginEvent
 }

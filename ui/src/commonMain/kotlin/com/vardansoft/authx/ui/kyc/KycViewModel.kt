@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.use_cases.ValidateNotBlank
 import com.vardansoft.authx.domain.use_cases.ValidateNotNull
-import com.vardansoft.core.data.NetworkResult
+import com.vardansoft.core.domain.Result
 import com.vardansoft.core.data.download
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -320,11 +320,11 @@ class KycViewModel(
         }
         val res = client.fetchMyKyc()
         when (res) {
-            is NetworkResult.Error -> _state.update {
+            is Result.Error -> _state.update {
                 it.copy(infoMsg = res.message)
             }
 
-            is NetworkResult.Success -> {
+            is Result.Success -> {
                 val current = res.data
                 val documentFront = current?.documentInformation?.documentFrontUrl?.let {
                     download(url = it)
@@ -336,17 +336,17 @@ class KycViewModel(
                     download(url = it)
                 }
 
-                if (documentFront != null && documentFront is NetworkResult.Error) {
+                if (documentFront != null && documentFront is Result.Error) {
                     _state.update {
                         it.copy(infoMsg = documentFront.message)
                     }
                 }
-                if (documentBack != null && documentBack is NetworkResult.Error) {
+                if (documentBack != null && documentBack is Result.Error) {
                     _state.update {
                         it.copy(infoMsg = documentBack.message)
                     }
                 }
-                if (selfie != null && selfie is NetworkResult.Error) {
+                if (selfie != null && selfie is Result.Error) {
                     _state.update {
                         it.copy(infoMsg = selfie.message)
                     }
@@ -393,11 +393,11 @@ class KycViewModel(
                                 ?: s.documentInfo.documentExpiryDate,
                             documentIssuedPlace = current?.documentInformation?.documentIssuedPlace
                                 ?: s.documentInfo.documentIssuedPlace,
-                            documentFront = (documentFront as? NetworkResult.Success)?.data
+                            documentFront = (documentFront as? Result.Success)?.data
                                 ?: s.documentInfo.documentFront,
-                            documentBack = (documentBack as? NetworkResult.Success)?.data
+                            documentBack = (documentBack as? Result.Success)?.data
                                 ?: s.documentInfo.documentBack,
-                            selfie = (selfie as? NetworkResult.Success)?.data
+                            selfie = (selfie as? Result.Success)?.data
                                 ?: s.documentInfo.selfie
                         )
                     )
@@ -511,9 +511,9 @@ class KycViewModel(
             val req = _state.value.updateKycRequest()
             val res = client.submitKyc(req)
             when (res) {
-                is NetworkResult.Error -> _state.update { it.copy(infoMsg = res.message) }
+                is Result.Error -> _state.update { it.copy(infoMsg = res.message) }
 
-                is NetworkResult.Success -> _state.update { it.copy(existing = res.data) }
+                is Result.Success -> _state.update { it.copy(existing = res.data) }
             }
         }
         _state.update { it.copy(progress = null) }

@@ -2,10 +2,10 @@ package com.vardansoft.authx.ui.login
 
 import androidx.compose.runtime.Composable
 import com.vardansoft.authx.data.Credential
-import com.vardansoft.core.data.NetworkResult
+import com.vardansoft.core.domain.Result
 
 interface CredentialRetriever {
-    suspend fun getCredential(): NetworkResult<Credential>
+    suspend fun getCredential(): Result<Credential>
 }
 
 @Composable

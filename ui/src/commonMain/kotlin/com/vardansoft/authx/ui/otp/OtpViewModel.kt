@@ -5,8 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.AuthXPreferences
 import com.vardansoft.authx.domain.use_cases.ValidateOtpCode
-import com.vardansoft.core.data.NetworkResult
-import com.vardansoft.core.presentation.toInfoMessage
+import com.vardansoft.core.domain.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,22 +47,22 @@ internal class OtpViewModel(
                     state.value.verifyParam()?.let { req ->
                         val res = client.verifyPhoneOtp(req)
                         when (res) {
-                            is NetworkResult.Error -> {
+                            is Result.Error -> {
                                 _state.update {
                                     it.copy(infoMsg = res.message)
                                 }
                             }
 
-                            is NetworkResult.Success -> {
+                            is Result.Success -> {
                                 val res = client.fetchUserInfo()
                                 when (res) {
-                                    is NetworkResult.Error -> {
+                                    is Result.Error -> {
                                         _state.update {
                                             it.copy(infoMsg = res.message)
                                         }
                                     }
 
-                                    is NetworkResult.Success -> {
+                                    is Result.Success -> {
                                         authXPreferences.updateUserInformation(res.data)
                                         uiEventChannel.send(OtpUiEvent.Verified)
                                     }
@@ -85,7 +84,7 @@ internal class OtpViewModel(
                     }
                     val res = client.sendPhoneOtp(req)
                     when (res) {
-                        is NetworkResult.Error -> {
+                        is Result.Error -> {
                             _state.update {
                                 it.copy(
                                     infoMsg = res.message,
@@ -95,7 +94,7 @@ internal class OtpViewModel(
                             }
                         }
 
-                        is NetworkResult.Success -> {
+                        is Result.Success -> {
                             _state.update {
                                 it.copy(progress = null)
                             }
