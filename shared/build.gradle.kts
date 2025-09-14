@@ -53,6 +53,19 @@ kotlin {
                 implementation(libs.kotlin.test)
             }
         }
+        val jvmMain by getting {
+            dependencies {
+                // Phone Number
+                implementation(libs.libphonenumber)
+            }
+        }
+        val androidMain by getting {
+            dependencies {
+                // Phone Number
+                implementation(libs.libphonenumber)
+            }
+        }
+
     }
 }
 

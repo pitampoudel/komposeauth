@@ -1,14 +1,8 @@
-package com.vardansoft.authx.core.utils
+package com.vardansoft.core.data
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 
-data class PhoneNumber(
-    val nationalNumber: Long,
-    val countryNameCode: String?,
-    val fullNumberInInternationalFormat: String
-)
-
-fun parsePhoneNumber(
+actual fun parsePhoneNumber(
     countryNameCode: String?,
     phoneNumber: String
 ): PhoneNumber? {
@@ -24,7 +18,6 @@ fun parsePhoneNumber(
         )
         else null
     } catch (e: Exception) {
-        e.printStackTrace()
         null
     }
 }

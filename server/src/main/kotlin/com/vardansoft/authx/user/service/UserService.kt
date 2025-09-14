@@ -1,10 +1,9 @@
 package com.vardansoft.authx.user.service
 
 import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
-import com.vardansoft.authx.core.utils.parsePhoneNumber
+import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.data.UpdatePhoneNumberRequest
 import com.vardansoft.authx.data.VerifyPhoneOtpRequest
-import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.user.dto.UpdateUserRequest
 import com.vardansoft.authx.user.dto.UserResponse
 import com.vardansoft.authx.user.dto.mapToEntity
@@ -12,6 +11,7 @@ import com.vardansoft.authx.user.dto.mapToResponseDto
 import com.vardansoft.authx.user.dto.update
 import com.vardansoft.authx.user.entity.User
 import com.vardansoft.authx.user.repository.UserRepository
+import com.vardansoft.core.data.parsePhoneNumber
 import jakarta.validation.Valid
 import org.bson.types.ObjectId
 import org.springframework.security.crypto.password.PasswordEncoder

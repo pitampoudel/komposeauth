@@ -57,9 +57,6 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
-    // Phone Number
-    implementation("com.googlecode.libphonenumber:libphonenumber:9.0.9")
-
     // Google Cloud Platform
     implementation("com.google.cloud:spring-cloud-gcp-storage:6.2.3")
 

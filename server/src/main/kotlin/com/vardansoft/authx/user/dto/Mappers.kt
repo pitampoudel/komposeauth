@@ -1,8 +1,8 @@
 package com.vardansoft.authx.user.dto
 
-import com.vardansoft.authx.core.utils.parsePhoneNumber
 import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.user.entity.User
+import com.vardansoft.core.data.parsePhoneNumber
 import jakarta.validation.Valid
 import org.bson.types.ObjectId
 import org.springframework.security.crypto.password.PasswordEncoder
