@@ -21,10 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
-import com.vardansoft.authx.ui.core.asDisplayDate
-import com.vardansoft.authx.ui.core.asDisplayDateTime
-import com.vardansoft.authx.ui.core.asDisplayTime
-import com.vardansoft.authx.ui.core.toSystemLocalDateTime
+import com.vardansoft.core.domain.asDisplayDate
+import com.vardansoft.core.domain.asDisplayDateTime
+import com.vardansoft.core.domain.asDisplayTime
+import com.vardansoft.core.domain.toSystemLocalDateTime
 import com.vardansoft.ui.generated.resources.Res
 import com.vardansoft.ui.generated.resources.cancel
 import com.vardansoft.ui.generated.resources.ok

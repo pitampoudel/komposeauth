@@ -34,8 +34,8 @@ import com.vardansoft.authx.ui.core.components.DateTimeField
 import com.vardansoft.authx.ui.core.components.DateTimeFieldType
 import com.vardansoft.authx.ui.core.components.EnumField
 import com.vardansoft.authx.ui.core.components.FileInputField
-import com.vardansoft.authx.ui.core.toSystemLocalDate
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper
+import com.vardansoft.core.domain.toSystemLocalDate
 import com.vardansoft.ui.generated.resources.Res
 import com.vardansoft.ui.generated.resources.common_skip
 import com.vardansoft.ui.generated.resources.kyc_current_address_title
