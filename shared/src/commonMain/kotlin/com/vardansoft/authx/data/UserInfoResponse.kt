@@ -1,11 +1,13 @@
 package com.vardansoft.authx.data
 
-import kotlinx.datetime.Instant
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @Serializable
-data class UserInfoResponse(
+data class UserInfoResponse @OptIn(ExperimentalTime::class) constructor(
     @SerialName("firstName")
     val firstName: String,
     @SerialName("lastName")
@@ -25,9 +27,9 @@ data class UserInfoResponse(
     @SerialName("id")
     val id: String,
     @SerialName("createdAt")
-    val createdAt: Instant,
+    @Contextual val createdAt: Instant,
     @SerialName("updatedAt")
-    val updatedAt: Instant,
+    @Contextual val updatedAt: Instant,
     @SerialName("socialLinks")
     val socialLinks: List<String>
 ) {

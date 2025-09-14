@@ -28,12 +28,13 @@ import com.vardansoft.authx.ui.core.toSystemLocalDateTime
 import com.vardansoft.ui.generated.resources.Res
 import com.vardansoft.ui.generated.resources.cancel
 import com.vardansoft.ui.generated.resources.ok
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 
 enum class DateTimeFieldType {
@@ -42,7 +43,7 @@ enum class DateTimeFieldType {
     DATE_AND_TIME
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 fun DateTimeField(
     modifier: Modifier = Modifier,

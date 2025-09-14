@@ -1,4 +1,4 @@
-name: Publish KMP Library
+name: Publish Client Library
 on:
   workflow_dispatch:
   release:
