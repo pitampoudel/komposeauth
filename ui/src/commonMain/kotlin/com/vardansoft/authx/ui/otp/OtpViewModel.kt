@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.AuthXPreferences
 import com.vardansoft.authx.domain.use_cases.ValidateOtpCode
+import com.vardansoft.core.presentation.toInfoMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,7 +49,7 @@ internal class OtpViewModel(
                         when {
                             res.isFailure -> {
                                 _state.update {
-                                    it.copy(infoMsg = res.exceptionOrNull()?.message)
+                                    it.copy(infoMsg = res.exceptionOrNull().toInfoMessage())
                                 }
                             }
 
@@ -57,7 +58,7 @@ internal class OtpViewModel(
                                 when {
                                     res.isFailure -> {
                                         _state.update {
-                                            it.copy(infoMsg = res.exceptionOrNull()?.message)
+                                            it.copy(infoMsg = res.exceptionOrNull().toInfoMessage())
                                         }
                                     }
 
@@ -86,7 +87,7 @@ internal class OtpViewModel(
                         res.isFailure -> {
                             _state.update {
                                 it.copy(
-                                    infoMsg = res.exceptionOrNull()?.message,
+                                    infoMsg = res.exceptionOrNull().toInfoMessage(),
                                     progress = null,
                                     req = null
                                 )

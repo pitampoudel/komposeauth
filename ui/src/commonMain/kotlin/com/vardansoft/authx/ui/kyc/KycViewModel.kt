@@ -6,6 +6,7 @@ import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.use_cases.ValidateNotBlank
 import com.vardansoft.authx.domain.use_cases.ValidateNotNull
 import com.vardansoft.core.data.download
+import com.vardansoft.core.presentation.toInfoMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -320,7 +321,7 @@ class KycViewModel(
         val res = client.fetchMyKyc()
         when {
             res.isFailure -> _state.update {
-                it.copy(infoMsg = res.exceptionOrNull()?.message)
+                it.copy(infoMsg = res.exceptionOrNull().toInfoMessage())
             }
 
             res.isSuccess -> {
@@ -337,17 +338,17 @@ class KycViewModel(
 
                 if (documentFront != null && documentFront.isFailure) {
                     _state.update {
-                        it.copy(infoMsg = documentFront.exceptionOrNull()?.message)
+                        it.copy(infoMsg = documentFront.exceptionOrNull().toInfoMessage())
                     }
                 }
                 if (documentBack != null && documentBack.isFailure) {
                     _state.update {
-                        it.copy(infoMsg = documentBack.exceptionOrNull()?.message)
+                        it.copy(infoMsg = documentBack.exceptionOrNull().toInfoMessage())
                     }
                 }
                 if (selfie != null && selfie.isFailure) {
                     _state.update {
-                        it.copy(infoMsg = selfie.exceptionOrNull()?.message)
+                        it.copy(infoMsg = selfie.exceptionOrNull().toInfoMessage())
                     }
                 }
 
@@ -508,7 +509,12 @@ class KycViewModel(
             val req = _state.value.updateKycRequest()
             val res = client.submitKyc(req)
             when {
-                res.isFailure -> _state.update { it.copy(infoMsg = res.exceptionOrNull()?.message) }
+                res.isFailure -> _state.update {
+                    it.copy(
+                        infoMsg = res.exceptionOrNull().toInfoMessage()
+                    )
+                }
+
                 res.isSuccess -> _state.update { it.copy(existing = res.getOrThrow()) }
             }
         }

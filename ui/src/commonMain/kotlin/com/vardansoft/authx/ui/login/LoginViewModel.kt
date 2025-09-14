@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.AuthXPreferences
+import com.vardansoft.core.presentation.toInfoMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -26,7 +27,7 @@ class LoginViewModel(
                     }
                     when {
                         event.credential.isFailure -> _state.update {
-                            it.copy(infoMsg = event.credential.exceptionOrNull()?.message)
+                            it.copy(infoMsg = event.credential.exceptionOrNull().toInfoMessage())
                         }
 
                         event.credential.isSuccess -> login(event.credential.getOrThrow())
@@ -48,14 +49,14 @@ class LoginViewModel(
         val res = authXClient.exchangeCredentialForToken(cred)
         when {
             res.isFailure -> _state.update {
-                it.copy(infoMsg = res.exceptionOrNull()?.message)
+                it.copy(infoMsg = res.exceptionOrNull().toInfoMessage())
             }
 
             res.isSuccess -> {
                 val userInfoRes = authXClient.fetchUserInfo(res.getOrThrow().accessToken)
                 when {
                     userInfoRes.isFailure -> _state.update {
-                        it.copy(infoMsg = userInfoRes.exceptionOrNull()?.message)
+                        it.copy(infoMsg = userInfoRes.exceptionOrNull().toInfoMessage())
                     }
 
                     userInfoRes.isSuccess -> {

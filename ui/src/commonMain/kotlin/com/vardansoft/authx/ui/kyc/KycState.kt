@@ -7,6 +7,7 @@ import com.vardansoft.authx.data.FamilyInformation
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.PersonalInformation
 import com.vardansoft.authx.data.UpdateKycRequest
+import com.vardansoft.core.presentation.InfoMessage
 import com.vardansoft.core.domain.KmpFile
 import kotlinx.datetime.LocalDate
 
@@ -159,7 +160,7 @@ data class KycState(
     val currentAddress: AddressState = AddressState(),
     val currentAddressSameAsPermanent: Boolean = false,
     val progress: Float? = null,
-    val infoMsg: String? = null,
+    val infoMsg: InfoMessage? = null,
     val existing: KycResponse? = null
 ) {
     fun containsError(): Boolean {

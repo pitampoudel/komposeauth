@@ -2,12 +2,13 @@ package com.vardansoft.authx.ui.core.wrapper.screenstate
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import com.vardansoft.core.presentation.InfoMessage
 
 
 @Composable
 fun ScreenStateWrapper(
     progress: Float?,
-    infoMessage: String?,
+    infoMessage: InfoMessage?,
     onDismissInfoMsg: () -> Unit,
     content: @Composable () -> Unit
 ) {
