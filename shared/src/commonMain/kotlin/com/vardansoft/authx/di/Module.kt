@@ -1,6 +1,5 @@
 package com.vardansoft.authx.di
 
-import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.Settings
 import com.vardansoft.authx.data.AuthXClientImpl
 import com.vardansoft.authx.data.AuthXImpl
@@ -13,8 +12,8 @@ import com.vardansoft.authx.domain.use_cases.ValidateEmail
 import com.vardansoft.authx.domain.use_cases.ValidateOtpCode
 import com.vardansoft.authx.domain.use_cases.ValidatePassword
 import com.vardansoft.authx.domain.use_cases.ValidatePhoneNumber
-import com.vardansoft.authx.domain.use_cases.ValidateNotBlank
-import com.vardansoft.authx.domain.use_cases.ValidateNotNull
+import com.vardansoft.core.domain.validators.ValidateNotBlank
+import com.vardansoft.core.domain.validators.ValidateNotNull
 import org.koin.dsl.module
 
 fun authXSharedModule(authUrl: String, clientId: String, serverUrls: List<String>) = module {

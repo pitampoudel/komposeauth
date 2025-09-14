@@ -3,8 +3,8 @@ package com.vardansoft.authx.ui.kyc
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.domain.AuthXClient
-import com.vardansoft.authx.domain.use_cases.ValidateNotBlank
-import com.vardansoft.authx.domain.use_cases.ValidateNotNull
+import com.vardansoft.core.domain.validators.ValidateNotBlank
+import com.vardansoft.core.domain.validators.ValidateNotNull
 import com.vardansoft.core.domain.Result
 import com.vardansoft.core.data.download
 import kotlinx.coroutines.flow.MutableStateFlow

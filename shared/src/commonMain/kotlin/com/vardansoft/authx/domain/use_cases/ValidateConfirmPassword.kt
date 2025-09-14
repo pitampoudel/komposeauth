@@ -1,5 +1,7 @@
 package com.vardansoft.authx.domain.use_cases
 
+import com.vardansoft.core.domain.validators.ValidationResult
+
 class ValidateConfirmPassword {
     operator fun invoke(password: String, confirmPassword: String): ValidationResult {
         return if (confirmPassword.isBlank()) {

@@ -1,4 +1,4 @@
-package com.vardansoft.authx.domain.use_cases
+package com.vardansoft.core.domain.validators
 
 class ValidateNotNull {
     operator fun <T> invoke(value: T?): ValidationResult {
