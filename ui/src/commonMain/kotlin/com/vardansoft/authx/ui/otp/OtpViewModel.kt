@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.AuthXPreferences
 import com.vardansoft.authx.domain.use_cases.ValidateOtpCode
+import com.vardansoft.core.data.NetworkResult
 import com.vardansoft.core.presentation.toInfoMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -46,24 +47,24 @@ internal class OtpViewModel(
 
                     state.value.verifyParam()?.let { req ->
                         val res = client.verifyPhoneOtp(req)
-                        when {
-                            res.isFailure -> {
+                        when (res) {
+                            is NetworkResult.Error -> {
                                 _state.update {
-                                    it.copy(infoMsg = res.exceptionOrNull().toInfoMessage())
+                                    it.copy(infoMsg = res.message)
                                 }
                             }
 
-                            res.isSuccess -> {
+                            is NetworkResult.Success -> {
                                 val res = client.fetchUserInfo()
-                                when {
-                                    res.isFailure -> {
+                                when (res) {
+                                    is NetworkResult.Error -> {
                                         _state.update {
-                                            it.copy(infoMsg = res.exceptionOrNull().toInfoMessage())
+                                            it.copy(infoMsg = res.message)
                                         }
                                     }
 
-                                    res.isSuccess -> {
-                                        authXPreferences.updateUserInformation(res.getOrThrow())
+                                    is NetworkResult.Success -> {
+                                        authXPreferences.updateUserInformation(res.data)
                                         uiEventChannel.send(OtpUiEvent.Verified)
                                     }
                                 }
@@ -83,18 +84,18 @@ internal class OtpViewModel(
                         it.copy(progress = 0.0F)
                     }
                     val res = client.sendPhoneOtp(req)
-                    when {
-                        res.isFailure -> {
+                    when (res) {
+                        is NetworkResult.Error -> {
                             _state.update {
                                 it.copy(
-                                    infoMsg = res.exceptionOrNull().toInfoMessage(),
+                                    infoMsg = res.message,
                                     progress = null,
                                     req = null
                                 )
                             }
                         }
 
-                        res.isSuccess -> {
+                        is NetworkResult.Success -> {
                             _state.update {
                                 it.copy(progress = null)
                             }

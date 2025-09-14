@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.AuthXPreferences
-import com.vardansoft.core.presentation.toInfoMessage
+import com.vardansoft.core.data.NetworkResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -26,11 +26,11 @@ class LoginViewModel(
                         it.copy(progress = 0.0F)
                     }
                     when {
-                        event.credential.isFailure -> _state.update {
-                            it.copy(infoMsg = event.credential.exceptionOrNull().toInfoMessage())
+                        event.credential is NetworkResult.Error -> _state.update {
+                            it.copy(infoMsg = event.credential.message)
                         }
 
-                        event.credential.isSuccess -> login(event.credential.getOrThrow())
+                        event.credential is NetworkResult.Success -> login(event.credential.data)
                     }
 
                     _state.update {
@@ -47,22 +47,22 @@ class LoginViewModel(
 
     suspend fun login(cred: Credential) {
         val res = authXClient.exchangeCredentialForToken(cred)
-        when {
-            res.isFailure -> _state.update {
-                it.copy(infoMsg = res.exceptionOrNull().toInfoMessage())
+        when (res) {
+            is NetworkResult.Error -> _state.update {
+                it.copy(infoMsg = res.message)
             }
 
-            res.isSuccess -> {
-                val userInfoRes = authXClient.fetchUserInfo(res.getOrThrow().accessToken)
-                when {
-                    userInfoRes.isFailure -> _state.update {
-                        it.copy(infoMsg = userInfoRes.exceptionOrNull().toInfoMessage())
+            is NetworkResult.Success -> {
+                val userInfoRes = authXClient.fetchUserInfo(res.data.accessToken)
+                when (userInfoRes) {
+                    is NetworkResult.Error -> _state.update {
+                        it.copy(infoMsg = userInfoRes.message)
                     }
 
-                    userInfoRes.isSuccess -> {
+                    is NetworkResult.Success -> {
                         authXPreferences.saveLoggedInDetails(
-                            token = res.getOrThrow(),
-                            userInfoResponse = userInfoRes.getOrThrow()
+                            token = res.data,
+                            userInfoResponse = userInfoRes.data
                         )
                     }
                 }

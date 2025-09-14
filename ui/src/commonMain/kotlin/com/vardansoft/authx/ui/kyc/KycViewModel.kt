@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.use_cases.ValidateNotBlank
 import com.vardansoft.authx.domain.use_cases.ValidateNotNull
+import com.vardansoft.core.data.NetworkResult
 import com.vardansoft.core.data.download
-import com.vardansoft.core.presentation.toInfoMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -319,13 +319,13 @@ class KycViewModel(
             it.copy(progress = 0.0f)
         }
         val res = client.fetchMyKyc()
-        when {
-            res.isFailure -> _state.update {
-                it.copy(infoMsg = res.exceptionOrNull().toInfoMessage())
+        when (res) {
+            is NetworkResult.Error -> _state.update {
+                it.copy(infoMsg = res.message)
             }
 
-            res.isSuccess -> {
-                val current = res.getOrNull()
+            is NetworkResult.Success -> {
+                val current = res.data
                 val documentFront = current?.documentInformation?.documentFrontUrl?.let {
                     download(url = it)
                 }
@@ -336,19 +336,19 @@ class KycViewModel(
                     download(url = it)
                 }
 
-                if (documentFront != null && documentFront.isFailure) {
+                if (documentFront != null && documentFront is NetworkResult.Error) {
                     _state.update {
-                        it.copy(infoMsg = documentFront.exceptionOrNull().toInfoMessage())
+                        it.copy(infoMsg = documentFront.message)
                     }
                 }
-                if (documentBack != null && documentBack.isFailure) {
+                if (documentBack != null && documentBack is NetworkResult.Error) {
                     _state.update {
-                        it.copy(infoMsg = documentBack.exceptionOrNull().toInfoMessage())
+                        it.copy(infoMsg = documentBack.message)
                     }
                 }
-                if (selfie != null && selfie.isFailure) {
+                if (selfie != null && selfie is NetworkResult.Error) {
                     _state.update {
-                        it.copy(infoMsg = selfie.exceptionOrNull().toInfoMessage())
+                        it.copy(infoMsg = selfie.message)
                     }
                 }
 
@@ -393,10 +393,12 @@ class KycViewModel(
                                 ?: s.documentInfo.documentExpiryDate,
                             documentIssuedPlace = current?.documentInformation?.documentIssuedPlace
                                 ?: s.documentInfo.documentIssuedPlace,
-                            documentFront = documentFront?.getOrNull()
+                            documentFront = (documentFront as? NetworkResult.Success)?.data
                                 ?: s.documentInfo.documentFront,
-                            documentBack = documentBack?.getOrNull() ?: s.documentInfo.documentBack,
-                            selfie = selfie?.getOrNull() ?: s.documentInfo.selfie
+                            documentBack = (documentBack as? NetworkResult.Success)?.data
+                                ?: s.documentInfo.documentBack,
+                            selfie = (selfie as? NetworkResult.Success)?.data
+                                ?: s.documentInfo.selfie
                         )
                     )
                 }
@@ -508,14 +510,10 @@ class KycViewModel(
         if (!_state.value.containsError()) {
             val req = _state.value.updateKycRequest()
             val res = client.submitKyc(req)
-            when {
-                res.isFailure -> _state.update {
-                    it.copy(
-                        infoMsg = res.exceptionOrNull().toInfoMessage()
-                    )
-                }
+            when (res) {
+                is NetworkResult.Error -> _state.update { it.copy(infoMsg = res.message) }
 
-                res.isSuccess -> _state.update { it.copy(existing = res.getOrThrow()) }
+                is NetworkResult.Success -> _state.update { it.copy(existing = res.data) }
             }
         }
         _state.update { it.copy(progress = null) }

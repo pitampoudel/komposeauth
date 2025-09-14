@@ -3,6 +3,9 @@ package com.vardansoft.authx.data.utils
 import com.vardansoft.authx.data.ApiEndpoints.TOKEN
 import com.vardansoft.authx.data.OAuth2TokenData
 import com.vardansoft.authx.domain.AuthXPreferences
+import com.vardansoft.core.data.NetworkResult
+import com.vardansoft.core.data.asResource
+import com.vardansoft.core.data.safeApiCall
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.auth.providers.BearerTokens
@@ -57,14 +60,14 @@ internal suspend fun RefreshTokensParams.tryTokenRefresh(
         ).asResource { body() }
     }
 
-    return when {
-        resource.isSuccess -> {
+    return when (resource) {
+        is NetworkResult.Success -> {
             // Save new tokens
-            authXPreferences?.updateTokenData(resource.getOrThrow())
+            authXPreferences?.updateTokenData(resource.data)
 
             BearerTokens(
-                accessToken = resource.getOrThrow().accessToken,
-                refreshToken = resource.getOrThrow().refreshToken
+                accessToken = resource.data.accessToken,
+                refreshToken = resource.data.refreshToken
             )
         }
 
