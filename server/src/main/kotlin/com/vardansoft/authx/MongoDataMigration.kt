@@ -54,6 +54,6 @@ class MongoDataMigration(
             }
         }
 
-        println("Migration completed. Updated $updatedCount user(s) with RemoteFile picture fields.")
+        println("Migration completed. Updated $updatedCount user(s)")
     }
 }
