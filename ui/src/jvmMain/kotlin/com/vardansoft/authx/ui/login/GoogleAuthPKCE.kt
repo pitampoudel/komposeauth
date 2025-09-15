@@ -30,7 +30,7 @@ object GoogleAuthPKCE {
         val verifier = generateCodeVerifier()
         val challenge = generateCodeChallenge(verifier)
 
-        val server = HttpServer.create(InetSocketAddress(8080), 0)
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 8080), 0)
         var authCode: String? = null
         val lock = Object()
 
@@ -48,7 +48,7 @@ object GoogleAuthPKCE {
         val authUri = URI.create(
             "https://accounts.google.com/o/oauth2/v2/auth?" +
                     "client_id=$clientId&" +
-                    "redirect_uri=http://localhost:8080/callback&" +
+                    "redirect_uri=http://127.0.0.1:8080/callback&" +
                     "response_type=code&" +
                     "scope=openid%20email%20profile&" +
                     "code_challenge=$challenge&" +
@@ -75,7 +75,7 @@ object GoogleAuthPKCE {
                     HttpRequest.BodyPublishers.ofString(
                         "code=$authCode&" +
                                 "client_id=$clientId&" +
-                                "redirect_uri=http://localhost:8080/callback&" +
+                                "redirect_uri=http://127.0.0.1:8080/callback&" +
                                 "grant_type=authorization_code&" +
                                 "code_verifier=$verifier"
                     )
@@ -87,4 +87,3 @@ object GoogleAuthPKCE {
         return json["id_token"]?.jsonPrimitive?.content
     }
 }
-
