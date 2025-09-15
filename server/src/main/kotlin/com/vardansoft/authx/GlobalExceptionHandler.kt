@@ -1,4 +1,4 @@
-package com.vardansoft.authx.config
+package com.vardansoft.authx
 
 import io.sentry.Sentry
 import org.slf4j.LoggerFactory
