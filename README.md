@@ -4,8 +4,7 @@ A Kotlin Multiplatform authentication solution: Authorization Server (Spring Boo
 
 ## Maven Central
 
-- [authx on Maven Central](https://search.maven.org/artifact/com.vardansoft/authx)
-- [authx-ui on Maven Central](https://search.maven.org/artifact/com.vardansoft/authx-ui)
+[![Maven Central](https://maven-badges.sml.io/maven-central/com.vardansoft/authx/badge.svg)](https://search.maven.org/artifact/com.vardansoft/authx)
 
 ## Overview
 
