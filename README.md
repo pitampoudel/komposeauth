@@ -4,7 +4,7 @@ A Kotlin Multiplatform authentication solution: Authorization Server (Spring Boo
 
 ## Maven Central
 
-[![Maven Central](https://maven-badges.sml.io/maven-central/com.vardansoft/authx/badge.svg)](https://search.maven.org/artifact/com.vardansoft/authx)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/authx/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/authx)
 
 ## Overview
 
@@ -32,10 +32,10 @@ Add the AuthX dependencies to your project:
 // In your build.gradle.kts
 dependencies {
     // Core auth module (for shared)
-    implementation("com.vardansoft:authx:x.x.x")
+    implementation("com.vardansoft:authx:1.2.2")
 
     // Optional UI components (for composeApp)
-    implementation("com.vardansoft:authx-ui:x.x.x")
+    implementation("com.vardansoft:authx-ui:1.2.2")
 }
 ```
 
