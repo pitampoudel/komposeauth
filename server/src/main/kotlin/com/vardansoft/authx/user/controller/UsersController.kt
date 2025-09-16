@@ -74,7 +74,6 @@ class UsersController(
 
 
     @RestController
-    @RequestMapping("/api/auth")
     class AuthenticationController(
         private val userService: UserService,
         private val jwtService: JwtService,
