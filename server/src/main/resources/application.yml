@@ -63,4 +63,3 @@ app:
   name: ${APP_NAME:AuthX}
   expectedGcpProjectId: ${GCP_PROJECT_ID}
   logoUrl: ${APP_LOGO_URL}
-

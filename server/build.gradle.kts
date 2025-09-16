@@ -60,6 +60,9 @@ dependencies {
     // Google Cloud Platform
     implementation("com.google.cloud:spring-cloud-gcp-storage:6.2.3")
 
+    // OpenAPI documentation
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+
     testImplementation("org.testcontainers:testcontainers:1.21.3")
     testImplementation("org.testcontainers:junit-jupiter:1.21.3")
     testImplementation("org.testcontainers:mongodb")
