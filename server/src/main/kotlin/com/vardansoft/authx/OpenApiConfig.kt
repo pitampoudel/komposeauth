@@ -1,6 +1,7 @@
 package com.vardansoft.authx
 
 import io.swagger.v3.oas.models.Components
+import io.swagger.v3.oas.models.ExternalDocumentation
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.security.SecurityRequirement
@@ -18,7 +19,12 @@ class OpenApiConfig {
             .info(
                 Info()
                     .title("AuthX API")
-                    .description("The REST API for AuthX")
+                    .description("The REST API for AuthX. This is an OAuth2 authorization server.")
+            )
+            .externalDocs(
+                ExternalDocumentation()
+                    .description("OAuth2 Authorization Server Metadata")
+                    .url("/.well-known/oauth-authorization-server")
             )
             .addSecurityItem(SecurityRequirement().addList(securitySchemeName))
             .components(
