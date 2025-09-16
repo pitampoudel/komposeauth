@@ -85,7 +85,7 @@ class UsersController(
             summary = "Login with credentials",
             description = "Validate credentials and returns JWT tokens directly"
         )
-        fun login(@RequestBody @Valid request: Credential): ResponseEntity<OAuth2TokenData> {
+        fun login(@RequestBody request: Credential): ResponseEntity<OAuth2TokenData> {
             val user = when (request) {
                 is Credential.EmailPassword -> userService.findUserByEmailOrPhone(request.username)
                     ?.takeIf {
