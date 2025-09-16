@@ -2,9 +2,7 @@ package com.vardansoft.authx.core.config
 
 
 import com.vardansoft.authx.authorizations.service.MongoOAuth2AuthorizationService
-import com.vardansoft.authx.core.converters.GoogleIdTokenGrantAuthConverter
 import com.vardansoft.authx.core.converters.OAuth2PublicClientAuthConverter
-import com.vardansoft.authx.core.providers.GoogleIdTokenGrantAuthProvider
 import com.vardansoft.authx.core.providers.OAuth2PublicClientAuthProvider
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.kyc.service.KycService
@@ -62,13 +60,15 @@ class AuthConfig(
                         "/login",
                         "/token",
                         "/signup",
+                        "/api/auth/**",
                         "/users",
                         "/assets/**",
-                        "/reset-password",
                         "/config/**",
                         "/swagger-ui.html",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
+                        "/verify-email",
+                        "/reset-password"
                     ).permitAll()
                     .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD)
                     .permitAll()
@@ -115,22 +115,6 @@ class AuthConfig(
             it.authenticationProvider(
                 OAuth2PublicClientAuthProvider(
                     registeredClientRepository = registeredClientRepository
-                )
-            )
-        }
-
-        // Configure token endpoint to support custom grant type
-        authorizationServerConfigurer.tokenEndpoint { tokenEndpoint ->
-            tokenEndpoint.accessTokenRequestConverter(
-                GoogleIdTokenGrantAuthConverter()
-            )
-            tokenEndpoint.authenticationProvider(
-                GoogleIdTokenGrantAuthProvider(
-                    userService = userService,
-                    authorizationService = authorizationService,
-                    tokenGenerator = tokenGenerator,
-                    registeredClientRepository = registeredClientRepository,
-                    googleClientId = googleClientId
                 )
             )
         }

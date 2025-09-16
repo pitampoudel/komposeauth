@@ -1,6 +1,7 @@
 package com.vardansoft.authx.user.service
 
 import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
+import com.vardansoft.authx.core.utils.validateGoogleIdToken
 import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.data.UpdatePhoneNumberRequest
 import com.vardansoft.authx.data.VerifyPhoneOtpRequest
@@ -14,6 +15,7 @@ import com.vardansoft.authx.user.repository.UserRepository
 import com.vardansoft.core.data.parsePhoneNumber
 import jakarta.validation.Valid
 import org.bson.types.ObjectId
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -22,7 +24,9 @@ import java.time.Instant
 class UserService(
     private val userRepository: UserRepository,
     val passwordEncoder: PasswordEncoder,
-    private val phoneNumberVerificationService: PhoneNumberVerificationService
+    private val phoneNumberVerificationService: PhoneNumberVerificationService,
+    @Value("\${spring.security.oauth2.client.registration.google.client-id}")
+    private val googleClientId: String
 ) {
 
     fun findUser(id: String): User? {
@@ -106,5 +110,25 @@ class UserService(
 
         val result = userRepository.save(updatedUser)
         return result.mapToResponseDto()
+    }
+
+    fun findOrCreateUserByGoogleIdToken(idToken: String): User {
+        val payload = validateGoogleIdToken(
+            clientId = googleClientId,
+            idToken = idToken
+        )
+        val user = findOrCreateUser(
+            CreateUserRequest(
+                email = payload["email"] as String,
+                firstName = payload["given_name"] as String,
+                lastName = payload["family_name"] as String?,
+                picture = payload["picture"] as? String
+            )
+        )
+
+        if (payload["email_verified"] as? Boolean == true) {
+            emailVerified(user.id)
+        }
+        return user
     }
 }

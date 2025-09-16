@@ -20,12 +20,11 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                     is Result.Error -> return res
                     is Result.Success -> {
                         val googleAuthClientId = res.data.googleClientId
-                        val clientId = getKoin().get<AuthX>().clientId
                         val token = GoogleAuthPKCE.getCredential(googleAuthClientId)
                         if (token == null) {
                             return Result.Error("Failed to retrieve Google ID token")
                         }
-                        return Result.Success(Credential.GoogleId(clientId, token))
+                        return Result.Success(Credential.GoogleId(token))
                     }
                 }
             }

@@ -4,7 +4,6 @@ import io.ktor.client.plugins.auth.AuthConfig
 
 interface AuthX {
     val authUrl: String
-    val clientId: String
     val serverUrls: List<String>
     fun configureBearer(auth: AuthConfig)
 }

@@ -16,7 +16,7 @@ import com.vardansoft.core.domain.validators.ValidateNotBlank
 import com.vardansoft.core.domain.validators.ValidateNotNull
 import org.koin.dsl.module
 
-fun authXSharedModule(authUrl: String, clientId: String, serverUrls: List<String>) = module {
+fun authXSharedModule(authUrl: String, serverUrls: List<String>) = module {
     single<Settings> {
         Settings()
     }
@@ -48,7 +48,6 @@ fun authXSharedModule(authUrl: String, clientId: String, serverUrls: List<String
         AuthXImpl(
             authXPreferences = get<AuthXPreferences>(),
             authUrl = authUrl,
-            clientId = clientId,
             serverUrls = serverUrls
         )
     }

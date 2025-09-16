@@ -59,6 +59,9 @@ dependencies {
 
     // Google Cloud Platform
     implementation("com.google.cloud:spring-cloud-gcp-storage:6.2.3")
+    
+    // Google API client for ID token verification
+    implementation("com.google.api-client:google-api-client:2.2.0")
 
     // OpenAPI documentation
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")

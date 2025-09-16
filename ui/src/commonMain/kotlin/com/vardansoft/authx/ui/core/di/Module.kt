@@ -8,11 +8,10 @@ import org.koin.core.KoinApplication
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-fun KoinApplication.configureAuthX(authUrl: String, clientId: String, hosts: List<String>) {
+fun KoinApplication.configureAuthX(authUrl: String, hosts: List<String>) {
     modules(
         authXSharedModule(
             authUrl = authUrl,
-            clientId = clientId,
             serverUrls = hosts
         ) + module {
             viewModel<OtpViewModel> {

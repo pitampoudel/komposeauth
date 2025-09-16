@@ -1,6 +1,7 @@
 package com.vardansoft.authx.core.service
 
 import com.vardansoft.authx.AppProperties
+import com.vardansoft.authx.user.entity.User
 import org.apache.coyote.BadRequestException
 import org.springframework.http.HttpStatusCode
 import org.springframework.security.oauth2.jwt.Jwt
@@ -13,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 
 @Service
 class JwtService(
@@ -22,7 +24,9 @@ class JwtService(
 ) {
     enum class TokenType {
         VERIFY_EMAIL,
-        RESET_PASSWORD
+        RESET_PASSWORD,
+        ACCESS_TOKEN,
+        REFRESH_TOKEN
     }
 
     private fun generateToken(
@@ -71,6 +75,10 @@ class JwtService(
         return "${appProperties.baseUrl}/verify-email?token=$token"
     }
 
+    fun retrieveClaimsIfValidEmailVerificationToken(token: String): Jwt {
+        return parse(token, TokenType.VERIFY_EMAIL)
+    }
+
     fun generateResetPasswordLink(userId: String): String {
         val token = generateToken(
             audience = appProperties.baseUrl!!,
@@ -82,12 +90,44 @@ class JwtService(
     }
 
 
-    fun retrieveClaimsIfValidEmailVerificationToken(token: String): Jwt {
-        return parse(token, TokenType.VERIFY_EMAIL)
-    }
-
     fun retrieveClaimsIfValidResetPasswordToken(token: String): Jwt {
         return parse(token, TokenType.RESET_PASSWORD)
+    }
+
+    fun generateAccessToken(user: User): String {
+        val token = generateToken(
+            audience = appProperties.baseUrl!!,
+            userId = user.id.toHexString(),
+            claims = mapOf(
+                "type" to TokenType.ACCESS_TOKEN.name,
+                "email" to user.email,
+                "scope" to "email"
+            ),
+            validity = 1.hours
+        )
+        return token?.tokenValue ?: throw RuntimeException("Failed to generate access token")
+    }
+
+    fun validateAccessToken(token: String): String {
+        val jwt = parse(token, TokenType.ACCESS_TOKEN)
+        return jwt.subject ?: throw RuntimeException("Invalid token subject")
+    }
+
+    fun generateRefreshToken(user: User): String {
+        val token = generateToken(
+            audience = appProperties.baseUrl!!,
+            userId = user.id.toHexString(),
+            claims = mapOf(
+                "type" to TokenType.REFRESH_TOKEN.name
+            ),
+            validity = 30.days
+        )
+        return token?.tokenValue ?: throw RuntimeException("Failed to generate refresh token")
+    }
+
+    fun validateRefreshToken(token: String): String {
+        val jwt = parse(token, TokenType.REFRESH_TOKEN)
+        return jwt.subject ?: throw RuntimeException("Invalid token subject")
     }
 
 }

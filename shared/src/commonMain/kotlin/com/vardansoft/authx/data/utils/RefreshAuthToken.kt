@@ -1,18 +1,19 @@
 package com.vardansoft.authx.data.utils
 
-import com.vardansoft.authx.data.ApiEndpoints.TOKEN
+import com.vardansoft.authx.data.ApiEndpoints.REFRESH_TOKEN
 import com.vardansoft.authx.data.OAuth2TokenData
+import com.vardansoft.authx.data.TokenRefreshRequest
 import com.vardansoft.authx.domain.AuthXPreferences
-import com.vardansoft.core.domain.Result
 import com.vardansoft.core.data.asResource
 import com.vardansoft.core.data.safeApiCall
+import com.vardansoft.core.domain.Result
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.RefreshTokensParams
-import io.ktor.client.request.forms.submitForm
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
-import io.ktor.http.Parameters
 import io.ktor.http.headers
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -26,7 +27,6 @@ import kotlin.time.ExperimentalTime
 
 internal suspend fun RefreshTokensParams.tryTokenRefresh(
     authUrl: String,
-    clientId: String,
     client: HttpClient,
     authXPreferences: AuthXPreferences?
 ): BearerTokens? {
@@ -44,18 +44,13 @@ internal suspend fun RefreshTokensParams.tryTokenRefresh(
     }
 
     val resource = safeApiCall<OAuth2TokenData> {
-        client.submitForm(
-            "$authUrl/$TOKEN",
-            formParameters = Parameters.build {
-                append("refresh_token", refreshToken)
-                append("client_id", clientId)
-                append("grant_type", "refresh_token")
-
-            },
+        client.post(
+            "$authUrl/$REFRESH_TOKEN",
             block = {
                 headers {
                     remove(HttpHeaders.Authorization)
                 }
+                setBody(TokenRefreshRequest(refreshToken))
             }
         ).asResource { body() }
     }

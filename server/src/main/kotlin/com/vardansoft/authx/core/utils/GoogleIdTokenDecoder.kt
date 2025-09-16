@@ -1,22 +1,21 @@
-package com.vardansoft.authx.core.providers.utils
+package com.vardansoft.authx.core.utils
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
+import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
-
+import java.util.Collections
 
 fun validateGoogleIdToken(clientId: String, idToken: String): GoogleIdToken.Payload {
     val verifier = GoogleIdTokenVerifier.Builder(
-        GoogleNetHttpTransport.newTrustedTransport(),
+        NetHttpTransport(),
         GsonFactory.getDefaultInstance()
     )
-        .setAudience(listOf(clientId))
+        .setAudience(Collections.singletonList(clientId))
         .build()
 
-    val token = verifier.verify(idToken)
-    if (token != null) {
-        return token.payload
-    }
-    throw SecurityException("Invalid Google token")
+    val googleIdToken = verifier.verify(idToken)
+        ?: throw IllegalArgumentException("Invalid Google ID token")
+
+    return googleIdToken.payload
 }

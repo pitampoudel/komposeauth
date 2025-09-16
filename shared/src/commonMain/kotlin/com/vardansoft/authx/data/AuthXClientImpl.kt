@@ -1,24 +1,22 @@
 package com.vardansoft.authx.data
 
+import com.vardansoft.authx.data.ApiEndpoints.TOKEN
 import com.vardansoft.authx.data.ApiEndpoints.CONFIG
 import com.vardansoft.authx.data.ApiEndpoints.KYC
-import com.vardansoft.authx.data.ApiEndpoints.TOKEN
 import com.vardansoft.authx.data.ApiEndpoints.UPDATE_PHONE_NUMBER
 import com.vardansoft.authx.data.ApiEndpoints.USER_INFO
 import com.vardansoft.authx.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import com.vardansoft.authx.domain.AuthXClient
-import com.vardansoft.core.domain.Result
 import com.vardansoft.core.data.asResource
 import com.vardansoft.core.data.safeApiCall
+import com.vardansoft.core.domain.Result
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
-import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
-import io.ktor.http.Parameters
 
 class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXClient {
 
@@ -31,18 +29,9 @@ class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXCl
 
     override suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2TokenData> {
         return safeApiCall {
-            httpClient.submitForm(
-                "$authUrl/$TOKEN",
-                formParameters = when (credential) {
-                    is Credential.GoogleId -> {
-                        Parameters.build {
-                            append("code", credential.idToken)
-                            append("client_id", credential.clientId)
-                            append("grant_type", "urn:ietf:params:oauth:grant-type:google_id_token")
-                        }
-                    }
-                }
-            ).asResource { body() }
+            httpClient.post("$authUrl/$TOKEN") {
+                setBody(credential)
+            }.asResource { body() }
         }
     }
 

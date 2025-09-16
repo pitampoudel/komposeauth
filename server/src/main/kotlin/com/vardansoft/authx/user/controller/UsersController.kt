@@ -4,19 +4,30 @@ import com.vardansoft.authx.core.service.EmailService
 import com.vardansoft.authx.core.service.JwtService
 import com.vardansoft.authx.core.utils.acceptsHtml
 import com.vardansoft.authx.data.CreateUserRequest
+import com.vardansoft.authx.data.Credential
+import com.vardansoft.authx.data.OAuth2TokenData
+import com.vardansoft.authx.data.TokenRefreshRequest
 import com.vardansoft.authx.user.dto.UserResponse
 import com.vardansoft.authx.user.dto.mapToResponseDto
 import com.vardansoft.authx.user.service.UserService
+import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.userdetails.UsernameNotFoundException
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+import kotlin.time.Duration.Companion.hours
 
 
 @Controller
@@ -60,6 +71,70 @@ class UsersController(
             ResponseEntity.ok().body(userResponse)
         }
     }
+
+
+    @RestController
+    @RequestMapping("/api/auth")
+    class AuthenticationController(
+        private val userService: UserService,
+        private val jwtService: JwtService,
+        private val passwordEncoder: PasswordEncoder
+    ) {
+
+        @PostMapping("/token")
+        @Operation(
+            summary = "Login with credentials",
+            description = "Validate credentials and returns JWT tokens directly"
+        )
+        fun login(@RequestBody @Valid request: Credential): ResponseEntity<OAuth2TokenData> {
+            val user = when (request) {
+                is Credential.EmailPassword -> userService.findUserByEmailOrPhone(request.username)
+                    ?.takeIf {
+                        passwordEncoder.matches(request.password, it.passwordHash)
+                    }
+
+                is Credential.GoogleId -> userService.findOrCreateUserByGoogleIdToken(request.idToken)
+            } ?: throw UsernameNotFoundException("User not found or invalid credentials")
+
+            val accessToken = jwtService.generateAccessToken(user)
+            val refreshToken = jwtService.generateRefreshToken(user)
+
+            return ResponseEntity.ok(
+                OAuth2TokenData(
+                    accessToken = accessToken,
+                    refreshToken = refreshToken,
+                    tokenType = "Bearer",
+                    expiresIn = 1.hours.inWholeSeconds,
+                    scope = ""
+                )
+            )
+        }
+
+        @PostMapping("/refresh_token")
+        @Operation(
+            summary = "Refresh access token",
+            description = "Use refresh token to get new access token"
+        )
+        fun refreshToken(@RequestBody @Valid request: TokenRefreshRequest): ResponseEntity<OAuth2TokenData> {
+            val userId = jwtService.validateRefreshToken(request.refreshToken)
+            val user =
+                userService.findUser(userId) ?: throw UsernameNotFoundException("User not found")
+
+            val newAccessToken = jwtService.generateAccessToken(user)
+
+            return ResponseEntity.ok(
+                OAuth2TokenData(
+                    accessToken = newAccessToken,
+                    refreshToken = request.refreshToken, // Keep the same refresh token
+                    tokenType = "Bearer",
+                    expiresIn = 3600,
+                    scope = ""
+                )
+            )
+        }
+
+    }
+
 
     @GetMapping("/users/{id}")
     @PreAuthorize("hasAuthority('SCOPE_user.read.any')")

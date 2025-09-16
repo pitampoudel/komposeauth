@@ -16,7 +16,6 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.vardansoft.authx.data.Credential
-import com.vardansoft.authx.domain.AuthX
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.core.domain.Result
 import org.koin.java.KoinJavaComponent.getKoin
@@ -37,8 +36,6 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                     is Result.Error -> return res
                     is Result.Success -> {
                         val googleAuthClientId = res.data.googleClientId
-
-                        val clientId = getKoin().get<AuthX>().clientId
 
                         val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
                             .setFilterByAuthorizedAccounts(false)
@@ -63,7 +60,6 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                                                     GoogleIdTokenCredential.createFrom(credential.data)
                                                 Result.Success(
                                                     Credential.GoogleId(
-                                                        clientId = clientId,
                                                         idToken = googleIdTokenCredential.idToken
                                                     )
                                                 )

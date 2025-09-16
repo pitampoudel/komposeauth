@@ -15,7 +15,6 @@ import kotlinx.serialization.json.Json
 class AuthXImpl internal constructor(
     private val authXPreferences: AuthXPreferences,
     override val authUrl: String,
-    override val clientId: String,
     override val serverUrls: List<String>
 ) : AuthX {
     val hosts = (serverUrls + authUrl).map {
@@ -35,7 +34,6 @@ class AuthXImpl internal constructor(
 
             refreshTokens {
                 tryTokenRefresh(
-                    clientId = clientId,
                     client = HttpClient {
                         install(ContentNegotiation) { json(Json) }
                     },
