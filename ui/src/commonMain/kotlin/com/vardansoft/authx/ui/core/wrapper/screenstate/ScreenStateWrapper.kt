@@ -1,6 +1,8 @@
 package com.vardansoft.authx.ui.core.wrapper.screenstate
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import com.vardansoft.core.presentation.InfoMessage
 
@@ -12,13 +14,15 @@ fun ScreenStateWrapper(
     onDismissInfoMsg: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    Box {
-        content()
-        if (progress != null) {
-            ProgressDialog(progress)
-        }
-        if (infoMessage != null) {
-            InfoDialog(infoMessage, onDismiss = onDismissInfoMsg)
+    Surface(color = MaterialTheme.colorScheme.background) {
+        Box {
+            content()
+            if (progress != null) {
+                ProgressDialog(progress)
+            }
+            if (infoMessage != null) {
+                InfoDialog(infoMessage, onDismiss = onDismissInfoMsg)
+            }
         }
     }
 }

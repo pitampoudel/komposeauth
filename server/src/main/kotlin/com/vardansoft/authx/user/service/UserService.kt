@@ -1,5 +1,8 @@
 package com.vardansoft.authx.user.service
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest
+import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.json.gson.GsonFactory
 import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
 import com.vardansoft.authx.core.utils.validateGoogleIdToken
 import com.vardansoft.authx.data.CreateUserRequest
@@ -26,9 +29,12 @@ class UserService(
     val passwordEncoder: PasswordEncoder,
     private val phoneNumberVerificationService: PhoneNumberVerificationService,
     @Value("\${spring.security.oauth2.client.registration.google.client-id}")
-    private val googleClientId: String
+    private val googleClientId: String,
+    @Value("\${spring.security.oauth2.client.registration.google.client-secret}")
+    private val googleClientSecret: String
 ) {
-
+    private val httpTransport = NetHttpTransport()
+    private val jsonFactory = GsonFactory()
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
     }
@@ -130,5 +136,18 @@ class UserService(
             emailVerified(user.id)
         }
         return user
+    }
+
+    fun findOrCreateUserByGooglePKCEAuthCode(authCode: String): User {
+        val tokenResponse = GoogleAuthorizationCodeTokenRequest(
+            httpTransport,
+            jsonFactory,
+            googleClientId,
+            googleClientSecret,
+            authCode,
+            null
+        ).execute()
+
+        return findOrCreateUserByGoogleIdToken(tokenResponse.idToken)
     }
 }

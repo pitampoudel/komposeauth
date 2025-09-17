@@ -3,7 +3,6 @@ package com.vardansoft.authx.ui.login
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.vardansoft.authx.data.Credential
-import com.vardansoft.authx.domain.AuthX
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.core.domain.Result
 import org.koin.java.KoinJavaComponent.getKoin
@@ -20,11 +19,11 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                     is Result.Error -> return res
                     is Result.Success -> {
                         val googleAuthClientId = res.data.googleClientId
-                        val token = GoogleAuthPKCE.getCredential(googleAuthClientId)
-                        if (token == null) {
+                        val credential = GoogleAuthPKCE.getCredential(googleAuthClientId)
+                        if (credential == null) {
                             return Result.Error("Failed to retrieve Google ID token")
                         }
-                        return Result.Success(Credential.GoogleId(token))
+                        return Result.Success(credential)
                     }
                 }
             }

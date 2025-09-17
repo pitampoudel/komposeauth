@@ -5,11 +5,11 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 
 actual fun LocalDate.asDisplayDate(): String {
-    return "${dayOfMonth}-${monthNumber}-${year}"
+    return "${day}-${month}-${year}"
 }
 
 actual fun LocalDateTime.asDisplayDateTime(): String {
-    return "${dayOfMonth}-${monthNumber}-${year} ${hour}:${minute}:${second}"
+    return "${day}-${month}-${year} ${hour}:${minute}:${second}"
 }
 
 actual fun LocalTime.asDisplayTime(): String {
