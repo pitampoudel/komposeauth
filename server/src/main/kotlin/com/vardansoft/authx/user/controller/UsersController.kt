@@ -24,9 +24,7 @@ import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
 import kotlin.time.Duration.Companion.hours
 
 
@@ -34,7 +32,8 @@ import kotlin.time.Duration.Companion.hours
 class UsersController(
     val userService: UserService,
     val emailService: EmailService,
-    val jwtService: JwtService
+    val jwtService: JwtService,
+    private val passwordEncoder: PasswordEncoder
 ) {
 
     @GetMapping("/signup")
@@ -73,65 +72,56 @@ class UsersController(
     }
 
 
-    @RestController
-    class AuthenticationController(
-        private val userService: UserService,
-        private val jwtService: JwtService,
-        private val passwordEncoder: PasswordEncoder
-    ) {
+    @PostMapping("/token")
+    @Operation(
+        summary = "Login with credentials",
+        description = "Validate credentials and returns JWT tokens directly"
+    )
+    fun token(@RequestBody request: Credential): ResponseEntity<OAuth2TokenData> {
+        val user = when (request) {
+            is Credential.EmailPassword -> userService.findUserByEmailOrPhone(request.username)
+                ?.takeIf {
+                    passwordEncoder.matches(request.password, it.passwordHash)
+                }
 
-        @PostMapping("/token")
-        @Operation(
-            summary = "Login with credentials",
-            description = "Validate credentials and returns JWT tokens directly"
-        )
-        fun login(@RequestBody request: Credential): ResponseEntity<OAuth2TokenData> {
-            val user = when (request) {
-                is Credential.EmailPassword -> userService.findUserByEmailOrPhone(request.username)
-                    ?.takeIf {
-                        passwordEncoder.matches(request.password, it.passwordHash)
-                    }
+            is Credential.GoogleId -> userService.findOrCreateUserByGoogleIdToken(request.idToken)
+        } ?: throw UsernameNotFoundException("User not found or invalid credentials")
 
-                is Credential.GoogleId -> userService.findOrCreateUserByGoogleIdToken(request.idToken)
-            } ?: throw UsernameNotFoundException("User not found or invalid credentials")
+        val accessToken = jwtService.generateAccessToken(user)
+        val refreshToken = jwtService.generateRefreshToken(user)
 
-            val accessToken = jwtService.generateAccessToken(user)
-            val refreshToken = jwtService.generateRefreshToken(user)
-
-            return ResponseEntity.ok(
-                OAuth2TokenData(
-                    accessToken = accessToken,
-                    refreshToken = refreshToken,
-                    tokenType = "Bearer",
-                    expiresIn = 1.hours.inWholeSeconds,
-                    scope = ""
-                )
+        return ResponseEntity.ok(
+            OAuth2TokenData(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                tokenType = "Bearer",
+                expiresIn = 1.hours.inWholeSeconds,
+                scope = ""
             )
-        }
-
-        @PostMapping("/refresh_token")
-        @Operation(
-            summary = "Refresh access token",
-            description = "Use refresh token to get new access token"
         )
-        fun refreshToken(@RequestBody @Valid request: TokenRefreshRequest): ResponseEntity<OAuth2TokenData> {
-            val userId = jwtService.validateRefreshToken(request.refreshToken)
-            val user =
-                userService.findUser(userId) ?: throw UsernameNotFoundException("User not found")
+    }
 
-            val newAccessToken = jwtService.generateAccessToken(user)
+    @PostMapping("/refresh_token")
+    @Operation(
+        summary = "Refresh access token",
+        description = "Use refresh token to get new access token"
+    )
+    fun refreshToken(@RequestBody @Valid request: TokenRefreshRequest): ResponseEntity<OAuth2TokenData> {
+        val userId = jwtService.validateRefreshToken(request.refreshToken)
+        val user =
+            userService.findUser(userId) ?: throw UsernameNotFoundException("User not found")
 
-            return ResponseEntity.ok(
-                OAuth2TokenData(
-                    accessToken = newAccessToken,
-                    refreshToken = request.refreshToken, // Keep the same refresh token
-                    tokenType = "Bearer",
-                    expiresIn = 3600,
-                    scope = ""
-                )
+        val newAccessToken = jwtService.generateAccessToken(user)
+
+        return ResponseEntity.ok(
+            OAuth2TokenData(
+                accessToken = newAccessToken,
+                refreshToken = request.refreshToken, // Keep the same refresh token
+                tokenType = "Bearer",
+                expiresIn = 3600,
+                scope = ""
             )
-        }
-
+        )
     }
 
 

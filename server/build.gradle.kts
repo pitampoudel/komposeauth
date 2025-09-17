@@ -6,7 +6,6 @@ plugins {
     id("org.springframework.boot") version "3.5.5"
     id("io.spring.dependency-management") version "1.1.7"
     id("io.sentry.jvm.gradle") version "5.10.0"
-
 }
 
 sentry {
@@ -14,12 +13,6 @@ sentry {
     org = "vardan-soft-pvt-ltd"
     projectName = "authx"
     authToken = System.getenv("SENTRY_AUTH_TOKEN")
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
 }
 
 dependencies {
@@ -34,7 +27,6 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     "developmentOnly"("org.springframework.boot:spring-boot-devtools")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.security:spring-security-crypto")
@@ -45,17 +37,15 @@ dependencies {
 
     // Load .env into Spring Environment so application.yml can use ${VAR}
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
-    
+
     // Sentry for error tracking
     implementation("io.sentry:sentry-spring-boot-starter-jakarta:7.14.0")
 
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.0.0")
 
-    compileOnly("jakarta.servlet:jakarta.servlet-api:6.1.0")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
     // Google Cloud Platform
     implementation("com.google.cloud:spring-cloud-gcp-storage:6.2.3")

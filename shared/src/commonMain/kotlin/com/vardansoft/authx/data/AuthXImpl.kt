@@ -35,7 +35,9 @@ class AuthXImpl internal constructor(
             refreshTokens {
                 tryTokenRefresh(
                     client = HttpClient {
-                        install(ContentNegotiation) { json(Json) }
+                        install(ContentNegotiation) {
+                            json(Json)
+                        }
                     },
                     authXPreferences = authXPreferences,
                     authUrl = authUrl
