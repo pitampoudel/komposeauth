@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import java.net.Inet4Address
 import java.net.NetworkInterface
+import java.util.Collections
 
 @Configuration
 @ConfigurationProperties(prefix = "app")
@@ -12,9 +13,7 @@ class AppProperties {
         get() {
             val raw = field?.trim().orEmpty()
             if (raw.isNotEmpty()) return raw
-            val port = "8080"
-            val ip = getLocalIpAddress() ?: "localhost"
-            return "http://$ip:$port"
+            return "http://${getLocalIpAddress()}:8080"
         }
     lateinit var gcpBucketName: String
     lateinit var name: String
@@ -28,17 +27,25 @@ class AppProperties {
     var twilioVerifyServiceSid: String? = null
 
     fun getLocalIpAddress(): String? {
-        val networkInterfaces = NetworkInterface.getNetworkInterfaces()
-        while (networkInterfaces.hasMoreElements()) {
-            val networkInterface = networkInterfaces.nextElement()
-            val inetAddresses = networkInterface.inetAddresses
-            while (inetAddresses.hasMoreElements()) {
-                val inetAddress = inetAddresses.nextElement()
-                if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
-                    return "${inetAddress.hostAddress}"
+        val excludePrefixes = listOf(
+            "veth", "docker", "virbr", "br-", "tun", "tap", "ppp", "vpn", "vmnet", "vboxnet"
+        )
+
+        val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+            .filter { it.isUp && !it.isLoopback && !it.isVirtual }
+            .sortedBy { it.index } // lower index usually means physical NIC
+
+        for (ni in interfaces) {
+            val name = ni.name.lowercase()
+            if (excludePrefixes.any { name.startsWith(it) }) continue
+
+            for (addr in Collections.list(ni.inetAddresses)) {
+                if (addr is Inet4Address && !addr.isLoopbackAddress) {
+                    return addr.hostAddress
                 }
             }
         }
         return null
     }
+
 }
