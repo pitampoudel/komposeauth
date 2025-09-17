@@ -8,10 +8,10 @@ import kotlin.time.Instant
 
 @Serializable
 data class UserInfoResponse @OptIn(ExperimentalTime::class) constructor(
-    @SerialName("firstName")
-    val firstName: String,
-    @SerialName("lastName")
-    val lastName: String?,
+    @SerialName("givenName")
+    val givenName: String,
+    @SerialName("familyName")
+    val familyName: String?,
     @SerialName("email")
     val email: String,
     @SerialName("phoneNumber")
@@ -33,5 +33,5 @@ data class UserInfoResponse @OptIn(ExperimentalTime::class) constructor(
     @SerialName("socialLinks")
     val socialLinks: List<String>
 ) {
-    fun fullName() = "$firstName $lastName"
+    fun fullName() = "$givenName $familyName"
 }

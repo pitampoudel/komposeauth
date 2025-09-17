@@ -102,7 +102,9 @@ class JwtService(
                 "type" to TokenType.ACCESS_TOKEN.name,
                 "email" to user.email,
                 "scope" to "openid profile email",
-                "scp" to listOf("openid", "profile", "email")
+                "scp" to listOf("openid", "profile", "email"),
+                "givenName" to user.firstName,
+                "familyName" to user.lastName
             ),
             validity = 1.hours
         )
