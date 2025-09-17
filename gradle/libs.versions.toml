@@ -8,6 +8,8 @@ ktor = "3.3.0"
 libphonenumber = "9.0.13"
 multiplatformSettings = "1.3.0"
 kotlinx-serialization = "2.2.20"
+kotlinxSerializationCore = "1.9.0"
+kotlinxSerializationJson = "1.9.0"
 jetbrains-lifecycle = "2.9.4"
 kotlinx-datetime = "0.7.1"
 compose = "1.9.0"
@@ -31,6 +33,8 @@ multiplatform-settings-serialization = { module = "com.russhwolf:multiplatform-s
 multiplatformSettings-noArg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings" }
 multiplatformSettings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version.ref = "multiplatformSettings" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+kotlinx-serialization-core-jvm = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm", version.ref = "kotlinxSerializationCore" }
+kotlinx-serialization-json-jvm = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm", version.ref = "kotlinxSerializationJson" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth", version.ref = "ktor" }
 ktor-client-contentNegotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }

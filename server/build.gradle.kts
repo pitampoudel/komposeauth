@@ -35,6 +35,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-mail")
 
+    // kotlinx serialization
+    implementation(libs.kotlinx.serialization.json.jvm)
+    implementation(libs.kotlinx.serialization.core.jvm)
+
     // Load .env into Spring Environment so application.yml can use ${VAR}
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
 
