@@ -7,6 +7,9 @@ import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.data.OAuth2TokenData
 import com.vardansoft.authx.data.TokenRefreshRequest
+import com.vardansoft.authx.data.UserInfoResponse
+import com.vardansoft.authx.kyc.service.KycService
+import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.user.dto.UserResponse
 import com.vardansoft.authx.user.dto.mapToResponseDto
 import com.vardansoft.authx.user.service.UserService
@@ -16,6 +19,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Controller
@@ -24,8 +28,10 @@ import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.ExperimentalTime
 
 
 @Controller
@@ -33,7 +39,8 @@ class UsersController(
     val userService: UserService,
     val emailService: EmailService,
     val jwtService: JwtService,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    val kycService: KycService
 ) {
 
     @GetMapping("/signup")
@@ -144,6 +151,34 @@ class UsersController(
         val users = userService.findUsersBulk(userIds)
         val userResponses = users.map { it.mapToResponseDto() }
         return ResponseEntity.ok(userResponses)
+    }
+
+    @GetMapping("/me")
+    @Operation(
+        summary = "Get user information",
+        description = "Returns user information for the authenticated user following OAuth2/OIDC standard"
+    )
+    @OptIn(ExperimentalTime::class)
+    fun getUserInfo(authentication: Authentication): ResponseEntity<UserInfoResponse> {
+        val userId = authentication.name
+        val user = userService.findUser(userId) ?: return ResponseEntity.notFound().build()
+
+        val userInfo = UserInfoResponse(
+            id = user.id.toHexString(),
+            email = user.email ?: "",
+            firstName = user.firstName,
+            lastName = user.lastName,
+            phoneNumber = user.phoneNumber,
+            emailVerified = user.emailVerified,
+            phoneNumberVerified = user.phoneNumberVerified,
+            kycVerified = (kycService.find(user.id)?.status == KycResponse.Status.APPROVED),
+            picture = user.picture,
+            createdAt = kotlin.time.Instant.fromEpochMilliseconds(user.createdAt.toEpochMilli()),
+            updatedAt = kotlin.time.Instant.fromEpochMilliseconds(user.updatedAt.toEpochMilli()),
+            socialLinks = user.socialLinks
+        )
+
+        return ResponseEntity.ok(userInfo)
     }
 
 }

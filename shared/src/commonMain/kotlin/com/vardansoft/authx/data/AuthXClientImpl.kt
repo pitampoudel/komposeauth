@@ -4,7 +4,7 @@ import com.vardansoft.authx.data.ApiEndpoints.TOKEN
 import com.vardansoft.authx.data.ApiEndpoints.CONFIG
 import com.vardansoft.authx.data.ApiEndpoints.KYC
 import com.vardansoft.authx.data.ApiEndpoints.UPDATE_PHONE_NUMBER
-import com.vardansoft.authx.data.ApiEndpoints.USER_INFO
+import com.vardansoft.authx.data.ApiEndpoints.ME
 import com.vardansoft.authx.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.core.data.asResource
@@ -38,7 +38,7 @@ class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXCl
 
     override suspend fun fetchUserInfo(accessToken: String?): Result<UserInfoResponse> {
         return safeApiCall {
-            httpClient.get("$authUrl/$USER_INFO") {
+            httpClient.get("$authUrl/$ME") {
                 accessToken?.let { bearerAuth(accessToken) }
             }.asResource { body() }
         }

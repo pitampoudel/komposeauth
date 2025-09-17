@@ -101,7 +101,8 @@ class JwtService(
             claims = mapOf(
                 "type" to TokenType.ACCESS_TOKEN.name,
                 "email" to user.email,
-                "scope" to "email"
+                "scope" to "openid profile email",
+                "scp" to listOf("openid", "profile", "email")
             ),
             validity = 1.hours
         )
