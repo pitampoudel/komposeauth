@@ -3,13 +3,14 @@ package com.vardansoft.core.domain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.number
 
 actual fun LocalDate.asDisplayDate(): String {
-    return "${dayOfMonth}-${monthNumber}-${year}"
+    return "$day-${month.number}-${year}"
 }
 
 actual fun LocalDateTime.asDisplayDateTime(): String {
-    return "${dayOfMonth}-${monthNumber}-${year} ${hour}:${minute}:${second}"
+    return "$day-${month.number}-${year} ${hour}:${minute}:${second}"
 }
 
 actual fun LocalTime.asDisplayTime(): String {
