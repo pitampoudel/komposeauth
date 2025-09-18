@@ -38,6 +38,7 @@ logging:
     com.vardansoft.authx.core.service: DEBUG
 
 sentry:
+  logs.enabled: true
   dsn: ${SENTRY_DSN}
   traces-sample-rate: 1.0
   logging:
