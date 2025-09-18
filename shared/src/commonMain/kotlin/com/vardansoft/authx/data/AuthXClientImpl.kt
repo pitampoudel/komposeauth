@@ -16,14 +16,16 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.request.parameter
 import io.ktor.client.statement.HttpResponse
 
 class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXClient {
 
-    override suspend fun fetchConfig(): Result<ConfigResponse> {
+    override suspend fun fetchConfig(desktop: Boolean): Result<ConfigResponse> {
         return safeApiCall {
-            httpClient.get("$authUrl/$CONFIG")
-                .asResource { body<ConfigResponse>() }
+            httpClient.get("$authUrl/$CONFIG") {
+                parameter("desktop", desktop.toString())
+            }.asResource { body<ConfigResponse>() }
         }
     }
 

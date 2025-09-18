@@ -12,7 +12,7 @@ import com.vardansoft.core.domain.Result
 import io.ktor.client.statement.HttpResponse
 
 interface AuthXClient {
-    suspend fun fetchConfig(): Result<ConfigResponse>
+    suspend fun fetchConfig(desktop: Boolean = false): Result<ConfigResponse>
     suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2TokenData>
     suspend fun fetchUserInfo(accessToken: String? = null): Result<UserInfoResponse>
     suspend fun verifyPhoneOtp(req: VerifyPhoneOtpRequest): Result<HttpResponse>
