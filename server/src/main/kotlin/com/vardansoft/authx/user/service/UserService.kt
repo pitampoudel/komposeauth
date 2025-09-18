@@ -145,7 +145,7 @@ class UserService(
             googleClientId,
             googleClientSecret,
             authCode,
-            null
+            "http://127.0.0.1:8080/callback"
         ).execute()
 
         return findOrCreateUserByGoogleIdToken(tokenResponse.idToken)
