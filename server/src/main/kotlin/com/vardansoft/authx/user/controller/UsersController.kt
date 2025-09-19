@@ -91,6 +91,11 @@ class UsersController(
                 }
 
             is Credential.GoogleId -> userService.findOrCreateUserByGoogleIdToken(request.idToken)
+            is Credential.AuthCode -> userService.findOrCreateUserByAuthCode(
+                code = request.code,
+                codeVerifier = request.codeVerifier,
+                redirectUri = request.redirectUri
+            )
         } ?: throw UsernameNotFoundException("User not found or invalid credentials")
 
         val accessToken = jwtService.generateAccessToken(user)

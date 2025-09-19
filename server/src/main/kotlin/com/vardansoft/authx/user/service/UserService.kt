@@ -1,5 +1,6 @@
 package com.vardansoft.authx.user.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
@@ -20,6 +21,12 @@ import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import java.net.URI
+import java.net.URLEncoder
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 
 @Service
@@ -36,6 +43,31 @@ class UserService(
     private val jsonFactory = GsonFactory()
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
+    }
+
+    fun findOrCreateUserByAuthCode(code: String, codeVerifier: String, redirectUri: String): User {
+        val client = HttpClient.newHttpClient()
+        val form = String.format(
+            "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&code_verifier=%s",
+            URLEncoder.encode(googleClientId, StandardCharsets.UTF_8),
+            URLEncoder.encode(code, StandardCharsets.UTF_8),
+            URLEncoder.encode(redirectUri, StandardCharsets.UTF_8),
+            URLEncoder.encode(codeVerifier, StandardCharsets.UTF_8)
+        )
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create("https://oauth2.googleapis.com/token"))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .POST(HttpRequest.BodyPublishers.ofString(form))
+            .build()
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+        if (response.statusCode() !in 200..299) {
+            throw IllegalStateException("Failed to exchange auth code: HTTP ${response.statusCode()} - ${response.body()}")
+        }
+        val mapper = ObjectMapper()
+        val node = mapper.readTree(response.body())
+        val idToken = node.get("id_token")?.asText()
+            ?: throw IllegalStateException("No id_token in token response")
+        return findOrCreateUserByGoogleIdToken(idToken)
     }
 
     fun findUsersBulk(ids: List<String>): List<User> {

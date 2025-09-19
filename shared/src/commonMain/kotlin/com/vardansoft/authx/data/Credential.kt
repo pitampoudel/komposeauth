@@ -13,6 +13,17 @@ sealed class Credential {
     ) : Credential()
 
     @Serializable
+    @SerialName("AUTH_CODE")
+    class AuthCode(
+        @SerialName("code")
+        val code: String,
+        @SerialName("codeVerifier")
+        val codeVerifier: String,
+        @SerialName("redirectUri")
+        val redirectUri: String
+    ) : Credential()
+
+    @Serializable
     @SerialName("USERNAME_PASSWORD")
     class EmailPassword(
         @SerialName("username")
