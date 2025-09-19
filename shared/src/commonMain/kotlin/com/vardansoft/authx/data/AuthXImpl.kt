@@ -13,6 +13,7 @@ import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.headers
 
@@ -67,6 +68,9 @@ class AuthXImpl internal constructor(
                     }
 
                     is Result.Error -> {
+                        if (result is Result.Error.Http && result.httpStatusCode == HttpStatusCode.Unauthorized) {
+                            authXPreferences.clear()
+                        }
                         null
                     }
                 }
