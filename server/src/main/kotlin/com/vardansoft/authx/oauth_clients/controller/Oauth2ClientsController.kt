@@ -7,9 +7,11 @@ import com.vardansoft.authx.oauth_clients.dto.toEntity
 import com.vardansoft.authx.oauth_clients.repository.OAuth2ClientRepository
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 
 @RestController
 @RequestMapping("/oauth2/clients")
+@ConditionalOnProperty(name = ["app.oauth-enabled"], havingValue = "true")
 class Oauth2ClientsController(
     val oauth2ClientRepository: OAuth2ClientRepository
 ) {

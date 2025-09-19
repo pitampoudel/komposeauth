@@ -1,14 +1,13 @@
 package com.vardansoft.authx.core.config
 
 
-import com.vardansoft.authx.authorizations.service.MongoOAuth2AuthorizationService
 import com.vardansoft.authx.core.converters.OAuth2PublicClientAuthConverter
 import com.vardansoft.authx.core.providers.OAuth2PublicClientAuthProvider
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.kyc.service.KycService
 import com.vardansoft.authx.user.service.UserService
 import jakarta.servlet.DispatcherType
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -25,7 +24,6 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
@@ -96,13 +94,10 @@ class AuthConfig(
 
     @Bean
     @Order(1)
+    @ConditionalOnProperty(name = ["app.oauth-enabled"], havingValue = "true")
     fun authServerSecurityFilterChain(
         http: HttpSecurity,
-        authorizationService: MongoOAuth2AuthorizationService,
-        tokenGenerator: OAuth2TokenGenerator<*>,
-        registeredClientRepository: RegisteredClientRepository,
-        @Value("\${spring.security.oauth2.client.registration.google.client-id}")
-        googleClientId: String
+        registeredClientRepository: RegisteredClientRepository
     ): SecurityFilterChain {
         val authorizationServerConfigurer: OAuth2AuthorizationServerConfigurer by lazy {
             OAuth2AuthorizationServerConfigurer.authorizationServer()

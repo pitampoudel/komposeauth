@@ -18,12 +18,6 @@ class AuthApplication {
             scope.setTag("component", "AuthX-Server")
             scope.setTag("environment", System.getenv("SPRING_PROFILES_ACTIVE") ?: "default")
         }
-        
-        // Set global exception handler for uncaught exceptions
-        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
-            Sentry.captureException(exception)
-            Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(thread, exception)
-        }
     }
 
     @Bean

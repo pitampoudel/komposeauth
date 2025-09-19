@@ -1,7 +1,7 @@
 package com.vardansoft.authx.core.service.sms
 
 import com.vardansoft.authx.AppProperties
-import com.vardansoft.authx.core.service.TwilioSmsService
+import com.vardansoft.authx.core.service.sms.TwilioSmsService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate

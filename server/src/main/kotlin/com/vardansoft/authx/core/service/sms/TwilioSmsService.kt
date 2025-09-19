@@ -1,7 +1,6 @@
-package com.vardansoft.authx.core.service
+package com.vardansoft.authx.core.service.sms
 
 import com.vardansoft.authx.AppProperties
-import com.vardansoft.authx.core.service.sms.SmsService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
