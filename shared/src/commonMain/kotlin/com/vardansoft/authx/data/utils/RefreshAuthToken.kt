@@ -33,11 +33,9 @@ internal suspend fun RefreshTokensParams.tryTokenRefresh(
     val refreshToken = this.oldTokens?.refreshToken
 
     if (refreshToken.isNullOrEmpty()) {
-        authXPreferences?.clear()
         return null
     }
 
-    // Check if refresh token is expired
     if (isRefreshTokenExpired(refreshToken)) {
         authXPreferences?.clear()
         return null
@@ -66,8 +64,7 @@ internal suspend fun RefreshTokensParams.tryTokenRefresh(
             )
         }
 
-        else -> {
-            authXPreferences?.clear()
+       is Result.Error -> {
             null
         }
     }

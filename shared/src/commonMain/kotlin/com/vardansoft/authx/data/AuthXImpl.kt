@@ -8,6 +8,8 @@ import io.ktor.client.plugins.auth.AuthConfig
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.http.Url
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
@@ -37,6 +39,9 @@ class AuthXImpl internal constructor(
                     client = HttpClient {
                         install(ContentNegotiation) {
                             json(Json)
+                        }
+                        install(Logging){
+                            level = LogLevel.ALL
                         }
                     },
                     authXPreferences = authXPreferences,
