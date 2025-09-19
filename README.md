@@ -1,60 +1,67 @@
 # AuthX
 
-A Kotlin Multiplatform authentication solution: Authorization Server (Spring Boot) + KMP Client Library + Compose Multiplatform UI.
+Full‑stack authentication for Kotlin Multiplatform: Spring Authorization Server + KMP SDK + Compose Multiplatform UI.
 
 ## Maven Central
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/authx/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/authx)
 
-## Overview
-
-AuthX provides end-to-end authentication for Kotlin Multiplatform apps.
-- Server: OAuth 2.1 Authorization Server with OIDC userinfo, Google sign-in grant, user management, phone OTP, email verification, credentials, and client registration
-- Shared (KMP) library: exposes AuthX, AuthClient, LoginPreferences (with token refresh utilities and Koin modules)
-- UI library (Compose Multiplatform): provides LoginViewModel, LogoutHandler, OTP screen, and a Local Composition to access the current user; plus platform-specific credential retrieval
+## What is AuthX?
+AuthX is a production‑ready auth platform tailored for Kotlin Multiplatform apps.
+- Server (Spring Boot): OAuth 2.1 Authorization Server + Resource Server, OIDC userinfo, Google sign‑in, password login, email verification, phone OTP, client registration, JWT with custom claims, MongoDB persistence.
+- Shared KMP SDK (artifact: authx): Auth client with token storage and auto‑refresh, Koin modules, helpers for configuring Ktor.
+- Compose Multiplatform UI (artifact: authx-ui): Login flow, OTP screen, Logout handler, current user CompositionLocal, and platform credential retrieval utilities.
 
 Modules in this repository:
-1. shared (artifact: authx) – Core auth client for KMP
-2. ui (artifact: authx-ui) – UI components for Compose Multiplatform
-3. server – Spring Boot authorization server
+1. shared – Core KMP client library (published as com.vardansoft:authx)
+2. ui – Compose Multiplatform UI library (published as com.vardansoft:authx-ui)
+3. server – Spring Boot OAuth2/OIDC authorization server and APIs
+
+## Key features
+- OAuth 2.1 with Authorization Server and Resource Server
+- OIDC userinfo; JWT access tokens with custom claims (authorities, names)
+- Google OAuth (web/desktop), password login, email verification, phone OTP
+- Public client auth support for mobile/desktop apps
+- Config endpoint: GET {BASE_URL}/config returns Google client ID (desktop=true for desktop)
+- MongoDB storage; automatic indexes; Testcontainers tests
+- Optional SMS via Twilio or Samaye; SMTP email for verification/reset
+- Dockerfile for containerized server build/run
 
 ## Server (Spring Boot)
 
-### Configuration (Environment Variables)
-You can set real environment variables or place them in a `.env` file in the project root (or the `server` module directory) for local development.
+### Prerequisites
+- Java 17+
+- MongoDB (set MONGODB_URI)
 
-For convenience, copy `.env.example` to `.env` and fill in your environment-specific values.
+### Docker
+- Build: docker build -t authx-server .
+- Run: docker run -p 8080:8080 --env-file .env authx-server
 
-## Client Integration (KMP)
-Add the AuthX dependencies to your project:
+## Client integration (KMP)
+Add dependencies:
 
 ```kotlin
-// In your build.gradle.kts
 dependencies {
-    // Core auth module (for shared)
-    implementation("com.vardansoft:authx:1.2.2")
+    // Core KMP client
+    implementation("com.vardansoft:authx:x.x.x")
 
-    // Optional UI components (for composeApp)
-    implementation("com.vardansoft:authx-ui:1.2.2")
+    // Optional Compose Multiplatform UI
+    implementation("com.vardansoft:authx-ui:x.x.x")
 }
 ```
 
-1) Initialize with your AUTH_URL, public client id, and hosts list:
+Initialize Koin/AuthX and configure your hosts:
 ```kotlin
 koinConfiguration {
     configureAuthX(
         authUrl = Constants.AUTH_SERVER_URL,
         clientId = Constants.AUTH_CLIENT_ID,
-        hosts = listOf(
-            Constants.Server.SERVER_URL
-        )
+        hosts = listOf(Constants.Server.SERVER_URL)
     )
 }
-
 ```
 
-2) Configure your Ktor HttpClient to use the bearer authenticator with auto-refresh by delegating to AuthX.
-
+Configure Ktor HttpClient with bearer auth auto‑refresh via AuthX:
 ```kotlin
 val httpClient = HttpClient {
     install(Auth) {
@@ -64,31 +71,24 @@ val httpClient = HttpClient {
 }
 ```
 
-Use provided view models and screens (e.g., OtpScreen, and a Login flow with rememberCredentialRetriever).
-
-### UI Components
-
-#### Current user Local Composition
+### UI components (Compose Multiplatform)
+- Current user Local Composition
 ```kotlin
 ProvideUserInfo {
     val userInfoState = LocalUserInfoState.current
-    // use userInfoState (LazyState<UserInfo>) to render UI
+    // render using userInfoState (LazyState<UserInfo>)
 }
 ```
-
-#### LogoutHandler
+- Logout handler
 ```kotlin
 val logoutHandler = rememberLogoutHandler()
-// e.g., inside a Button onClick:
 logoutHandler.logout()
 ```
-
-#### OTP Screen
+- OTP screen
 ```kotlin
-   OtpScreen()
+OtpScreen()
 ```
-
-#### LoginViewModel
+- LoginViewModel + credential retrieval
 ```kotlin
 val credentialRetriever = rememberCredentialRetriever()
 val viewModel = koinViewModel<LoginViewModel>()
@@ -98,15 +98,10 @@ LaunchedEffect(Unit) {
 }
 ```
 
-## Testing
-- Run all tests: ./gradlew :server:test
-- Recommended: keep a local Mongo instance running for integration tests that use Testcontainers (otherwise they pull automatically).
-
-## Notes & Tips
-- Java/JVM: Server uses Java 17 toolchain.
-- Scopes: Some endpoints require SCOPE_user.read.any or SCOPE_user.write.any.
-- Config endpoint: GET {BASE_URL}/config returns the Google OAuth client ID for your client to use.
-- Docker: The provided Dockerfile builds the server and runs it with sensible JVM defaults for containers.
+## Notes
+- Java toolchain: 17
+- Some protected APIs require SCOPE_user.read.any or SCOPE_user.write.any
+- OIDC userinfo includes KYC status when configured
 
 ## License
-Apache 2.0. See the project POM metadata for details.
+Apache 2.0. See project metadata for details.
