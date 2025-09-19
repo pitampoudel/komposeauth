@@ -3,6 +3,7 @@ package com.vardansoft.authx.user.controller
 import com.vardansoft.authx.core.service.EmailService
 import com.vardansoft.authx.core.service.JwtService
 import com.vardansoft.authx.core.utils.acceptsHtml
+import com.vardansoft.authx.data.ApiEndpoints
 import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.data.OAuth2TokenData
@@ -78,7 +79,7 @@ class UsersController(
     }
 
 
-    @PostMapping("/token")
+    @PostMapping("/${ApiEndpoints.TOKEN}")
     @Operation(
         summary = "Login with credentials",
         description = "Validate credentials and returns JWT tokens directly"
@@ -112,7 +113,7 @@ class UsersController(
         )
     }
 
-    @PostMapping("/refresh_token")
+    @PostMapping("/${ApiEndpoints.REFRESH_TOKEN}")
     @Operation(
         summary = "Refresh access token",
         description = "Use refresh token to get new access token"

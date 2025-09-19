@@ -3,6 +3,7 @@ package com.vardansoft.authx.core.config
 
 import com.vardansoft.authx.core.converters.OAuth2PublicClientAuthConverter
 import com.vardansoft.authx.core.providers.OAuth2PublicClientAuthProvider
+import com.vardansoft.authx.data.ApiEndpoints
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.kyc.service.KycService
 import com.vardansoft.authx.user.service.UserService
@@ -56,7 +57,8 @@ class AuthConfig(
                     .requestMatchers("/oauth2/clients/**").hasRole("ADMIN")
                     .requestMatchers(
                         "/login",
-                        "/token",
+                        "/${ApiEndpoints.TOKEN}",
+                        "/${ApiEndpoints.REFRESH_TOKEN}",
                         "/signup",
                         "/api/auth/**",
                         "/users",
