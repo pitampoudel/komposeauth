@@ -12,6 +12,7 @@ import com.vardansoft.core.domain.Result
 import org.koin.java.KoinJavaComponent.getKoin
 import java.awt.Desktop
 import java.net.URI
+import java.net.ServerSocket
 
 @Composable
 actual fun rememberCredentialRetriever(): CredentialRetriever {
@@ -25,8 +26,7 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                     is Result.Error -> return res
                     is Result.Success -> {
                         val googleAuthClientId = res.data.googleClientId
-
-                        val port = 8080
+                        val port = ServerSocket(0).use { it.localPort }
                         val redirectUri = "http://127.0.0.1:$port/callback"
                         val verifier = generateCodeVerifier()
                         val challenge = generateCodeChallenge(verifier)
