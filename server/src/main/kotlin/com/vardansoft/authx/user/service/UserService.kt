@@ -1,6 +1,5 @@
 package com.vardansoft.authx.user.service
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
@@ -138,16 +137,4 @@ class UserService(
         return user
     }
 
-    fun findOrCreateUserByGooglePKCEAuthCode(authCode: String): User {
-        val tokenResponse = GoogleAuthorizationCodeTokenRequest(
-            httpTransport,
-            jsonFactory,
-            googleClientId,
-            googleClientSecret,
-            authCode,
-            "http://127.0.0.1:8080/callback"
-        ).execute()
-
-        return findOrCreateUserByGoogleIdToken(tokenResponse.idToken)
-    }
 }

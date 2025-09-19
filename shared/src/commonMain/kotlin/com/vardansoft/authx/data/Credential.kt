@@ -21,10 +21,4 @@ sealed class Credential {
         val password: String
     ) : Credential()
 
-    @Serializable
-    class GooglePKCEAuthCode(
-        @SerialName("authCode")
-        val authCode: String
-    ) : Credential()
-
 }
