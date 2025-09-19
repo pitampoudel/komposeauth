@@ -1,6 +1,7 @@
 package com.vardansoft.authx.data
 
 import com.vardansoft.authx.data.ApiEndpoints.REFRESH_TOKEN
+import com.vardansoft.authx.data.ApiEndpoints.TOKEN
 import com.vardansoft.authx.domain.AuthX
 import com.vardansoft.authx.domain.AuthXPreferences
 import com.vardansoft.core.data.asResource
@@ -12,10 +13,8 @@ import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
-import io.ktor.http.headers
 
 class AuthXImpl internal constructor(
     private val authXPreferences: AuthXPreferences,
@@ -49,9 +48,6 @@ class AuthXImpl internal constructor(
                     client.post(
                         "$authUrl/$REFRESH_TOKEN",
                         block = {
-                            headers {
-                                remove(HttpHeaders.Authorization)
-                            }
                             setBody(TokenRefreshRequest(refreshToken))
                         }
                     ).asResource { body() }
@@ -77,7 +73,9 @@ class AuthXImpl internal constructor(
             }
             sendWithoutRequest {
                 val host = it.url.host
-                hosts.contains(host) || isIpAddress(host)
+                val urlString = it.url.toString()
+                val isAuthEndpoint = urlString.endsWith("/$REFRESH_TOKEN") || urlString.endsWith("/$TOKEN")
+                (hosts.contains(host) || isIpAddress(host)) && !isAuthEndpoint
             }
         }
     }
