@@ -48,11 +48,12 @@ class UserService(
     fun findOrCreateUserByAuthCode(code: String, codeVerifier: String, redirectUri: String): User {
         val client = HttpClient.newHttpClient()
         val form = String.format(
-            "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&code_verifier=%s",
+            "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&code_verifier=%s&client_secret=%s",
             URLEncoder.encode(googleClientId, StandardCharsets.UTF_8),
             URLEncoder.encode(code, StandardCharsets.UTF_8),
             URLEncoder.encode(redirectUri, StandardCharsets.UTF_8),
-            URLEncoder.encode(codeVerifier, StandardCharsets.UTF_8)
+            URLEncoder.encode(codeVerifier, StandardCharsets.UTF_8),
+            URLEncoder.encode(googleClientSecret, StandardCharsets.UTF_8)
         )
         val request = HttpRequest.newBuilder()
             .uri(URI.create("https://oauth2.googleapis.com/token"))
