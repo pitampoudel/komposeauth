@@ -101,8 +101,7 @@ class JwtService(
             claims = mapOf(
                 "type" to TokenType.ACCESS_TOKEN.name,
                 "email" to user.email,
-                "scope" to "openid profile email",
-                "scp" to listOf("openid", "profile", "email"),
+                "authorities" to listOf(user.roleAuthority()),
                 "givenName" to user.firstName,
                 "familyName" to user.lastName
             ),

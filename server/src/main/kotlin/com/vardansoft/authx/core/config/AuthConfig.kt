@@ -82,7 +82,10 @@ class AuthConfig(
                 object : DaoAuthenticationProvider(UserDetailsService { email ->
                     val user = userService.findUserByEmailOrPhone(email)
                         ?: throw UsernameNotFoundException("User not found with email: $email")
-                    User.withUsername(user.email).password(user.passwordHash).build()
+                    User.withUsername(user.email)
+                        .password(user.passwordHash)
+                        .authorities(user.roleAuthority())
+                        .build()
                 }) {
                     init {
                         setPasswordEncoder(this@AuthConfig.passwordEncoder)

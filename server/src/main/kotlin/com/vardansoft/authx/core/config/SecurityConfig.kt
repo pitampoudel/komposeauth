@@ -82,12 +82,16 @@ class SecurityConfig() {
                 else -> {
                     if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN) {
                         val principal = context.getPrincipal<UsernamePasswordAuthenticationToken>()
-                        context.claims.claim(
-                            "authorities",
-                            principal.authorities.map { it.authority }
-                        )
                         val user = userService.findUser(principal.name)
                             ?: throw AccountNotFoundException("User not found")
+                        val principalAuthorities = principal.authorities.map { it.authority }
+                        val effectiveAuthorities = principalAuthorities.ifEmpty {
+                            listOf(user.roleAuthority())
+                        }
+                        context.claims.claim(
+                            "authorities",
+                            effectiveAuthorities
+                        )
                         context.claims.claim("first_name", user.firstName)
                         if (user.lastName != null)
                             context.claims.claim("last_name", user.lastName)
