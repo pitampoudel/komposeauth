@@ -1,8 +1,7 @@
 package com.vardansoft.authx.user.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.json.gson.GsonFactory
+import com.vardansoft.authx.AppProperties
 import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
 import com.vardansoft.authx.core.utils.validateGoogleIdToken
 import com.vardansoft.authx.data.CreateUserRequest
@@ -36,11 +35,8 @@ class UserService(
     private val phoneNumberVerificationService: PhoneNumberVerificationService,
     @Value("\${spring.security.oauth2.client.registration.google.client-id}")
     private val googleClientId: String,
-    @Value("\${spring.security.oauth2.client.registration.google.client-secret}")
-    private val googleClientSecret: String
+    val appProperties: AppProperties
 ) {
-    private val httpTransport = NetHttpTransport()
-    private val jsonFactory = GsonFactory()
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
     }
@@ -49,11 +45,11 @@ class UserService(
         val client = HttpClient.newHttpClient()
         val form = String.format(
             "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&code_verifier=%s&client_secret=%s",
-            URLEncoder.encode(googleClientId, StandardCharsets.UTF_8),
+            URLEncoder.encode(appProperties.googleAuthDesktopClientId, StandardCharsets.UTF_8),
             URLEncoder.encode(code, StandardCharsets.UTF_8),
             URLEncoder.encode(redirectUri, StandardCharsets.UTF_8),
             URLEncoder.encode(codeVerifier, StandardCharsets.UTF_8),
-            URLEncoder.encode(googleClientSecret, StandardCharsets.UTF_8)
+            URLEncoder.encode(appProperties.googleAuthDesktopClientSecret, StandardCharsets.UTF_8)
         )
         val request = HttpRequest.newBuilder()
             .uri(URI.create("https://oauth2.googleapis.com/token"))
@@ -152,7 +148,7 @@ class UserService(
 
     fun findOrCreateUserByGoogleIdToken(idToken: String): User {
         val payload = validateGoogleIdToken(
-            clientId = googleClientId,
+            clientIds = listOf(googleClientId, appProperties.googleAuthDesktopClientId),
             idToken = idToken
         )
         val user = findOrCreateUser(
