@@ -56,6 +56,7 @@ class AuthConfig(
                 auth
                     .requestMatchers("/oauth2/clients/**").hasRole("ADMIN")
                     .requestMatchers(
+                        "/oauth2/jwks",
                         "/login",
                         "/${ApiEndpoints.TOKEN}",
                         "/${ApiEndpoints.REFRESH_TOKEN}",

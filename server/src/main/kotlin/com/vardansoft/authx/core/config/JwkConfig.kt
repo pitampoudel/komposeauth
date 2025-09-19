@@ -31,9 +31,8 @@ class JwkConfig(
     private val privateKeyBlobName = "jwk/private.key"
 
     @Bean
-    fun jwkSource(): JWKSource<SecurityContext?> {
-
-        val keyPair = when {
+    fun serverKeyPair(): KeyPair {
+        return when {
             storageService.exists(publicKeyBlobName) && storageService.exists(privateKeyBlobName) -> {
                 logger.info("Loading existing key pair from Google Cloud Storage")
                 loadKeyPairFromGcs()
@@ -44,17 +43,24 @@ class JwkConfig(
                 generateAndSaveKeyPairToGcs()
             }
         }
+    }
 
-        val publicKey = keyPair.public as RSAPublicKey
-        val privateKey = keyPair.private as RSAPrivateKey
-
+    @Bean
+    fun jwkSet(serverKeyPair: KeyPair): JWKSet {
+        val publicKey = serverKeyPair.public as RSAPublicKey
+        val privateKey = serverKeyPair.private as RSAPrivateKey
         val rsaKey = RSAKey.Builder(publicKey)
             .privateKey(privateKey)
             .keyID("spring-boot-jwk") // static kid is fine unless rotating
             .build()
-
-        return ImmutableJWKSet(JWKSet(rsaKey))
+        return JWKSet(rsaKey)
     }
+
+    @Bean
+    fun jwkSource(jwkSet: JWKSet): JWKSource<SecurityContext> {
+        return ImmutableJWKSet(jwkSet)
+    }
+
     @Bean
     fun jwtEncoder(jwkSource: JWKSource<SecurityContext>): JwtEncoder {
         return NimbusJwtEncoder(jwkSource)
