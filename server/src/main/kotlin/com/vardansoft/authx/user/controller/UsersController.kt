@@ -6,15 +6,18 @@ import com.vardansoft.authx.core.utils.acceptsHtml
 import com.vardansoft.authx.data.ApiEndpoints
 import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.data.Credential
+import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.OAuth2TokenData
 import com.vardansoft.authx.data.TokenRefreshRequest
 import com.vardansoft.authx.data.UserInfoResponse
 import com.vardansoft.authx.kyc.service.KycService
-import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.user.dto.UserResponse
 import com.vardansoft.authx.user.dto.mapToResponseDto
 import com.vardansoft.authx.user.service.UserService
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -54,6 +57,18 @@ class UsersController(
     }
 
     @PostMapping("/users")
+    @Operation(
+        summary = "Create user",
+        description = "Creates a new user account. Accepts form fields defined by CreateUserRequest. If the client accepts HTML, a redirect to /login may be returned.",
+    )
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        description = "Form payload to create a user",
+        required = true,
+        content = [
+            Content(mediaType = "application/x-www-form-urlencoded", schema = Schema(implementation = CreateUserRequest::class)),
+            Content(mediaType = "multipart/form-data", schema = Schema(implementation = CreateUserRequest::class))
+        ]
+    )
     fun create(
         @ModelAttribute request: CreateUserRequest,
         httpRequest: HttpServletRequest
@@ -79,10 +94,21 @@ class UsersController(
     }
 
 
-    @PostMapping("/${ApiEndpoints.TOKEN}", consumes = ["application/json"])
+    @PostMapping("/${ApiEndpoints.TOKEN}", consumes = ["application/json"], produces = ["application/json"])
     @Operation(
         summary = "Login with credentials",
-        description = "Validate credentials and returns JWT tokens directly"
+        description = "Validate credentials (email/password, Google ID token, or Google OAuth2 authorization code) and returns JWT tokens directly"
+    )
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        description = "Credential payload. Use one of the supported credential objects.",
+        required = true,
+        content = [
+            Content(mediaType = "application/json", schema = Schema(oneOf = [
+                Credential.EmailPassword::class,
+                Credential.GoogleId::class,
+                Credential.AuthCode::class
+            ]))
+        ]
     )
     fun token(@RequestBody request: Credential): ResponseEntity<OAuth2TokenData> {
         val user = when (request) {
@@ -116,7 +142,14 @@ class UsersController(
     @PostMapping("/${ApiEndpoints.REFRESH_TOKEN}")
     @Operation(
         summary = "Refresh access token",
-        description = "Use refresh token to get new access token"
+        description = "Use refresh token to get a new access token"
+    )
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        description = "Refresh token request",
+        required = true,
+        content = [
+            Content(mediaType = "application/json", schema = Schema(implementation = TokenRefreshRequest::class))
+        ]
     )
     fun refreshToken(@RequestBody @Valid request: TokenRefreshRequest): ResponseEntity<OAuth2TokenData> {
         val userId = jwtService.validateRefreshToken(request.refreshToken)
@@ -138,6 +171,11 @@ class UsersController(
 
 
     @GetMapping("/users/{id}")
+    @Operation(
+        summary = "Get user by ID",
+        description = "Fetch a single user by their ID"
+    )
+    @Parameter(name = "id", description = "User ID", required = true)
     @PreAuthorize("hasAuthority('SCOPE_user.read.any')")
     fun getUserById(@PathVariable id: String): ResponseEntity<UserResponse> {
         val user = userService.findUser(id) ?: return ResponseEntity.notFound().build()
@@ -145,6 +183,11 @@ class UsersController(
     }
 
     @GetMapping("/users/batch")
+    @Operation(
+        summary = "Get multiple users",
+        description = "Fetch multiple users by a comma-separated list of IDs"
+    )
+    @Parameter(name = "ids", description = "Comma-separated list of user IDs", required = true)
     @PreAuthorize("hasAuthority('SCOPE_user.read.any')")
     fun getUsersBatch(@RequestParam ids: String): ResponseEntity<List<UserResponse>> {
         val userIds = ids.split(",").map { it.trim() }.filter { it.isNotEmpty() }
