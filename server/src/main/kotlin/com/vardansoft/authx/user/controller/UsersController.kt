@@ -79,7 +79,7 @@ class UsersController(
     }
 
 
-    @PostMapping("/${ApiEndpoints.TOKEN}")
+    @PostMapping("/${ApiEndpoints.TOKEN}", consumes = ["application/json"])
     @Operation(
         summary = "Login with credentials",
         description = "Validate credentials and returns JWT tokens directly"

@@ -8,10 +8,10 @@ import org.springframework.http.converter.json.KotlinSerializationJsonHttpMessag
 @Configuration
 class SerializationConfig {
     @Bean
-    fun kotlinSerializationConverter() = KotlinSerializationJsonHttpMessageConverter(
-        Json {
-            classDiscriminator = "type"
-        }
-    )
+    fun kotlinxJson(): Json = Json {
+        classDiscriminator = "type"
+    }
 
+    @Bean
+    fun kotlinSerializationConverter(json: Json) = KotlinSerializationJsonHttpMessageConverter(json)
 }

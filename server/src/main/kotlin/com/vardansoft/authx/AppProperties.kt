@@ -9,6 +9,7 @@ import java.util.Collections
 @Configuration
 @ConfigurationProperties(prefix = "app")
 class AppProperties {
+    // TODO it is always localhost in development but it should be ip address
     var baseUrl: String? = null
         get() {
             val raw = field?.trim().orEmpty()
