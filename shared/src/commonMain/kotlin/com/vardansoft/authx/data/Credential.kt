@@ -25,7 +25,7 @@ sealed class Credential {
 
     @Serializable
     @SerialName("USERNAME_PASSWORD")
-    class EmailPassword(
+    class UsernamePassword(
         @SerialName("username")
         val username: String,
         @SerialName("password")

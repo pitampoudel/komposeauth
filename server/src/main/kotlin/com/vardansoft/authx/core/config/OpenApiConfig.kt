@@ -1,4 +1,4 @@
-package com.vardansoft.authx
+package com.vardansoft.authx.core.config
 
 import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.OpenAPI
@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class OpenApiConfig {
+
 
     @Bean
     fun openAPI(): OpenAPI {

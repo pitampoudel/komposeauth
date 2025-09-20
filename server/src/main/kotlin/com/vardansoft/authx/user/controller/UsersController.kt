@@ -104,7 +104,7 @@ class UsersController(
         required = true,
         content = [
             Content(mediaType = "application/json", schema = Schema(oneOf = [
-                Credential.EmailPassword::class,
+                Credential.UsernamePassword::class,
                 Credential.GoogleId::class,
                 Credential.AuthCode::class
             ]))
@@ -112,7 +112,7 @@ class UsersController(
     )
     fun token(@RequestBody request: Credential): ResponseEntity<OAuth2TokenData> {
         val user = when (request) {
-            is Credential.EmailPassword -> userService.findUserByEmailOrPhone(request.username)
+            is Credential.UsernamePassword -> userService.findUserByEmailOrPhone(request.username)
                 ?.takeIf {
                     passwordEncoder.matches(request.password, it.passwordHash)
                 }
