@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.ExperimentalTime
+import kotlin.time.toKotlinInstant
 
 
 @Controller
@@ -84,7 +85,11 @@ class UsersController(
     }
 
 
-    @PostMapping("/${ApiEndpoints.TOKEN}", consumes = ["application/json"], produces = ["application/json"])
+    @PostMapping(
+        "/${ApiEndpoints.TOKEN}",
+        consumes = ["application/json"],
+        produces = ["application/json"]
+    )
     @Operation(
         summary = "Login with credentials",
         description = "Validate credentials (email/password, Google ID token, or Google OAuth2 authorization code) and returns JWT tokens directly"
@@ -193,8 +198,8 @@ class UsersController(
             phoneNumberVerified = user.phoneNumberVerified,
             kycVerified = (kycService.find(user.id)?.status == KycResponse.Status.APPROVED),
             picture = user.picture,
-            createdAt = kotlin.time.Instant.fromEpochMilliseconds(user.createdAt.toEpochMilli()),
-            updatedAt = kotlin.time.Instant.fromEpochMilliseconds(user.updatedAt.toEpochMilli()),
+            createdAt = user.createdAt.toKotlinInstant(),
+            updatedAt = user.createdAt.toKotlinInstant(),
             socialLinks = user.socialLinks
         )
 
