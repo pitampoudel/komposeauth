@@ -1,5 +1,6 @@
 package com.vardansoft.authx.data
 
+import com.vardansoft.core.domain.isValidEmail
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -32,10 +33,6 @@ data class CreateUserRequest(
         require(email.isNullOrBlank() || email.isValidEmail())
         require(phoneNumber.isNullOrBlank() || phoneNumber.isValidPhoneNumber())
         require(email != null || phoneNumber != null)
-    }
-
-    private fun String?.isValidEmail(): Boolean {
-        return this?.matches(Regex("^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) == true
     }
 
     private fun String.isValidPhoneNumber(): Boolean {

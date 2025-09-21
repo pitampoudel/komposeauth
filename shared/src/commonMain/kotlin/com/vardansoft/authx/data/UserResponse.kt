@@ -1,8 +1,10 @@
-package com.vardansoft.authx.user.dto
+package com.vardansoft.authx.data
 
-import java.time.Instant
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
-data class UserResponse(
+
+data class UserResponse @OptIn(ExperimentalTime::class) constructor(
     val id: String,
     val firstName: String,
     val lastName: String?,

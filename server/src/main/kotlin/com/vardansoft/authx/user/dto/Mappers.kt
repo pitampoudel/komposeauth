@@ -1,11 +1,15 @@
 package com.vardansoft.authx.user.dto
 
 import com.vardansoft.authx.data.CreateUserRequest
+import com.vardansoft.authx.data.UpdateUserRequest
+import com.vardansoft.authx.data.UserResponse
 import com.vardansoft.authx.user.entity.User
 import com.vardansoft.core.data.parsePhoneNumber
 import jakarta.validation.Valid
 import org.bson.types.ObjectId
 import org.springframework.security.crypto.password.PasswordEncoder
+import kotlin.time.ExperimentalTime
+import kotlin.time.toKotlinInstant
 
 fun CreateUserRequest.mapToEntity(passwordEncoder: PasswordEncoder): @Valid User {
     return User(
@@ -33,6 +37,7 @@ fun User.update(req: UpdateUserRequest, passwordEncoder: PasswordEncoder): @Vali
     )
 }
 
+@OptIn(ExperimentalTime::class)
 fun User.mapToResponseDto(): UserResponse {
     return UserResponse(
         id = this.id.toHexString(),
@@ -43,7 +48,7 @@ fun User.mapToResponseDto(): UserResponse {
         phoneNumber = this.phoneNumber,
         phoneNumberVerified = phoneNumberVerified,
         photoUrl = this.picture,
-        createdAt = this.createdAt,
-        updatedAt = this.updatedAt
+        createdAt = this.createdAt.toKotlinInstant(),
+        updatedAt = this.updatedAt.toKotlinInstant()
     )
 }

@@ -11,7 +11,7 @@ import com.vardansoft.authx.data.OAuth2TokenData
 import com.vardansoft.authx.data.TokenRefreshRequest
 import com.vardansoft.authx.data.UserInfoResponse
 import com.vardansoft.authx.kyc.service.KycService
-import com.vardansoft.authx.user.dto.UserResponse
+import com.vardansoft.authx.data.UserResponse
 import com.vardansoft.authx.user.dto.mapToResponseDto
 import com.vardansoft.authx.user.service.UserService
 import io.swagger.v3.oas.annotations.Operation

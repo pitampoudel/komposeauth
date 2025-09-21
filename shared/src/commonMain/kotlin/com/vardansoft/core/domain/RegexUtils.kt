@@ -8,3 +8,6 @@ fun isUrlValid(url: String): Boolean {
             "(/\\S*)?$" // Path
     return Regex(pattern).matches(url)
 }
+fun String?.isValidEmail(): Boolean {
+    return this?.matches(Regex("^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) == true
+}

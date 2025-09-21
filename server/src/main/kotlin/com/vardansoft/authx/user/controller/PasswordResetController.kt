@@ -2,7 +2,7 @@ package com.vardansoft.authx.user.controller
 
 import com.vardansoft.authx.core.service.EmailService
 import com.vardansoft.authx.core.service.JwtService
-import com.vardansoft.authx.user.dto.UpdateUserRequest
+import com.vardansoft.authx.data.UpdateUserRequest
 import com.vardansoft.authx.user.service.UserService
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller

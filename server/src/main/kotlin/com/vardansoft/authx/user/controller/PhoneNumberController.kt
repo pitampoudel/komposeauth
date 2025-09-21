@@ -3,7 +3,7 @@ package com.vardansoft.authx.user.controller
 import com.vardansoft.authx.core.config.UserContextService
 import com.vardansoft.authx.data.UpdatePhoneNumberRequest
 import com.vardansoft.authx.data.VerifyPhoneOtpRequest
-import com.vardansoft.authx.user.dto.UserResponse
+import com.vardansoft.authx.data.UserResponse
 import com.vardansoft.authx.user.service.UserService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity

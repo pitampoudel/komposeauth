@@ -9,8 +9,8 @@ import com.vardansoft.authx.core.utils.validateGoogleIdToken
 import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.data.UpdatePhoneNumberRequest
 import com.vardansoft.authx.data.VerifyPhoneOtpRequest
-import com.vardansoft.authx.user.dto.UpdateUserRequest
-import com.vardansoft.authx.user.dto.UserResponse
+import com.vardansoft.authx.data.UpdateUserRequest
+import com.vardansoft.authx.data.UserResponse
 import com.vardansoft.authx.user.dto.mapToEntity
 import com.vardansoft.authx.user.dto.mapToResponseDto
 import com.vardansoft.authx.user.dto.update
