@@ -1,6 +1,8 @@
 package com.vardansoft.authx.user.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import com.vardansoft.authx.AppProperties
 import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
 import com.vardansoft.authx.core.utils.validateGoogleIdToken
@@ -60,9 +62,8 @@ class UserService(
         if (response.statusCode() !in 200..299) {
             throw IllegalStateException("Failed to exchange auth code: HTTP ${response.statusCode()} - ${response.body()}")
         }
-        val mapper = ObjectMapper()
-        val node = mapper.readTree(response.body())
-        val idToken = node.get("id_token")?.asText()
+        val jsonElement = Json.parseToJsonElement(response.body())
+        val idToken = jsonElement.jsonObject["id_token"]?.jsonPrimitive?.content
             ?: throw IllegalStateException("No id_token in token response")
         return findOrCreateUserByGoogleIdToken(idToken)
     }

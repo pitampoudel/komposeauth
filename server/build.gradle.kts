@@ -15,6 +15,10 @@ sentry {
     authToken = System.getenv("SENTRY_AUTH_TOKEN")
 }
 
+configurations.all {
+    exclude(group = "org.springframework.boot", module = "spring-boot-starter-json")
+}
+
 dependencies {
     implementation(project(":shared"))
     implementation("org.springframework.boot:spring-boot-starter")
