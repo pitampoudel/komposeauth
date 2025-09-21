@@ -57,7 +57,7 @@ class UsersController(
         description = "Creates a new user account",
     )
     fun create(@RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
-        val createdUser = userService.findOrCreateUser(request)
+        val createdUser = userService.createUser(request)
         val userResponse = createdUser.mapToResponseDto()
         if (createdUser.email != null && !createdUser.emailVerified) emailService.sendSimpleMail(
             to = createdUser.email,

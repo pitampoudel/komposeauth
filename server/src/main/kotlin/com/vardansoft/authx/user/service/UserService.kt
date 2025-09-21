@@ -83,11 +83,11 @@ class UserService(
         return userRepository.findByEmail(value) ?: userRepository.findByPhoneNumber(value)
     }
 
-    fun createUser(@Valid req: CreateUserRequest): User {
+    fun createUser(req: CreateUserRequest): User {
         return userRepository.insert(req.mapToEntity(passwordEncoder))
     }
 
-    fun updateUser(userId: ObjectId, @Valid req: UpdateUserRequest): UserResponse {
+    fun updateUser(userId: ObjectId, req: UpdateUserRequest): UserResponse {
         val existingUser = userRepository.findById(userId).orElse(null)
             ?: throw IllegalStateException("User not found")
         val result = userRepository.save(existingUser.update(req, passwordEncoder))
