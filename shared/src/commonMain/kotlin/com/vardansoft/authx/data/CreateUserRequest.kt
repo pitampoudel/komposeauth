@@ -26,7 +26,9 @@ data class CreateUserRequest(
     init {
         require(firstName.isNotBlank())
         require(lastName?.isNotBlank() == true)
-        require(password == null || Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$").matches(password))
+        require(password == null || Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$").matches(password)){
+            "Password must contain at least one uppercase letter, one lowercase letter, and one digit"
+        }
         require(password == confirmPassword) {
             "Password and confirmation password must match"
         }

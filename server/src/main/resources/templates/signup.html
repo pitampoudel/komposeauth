@@ -95,7 +95,8 @@
             border-color: #2563eb;
         }
 
-        .form-input:invalid {
+        .form-input:invalid,
+        .form-input.invalid-input { /* Style for server-side invalid inputs too */
             border-color: #ef4444;
         }
 
@@ -285,7 +286,7 @@
                 <p class="subtitle">Create your account to get started</p>
             </header>
 
-            <!-- Error Message -->
+            <!-- Error Message from Server (e.g. for ?error param) -->
             <div th:if="${param.error}" class="error-message" role="alert" aria-live="polite">
                 <svg class="error-icon" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
@@ -294,9 +295,20 @@
                 </svg>
                 <span>Failed to create your account. Please try again.</span>
             </div>
+            
+            <!-- API Error Message -->
+            <div id="apiErrorMessage" class="error-message" role="alert" aria-live="polite" style="display: none;">
+                <svg class="error-icon" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                          clip-rule="evenodd"/>
+                </svg>
+                <span id="apiErrorMessageText"></span>
+            </div>
+
 
             <!-- Signup Form -->
-            <form method="post" action="/users" novalidate aria-label="Sign up form" id="signupForm">
+            <form novalidate aria-label="Sign up form" id="signupForm">
                 <!-- First Name Field -->
                 <div class="form-group">
                     <label for="firstName" class="form-label">
@@ -433,60 +445,93 @@
             const submitBtn = document.getElementById('submitBtn');
             const submitText = document.getElementById('submit-text');
             const submitStatus = document.getElementById('submit-status');
+            const apiErrorMessageDiv = document.getElementById('apiErrorMessage');
+            const apiErrorMessageText = document.getElementById('apiErrorMessageText');
+
+            const firstNameInput = document.getElementById('firstName');
+            const lastNameInput = document.getElementById('lastName');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const passwordRequirements = document.getElementById('password-requirements');
+            
+            const allInputs = [firstNameInput, lastNameInput, emailInput, passwordInput, confirmPasswordInput];
 
             // Form submission handling
-            form.addEventListener('submit', function (e) {
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault(); // Prevent default form submission
+
+                // Hide API error message
+                apiErrorMessageDiv.style.display = 'none';
+                apiErrorMessageText.textContent = '';
+
+                // Client-side validation
+                let isValid = true;
+
+                if (firstNameInput.value.trim().length < 2) {
+                    showFieldError('firstName-error', 'First name must be at least 2 characters long', firstNameInput);
+                    if(isValid) firstNameInput.focus();
+                    isValid = false;
+                }
+                if (lastNameInput.value.trim().length < 2) {
+                    showFieldError('lastName-error', 'Last name must be at least 2 characters long', lastNameInput);
+                     if(isValid) lastNameInput.focus();
+                    isValid = false;
+                }
+                if (!emailInput.validity.valid || emailInput.value.trim() === '') {
+                    showFieldError('email-error', 'Please enter a valid email address', emailInput);
+                    if(isValid) emailInput.focus();
+                    isValid = false;
+                }
+                if (passwordInput.value.length < 6) {
+                    showFieldError('password-error', 'Password must be at least 6 characters long', passwordInput);
+                    if(isValid) passwordInput.focus();
+                    isValid = false;
+                }
+                if (passwordInput.value !== confirmPasswordInput.value) {
+                    showFieldError('confirmPassword-error', 'Passwords do not match', confirmPasswordInput);
+                    if(isValid) confirmPasswordInput.focus();
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    return;
+                }
+
                 // Show loading state
                 submitBtn.disabled = true;
                 submitBtn.classList.add('btn-loading');
                 submitText.textContent = 'Creating Account...';
                 submitStatus.textContent = 'Processing your request...';
 
-                // Basic client-side validation
-                const firstName = document.getElementById('firstName');
-                const lastName = document.getElementById('lastName');
-                const email = document.getElementById('email');
-                const password = document.getElementById('password');
-                const confirmPassword = document.getElementById('confirmPassword');
+                const userData = {
+                    firstName: firstNameInput.value.trim(),
+                    lastName: lastNameInput.value.trim(),
+                    email: emailInput.value.trim(),
+                    password: passwordInput.value,
+                    confirmPassword: confirmPasswordInput.value
+                };
 
-                if (firstName.value.trim().length < 2) {
-                    e.preventDefault();
-                    resetSubmitButton();
-                    showFieldError('firstName-error', 'First name must be at least 2 characters long');
-                    firstName.focus();
-                    return;
-                }
+                try {
+                    const response = await fetch('/users', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(userData)
+                    });
 
-                if (lastName.value.trim().length < 2) {
-                    e.preventDefault();
+                    if (response.ok) {
+                        window.location.href = '/login?signupSuccess=true'; // Redirect on success
+                    } else {
+                        const errorData = await response.json().catch(() => ({ message: 'An unexpected error occurred. Please try again.' }));
+                        showApiError(errorData.message || `Failed to create account. Status: ${response.status}`);
+                        resetSubmitButton();
+                    }
+                } catch (error) {
+                    showApiError('A network error occurred. Please check your connection and try again.');
                     resetSubmitButton();
-                    showFieldError('lastName-error', 'Last name must be at least 2 characters long');
-                    lastName.focus();
-                    return;
-                }
-
-                if (!email.validity.valid) {
-                    e.preventDefault();
-                    resetSubmitButton();
-                    showFieldError('email-error', 'Please enter a valid email address');
-                    email.focus();
-                    return;
-                }
-
-                if (password.value.length < 6) {
-                    e.preventDefault();
-                    resetSubmitButton();
-                    showFieldError('password-error', 'Password must be at least 6 characters long');
-                    password.focus();
-                    return;
-                }
-
-                if (password.value !== confirmPassword.value) {
-                    e.preventDefault();
-                    resetSubmitButton();
-                    showFieldError('confirmPassword-error', 'Passwords do not match');
-                    confirmPassword.focus();
-                    return;
                 }
             });
 
@@ -496,25 +541,34 @@
                 submitBtn.classList.remove('btn-loading');
                 submitText.textContent = 'Create Account';
                 submitStatus.textContent = '';
+                allInputs.forEach(input => input.classList.remove('invalid-input'));
+            }
+            
+            function showApiError(message) {
+                apiErrorMessageText.textContent = message;
+                apiErrorMessageDiv.style.display = 'flex';
             }
 
             // Show field-specific error
-            function showFieldError(errorId, message) {
+            function showFieldError(errorId, message, inputElement) {
                 const errorElement = document.getElementById(errorId);
                 errorElement.textContent = message;
                 errorElement.classList.remove('sr-only');
+                if (inputElement) {
+                    inputElement.classList.add('invalid-input');
+                    inputElement.setAttribute('aria-invalid', 'true');
+                }
                 setTimeout(() => {
                     errorElement.classList.add('sr-only');
+                    errorElement.textContent = ''; // Clear text for screen readers
                 }, 5000);
             }
 
             // Password validation feedback
-            const passwordInput = document.getElementById('password');
-            const passwordRequirements = document.getElementById('password-requirements');
-            const confirmPasswordInput = document.getElementById('confirmPassword');
-
             passwordInput.addEventListener('input', function () {
                 document.getElementById('password-error').classList.add('sr-only');
+                this.classList.remove('invalid-input');
+                this.setAttribute('aria-invalid', 'false');
 
                 if (this.value.length >= 6) {
                     passwordRequirements.textContent = 'Password meets requirements';
@@ -525,39 +579,42 @@
                 }
             });
 
-            // Confirm password validation
-            confirmPasswordInput.addEventListener('input', function () {
-                document.getElementById('confirmPassword-error').classList.add('sr-only');
+            // Confirm password validation and other inputs
+            [firstNameInput, lastNameInput, emailInput, confirmPasswordInput].forEach(input => {
+                input.addEventListener('input', function () {
+                    document.getElementById(this.id + '-error').classList.add('sr-only');
+                    this.classList.remove('invalid-input');
+                    this.setAttribute('aria-invalid', 'false');
+                });
             });
-
-            // Clear errors on input for other fields
-            document.getElementById('firstName').addEventListener('input', function () {
-                document.getElementById('firstName-error').classList.add('sr-only');
-            });
-
-            document.getElementById('lastName').addEventListener('input', function () {
-                document.getElementById('lastName-error').classList.add('sr-only');
-            });
-
-            document.getElementById('email').addEventListener('input', function () {
-                document.getElementById('email-error').classList.add('sr-only');
-            });
-
+            
             // Handle back button navigation
             window.addEventListener('pageshow', function (event) {
-                if (event.persisted) {
+                if (event.persisted) { // If the page was loaded from bfcache
                     resetSubmitButton();
+                    form.reset(); // Also reset form fields
+                    allInputs.forEach(input => {
+                        input.classList.remove('invalid-input');
+                        input.setAttribute('aria-invalid', 'false');
+                         const errorId = input.id + '-error';
+                         const errorElement = document.getElementById(errorId);
+                         if(errorElement) errorElement.classList.add('sr-only');
+                    });
+                     passwordRequirements.textContent = 'Password must be at least 6 characters long';
+                     passwordRequirements.className = 'password-requirements';
+                     apiErrorMessageDiv.style.display = 'none';
                 }
             });
 
             // Keyboard navigation improvements
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && e.target.tagName !== 'BUTTON' && e.target.type !== 'submit') {
-                    const form = e.target.closest('form');
-                    if (form) {
+                    const currentForm = e.target.closest('form');
+                    if (currentForm && currentForm.id === 'signupForm') {
                         const submitButton = form.querySelector('button[type="submit"]');
                         if (submitButton && !submitButton.disabled) {
-                            submitButton.click();
+                           // submitButton.click(); // Programmatic click might not trigger all event listeners consistently
+                           form.requestSubmit(); // Use this for better standards compliance
                         }
                     }
                 }
