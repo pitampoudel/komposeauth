@@ -1,6 +1,5 @@
 package com.vardansoft.authx.core.config
 
-
 import com.vardansoft.authx.core.converters.OAuth2PublicClientAuthConverter
 import com.vardansoft.authx.core.providers.OAuth2PublicClientAuthProvider
 import com.vardansoft.authx.data.ApiEndpoints
@@ -17,6 +16,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer.AuthorizationManagerRequestMatcherRegistry
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -30,6 +30,7 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
 import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
@@ -42,10 +43,23 @@ class AuthConfig(
     val passwordEncoder: PasswordEncoder,
     val kycService: KycService
 ) {
+
+    @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val configuration = CorsConfiguration()
+        configuration.allowedOrigins = listOf("*")
+        configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        configuration.allowedHeaders = listOf("*")
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/**", configuration)
+        return source
+    }
+
     @Bean
     @Order(2)
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
+            .cors { } // Apply global CORS configuration
             .csrf { csrf -> csrf.disable() }
             .oauth2ResourceServer { conf ->
                 conf.jwt {
@@ -121,15 +135,7 @@ class AuthConfig(
         }
 
         return http.securityMatcher(authorizationServerConfigurer.endpointsMatcher)
-            .cors {
-                it.configurationSource(UrlBasedCorsConfigurationSource().apply {
-                    registerCorsConfiguration("/**", CorsConfiguration().apply {
-                        allowedOrigins = listOf("*")
-                        allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        allowedHeaders = listOf("*")
-                    })
-                })
-            }
+            .cors { } // Apply global CORS configuration
             .with(authorizationServerConfigurer) { authorizationServer ->
                 authorizationServer.oidc {
                     it.userInfoEndpoint { userInfo ->
@@ -159,8 +165,11 @@ class AuthConfig(
                         }
                     }
                 }
-            }.authorizeHttpRequests { auth ->
+            }
+            .authorizeHttpRequests { auth ->
+                // Specific OAuth2 server endpoint permissions
                 auth.requestMatchers("/oauth2/token").permitAll()
+                // All other OAuth2 endpoints covered by the matcher should be authenticated
                 auth.anyRequest().authenticated()
             }
             .exceptionHandling {
