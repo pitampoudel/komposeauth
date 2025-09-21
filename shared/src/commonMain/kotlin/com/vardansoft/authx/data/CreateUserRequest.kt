@@ -17,16 +17,16 @@ data class CreateUserRequest(
     @SerialName("phoneNumber")
     val phoneNumber: String? = null,
     @SerialName("password")
-    val password: String,
+    val password: String? = null,
     @SerialName("confirmPassword")
-    val confirmPassword: String,
+    val confirmPassword: String? = null,
     @SerialName("picture")
     val picture: String? = null
 ) {
     init {
         require(firstName.isNotBlank())
         require(lastName?.isNotBlank() == true)
-        require(Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$").matches(password)) {
+        require(password == null || Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$").matches(password)) {
             "Password must contain at least one uppercase letter, one lowercase letter, and one digit"
         }
         require(password == confirmPassword) {
