@@ -1,6 +1,8 @@
 package com.vardansoft.authx.core.controller
 
 import com.vardansoft.authx.AppProperties
+import io.swagger.v3.oas.annotations.Operation // Added import
+import kotlinx.serialization.Serializable
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -15,10 +17,21 @@ class ConfigController(
     private val googleClientId: String,
     val appProperties: AppProperties
 ) {
+    @Serializable
     data class ConfigResponse(val googleClientId: String)
 
+    @Operation(
+        summary = "Get client configuration",
+        description = "Returns client configuration, such as the Google Client ID. The `desktop` parameter can be used to request a client ID for desktop applications."
+    )
     @GetMapping
-    fun getConfig(@RequestParam(name = "desktop", required = false, defaultValue = "false") desktop: Boolean): ResponseEntity<ConfigResponse> {
+    fun getConfig(
+        @RequestParam(
+            name = "desktop",
+            required = false,
+            defaultValue = "false"
+        ) desktop: Boolean
+    ): ResponseEntity<ConfigResponse> {
         val clientId = if (desktop) appProperties.googleAuthDesktopClientId else googleClientId
         return ResponseEntity.ok(ConfigResponse(clientId))
     }

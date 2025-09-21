@@ -4,6 +4,8 @@ import com.vardansoft.authx.core.service.EmailService
 import com.vardansoft.authx.core.service.JwtService
 import com.vardansoft.authx.data.UpdateUserRequest
 import com.vardansoft.authx.user.service.UserService
+import com.vardansoft.core.data.MessageResponse
+import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
@@ -15,11 +17,15 @@ class PasswordResetController(
     private val emailService: EmailService,
     private val jwtService: JwtService
 ) {
+    @Operation(
+        summary = "Send password reset link",
+        description = "Sends a password reset link to the user's email address."
+    )
     @PutMapping
     @ResponseBody
-    fun sendResetLink(@RequestParam email: String): ResponseEntity<*> {
+    fun sendResetLink(@RequestParam email: String): ResponseEntity<MessageResponse> {
         val user = userService.findUserByEmailOrPhone(email)
-            ?: return ResponseEntity.badRequest().body("No user with that email")
+            ?: return ResponseEntity.badRequest().body(MessageResponse("No user with that email"))
 
         val link = jwtService.generateResetPasswordLink(userId = user.id.toHexString())
 
@@ -29,21 +35,25 @@ class PasswordResetController(
             text = "Click the link to reset your password: $link"
         )
 
-        return ResponseEntity.ok("Reset link sent")
+        return ResponseEntity.ok(MessageResponse("Reset link sent"))
     }
 
+    @Operation(
+        summary = "Reset password",
+        description = "Resets the user's password using a token received via email."
+    )
     @PostMapping
     @ResponseBody
     fun resetPassword(
         @RequestParam token: String,
         @RequestParam newPassword: String,
         @RequestParam confirmPassword: String,
-    ): ResponseEntity<*> {
+    ): ResponseEntity<MessageResponse> {
 
         val userId = jwtService.retrieveClaimsIfValidResetPasswordToken(token).subject
 
         val user = userService.findUser(userId)
-            ?: return ResponseEntity.notFound().build<String>()
+            ?: return ResponseEntity.notFound().build()
 
         userService.updateUser(
             userId = user.id,
@@ -53,6 +63,6 @@ class PasswordResetController(
             )
         )
 
-        return ResponseEntity.ok("Password updated successfully")
+        return ResponseEntity.ok(MessageResponse("Password updated successfully"))
     }
 }

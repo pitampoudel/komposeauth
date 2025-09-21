@@ -4,6 +4,8 @@ import com.vardansoft.authx.core.config.UserContextService
 import com.vardansoft.authx.core.service.EmailService
 import com.vardansoft.authx.core.service.JwtService
 import com.vardansoft.authx.user.service.UserService
+import com.vardansoft.core.data.MessageResponse
+import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -16,13 +18,17 @@ class EmailVerifyController(
     val userContextService: UserContextService,
 ) {
 
+    @Operation(
+        summary = "Send verification email",
+        description = "Sends an email with a verification link to the currently authenticated user's email address."
+    )
     @PostMapping
-    fun sendVerificationEmail(): ResponseEntity<*> {
+    fun sendVerificationEmail(): ResponseEntity<MessageResponse> {
         val user = userContextService.getCurrentUser()
 
         // Check if user email exists
         if (user.email == null) {
-            return ResponseEntity.badRequest().body("User email is not set.")
+            return ResponseEntity.badRequest().body(MessageResponse("User email is not set."))
         }
 
         val link = jwtService.generateEmailVerificationLink(userId = user.id.toHexString())
@@ -33,22 +39,26 @@ class EmailVerifyController(
             text = "Click the link to verify your email: $link"
         )
 
-        return ResponseEntity.ok("Verification link sent to your email")
+        return ResponseEntity.ok(MessageResponse("Verification link sent to your email"))
     }
 
+    @Operation(
+        summary = "Verify email address",
+        description = "Verifies the user's email address using the provided token."
+    )
     @GetMapping
-    fun verifyEmail(@RequestParam("token") token: String): ResponseEntity<*> {
+    fun verifyEmail(@RequestParam("token") token: String): ResponseEntity<MessageResponse> {
         val claims = jwtService.retrieveClaimsIfValidEmailVerificationToken(token)
 
         val user =
-            userService.findUser(claims.subject) ?: return ResponseEntity.notFound().build<String>()
+            userService.findUser(claims.subject) ?: return ResponseEntity.notFound().build()
 
         if (user.emailVerified) {
-            return ResponseEntity.ok("Email already verified")
+            return ResponseEntity.ok(MessageResponse("Email already verified"))
         }
 
         userService.emailVerified(user.id)
 
-        return ResponseEntity.ok("Email successfully verified")
+        return ResponseEntity.ok(MessageResponse("Email successfully verified"))
     }
 }
