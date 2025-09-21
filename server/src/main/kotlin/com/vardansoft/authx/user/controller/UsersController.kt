@@ -16,8 +16,6 @@ import com.vardansoft.authx.user.dto.mapToResponseDto
 import com.vardansoft.authx.user.service.UserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.media.Content
-import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -59,15 +57,7 @@ class UsersController(
     @PostMapping("/users")
     @Operation(
         summary = "Create user",
-        description = "Creates a new user account. Accepts form fields defined by CreateUserRequest. If the client accepts HTML, a redirect to /login may be returned.",
-    )
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-        description = "Form payload to create a user",
-        required = true,
-        content = [
-            Content(mediaType = "application/x-www-form-urlencoded", schema = Schema(implementation = CreateUserRequest::class)),
-            Content(mediaType = "multipart/form-data", schema = Schema(implementation = CreateUserRequest::class))
-        ]
+        description = "Creates a new user account. If the client accepts HTML, a redirect to /login may be returned.",
     )
     fun create(
         @ModelAttribute request: CreateUserRequest,
@@ -98,17 +88,6 @@ class UsersController(
     @Operation(
         summary = "Login with credentials",
         description = "Validate credentials (email/password, Google ID token, or Google OAuth2 authorization code) and returns JWT tokens directly"
-    )
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-        description = "Credential payload. Use one of the supported credential objects.",
-        required = true,
-        content = [
-            Content(mediaType = "application/json", schema = Schema(oneOf = [
-                Credential.UsernamePassword::class,
-                Credential.GoogleId::class,
-                Credential.AuthCode::class
-            ]))
-        ]
     )
     fun token(@RequestBody request: Credential): ResponseEntity<OAuth2TokenData> {
         val user = when (request) {
@@ -143,13 +122,6 @@ class UsersController(
     @Operation(
         summary = "Refresh access token",
         description = "Use refresh token to get a new access token"
-    )
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-        description = "Refresh token request",
-        required = true,
-        content = [
-            Content(mediaType = "application/json", schema = Schema(implementation = TokenRefreshRequest::class))
-        ]
     )
     fun refreshToken(@RequestBody @Valid request: TokenRefreshRequest): ResponseEntity<OAuth2TokenData> {
         val userId = jwtService.validateRefreshToken(request.refreshToken)
