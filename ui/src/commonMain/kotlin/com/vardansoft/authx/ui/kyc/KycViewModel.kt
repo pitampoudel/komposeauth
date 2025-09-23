@@ -310,9 +310,11 @@ class KycViewModel(
                     )
                 }
 
-                is KycEvent.SubmitPersonalInfo -> submitPersonalInfo()
-                is KycEvent.SubmitAddressDetails -> submitAddressDetails()
-                is KycEvent.SubmitDocuments -> submitDocuments()
+                is KycEvent.SaveAndContinue -> when (state.value.currentPage) {
+                    1 -> submitPersonalInfo()
+                    2 -> submitAddressDetails()
+                    3 -> submitDocuments()
+                }
             }
         }
     }
@@ -449,7 +451,7 @@ class KycViewModel(
                     refillAll(res.data)
                     _state.update {
                         it.copy(
-                            currentPage = it.currentPage+1
+                            currentPage = it.currentPage + 1
                         )
                     }
                 }
@@ -516,7 +518,7 @@ class KycViewModel(
                     refillAll(res.data)
                     _state.update {
                         it.copy(
-                            currentPage = it.currentPage+1
+                            currentPage = it.currentPage + 1
                         )
                     }
                 }
