@@ -61,6 +61,8 @@ data class AddressState(
 }
 
 data class PersonalInformationState(
+    val country: String = "",
+    val countryError: String? = null,
     val nationality: String = "",
     val nationalityError: String? = null,
     val firstName: String = "",
@@ -82,21 +84,23 @@ data class PersonalInformationState(
 ) {
 
     fun hasError(): Boolean {
-        return nationalityError != null ||
+        return countryError!=null ||
+                nationalityError != null ||
                 firstNameError != null ||
                 middleNameError != null ||
                 lastNameError != null ||
                 dateOfBirthError != null ||
-                genderError != null
-                || fatherNameError != null
-                || motherNameError != null
-                || maritalStatusError != null
+                genderError != null ||
+                fatherNameError != null ||
+                motherNameError != null ||
+                maritalStatusError != null
     }
 
     fun toRequest(): PersonalInformation {
         require(!hasError()) { "Form contains errors" }
 
         return PersonalInformation(
+            country = country,
             nationality = nationality,
             firstName = firstName,
             middleName = middleName.takeIf { it.isNotBlank() },

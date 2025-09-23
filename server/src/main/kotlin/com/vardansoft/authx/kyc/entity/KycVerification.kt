@@ -16,8 +16,10 @@ import java.time.Instant
 @TypeAlias("kyc_verification")
 data class KycVerification(
     @Id val id: ObjectId = ObjectId.get(),
-    @Indexed(unique = true) val userId: ObjectId,
+    @Indexed(unique = true)
+    val userId: ObjectId,
     // PERSONAL
+    val country: String,
     val nationality: String,
     val firstName: String,
     val middleName: String?,

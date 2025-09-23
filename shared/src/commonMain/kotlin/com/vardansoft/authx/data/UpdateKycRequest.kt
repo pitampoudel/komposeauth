@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PersonalInformation(
+    val country: String,
     val nationality: String,
     val firstName: String,
     val middleName: String?,

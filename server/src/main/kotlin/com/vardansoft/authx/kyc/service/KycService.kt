@@ -33,7 +33,12 @@ class KycService(
             throw IllegalStateException("KYC already approved; cannot resubmit")
         }
 
+        if (existing != null && (existing.country != data.country || existing.nationality != data.nationality)) {
+            throw IllegalStateException("KYC already submitted with different country or nationality; cannot resubmit")
+        }
+
         val kycRecord = existing?.copy(
+            country = data.country,
             nationality = data.nationality,
             firstName = data.firstName,
             middleName = data.middleName,
@@ -45,6 +50,7 @@ class KycService(
             maritalStatus = data.maritalStatus,
         ) ?: KycVerification(
             userId = userId,
+            country = data.country,
             nationality = data.nationality,
             firstName = data.firstName,
             middleName = data.middleName,

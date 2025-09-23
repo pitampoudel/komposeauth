@@ -8,6 +8,7 @@ fun KycVerification.toResponse() = KycResponse(
     id = id.toHexString(),
     userId = userId.toHexString(),
     personalInformation = PersonalInformation(
+        country = country,
         nationality = nationality,
         firstName = firstName,
         middleName = middleName,

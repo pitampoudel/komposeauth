@@ -8,6 +8,7 @@ import kotlinx.datetime.LocalDate
 sealed interface KycEvent {
     data object LoadExisting : KycEvent
     // Personal detail events
+    data class CountryChanged(val value: String) : KycEvent
     data class NationalityChanged(val value: String) : KycEvent
     data class FirstNameChanged(val value: String) : KycEvent
     data class MiddleNameChanged(val value: String) : KycEvent

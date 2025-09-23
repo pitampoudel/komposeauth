@@ -29,6 +29,14 @@ class KycViewModel(
                     it.copy(infoMsg = null)
                 }
 
+                is KycEvent.CountryChanged -> _state.update {
+                    it.copy(
+                        personalInfo = it.personalInfo.copy(
+                            country = event.value,
+                            countryError = null
+                        )
+                    )
+                }
                 is KycEvent.NationalityChanged -> _state.update {
                     it.copy(
                         personalInfo = it.personalInfo.copy(
@@ -419,6 +427,7 @@ class KycViewModel(
     private suspend fun submitPersonalInfo() {
         _state.update { it.copy(progress = 0.0f) }
 
+        val countryValidation = validateNotBlank(_state.value.personalInfo.country)
         val nationalityValidation = validateNotBlank(_state.value.personalInfo.nationality)
         val firstNameValidation = validateNotBlank(_state.value.personalInfo.firstName)
         val lastNameValidation = validateNotBlank(_state.value.personalInfo.lastName)
@@ -431,6 +440,7 @@ class KycViewModel(
         _state.update { s ->
             s.copy(
                 personalInfo = s.personalInfo.copy(
+                    countryError = countryValidation.errorMessage(),
                     nationalityError = nationalityValidation.errorMessage(),
                     firstNameError = firstNameValidation.errorMessage(),
                     lastNameError = lastNameValidation.errorMessage(),
