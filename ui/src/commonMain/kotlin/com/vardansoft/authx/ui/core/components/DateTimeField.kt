@@ -9,8 +9,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
@@ -21,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Shape
 import com.vardansoft.core.domain.asDisplayDate
 import com.vardansoft.core.domain.asDisplayDateTime
 import com.vardansoft.core.domain.asDisplayTime
@@ -51,7 +55,9 @@ fun DateTimeField(
     leadingIcon: (@Composable () -> Unit)? = null,
     supportingText: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
-    label: @Composable () -> Unit,
+    label: (@Composable () -> Unit)? = null,
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
+    shape: Shape = OutlinedTextFieldDefaults.shape,
     type: DateTimeFieldType,
     value: Instant?,
     onValueChange: (Instant?) -> Unit,
@@ -143,6 +149,8 @@ fun DateTimeField(
                 isShowingDatePickerDialog = true
             }
         },
+        colors = colors,
+        shape = shape,
         enabled = enabled,
         isError = isError,
         value = when (type) {
