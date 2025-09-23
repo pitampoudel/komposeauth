@@ -13,11 +13,11 @@ class JwksController(
     private val jwkSet: JWKSet
 ) {
     @Operation(
-        summary = "Get OAuth2 JWKS",
-        description = "Returns the JSON Web Key Set (JWKS) for OAuth2 token verification."
+        summary = "Get JWKS",
+        description = "Returns the JSON Web Key Set (JWKS) for token verification."
     )
     @GetMapping("/oauth2/jwks", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun oauth2Jwks(): JWKSet {
-        return jwkSet
+    fun jwks(): Map<String, Any> {
+        return jwkSet.toJSONObject()
     }
 }
