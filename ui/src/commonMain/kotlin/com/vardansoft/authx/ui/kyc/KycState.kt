@@ -1,14 +1,12 @@
 package com.vardansoft.authx.ui.kyc
 
-import com.vardansoft.authx.data.AddressInformation
 import com.vardansoft.authx.data.DocumentInformation
 import com.vardansoft.authx.data.DocumentType
-import com.vardansoft.authx.data.FamilyInformation
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.PersonalInformation
-import com.vardansoft.authx.data.UpdateKycRequest
-import com.vardansoft.core.presentation.InfoMessage
+import com.vardansoft.authx.data.UpdateAddressDetailsRequest
 import com.vardansoft.core.domain.KmpFile
+import com.vardansoft.core.presentation.InfoMessage
 import kotlinx.datetime.LocalDate
 
 data class AddressState(
@@ -25,7 +23,7 @@ data class AddressState(
     val tole: String = "",
     val toleError: String? = null
 ) {
-    fun containsError(): Boolean {
+    fun hasError(): Boolean {
         return countryError != null ||
                 provinceError != null ||
                 districtError != null ||
@@ -34,24 +32,29 @@ data class AddressState(
                 toleError != null
     }
 
-    fun toRequestData(): AddressInformation = AddressInformation(
-        country = country,
-        province = province,
-        district = district,
-        localUnit = localUnit,
-        wardNo = wardNo,
-        tole = tole
-    )
+    fun toRequest(): KycResponse.AddressInformation {
+        require(!hasError()) { "Form contains errors" }
+
+        return KycResponse.AddressInformation(
+            country = country,
+            province = province,
+            district = district,
+            localUnit = localUnit,
+            wardNo = wardNo,
+            tole = tole
+        )
+    }
+
 
     companion object {
-        fun fromData(data: AddressInformation): AddressState {
+        fun fromData(data: KycResponse.AddressInformation): AddressState {
             return AddressState(
-                country = data.country,
-                province = data.province,
-                district = data.district,
-                localUnit = data.localUnit,
-                wardNo = data.wardNo,
-                tole = data.tole
+                country = data.country.orEmpty(),
+                province = data.province.orEmpty(),
+                district = data.district.orEmpty(),
+                localUnit = data.localUnit.orEmpty(),
+                wardNo = data.wardNo.orEmpty(),
+                tole = data.tole.orEmpty()
             )
         }
     }
@@ -69,28 +72,7 @@ data class PersonalInformationState(
     val dateOfBirth: LocalDate? = null,
     val dateOfBirthError: String? = null,
     val gender: KycResponse.Gender? = null,
-    val genderError: String? = null
-) {
-    fun containsError(): Boolean {
-        return nationalityError != null ||
-                firstNameError != null ||
-                middleNameError != null ||
-                lastNameError != null ||
-                dateOfBirthError != null ||
-                genderError != null
-    }
-
-    fun toRequestData(): PersonalInformation = PersonalInformation(
-        nationality = nationality,
-        firstName = firstName,
-        middleName = middleName.takeIf { it.isNotBlank() },
-        lastName = lastName,
-        dateOfBirth = dateOfBirth!!,
-        gender = gender!!
-    )
-}
-
-data class FamilyInformationState(
+    val genderError: String? = null,
     val fatherName: String = "",
     val fatherNameError: String? = null,
     val motherName: String = "",
@@ -98,17 +80,34 @@ data class FamilyInformationState(
     val maritalStatus: KycResponse.MaritalStatus? = null,
     val maritalStatusError: String? = null
 ) {
-    fun containsError(): Boolean {
-        return fatherNameError != null
+
+    fun hasError(): Boolean {
+        return nationalityError != null ||
+                firstNameError != null ||
+                middleNameError != null ||
+                lastNameError != null ||
+                dateOfBirthError != null ||
+                genderError != null
+                || fatherNameError != null
                 || motherNameError != null
                 || maritalStatusError != null
     }
 
-    fun toRequestData(): FamilyInformation = FamilyInformation(
-        fatherName = fatherName,
-        motherName = motherName,
-        maritalStatus = maritalStatus!!
-    )
+    fun toRequest(): PersonalInformation {
+        require(!hasError()) { "Form contains errors" }
+
+        return PersonalInformation(
+            nationality = nationality,
+            firstName = firstName,
+            middleName = middleName.takeIf { it.isNotBlank() },
+            lastName = lastName,
+            dateOfBirth = dateOfBirth!!,
+            gender = gender!!,
+            fatherName = fatherName,
+            motherName = motherName,
+            maritalStatus = maritalStatus!!
+        )
+    }
 }
 
 data class DocumentInformationState(
@@ -129,7 +128,7 @@ data class DocumentInformationState(
     val selfie: KmpFile? = null,
     val selfieError: String? = null
 ) {
-    fun containsError(): Boolean {
+    fun hasError(): Boolean {
         return documentTypeError != null
                 || documentNumberError != null
                 || documentIssuedDateError != null
@@ -140,55 +139,49 @@ data class DocumentInformationState(
                 || selfieError != null
     }
 
-    fun toRequestData(): DocumentInformation = DocumentInformation(
-        documentType = documentType!!,
-        documentNumber = documentNumber,
-        documentIssuedDate = documentIssuedDate!!,
-        documentExpiryDate = documentExpiryDate!!,
-        documentIssuedPlace = documentIssuedPlace,
-        documentFront = documentFront!!.toEncodedData(),
-        documentBack = documentBack!!.toEncodedData(),
-        selfie = selfie!!.toEncodedData()
-    )
+    fun toRequest(): DocumentInformation {
+        require(!hasError()) { "Form contains errors" }
+
+        return DocumentInformation(
+            documentType = documentType!!,
+            documentNumber = documentNumber,
+            documentIssuedDate = documentIssuedDate!!,
+            documentExpiryDate = documentExpiryDate!!,
+            documentIssuedPlace = documentIssuedPlace,
+            documentFront = documentFront!!.toEncodedData(),
+            documentBack = documentBack!!.toEncodedData(),
+            selfie = selfie!!.toEncodedData()
+        )
+    }
+
 }
 
 data class KycState(
+    val currentPage: Int = 1,
     val personalInfo: PersonalInformationState = PersonalInformationState(),
-    val familyInfo: FamilyInformationState = FamilyInformationState(),
     val documentInfo: DocumentInformationState = DocumentInformationState(),
     val permanentAddress: AddressState = AddressState(),
     val currentAddress: AddressState = AddressState(),
     val currentAddressSameAsPermanent: Boolean = false,
     val progress: Float? = null,
     val infoMsg: InfoMessage? = null,
-    val existing: KycResponse? = null
+    val status: KycResponse.Status? = null
 ) {
-    fun containsError(): Boolean {
+    fun hasAddressDetailsError(): Boolean {
         val currentAddressError = if (!currentAddressSameAsPermanent) {
-            currentAddress.containsError()
+            currentAddress.hasError()
         } else {
             false
         }
-
-        return personalInfo.containsError() ||
-                familyInfo.containsError() ||
-                documentInfo.containsError() ||
-                currentAddressError ||
-                permanentAddress.containsError()
+        return currentAddressError || permanentAddress.hasError()
     }
 
-    fun updateKycRequest(): UpdateKycRequest {
-        require(!containsError()) { "Form contains errors" }
-        return UpdateKycRequest(
-            personalInformation = personalInfo.toRequestData(),
-            familyInformation = familyInfo.toRequestData(),
-            currentAddress = if (currentAddressSameAsPermanent) permanentAddress.toRequestData() else currentAddress.toRequestData(),
-            permanentAddress = permanentAddress.toRequestData(),
-            documentInformation = documentInfo.toRequestData()
+    fun updateAddressDetailsRequest(): UpdateAddressDetailsRequest {
+
+        require(!hasAddressDetailsError()) { "Form contains errors" }
+        return UpdateAddressDetailsRequest(
+            currentAddress = if (currentAddressSameAsPermanent) permanentAddress.toRequest() else currentAddress.toRequest(),
+            permanentAddress = permanentAddress.toRequest(),
         )
     }
-
-    val isApproved: Boolean get() = existing?.status == KycResponse.Status.APPROVED
-    val isPending: Boolean get() = existing?.status == KycResponse.Status.PENDING
-    val isRejected: Boolean get() = existing?.status == KycResponse.Status.REJECTED
 }

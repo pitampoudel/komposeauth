@@ -1,12 +1,15 @@
 package com.vardansoft.authx.kyc.service
 
 import com.vardansoft.authx.core.service.StorageService
+import com.vardansoft.authx.data.DocumentInformation
 import com.vardansoft.authx.data.KycResponse
-import com.vardansoft.authx.data.UpdateKycRequest
+import com.vardansoft.authx.data.PersonalInformation
+import com.vardansoft.authx.data.UpdateAddressDetailsRequest
 import com.vardansoft.authx.kyc.dto.toResponse
 import com.vardansoft.authx.kyc.entity.KycVerification
 import com.vardansoft.authx.kyc.repository.KycVerificationRepository
 import com.vardansoft.core.data.EncodedData
+import org.apache.coyote.BadRequestException
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,8 +23,74 @@ class KycService(
     fun find(userId: ObjectId): KycResponse? = kycRepo.findByUserId(userId)?.toResponse()
 
     @Transactional
-    fun submit(userId: ObjectId, data: UpdateKycRequest): KycResponse {
+    fun submitPersonalInformation(
+        userId: ObjectId,
+        data: PersonalInformation
+    ): KycResponse {
         val existing = kycRepo.findByUserId(userId)
+
+        if (existing?.status == KycResponse.Status.APPROVED) {
+            throw IllegalStateException("KYC already approved; cannot resubmit")
+        }
+
+        val kycRecord = existing?.copy(
+            nationality = data.nationality,
+            firstName = data.firstName,
+            middleName = data.middleName,
+            lastName = data.lastName,
+            dateOfBirth = data.dateOfBirth,
+            gender = data.gender,
+            fatherName = data.fatherName,
+            motherName = data.motherName,
+            maritalStatus = data.maritalStatus,
+        ) ?: KycVerification(
+            userId = userId,
+            nationality = data.nationality,
+            firstName = data.firstName,
+            middleName = data.middleName,
+            lastName = data.lastName,
+            dateOfBirth = data.dateOfBirth,
+            gender = data.gender,
+            fatherName = data.fatherName,
+            motherName = data.motherName,
+            maritalStatus = data.maritalStatus
+        )
+
+        return kycRepo.save(kycRecord).toResponse()
+    }
+
+    @Transactional
+    fun submitAddressDetails(userId: ObjectId, data: UpdateAddressDetailsRequest): KycResponse {
+        val existing = kycRepo.findByUserId(userId) ?: throw BadRequestException("KYC not found")
+
+        if (existing.status == KycResponse.Status.APPROVED) {
+            throw IllegalStateException("KYC already approved; cannot resubmit")
+        }
+
+        val entity = existing.copy(
+            permanentAddressCountry = data.permanentAddress.country,
+            permanentAddressProvince = data.permanentAddress.province,
+            permanentAddressDistrict = data.permanentAddress.district,
+            permanentAddressLocalUnit = data.permanentAddress.localUnit,
+            permanentAddressWardNo = data.permanentAddress.wardNo,
+            permanentAddressTole = data.permanentAddress.tole,
+            currentAddressCountry = data.currentAddress.country,
+            currentAddressProvince = data.currentAddress.province,
+            currentAddressDistrict = data.currentAddress.district,
+            currentAddressLocalUnit = data.currentAddress.localUnit,
+            currentAddressWardNo = data.currentAddress.wardNo,
+            currentAddressTole = data.currentAddress.tole
+        )
+        return kycRepo.save(entity).toResponse()
+    }
+
+    @Transactional
+    fun submitDocumentDetails(userId: ObjectId, data: DocumentInformation): KycResponse {
+        val existing = kycRepo.findByUserId(userId) ?: throw BadRequestException("KYC not found")
+
+        if (existing.status == KycResponse.Status.APPROVED) {
+            throw IllegalStateException("KYC already approved; cannot resubmit")
+        }
 
         fun upload(label: String, encoded: EncodedData): String {
             val file = encoded.toKmpFile()
@@ -29,83 +98,21 @@ class KycService(
             return storage.upload(blobName, file.mimeType, file.byteArray)
         }
 
-        val newFrontUrl = upload("front", data.documentInformation.documentFront)
-        val newBackUrl = upload("back", data.documentInformation.documentBack)
-        val newSelfieUrl = upload("selfie", data.documentInformation.selfie)
+        val newFrontUrl = upload("front", data.documentFront)
+        val newBackUrl = upload("back", data.documentBack)
+        val newSelfieUrl = upload("selfie", data.selfie)
 
-        val entity = if (existing == null) {
-            KycVerification(
-                userId = userId,
-                nationality = data.personalInformation.nationality,
-                firstName = data.personalInformation.firstName,
-                middleName = data.personalInformation.middleName,
-                lastName = data.personalInformation.lastName,
-                dateOfBirth = data.personalInformation.dateOfBirth,
-                gender = data.personalInformation.gender,
-                fatherName = data.familyInformation.fatherName,
-                motherName = data.familyInformation.motherName,
-                maritalStatus = data.familyInformation.maritalStatus,
-                documentType = data.documentInformation.documentType,
-                documentNumber = data.documentInformation.documentNumber,
-                documentIssuedDate = data.documentInformation.documentIssuedDate,
-                documentExpiryDate = data.documentInformation.documentExpiryDate,
-                documentIssuedPlace = data.documentInformation.documentIssuedPlace,
-                documentFrontUrl = newFrontUrl,
-                documentBackUrl = newBackUrl,
-                selfieUrl = newSelfieUrl,
-                permanentAddressCountry = data.permanentAddress.country,
-                permanentAddressProvince = data.permanentAddress.province,
-                permanentAddressDistrict = data.permanentAddress.district,
-                permanentAddressLocalUnit = data.permanentAddress.localUnit,
-                permanentAddressWardNo = data.permanentAddress.wardNo,
-                permanentAddressTole = data.permanentAddress.tole,
-                currentAddressCountry = data.currentAddress.country,
-                currentAddressProvince = data.currentAddress.province,
-                currentAddressDistrict = data.currentAddress.district,
-                currentAddressLocalUnit = data.currentAddress.localUnit,
-                currentAddressWardNo = data.currentAddress.wardNo,
-                currentAddressTole = data.currentAddress.tole,
-                status = KycResponse.Status.PENDING,
-                remarks = null,
-            )
-        } else {
-            if (existing.status == KycResponse.Status.APPROVED) {
-                throw IllegalStateException("KYC already approved; cannot resubmit")
-            }
-            existing.copy(
-                nationality = data.personalInformation.nationality,
-                firstName = data.personalInformation.firstName,
-                middleName = data.personalInformation.middleName,
-                lastName = data.personalInformation.lastName,
-                dateOfBirth = data.personalInformation.dateOfBirth,
-                gender = data.personalInformation.gender,
-                fatherName = data.familyInformation.fatherName,
-                motherName = data.familyInformation.motherName,
-                maritalStatus = data.familyInformation.maritalStatus,
-                documentType = data.documentInformation.documentType,
-                documentNumber = data.documentInformation.documentNumber,
-                documentIssuedDate = data.documentInformation.documentIssuedDate,
-                documentExpiryDate = data.documentInformation.documentExpiryDate,
-                documentIssuedPlace = data.documentInformation.documentIssuedPlace,
-                documentFrontUrl = newFrontUrl,
-                documentBackUrl = newBackUrl,
-                selfieUrl = newSelfieUrl,
-                permanentAddressCountry = data.permanentAddress.country,
-                permanentAddressProvince = data.permanentAddress.province,
-                permanentAddressDistrict = data.permanentAddress.district,
-                permanentAddressLocalUnit = data.permanentAddress.localUnit,
-                permanentAddressWardNo = data.permanentAddress.wardNo,
-                permanentAddressTole = data.permanentAddress.tole,
-                currentAddressCountry = data.currentAddress.country,
-                currentAddressProvince = data.currentAddress.province,
-                currentAddressDistrict = data.currentAddress.district,
-                currentAddressLocalUnit = data.currentAddress.localUnit,
-                currentAddressWardNo = data.currentAddress.wardNo,
-                currentAddressTole = data.currentAddress.tole,
-                status = KycResponse.Status.PENDING,
-                remarks = null
-            )
-        }
+        val entity = existing.copy(
+            documentType = data.documentType,
+            documentNumber = data.documentNumber,
+            documentIssuedDate = data.documentIssuedDate,
+            documentExpiryDate = data.documentExpiryDate,
+            documentIssuedPlace = data.documentIssuedPlace,
+            documentFrontUrl = newFrontUrl,
+            documentBackUrl = newBackUrl,
+            selfieUrl = newSelfieUrl,
+            status = KycResponse.Status.PENDING
+        )
         return kycRepo.save(entity).toResponse()
     }
 

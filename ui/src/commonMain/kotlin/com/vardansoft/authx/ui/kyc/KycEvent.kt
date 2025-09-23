@@ -46,6 +46,8 @@ sealed interface KycEvent {
     data class DocumentFrontSelected(val file: KmpFile?) : KycEvent
     data class DocumentBackSelected(val file: KmpFile?) : KycEvent
     data class SelfieSelected(val file: KmpFile?) : KycEvent
-    data object Submit : KycEvent
+    data object SubmitPersonalInfo : KycEvent
+    data object SubmitAddressDetails : KycEvent
+    data object SubmitDocuments : KycEvent
     data object DismissInfoMsg : KycEvent
 }

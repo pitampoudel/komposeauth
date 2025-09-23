@@ -2,8 +2,10 @@ package com.vardansoft.authx.kyc.controller
 
 import com.vardansoft.authx.core.config.UserContextService
 import com.vardansoft.authx.data.ApiEndpoints
-import com.vardansoft.authx.data.UpdateKycRequest
+import com.vardansoft.authx.data.DocumentInformation
 import com.vardansoft.authx.data.KycResponse
+import com.vardansoft.authx.data.PersonalInformation
+import com.vardansoft.authx.data.UpdateAddressDetailsRequest
 import com.vardansoft.authx.kyc.service.KycService
 import io.swagger.v3.oas.annotations.Operation
 import org.bson.types.ObjectId
@@ -37,13 +39,33 @@ class KycController(
     }
 
     @Operation(
-        summary = "Submit KYC information",
-        description = "Submits or updates the Know Your Customer (KYC) information for the currently authenticated user."
+        summary = "Submit Personal Information",
+        description = "Submits or updates the Personal information for the currently authenticated user."
     )
-    @PostMapping
-    fun submit(@Validated @RequestBody data: UpdateKycRequest): ResponseEntity<KycResponse> {
+    @PostMapping("/personal-info")
+    fun submitPersonalInformation(@Validated @RequestBody data: PersonalInformation): ResponseEntity<KycResponse> {
         val user = userContextService.getCurrentUser()
-        return ResponseEntity.ok(kycService.submit(user.id, data))
+        return ResponseEntity.ok(kycService.submitPersonalInformation(user.id, data))
+    }
+
+    @Operation(
+        summary = "Submit Address Details",
+        description = "Submits or updates the Address details for the currently authenticated user."
+    )
+    @PostMapping("/address")
+    fun submitAddressDetails(@Validated @RequestBody data: UpdateAddressDetailsRequest): ResponseEntity<KycResponse> {
+        val user = userContextService.getCurrentUser()
+        return ResponseEntity.ok(kycService.submitAddressDetails(user.id, data))
+    }
+
+    @Operation(
+        summary = "Submit Document Details",
+        description = "Submits or updates the Document details for the currently authenticated user."
+    )
+    @PostMapping("/documents")
+    fun submitDocumentDetails(@Validated @RequestBody data: DocumentInformation): ResponseEntity<KycResponse> {
+        val user = userContextService.getCurrentUser()
+        return ResponseEntity.ok(kycService.submitDocumentDetails(user.id, data))
     }
 
     @Operation(

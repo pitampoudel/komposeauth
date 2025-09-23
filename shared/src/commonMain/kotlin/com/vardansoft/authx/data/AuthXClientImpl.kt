@@ -1,10 +1,10 @@
 package com.vardansoft.authx.data
 
-import com.vardansoft.authx.data.ApiEndpoints.TOKEN
 import com.vardansoft.authx.data.ApiEndpoints.CONFIG
 import com.vardansoft.authx.data.ApiEndpoints.KYC
-import com.vardansoft.authx.data.ApiEndpoints.UPDATE_PHONE_NUMBER
 import com.vardansoft.authx.data.ApiEndpoints.ME
+import com.vardansoft.authx.data.ApiEndpoints.TOKEN
+import com.vardansoft.authx.data.ApiEndpoints.UPDATE_PHONE_NUMBER
 import com.vardansoft.authx.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.core.data.asResource
@@ -14,9 +14,9 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.request.parameter
 import io.ktor.client.statement.HttpResponse
 
 class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXClient {
@@ -73,12 +73,27 @@ class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXCl
         }
     }
 
-    override suspend fun submitKyc(body: UpdateKycRequest): Result<KycResponse> {
+    override suspend fun submitKycPersonalInfo(body: PersonalInformation): Result<KycResponse> {
         return safeApiCall {
-            httpClient.post("$authUrl/$KYC") {
+            httpClient.post("$authUrl/$KYC/personal-info") {
                 setBody(body)
             }.asResource { body<KycResponse>() }
         }
     }
 
+    override suspend fun submitKycDocuments(body: DocumentInformation): Result<KycResponse> {
+        return safeApiCall {
+            httpClient.post("$authUrl/$KYC/documents") {
+                setBody(body)
+            }.asResource { body<KycResponse>() }
+        }
+    }
+
+    override suspend fun submitKycAddressDetails(body: UpdateAddressDetailsRequest): Result<KycResponse> {
+        return safeApiCall {
+            httpClient.post("$authUrl/$KYC/address") {
+                setBody(body)
+            }.asResource { body<KycResponse>() }
+        }
+    }
 }

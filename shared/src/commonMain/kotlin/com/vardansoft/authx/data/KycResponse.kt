@@ -9,7 +9,6 @@ data class KycResponse(
     val id: String,
     val userId: String,
     val personalInformation: PersonalInformation,
-    val familyInformation: FamilyInformation,
     val currentAddress: AddressInformation,
     val permanentAddress: AddressInformation,
     val documentInformation: DocumentInformationResponse,
@@ -19,14 +18,24 @@ data class KycResponse(
 
     @Serializable
     data class DocumentInformationResponse(
-        val documentType: DocumentType,
-        val documentNumber: String,
-        val documentIssuedDate: LocalDate,
-        val documentExpiryDate: LocalDate,
-        val documentIssuedPlace: String,
-        val documentFrontUrl: String,
-        val documentBackUrl: String,
-        val selfieUrl: String
+        val documentType: DocumentType?,
+        val documentNumber: String?,
+        val documentIssuedDate: LocalDate?,
+        val documentExpiryDate: LocalDate?,
+        val documentIssuedPlace: String?,
+        val documentFrontUrl: String?,
+        val documentBackUrl: String?,
+        val selfieUrl: String?
+    )
+
+    @Serializable
+    data class AddressInformation(
+        val country: String?,
+        val province: String?,
+        val district: String?,
+        val localUnit: String?,
+        val wardNo: String?,
+        val tole: String?
     )
 
     enum class Status { PENDING, APPROVED, REJECTED }

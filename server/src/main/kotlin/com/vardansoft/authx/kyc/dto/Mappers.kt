@@ -1,7 +1,5 @@
 package com.vardansoft.authx.kyc.dto
 
-import com.vardansoft.authx.data.AddressInformation
-import com.vardansoft.authx.data.FamilyInformation
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.PersonalInformation
 import com.vardansoft.authx.kyc.entity.KycVerification
@@ -15,14 +13,12 @@ fun KycVerification.toResponse() = KycResponse(
         middleName = middleName,
         lastName = lastName,
         dateOfBirth = dateOfBirth,
-        gender = gender
-    ),
-    familyInformation = FamilyInformation(
+        gender = gender,
         fatherName = fatherName,
         motherName = motherName,
         maritalStatus = maritalStatus
     ),
-    currentAddress = AddressInformation(
+    currentAddress = KycResponse.AddressInformation(
         country = currentAddressCountry,
         province = currentAddressProvince,
         district = currentAddressDistrict,
@@ -30,7 +26,7 @@ fun KycVerification.toResponse() = KycResponse(
         wardNo = currentAddressWardNo,
         tole = currentAddressTole
     ),
-    permanentAddress = AddressInformation(
+    permanentAddress = KycResponse.AddressInformation(
         country = permanentAddressCountry,
         province = permanentAddressProvince,
         district = permanentAddressDistrict,

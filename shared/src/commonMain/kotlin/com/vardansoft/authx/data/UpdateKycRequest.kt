@@ -12,24 +12,11 @@ data class PersonalInformation(
     val lastName: String,
     val dateOfBirth: LocalDate,
     val gender: KycResponse.Gender,
-)
-
-@Serializable
-data class AddressInformation(
-    val country: String,
-    val province: String,
-    val district: String,
-    val localUnit: String,
-    val wardNo: String,
-    val tole: String
-)
-
-@Serializable
-data class FamilyInformation(
     val fatherName: String,
     val motherName: String,
-    val maritalStatus: KycResponse.MaritalStatus,
+    val maritalStatus: KycResponse.MaritalStatus
 )
+
 
 @Serializable
 data class DocumentInformation(
@@ -44,10 +31,7 @@ data class DocumentInformation(
 )
 
 @Serializable
-data class UpdateKycRequest(
-    val personalInformation: PersonalInformation,
-    val familyInformation: FamilyInformation,
-    val currentAddress: AddressInformation,
-    val permanentAddress: AddressInformation,
-    val documentInformation: DocumentInformation
+data class UpdateAddressDetailsRequest(
+    val currentAddress: KycResponse.AddressInformation,
+    val permanentAddress: KycResponse.AddressInformation,
 )

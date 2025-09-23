@@ -2,6 +2,7 @@ package com.vardansoft.authx.ui.kyc
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.core.domain.validators.ValidateNotBlank
 import com.vardansoft.core.domain.validators.ValidateNotNull
@@ -84,7 +85,7 @@ class KycViewModel(
 
                 is KycEvent.FatherNameChanged -> _state.update {
                     it.copy(
-                        familyInfo = it.familyInfo.copy(
+                        personalInfo = it.personalInfo.copy(
                             fatherName = event.value,
                             fatherNameError = null
                         )
@@ -93,7 +94,7 @@ class KycViewModel(
 
                 is KycEvent.MotherNameChanged -> _state.update {
                     it.copy(
-                        familyInfo = it.familyInfo.copy(
+                        personalInfo = it.personalInfo.copy(
                             motherName = event.value,
                             motherNameError = null
                         )
@@ -102,7 +103,7 @@ class KycViewModel(
 
                 is KycEvent.MaritalStatusChanged -> _state.update {
                     it.copy(
-                        familyInfo = it.familyInfo.copy(
+                        personalInfo = it.personalInfo.copy(
                             maritalStatus = event.value,
                             maritalStatusError = null
                         )
@@ -309,7 +310,9 @@ class KycViewModel(
                     )
                 }
 
-                is KycEvent.Submit -> submit()
+                is KycEvent.SubmitPersonalInfo -> submitPersonalInfo()
+                is KycEvent.SubmitAddressDetails -> submitAddressDetails()
+                is KycEvent.SubmitDocuments -> submitDocuments()
             }
         }
     }
@@ -326,82 +329,7 @@ class KycViewModel(
 
             is Result.Success -> {
                 val current = res.data
-                val documentFront = current?.documentInformation?.documentFrontUrl?.let {
-                    download(url = it)
-                }
-                val documentBack = current?.documentInformation?.documentBackUrl?.let {
-                    download(url = it)
-                }
-                val selfie = current?.documentInformation?.selfieUrl?.let {
-                    download(url = it)
-                }
-
-                if (documentFront != null && documentFront is Result.Error) {
-                    _state.update {
-                        it.copy(infoMsg = documentFront.message)
-                    }
-                }
-                if (documentBack != null && documentBack is Result.Error) {
-                    _state.update {
-                        it.copy(infoMsg = documentBack.message)
-                    }
-                }
-                if (selfie != null && selfie is Result.Error) {
-                    _state.update {
-                        it.copy(infoMsg = selfie.message)
-                    }
-                }
-
-                _state.update { s ->
-                    s.copy(
-                        existing = current,
-                        personalInfo = s.personalInfo.copy(
-                            nationality = current?.personalInformation?.nationality
-                                ?: s.personalInfo.nationality,
-                            firstName = current?.personalInformation?.firstName
-                                ?: s.personalInfo.firstName,
-                            middleName = current?.personalInformation?.middleName
-                                ?: s.personalInfo.middleName,
-                            lastName = current?.personalInformation?.lastName
-                                ?: s.personalInfo.lastName,
-                            dateOfBirth = current?.personalInformation?.dateOfBirth
-                                ?: s.personalInfo.dateOfBirth,
-                            gender = current?.personalInformation?.gender ?: s.personalInfo.gender
-                        ),
-                        familyInfo = s.familyInfo.copy(
-                            fatherName = current?.familyInformation?.fatherName
-                                ?: s.familyInfo.fatherName,
-                            motherName = current?.familyInformation?.motherName
-                                ?: s.familyInfo.motherName,
-                            maritalStatus = current?.familyInformation?.maritalStatus
-                                ?: s.familyInfo.maritalStatus
-                        ),
-                        currentAddress = current?.currentAddress?.let {
-                            AddressState.fromData(it)
-                        } ?: s.currentAddress,
-                        permanentAddress = current?.permanentAddress?.let {
-                            AddressState.fromData(it)
-                        } ?: s.permanentAddress,
-                        documentInfo = s.documentInfo.copy(
-                            documentType = current?.documentInformation?.documentType
-                                ?: s.documentInfo.documentType,
-                            documentNumber = current?.documentInformation?.documentNumber
-                                ?: s.documentInfo.documentNumber,
-                            documentIssuedDate = current?.documentInformation?.documentIssuedDate
-                                ?: s.documentInfo.documentIssuedDate,
-                            documentExpiryDate = current?.documentInformation?.documentExpiryDate
-                                ?: s.documentInfo.documentExpiryDate,
-                            documentIssuedPlace = current?.documentInformation?.documentIssuedPlace
-                                ?: s.documentInfo.documentIssuedPlace,
-                            documentFront = (documentFront as? Result.Success)?.data
-                                ?: s.documentInfo.documentFront,
-                            documentBack = (documentBack as? Result.Success)?.data
-                                ?: s.documentInfo.documentBack,
-                            selfie = (selfie as? Result.Success)?.data
-                                ?: s.documentInfo.selfie
-                        )
-                    )
-                }
+                refillAll(current)
             }
         }
         _state.update {
@@ -409,22 +337,131 @@ class KycViewModel(
         }
     }
 
-    private suspend fun submit() {
+    suspend fun refillAll(latestRecord: KycResponse?) {
+        val documentFront = latestRecord?.documentInformation?.documentFrontUrl?.let {
+            download(url = it)
+        }
+        val documentBack = latestRecord?.documentInformation?.documentBackUrl?.let {
+            download(url = it)
+        }
+        val selfie = latestRecord?.documentInformation?.selfieUrl?.let {
+            download(url = it)
+        }
+
+        if (documentFront != null && documentFront is Result.Error) {
+            _state.update {
+                it.copy(infoMsg = documentFront.message)
+            }
+        }
+        if (documentBack != null && documentBack is Result.Error) {
+            _state.update {
+                it.copy(infoMsg = documentBack.message)
+            }
+        }
+        if (selfie != null && selfie is Result.Error) {
+            _state.update {
+                it.copy(infoMsg = selfie.message)
+            }
+        }
+
+        _state.update { s ->
+            s.copy(
+                status = latestRecord?.status,
+                personalInfo = s.personalInfo.copy(
+                    nationality = latestRecord?.personalInformation?.nationality
+                        ?: s.personalInfo.nationality,
+                    firstName = latestRecord?.personalInformation?.firstName
+                        ?: s.personalInfo.firstName,
+                    middleName = latestRecord?.personalInformation?.middleName
+                        ?: s.personalInfo.middleName,
+                    lastName = latestRecord?.personalInformation?.lastName
+                        ?: s.personalInfo.lastName,
+                    dateOfBirth = latestRecord?.personalInformation?.dateOfBirth
+                        ?: s.personalInfo.dateOfBirth,
+                    gender = latestRecord?.personalInformation?.gender ?: s.personalInfo.gender,
+                    fatherName = latestRecord?.personalInformation?.fatherName
+                        ?: s.personalInfo.fatherName,
+                    motherName = latestRecord?.personalInformation?.motherName
+                        ?: s.personalInfo.motherName,
+                    maritalStatus = latestRecord?.personalInformation?.maritalStatus
+                        ?: s.personalInfo.maritalStatus
+                ),
+                currentAddress = latestRecord?.currentAddress?.let {
+                    AddressState.fromData(it)
+                } ?: s.currentAddress,
+                permanentAddress = latestRecord?.permanentAddress?.let {
+                    AddressState.fromData(it)
+                } ?: s.permanentAddress,
+                documentInfo = s.documentInfo.copy(
+                    documentType = latestRecord?.documentInformation?.documentType
+                        ?: s.documentInfo.documentType,
+                    documentNumber = latestRecord?.documentInformation?.documentNumber
+                        ?: s.documentInfo.documentNumber,
+                    documentIssuedDate = latestRecord?.documentInformation?.documentIssuedDate
+                        ?: s.documentInfo.documentIssuedDate,
+                    documentExpiryDate = latestRecord?.documentInformation?.documentExpiryDate
+                        ?: s.documentInfo.documentExpiryDate,
+                    documentIssuedPlace = latestRecord?.documentInformation?.documentIssuedPlace
+                        ?: s.documentInfo.documentIssuedPlace,
+                    documentFront = (documentFront as? Result.Success)?.data
+                        ?: s.documentInfo.documentFront,
+                    documentBack = (documentBack as? Result.Success)?.data
+                        ?: s.documentInfo.documentBack,
+                    selfie = (selfie as? Result.Success)?.data
+                        ?: s.documentInfo.selfie
+                )
+            )
+        }
+    }
+
+    private suspend fun submitPersonalInfo() {
         _state.update { it.copy(progress = 0.0f) }
 
-        // Validate personal info
         val nationalityValidation = validateNotBlank(_state.value.personalInfo.nationality)
         val firstNameValidation = validateNotBlank(_state.value.personalInfo.firstName)
         val lastNameValidation = validateNotBlank(_state.value.personalInfo.lastName)
         val dateOfBirthValidation = validateNotNull(_state.value.personalInfo.dateOfBirth)
         val genderValidation = validateNotNull(_state.value.personalInfo.gender)
+        val fatherNameValidation = validateNotBlank(_state.value.personalInfo.fatherName)
+        val motherNameValidation = validateNotBlank(_state.value.personalInfo.motherName)
+        val maritalStatusValidation = validateNotNull(_state.value.personalInfo.maritalStatus)
 
-        // Validate family info
-        val fatherNameValidation = validateNotBlank(_state.value.familyInfo.fatherName)
-        val motherNameValidation = validateNotBlank(_state.value.familyInfo.motherName)
-        val maritalStatusValidation = validateNotNull(_state.value.familyInfo.maritalStatus)
+        _state.update { s ->
+            s.copy(
+                personalInfo = s.personalInfo.copy(
+                    nationalityError = nationalityValidation.errorMessage(),
+                    firstNameError = firstNameValidation.errorMessage(),
+                    lastNameError = lastNameValidation.errorMessage(),
+                    dateOfBirthError = dateOfBirthValidation.errorMessage(),
+                    genderError = genderValidation.errorMessage(),
+                    fatherNameError = fatherNameValidation.errorMessage(),
+                    motherNameError = motherNameValidation.errorMessage(),
+                    maritalStatusError = maritalStatusValidation.errorMessage()
+                )
+            )
+        }
 
-        // Validate current address
+        if (!_state.value.personalInfo.hasError()) {
+            val res = client.submitKycPersonalInfo(_state.value.personalInfo.toRequest())
+            when (res) {
+                is Result.Error -> _state.update { it.copy(infoMsg = res.message) }
+                is Result.Success -> {
+                    refillAll(res.data)
+                    _state.update {
+                        it.copy(
+                            currentPage = it.currentPage+1
+                        )
+                    }
+                }
+            }
+        }
+
+        _state.update { it.copy(progress = null) }
+    }
+
+    private suspend fun submitAddressDetails() {
+        _state.update { it.copy(progress = 0.0f) }
+
         val currentAddressCountryValidation = validateNotBlank(_state.value.currentAddress.country)
         val currentAddressProvinceValidation =
             validateNotBlank(_state.value.currentAddress.province)
@@ -450,8 +487,48 @@ class KycViewModel(
             validateNotBlank(_state.value.permanentAddress.wardNo)
         val permanentAddressToleValidation = validateNotBlank(_state.value.permanentAddress.tole)
 
+        _state.update { s ->
+            s.copy(
+                permanentAddress = s.permanentAddress.copy(
+                    countryError = permanentAddressCountryValidation.errorMessage(),
+                    provinceError = permanentAddressProvinceValidation.errorMessage(),
+                    districtError = permanentAddressDistrictValidation.errorMessage(),
+                    localUnitError = permanentAddressLocalUnitValidation.errorMessage(),
+                    wardNoError = permanentAddressWardNoValidation.errorMessage(),
+                    toleError = permanentAddressToleValidation.errorMessage()
+                ),
+                currentAddress = s.currentAddress.copy(
+                    countryError = currentAddressCountryValidation.errorMessage(),
+                    provinceError = currentAddressProvinceValidation.errorMessage(),
+                    districtError = currentAddressDistrictValidation.errorMessage(),
+                    localUnitError = currentAddressLocalUnitValidation.errorMessage(),
+                    wardNoError = currentAddressWardNoValidation.errorMessage(),
+                    toleError = currentAddressToleValidation.errorMessage()
+                ),
+            )
+        }
 
-        // Validate document info
+        if (!_state.value.hasAddressDetailsError()) {
+            val res = client.submitKycAddressDetails(_state.value.updateAddressDetailsRequest())
+            when (res) {
+                is Result.Error -> _state.update { it.copy(infoMsg = res.message) }
+                is Result.Success -> {
+                    refillAll(res.data)
+                    _state.update {
+                        it.copy(
+                            currentPage = it.currentPage+1
+                        )
+                    }
+                }
+            }
+        }
+
+        _state.update { it.copy(progress = null) }
+    }
+
+    private suspend fun submitDocuments() {
+        _state.update { it.copy(progress = 0.0f) }
+
         val documentTypeValidation = validateNotNull(_state.value.documentInfo.documentType)
         val documentNumberValidation = validateNotBlank(_state.value.documentInfo.documentNumber)
         val documentIssuedDateValidation =
@@ -466,34 +543,6 @@ class KycViewModel(
 
         _state.update { s ->
             s.copy(
-                personalInfo = s.personalInfo.copy(
-                    nationalityError = nationalityValidation.errorMessage(),
-                    firstNameError = firstNameValidation.errorMessage(),
-                    lastNameError = lastNameValidation.errorMessage(),
-                    dateOfBirthError = dateOfBirthValidation.errorMessage(),
-                    genderError = genderValidation.errorMessage()
-                ),
-                familyInfo = s.familyInfo.copy(
-                    fatherNameError = fatherNameValidation.errorMessage(),
-                    motherNameError = motherNameValidation.errorMessage(),
-                    maritalStatusError = maritalStatusValidation.errorMessage()
-                ),
-                permanentAddress = s.permanentAddress.copy(
-                    countryError = permanentAddressCountryValidation.errorMessage(),
-                    provinceError = permanentAddressProvinceValidation.errorMessage(),
-                    districtError = permanentAddressDistrictValidation.errorMessage(),
-                    localUnitError = permanentAddressLocalUnitValidation.errorMessage(),
-                    wardNoError = permanentAddressWardNoValidation.errorMessage(),
-                    toleError = permanentAddressToleValidation.errorMessage()
-                ),
-                currentAddress = s.currentAddress.copy(
-                    countryError = if (!s.currentAddressSameAsPermanent) currentAddressCountryValidation.errorMessage() else null,
-                    provinceError = if (!s.currentAddressSameAsPermanent) currentAddressProvinceValidation.errorMessage() else null,
-                    districtError = if (!s.currentAddressSameAsPermanent) currentAddressDistrictValidation.errorMessage() else null,
-                    localUnitError = if (!s.currentAddressSameAsPermanent) currentAddressLocalUnitValidation.errorMessage() else null,
-                    wardNoError = if (!s.currentAddressSameAsPermanent) currentAddressWardNoValidation.errorMessage() else null,
-                    toleError = if (!s.currentAddressSameAsPermanent) currentAddressToleValidation.errorMessage() else null
-                ),
                 documentInfo = s.documentInfo.copy(
                     documentTypeError = documentTypeValidation.errorMessage(),
                     documentNumberError = documentNumberValidation.errorMessage(),
@@ -507,13 +556,12 @@ class KycViewModel(
             )
         }
 
-        if (!_state.value.containsError()) {
-            val req = _state.value.updateKycRequest()
-            val res = client.submitKyc(req)
+        if (!_state.value.documentInfo.hasError()) {
+            val req = _state.value.documentInfo.toRequest()
+            val res = client.submitKycDocuments(req)
             when (res) {
                 is Result.Error -> _state.update { it.copy(infoMsg = res.message) }
-
-                is Result.Success -> _state.update { it.copy(existing = res.data) }
+                is Result.Success -> refillAll(res.data)
             }
         }
         _state.update { it.copy(progress = null) }
