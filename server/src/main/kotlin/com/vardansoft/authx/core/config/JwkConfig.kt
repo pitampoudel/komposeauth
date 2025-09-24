@@ -5,6 +5,7 @@ import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
+import com.vardansoft.authx.AppProperties
 import com.vardansoft.authx.core.service.StorageService
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
@@ -27,13 +28,14 @@ import java.security.spec.X509EncodedKeySpec
 
 @Configuration(proxyBeanMethods = false)
 class JwkConfig(
-    @Lazy private val storageService: StorageService
+    @Lazy private val storageService: StorageService,
+    appProperties: AppProperties
 ) {
     private val logger = LoggerFactory.getLogger(JwkConfig::class.java)
     private val publicKeyBlobName = "jwk/public.key"
     private val privateKeyBlobName = "jwk/private.key"
 
-    private val localDir: Path = Path.of(System.getProperty("user.home"), ".authx", "jwk")
+    private val localDir: Path = Path.of(System.getProperty("user.home"), appProperties.name, "jwk")
     private val localPublicKey: Path = localDir.resolve("public.key")
     private val localPrivateKey: Path = localDir.resolve("private.key")
 
