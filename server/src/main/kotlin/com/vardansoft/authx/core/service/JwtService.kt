@@ -101,7 +101,7 @@ class JwtService(
             claims = mapOf(
                 "type" to TokenType.ACCESS_TOKEN.name,
                 "email" to user.email,
-                "authorities" to listOf(user.roleAuthority()),
+                "authorities" to user.roles.map { "ROLE_$it" },
                 "givenName" to user.firstName,
                 "familyName" to user.lastName
             ),

@@ -102,7 +102,6 @@ class UsersController(
                 refreshToken = refreshToken,
                 tokenType = "Bearer",
                 expiresIn = 1.hours.inWholeSeconds,
-                scope = ""
             )
         )
     }
@@ -125,7 +124,6 @@ class UsersController(
                 refreshToken = request.refreshToken, // Keep the same refresh token
                 tokenType = "Bearer",
                 expiresIn = 3600,
-                scope = ""
             )
         )
     }
@@ -137,7 +135,7 @@ class UsersController(
         description = "Fetch a single user by their ID"
     )
     @Parameter(name = "id", description = "User ID", required = true)
-    @PreAuthorize("hasAuthority('SCOPE_user.read.any')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_user.read.any')")
     fun getUserById(@PathVariable id: String): ResponseEntity<UserResponse> {
         val user = userService.findUser(id) ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(user.mapToResponseDto())
@@ -149,7 +147,7 @@ class UsersController(
         description = "Fetch multiple users by a comma-separated list of IDs"
     )
     @Parameter(name = "ids", description = "Comma-separated list of user IDs", required = true)
-    @PreAuthorize("hasAuthority('SCOPE_user.read.any')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_user.read.any')")
     fun getUsersBatch(@RequestParam ids: String): ResponseEntity<List<UserResponse>> {
         val userIds = ids.split(",").map { it.trim() }.filter { it.isNotEmpty() }
 
@@ -183,7 +181,7 @@ class UsersController(
             kycVerified = (kycService.find(user.id)?.status == KycResponse.Status.APPROVED),
             picture = user.picture,
             createdAt = user.createdAt.toKotlinInstant(),
-            updatedAt = user.createdAt.toKotlinInstant(),
+            updatedAt = user.updatedAt.toKotlinInstant(),
             socialLinks = user.socialLinks
         )
 

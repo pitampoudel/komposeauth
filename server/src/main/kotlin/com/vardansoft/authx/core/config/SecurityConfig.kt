@@ -14,7 +14,6 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.OAuth2RefreshToken
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
@@ -75,22 +74,17 @@ class SecurityConfig() {
         return OAuth2TokenCustomizer { context ->
             when (context.authorizationGrantType) {
                 AuthorizationGrantType.CLIENT_CREDENTIALS -> {
-                    val principal = context.getPrincipal<OAuth2ClientAuthenticationToken>()
-
+                    // val principal = context.getPrincipal<OAuth2ClientAuthenticationToken>()
                 }
 
                 else -> {
                     if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN) {
                         val principal = context.getPrincipal<UsernamePasswordAuthenticationToken>()
                         val user = userService.findUser(principal.name)
-                            ?: throw AccountNotFoundException("User not found")
-                        val principalAuthorities = principal.authorities.map { it.authority }
-                        val effectiveAuthorities = principalAuthorities.ifEmpty {
-                            listOf(user.roleAuthority())
-                        }
+                            ?: throw AccountNotFoundException("User not found with ID: ${principal.name}")
                         context.claims.claim(
                             "authorities",
-                            effectiveAuthorities
+                            principal.authorities + user.roles.map { "ROLE_$it" }
                         )
                         context.claims.claim("first_name", user.firstName)
                         if (user.lastName != null)

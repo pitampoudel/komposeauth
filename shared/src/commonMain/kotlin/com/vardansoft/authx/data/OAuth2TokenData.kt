@@ -11,8 +11,6 @@ data class OAuth2TokenData(
     val tokenType: String,
     @SerialName("expires_in")
     val expiresIn: Long,
-    @SerialName("scope")
-    val scope: String,
     @SerialName("refresh_token")
     val refreshToken: String? = null,
     @SerialName("id_token")

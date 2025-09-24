@@ -34,6 +34,7 @@ data class User(
     val picture: String? = null,
     val socialLinks: List<String> = listOf(),
     val passwordHash: String? = null,
+    val roles: List<String> = listOf(),
     @CreatedDate
     val createdAt: Instant = Instant.now(),
     @LastModifiedDate
@@ -42,13 +43,9 @@ data class User(
     fun asAuthToken() = UsernamePasswordAuthenticationToken(
         id.toHexString(),
         null,
-        listOf(
-            SimpleGrantedAuthority(roleAuthority()),
-        )
+        roles.map { SimpleGrantedAuthority("ROLE_$it") }
     )
 
-    // TODO remove hardcode
-    fun roleAuthority() = "ROLE_${if (email == "pitampoudelsaipu@gmail.com") "ADMIN" else "USER"}"
     val fullName: String
         get() = "$firstName $lastName"
 

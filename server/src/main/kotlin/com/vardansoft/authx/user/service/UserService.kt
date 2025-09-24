@@ -161,8 +161,9 @@ class UserService(
             )
         )
 
-        if (payload["email_verified"] as? Boolean == true) {
+        if (payload["email_verified"] as? Boolean == true && !user.emailVerified) {
             emailVerified(user.id)
+            return findUser(user.id.toHexString()) ?: user
         }
         return user
     }

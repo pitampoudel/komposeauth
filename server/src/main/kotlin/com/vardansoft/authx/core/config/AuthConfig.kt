@@ -17,6 +17,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
@@ -100,7 +101,9 @@ class AuthConfig(
                         ?: throw UsernameNotFoundException("User not found with email: $email")
                     User.withUsername(user.email)
                         .password(user.passwordHash)
-                        .authorities(user.roleAuthority())
+                        .authorities(user.roles.map {
+                            SimpleGrantedAuthority("ROLE_${it}")
+                        })
                         .build()
                 }) {
                     init {
@@ -160,6 +163,7 @@ class AuthConfig(
                                 .claim("createdAt", user.createdAt.toString())
                                 .claim("updatedAt", user.updatedAt.toString())
                                 .claim("picture", user.picture)
+                                .claim("roles", user.roles)
                                 .build()
                         }
                     }
