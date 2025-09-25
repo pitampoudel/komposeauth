@@ -12,14 +12,10 @@ class EmailService(val javaMailSender: JavaMailSender) {
         subject: String? = null,
         text: String? = null
     ) {
-        try {
-            val mailMessage = SimpleMailMessage()
-            mailMessage.setTo(to)
-            mailMessage.text = text
-            mailMessage.subject = subject
-            javaMailSender.send(mailMessage)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        val mailMessage = SimpleMailMessage()
+        mailMessage.setTo(to)
+        mailMessage.text = text
+        mailMessage.subject = subject
+        javaMailSender.send(mailMessage)
     }
 }
