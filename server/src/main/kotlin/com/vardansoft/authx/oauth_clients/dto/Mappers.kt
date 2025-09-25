@@ -55,8 +55,7 @@ fun CreateClientRequest.toEntity(): OAuth2Client {
     val grantTypes: Set<AuthorizationGrantType> = setOf(
         AuthorizationGrantType.AUTHORIZATION_CODE,
         AuthorizationGrantType.REFRESH_TOKEN,
-        AuthorizationGrantType.CLIENT_CREDENTIALS,
-        GOOGLE_ID_TOKEN_GRANT_TYPE
+        AuthorizationGrantType.CLIENT_CREDENTIALS
     )
     return OAuth2Client(
         clientId = id.toHexString(),
