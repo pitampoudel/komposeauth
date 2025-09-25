@@ -27,8 +27,10 @@ data class KycVerification(
     val dateOfBirth: LocalDate,
     val gender: KycResponse.Gender,
     // FAMILY
-    val fatherName: String,
-    val motherName: String,
+    val fatherName: String?,
+    val grandFatherName: String?,
+    val motherName: String?,
+    val grandMotherName: String?,
     val maritalStatus: KycResponse.MaritalStatus,
     // DOCUMENT
     val documentType: DocumentType? = null,
