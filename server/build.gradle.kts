@@ -47,7 +47,7 @@ dependencies {
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
 
     // Sentry for error tracking
-    implementation("io.sentry:sentry-spring-boot-starter-jakarta:7.14.0")
+    implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.21.1")
 
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.0.0")
