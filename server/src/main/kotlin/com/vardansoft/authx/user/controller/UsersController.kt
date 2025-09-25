@@ -40,17 +40,6 @@ class UsersController(
     private val passwordEncoder: PasswordEncoder,
     val kycService: KycService
 ) {
-
-    @GetMapping("/signup")
-    fun create(): String {
-        return "signup"
-    }
-
-    @GetMapping("/login")
-    fun login(): String {
-        return "login"
-    }
-
     @PostMapping("/users")
     @Operation(
         summary = "Create user",
