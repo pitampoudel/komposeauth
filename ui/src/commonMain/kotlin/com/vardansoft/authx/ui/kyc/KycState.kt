@@ -77,22 +77,26 @@ data class PersonalInformationState(
     val genderError: String? = null,
     val fatherName: String = "",
     val fatherNameError: String? = null,
+    val grandFatherName: String = "",
+    val grandFatherNameError: String? = null,
     val motherName: String = "",
     val motherNameError: String? = null,
+    val grandMotherName: String = "",
+    val grandMotherNameError: String? = null,
     val maritalStatus: KycResponse.MaritalStatus? = null,
     val maritalStatusError: String? = null
 ) {
 
     fun hasError(): Boolean {
-        return countryError!=null ||
+        return countryError != null ||
                 nationalityError != null ||
                 firstNameError != null ||
                 middleNameError != null ||
                 lastNameError != null ||
                 dateOfBirthError != null ||
                 genderError != null ||
-                fatherNameError != null ||
-                motherNameError != null ||
+                (fatherNameError != null && motherNameError != null) ||
+                (grandFatherNameError != null && grandMotherNameError != null) ||
                 maritalStatusError != null
     }
 
@@ -108,7 +112,9 @@ data class PersonalInformationState(
             dateOfBirth = dateOfBirth!!,
             gender = gender!!,
             fatherName = fatherName,
+            grandFatherName = grandFatherName,
             motherName = motherName,
+            grandMotherName = grandMotherName,
             maritalStatus = maritalStatus!!
         )
     }

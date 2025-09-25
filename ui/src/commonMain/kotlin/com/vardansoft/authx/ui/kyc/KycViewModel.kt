@@ -100,11 +100,28 @@ class KycViewModel(
                     )
                 }
 
+                is KycEvent.GrandFatherNameChanged -> _state.update {
+                    it.copy(
+                        personalInfo = it.personalInfo.copy(
+                            grandFatherName = event.value,
+                            grandFatherNameError = null
+                        )
+                    )
+                }
                 is KycEvent.MotherNameChanged -> _state.update {
                     it.copy(
                         personalInfo = it.personalInfo.copy(
                             motherName = event.value,
                             motherNameError = null
+                        )
+                    )
+                }
+
+                is KycEvent.GrandMotherNameChanged -> _state.update {
+                    it.copy(
+                        personalInfo = it.personalInfo.copy(
+                            grandMotherName = event.value,
+                            grandMotherNameError = null
                         )
                     )
                 }
@@ -391,8 +408,12 @@ class KycViewModel(
                     gender = latestRecord?.personalInformation?.gender ?: s.personalInfo.gender,
                     fatherName = latestRecord?.personalInformation?.fatherName
                         ?: s.personalInfo.fatherName,
+                    grandFatherName = latestRecord?.personalInformation?.grandFatherName
+                        ?: s.personalInfo.grandFatherName,
                     motherName = latestRecord?.personalInformation?.motherName
                         ?: s.personalInfo.motherName,
+                    grandMotherName = latestRecord?.personalInformation?.grandMotherName
+                        ?: s.personalInfo.grandMotherName,
                     maritalStatus = latestRecord?.personalInformation?.maritalStatus
                         ?: s.personalInfo.maritalStatus
                 ),
@@ -434,7 +455,9 @@ class KycViewModel(
         val dateOfBirthValidation = validateNotNull(_state.value.personalInfo.dateOfBirth)
         val genderValidation = validateNotNull(_state.value.personalInfo.gender)
         val fatherNameValidation = validateNotBlank(_state.value.personalInfo.fatherName)
+        val grandFatherNameValidation = validateNotBlank(_state.value.personalInfo.grandFatherName)
         val motherNameValidation = validateNotBlank(_state.value.personalInfo.motherName)
+        val grandMotherNameValidation = validateNotBlank(_state.value.personalInfo.grandMotherName)
         val maritalStatusValidation = validateNotNull(_state.value.personalInfo.maritalStatus)
 
         _state.update { s ->
@@ -447,7 +470,9 @@ class KycViewModel(
                     dateOfBirthError = dateOfBirthValidation.errorMessage(),
                     genderError = genderValidation.errorMessage(),
                     fatherNameError = fatherNameValidation.errorMessage(),
+                    grandFatherNameError = grandFatherNameValidation.errorMessage(),
                     motherNameError = motherNameValidation.errorMessage(),
+                    grandMotherNameError = grandMotherNameValidation.errorMessage(),
                     maritalStatusError = maritalStatusValidation.errorMessage()
                 )
             )
