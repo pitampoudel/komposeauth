@@ -66,4 +66,3 @@ app:
   logoUrl: ${APP_LOGO_URL}
   googleAuthDesktopClientId: ${GOOGLE_AUTH_DESKTOP_CLIENT_ID}
   googleAuthDesktopClientSecret: ${GOOGLE_AUTH_DESKTOP_CLIENT_SECRET}
-  oauth-enabled: ${OAUTH_ENABLED:false}

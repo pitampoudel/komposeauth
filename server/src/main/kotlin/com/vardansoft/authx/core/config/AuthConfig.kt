@@ -115,7 +115,6 @@ class AuthConfig(
 
     @Bean
     @Order(1)
-    @ConditionalOnProperty(name = ["app.oauth-enabled"], havingValue = "true")
     fun authServerSecurityFilterChain(
         http: HttpSecurity,
         registeredClientRepository: RegisteredClientRepository
