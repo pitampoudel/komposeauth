@@ -1,6 +1,7 @@
 package com.vardansoft.authx
 
 import io.sentry.Sentry
+import org.apache.coyote.BadRequestException // Added import
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.dao.DuplicateKeyException
@@ -9,10 +10,12 @@ import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.HttpRequestMethodNotSupportedException
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
 import java.time.LocalDateTime
+import javax.security.auth.login.AccountNotFoundException // Added import
 
 @ControllerAdvice
 class GlobalExceptionHandler {
@@ -77,6 +80,39 @@ class GlobalExceptionHandler {
             path = request.getDescription(false).removePrefix("uri=")
         )
         return ResponseEntity(errorResponse, HttpStatus.NOT_FOUND)
+    }
+
+    @ExceptionHandler(AccountNotFoundException::class)
+    fun handleAccountNotFoundException(ex: AccountNotFoundException, request: WebRequest): ResponseEntity<ErrorResponse> {
+        val errorResponse = ErrorResponse(
+            timestamp = LocalDateTime.now(),
+            message = ex.message,
+            path = request.getDescription(false).removePrefix("uri=")
+        )
+        return ResponseEntity(errorResponse, HttpStatus.NOT_FOUND)
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleValidationExceptions(ex: MethodArgumentNotValidException, request: WebRequest): ResponseEntity<ErrorResponse> {
+        val errors = ex.bindingResult.fieldErrors.joinToString(", ") {
+            it.defaultMessage ?: "Validation failed for field ${it.field}"
+        }
+        val errorResponse = ErrorResponse(
+            timestamp = LocalDateTime.now(),
+            message = "Validation failed: $errors",
+            path = request.getDescription(false).removePrefix("uri=")
+        )
+        return ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST)
+    }
+
+    @ExceptionHandler(BadRequestException::class)
+    fun handleApacheCoyoteBadRequestException(ex: BadRequestException, request: WebRequest): ResponseEntity<ErrorResponse> {
+        val errorResponse = ErrorResponse(
+            timestamp = LocalDateTime.now(),
+            message = ex.message,
+            path = request.getDescription(false).removePrefix("uri=")
+        )
+        return ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST)
     }
 
     @ExceptionHandler(Exception::class)
