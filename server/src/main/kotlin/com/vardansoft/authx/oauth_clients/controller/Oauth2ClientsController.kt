@@ -7,12 +7,16 @@ import com.vardansoft.authx.oauth_clients.dto.toEntity
 import com.vardansoft.authx.oauth_clients.repository.OAuth2ClientRepository
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/oauth2/clients")
-@ConditionalOnProperty(name = ["app.oauth-enabled"], havingValue = "true")
+@PreAuthorize("hasRole('ADMIN')")
 class Oauth2ClientsController(
     val oauth2ClientRepository: OAuth2ClientRepository
 ) {

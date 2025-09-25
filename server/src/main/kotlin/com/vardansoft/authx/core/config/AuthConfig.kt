@@ -68,7 +68,6 @@ class AuthConfig(
             }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/oauth2/clients/**").hasRole("ADMIN")
                     .requestMatchers(
                         "/oauth2/jwks",
                         "/login",
