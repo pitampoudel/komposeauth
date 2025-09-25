@@ -72,7 +72,7 @@ class JwtService(
             claims = mapOf("type" to TokenType.VERIFY_EMAIL.name),
             validity = 1.days
         )
-        return "${appProperties.baseUrl}/verify-email?token=$token"
+        return "${appProperties.baseUrl}/verify-email?token=${token?.tokenValue}"
     }
 
     fun retrieveClaimsIfValidEmailVerificationToken(token: String): Jwt {
@@ -86,7 +86,7 @@ class JwtService(
             claims = mapOf("type" to TokenType.RESET_PASSWORD.name),
             validity = 1.days
         )
-        return "${appProperties.baseUrl}/reset-password?token=$token"
+        return "${appProperties.baseUrl}/reset-password?token=${token?.tokenValue}"
     }
 
 
