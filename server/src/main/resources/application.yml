@@ -24,8 +24,8 @@ spring:
         smtp:
           from: ${SMTP_FROM}
           auth: true
-        starttls:
-          enable: true
+          starttls:
+            enable: true
   main:
     lazy-initialization: true
     banner-mode: off
