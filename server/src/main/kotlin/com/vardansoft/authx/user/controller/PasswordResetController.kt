@@ -8,6 +8,7 @@ import com.vardansoft.core.data.MessageResponse
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
+import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.*
 
 @Controller
@@ -17,6 +18,16 @@ class PasswordResetController(
     private val emailService: EmailService,
     private val jwtService: JwtService
 ) {
+    @Operation(
+        summary = "Show password reset form",
+        description = "Displays a form to reset the password using a token from the email."
+    )
+    @GetMapping
+    fun resetPasswordForm(@RequestParam token: String, model: Model): String {
+        model.addAttribute("token", token)
+        return "reset-password-form"
+    }
+
     @Operation(
         summary = "Send password reset link",
         description = "Sends a password reset link to the user's email address."
