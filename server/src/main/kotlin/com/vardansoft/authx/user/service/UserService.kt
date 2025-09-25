@@ -4,6 +4,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import com.vardansoft.authx.AppProperties
+import com.vardansoft.authx.core.service.EmailService
+import com.vardansoft.authx.core.service.JwtService
 import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
 import com.vardansoft.authx.core.utils.validateGoogleIdToken
 import com.vardansoft.authx.data.CreateUserRequest
@@ -37,7 +39,9 @@ class UserService(
     private val phoneNumberVerificationService: PhoneNumberVerificationService,
     @Value("\${spring.security.oauth2.client.registration.google.client-id}")
     private val googleClientId: String,
-    val appProperties: AppProperties
+    val appProperties: AppProperties,
+    val emailService: EmailService,
+    val jwtService: JwtService
 ) {
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
@@ -84,7 +88,17 @@ class UserService(
     }
 
     fun createUser(req: CreateUserRequest): User {
-        return userRepository.insert(req.mapToEntity(passwordEncoder))
+        val newUser = req.mapToEntity(passwordEncoder)
+        if (newUser.email != null && !newUser.emailVerified) emailService.sendSimpleMail(
+            to = newUser.email,
+            subject = "Email Verification",
+            text = "Please click the link to verify your email address: ${
+                jwtService.generateEmailVerificationLink(
+                    userId = newUser.id.toHexString()
+                )
+            }"
+        )
+        return userRepository.insert(newUser)
     }
 
     fun updateUser(userId: ObjectId, req: UpdateUserRequest): UserResponse {

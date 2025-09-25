@@ -35,7 +35,6 @@ import kotlin.time.toKotlinInstant
 @Controller
 class UsersController(
     val userService: UserService,
-    val emailService: EmailService,
     val jwtService: JwtService,
     private val passwordEncoder: PasswordEncoder,
     val kycService: KycService
@@ -46,18 +45,7 @@ class UsersController(
         description = "Creates a new user account",
     )
     fun create(@RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
-        val createdUser = userService.createUser(request)
-        val userResponse = createdUser.mapToResponseDto()
-        if (createdUser.email != null && !createdUser.emailVerified) emailService.sendSimpleMail(
-            to = createdUser.email,
-            subject = "Email Verification",
-            text = "Please click the link to verify your email address: ${
-                jwtService.generateEmailVerificationLink(
-                    userId = createdUser.id.toHexString()
-                )
-            }"
-        )
-        return ResponseEntity.ok().body(userResponse)
+        return ResponseEntity.ok().body(userService.createUser(request).mapToResponseDto())
 
     }
 
