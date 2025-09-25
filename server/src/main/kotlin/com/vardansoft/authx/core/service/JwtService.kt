@@ -95,6 +95,7 @@ class JwtService(
     }
 
     fun generateAccessToken(user: User): String {
+        val scopes = listOf("openid", "profile", "email")
         val token = generateToken(
             audience = appProperties.baseUrl!!,
             userId = user.id.toHexString(),
@@ -103,7 +104,9 @@ class JwtService(
                 "email" to user.email,
                 "authorities" to user.roles.map { "ROLE_$it" },
                 "givenName" to user.firstName,
-                "familyName" to user.lastName
+                "familyName" to user.lastName,
+                "scope" to scopes.joinToString(" "),
+                "scp" to scopes
             ),
             validity = 1.hours
         )
