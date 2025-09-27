@@ -82,7 +82,8 @@ class AuthConfig(
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/verify-email",
-                        "/reset-password"
+                        "/reset-password",
+                        "/countries.json"
                     ).permitAll()
                     .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD)
                     .permitAll()

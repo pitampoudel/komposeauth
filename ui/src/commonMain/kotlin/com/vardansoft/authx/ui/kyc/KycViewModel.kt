@@ -21,6 +21,15 @@ class KycViewModel(
     private val _state = MutableStateFlow(KycState())
     val state = _state.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            when (val countriesRes = client.fetchCountries()) {
+                is Result.Error -> _state.update { it.copy(infoMsg = countriesRes.message) }
+                is Result.Success -> _state.update { it.copy(countries = countriesRes.data) }
+            }
+        }
+    }
+
     fun onEvent(event: KycEvent) {
         viewModelScope.launch {
             when (event) {
@@ -395,6 +404,8 @@ class KycViewModel(
             s.copy(
                 status = latestRecord?.status,
                 personalInfo = s.personalInfo.copy(
+                    country = latestRecord?.personalInformation?.country
+                        ?: s.personalInfo.country,
                     nationality = latestRecord?.personalInformation?.nationality
                         ?: s.personalInfo.nationality,
                     firstName = latestRecord?.personalInformation?.firstName

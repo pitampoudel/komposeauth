@@ -5,6 +5,7 @@ import com.vardansoft.authx.data.DocumentType
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.PersonalInformation
 import com.vardansoft.authx.data.UpdateAddressDetailsRequest
+import com.vardansoft.authx.data.Country
 import com.vardansoft.core.domain.KmpFile
 import com.vardansoft.core.presentation.InfoMessage
 import kotlinx.datetime.LocalDate
@@ -175,7 +176,8 @@ data class KycState(
     val currentAddressSameAsPermanent: Boolean = false,
     val progress: Float? = null,
     val infoMsg: InfoMessage? = null,
-    val status: KycResponse.Status? = null
+    val status: KycResponse.Status? = null,
+    val countries: List<Country> = emptyList()
 ) {
     fun hasAddressDetailsError(): Boolean {
         val currentAddressError = if (!currentAddressSameAsPermanent) {

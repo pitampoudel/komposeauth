@@ -96,4 +96,10 @@ class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXCl
             }.asResource { body<KycResponse>() }
         }
     }
+
+    override suspend fun fetchCountries(): Result<List<Country>> {
+        return safeApiCall {
+            httpClient.get("$authUrl/countries.json").asResource { body() }
+        }
+    }
 }
