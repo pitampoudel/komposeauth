@@ -50,6 +50,9 @@ class KycService(
             motherName = data.motherName,
             grandMotherName = data.grandMotherName,
             maritalStatus = data.maritalStatus,
+            occupation = data.occupation,
+            pan = data.pan,
+            email = data.email
         ) ?: KycVerification(
             userId = userId,
             country = data.country,
@@ -63,7 +66,10 @@ class KycService(
             grandFatherName = data.grandFatherName,
             motherName = data.motherName,
             grandMotherName = data.grandMotherName,
-            maritalStatus = data.maritalStatus
+            maritalStatus = data.maritalStatus,
+            occupation = data.occupation,
+            pan = data.pan,
+            email = data.email
         )
 
         return kycRepo.save(kycRecord).toResponse()

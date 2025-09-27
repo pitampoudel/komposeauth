@@ -31,7 +31,11 @@ data class KycVerification(
     val grandFatherName: String?,
     val motherName: String?,
     val grandMotherName: String?,
-    val maritalStatus: KycResponse.MaritalStatus,
+    val maritalStatus: KycResponse.MaritalStatus?,
+    // OTHER
+    val occupation: String?,
+    val pan: String?,
+    val email: String?,
     // DOCUMENT
     val documentType: DocumentType? = null,
     val documentNumber: String? = null,

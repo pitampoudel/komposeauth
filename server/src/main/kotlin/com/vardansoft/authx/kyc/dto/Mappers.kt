@@ -19,7 +19,10 @@ fun KycVerification.toResponse() = KycResponse(
         motherName = motherName,
         maritalStatus = maritalStatus,
         grandFatherName = grandFatherName,
-        grandMotherName = grandMotherName
+        grandMotherName = grandMotherName,
+        occupation = occupation,
+        pan = pan,
+        email = email
     ),
     currentAddress = KycResponse.AddressInformation(
         country = currentAddressCountry,
