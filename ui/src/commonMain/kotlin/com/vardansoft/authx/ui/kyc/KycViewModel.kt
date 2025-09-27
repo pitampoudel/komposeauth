@@ -27,6 +27,34 @@ class KycViewModel(
                 is Result.Error -> _state.update { it.copy(infoMsg = countriesRes.message) }
                 is Result.Success -> _state.update { it.copy(countries = countriesRes.data) }
             }
+            _state.update {
+                it.copy(occupations = listOf(
+                    "Student",
+                    "Government Employee",
+                    "Private Sector Employee",
+                    "Self Employed/Business Owner",
+                    "Farmer",
+                    "Homemaker",
+                    "Retired",
+                    "Unemployed",
+                    "Doctor",
+                    "Engineer",
+                    "Lawyer",
+                    "Teacher/Professor",
+                    "Artist/Musician/Writer",
+                    "Skilled Laborer (e.g., Carpenter, Electrician)",
+                    "Unskilled Laborer",
+                    "Social Worker",
+                    "Religious Professional",
+                    "Military Personnel",
+                    "Police Officer",
+                    "Firefighter",
+                    "Pilot",
+                    "Journalist",
+                    "Athlete",
+                    "Other"
+                ))
+            }
         }
     }
 
@@ -46,6 +74,7 @@ class KycViewModel(
                         )
                     )
                 }
+
                 is KycEvent.NationalityChanged -> _state.update {
                     it.copy(
                         personalInfo = it.personalInfo.copy(
@@ -117,6 +146,7 @@ class KycViewModel(
                         )
                     )
                 }
+
                 is KycEvent.MotherNameChanged -> _state.update {
                     it.copy(
                         personalInfo = it.personalInfo.copy(
@@ -140,6 +170,33 @@ class KycViewModel(
                         personalInfo = it.personalInfo.copy(
                             maritalStatus = event.value,
                             maritalStatusError = null
+                        )
+                    )
+                }
+
+                is KycEvent.OccupationChanged -> _state.update {
+                    it.copy(
+                        personalInfo = it.personalInfo.copy(
+                            occupation = event.value,
+                            occupationError = null
+                        )
+                    )
+                }
+
+                is KycEvent.PanChanged -> _state.update {
+                    it.copy(
+                        personalInfo = it.personalInfo.copy(
+                            pan = event.value,
+                            panError = null
+                        )
+                    )
+                }
+
+                is KycEvent.EmailChanged -> _state.update {
+                    it.copy(
+                        personalInfo = it.personalInfo.copy(
+                            email = event.value,
+                            emailError = null
                         )
                     )
                 }
@@ -426,7 +483,11 @@ class KycViewModel(
                     grandMotherName = latestRecord?.personalInformation?.grandMotherName
                         ?: s.personalInfo.grandMotherName,
                     maritalStatus = latestRecord?.personalInformation?.maritalStatus
-                        ?: s.personalInfo.maritalStatus
+                        ?: s.personalInfo.maritalStatus,
+                    occupation = latestRecord?.personalInformation?.occupation
+                        ?: s.personalInfo.occupation,
+                    pan = latestRecord?.personalInformation?.pan ?: s.personalInfo.pan,
+                    email = latestRecord?.personalInformation?.email ?: s.personalInfo.email
                 ),
                 currentAddress = latestRecord?.currentAddress?.let {
                     AddressState.fromData(it)
@@ -470,6 +531,7 @@ class KycViewModel(
         val motherNameValidation = validateNotBlank(_state.value.personalInfo.motherName)
         val grandMotherNameValidation = validateNotBlank(_state.value.personalInfo.grandMotherName)
         val maritalStatusValidation = validateNotNull(_state.value.personalInfo.maritalStatus)
+
 
         _state.update { s ->
             s.copy(

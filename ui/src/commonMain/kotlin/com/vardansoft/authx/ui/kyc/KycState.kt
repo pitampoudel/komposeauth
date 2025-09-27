@@ -85,7 +85,13 @@ data class PersonalInformationState(
     val grandMotherName: String = "",
     val grandMotherNameError: String? = null,
     val maritalStatus: KycResponse.MaritalStatus? = null,
-    val maritalStatusError: String? = null
+    val maritalStatusError: String? = null,
+    val occupation: String = "",
+    val occupationError: String? = null,
+    val pan: String = "",
+    val panError: String? = null,
+    val email: String = "",
+    val emailError: String? = null
 ) {
 
     fun hasError(): Boolean {
@@ -98,7 +104,10 @@ data class PersonalInformationState(
                 genderError != null ||
                 (fatherNameError != null && motherNameError != null) ||
                 (grandFatherNameError != null && grandMotherNameError != null) ||
-                maritalStatusError != null
+                maritalStatusError != null ||
+                occupationError != null ||
+                panError != null ||
+                emailError != null
     }
 
     fun toRequest(): PersonalInformation {
@@ -116,7 +125,10 @@ data class PersonalInformationState(
             grandFatherName = grandFatherName,
             motherName = motherName,
             grandMotherName = grandMotherName,
-            maritalStatus = maritalStatus!!
+            maritalStatus = maritalStatus!!,
+            occupation = occupation,
+            pan = pan,
+            email = email
         )
     }
 }
@@ -177,7 +189,8 @@ data class KycState(
     val progress: Float? = null,
     val infoMsg: InfoMessage? = null,
     val status: KycResponse.Status? = null,
-    val countries: List<Country> = emptyList()
+    val countries: List<Country> = emptyList(),
+    val occupations: List<String> = emptyList()
 ) {
     fun hasAddressDetailsError(): Boolean {
         val currentAddressError = if (!currentAddressSameAsPermanent) {
