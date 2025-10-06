@@ -28,32 +28,34 @@ class KycViewModel(
                 is Result.Success -> _state.update { it.copy(countries = countriesRes.data) }
             }
             _state.update {
-                it.copy(occupations = listOf(
-                    "Student",
-                    "Government Employee",
-                    "Private Sector Employee",
-                    "Self Employed/Business Owner",
-                    "Farmer",
-                    "Homemaker",
-                    "Retired",
-                    "Unemployed",
-                    "Doctor",
-                    "Engineer",
-                    "Lawyer",
-                    "Teacher/Professor",
-                    "Artist/Musician/Writer",
-                    "Skilled Laborer (e.g., Carpenter, Electrician)",
-                    "Unskilled Laborer",
-                    "Social Worker",
-                    "Religious Professional",
-                    "Military Personnel",
-                    "Police Officer",
-                    "Firefighter",
-                    "Pilot",
-                    "Journalist",
-                    "Athlete",
-                    "Other"
-                ))
+                it.copy(
+                    occupations = listOf(
+                        "Student",
+                        "Government Employee",
+                        "Private Sector Employee",
+                        "Self Employed/Business Owner",
+                        "Farmer",
+                        "Homemaker",
+                        "Retired",
+                        "Unemployed",
+                        "Doctor",
+                        "Engineer",
+                        "Lawyer",
+                        "Teacher/Professor",
+                        "Artist/Musician/Writer",
+                        "Skilled Laborer (e.g., Carpenter, Electrician)",
+                        "Unskilled Laborer",
+                        "Social Worker",
+                        "Religious Professional",
+                        "Military Personnel",
+                        "Police Officer",
+                        "Firefighter",
+                        "Pilot",
+                        "Journalist",
+                        "Athlete",
+                        "Other"
+                    )
+                )
             }
         }
     }
@@ -211,50 +213,52 @@ class KycViewModel(
                     )
                 }
 
-                is KycEvent.CurrentAddressProvinceChanged -> _state.update { s ->
+                is KycEvent.CurrentAddressStateChanged -> _state.update { s ->
                     s.copy(
                         currentAddress = s.currentAddress.copy(
-                            province = event.value,
-                            provinceError = null
+                            state = event.value,
+                            stateError = null
                         )
                     )
                 }
 
-                is KycEvent.CurrentAddressDistrictChanged -> _state.update { s ->
+                is KycEvent.CurrentAddressCityChanged -> _state.update { s ->
                     s.copy(
                         currentAddress = s.currentAddress.copy(
-                            district = event.value,
-                            districtError = null
+                            city = event.value,
+                            cityError = null
                         )
                     )
                 }
 
-                is KycEvent.CurrentAddressLocalUnitChanged -> _state.update { s ->
+                is KycEvent.CurrentAddressAddressLine1Changed -> _state.update { s ->
                     s.copy(
                         currentAddress = s.currentAddress.copy(
-                            localUnit = event.value,
-                            localUnitError = null
+                            addressLine1 = event.value,
+                            addressLine1Error = null
                         )
                     )
                 }
 
-                is KycEvent.CurrentAddressWardNoChanged -> _state.update { s ->
+                is KycEvent.CurrentAddressAddressLine2Changed -> _state.update { s ->
                     s.copy(
                         currentAddress = s.currentAddress.copy(
-                            wardNo = event.value,
-                            wardNoError = null
+                            addressLine2 = event.value,
+                            addressLine2Error = null
                         )
                     )
                 }
 
-                is KycEvent.CurrentAddressToleChanged -> _state.update { s ->
+
+                is KycEvent.CurrentAddressPostalCodeChanged -> _state.update { s ->
                     s.copy(
                         currentAddress = s.currentAddress.copy(
-                            tole = event.value,
-                            toleError = null
+                            postalCode = event.value,
+                            postalCodeError = null
                         )
                     )
                 }
+
 
                 // Permanent Address Events
                 is KycEvent.PermanentAddressCountryChanged -> _state.update { s ->
@@ -266,47 +270,47 @@ class KycViewModel(
                     )
                 }
 
-                is KycEvent.PermanentAddressProvinceChanged -> _state.update { s ->
+                is KycEvent.PermanentAddressStateChanged -> _state.update { s ->
                     s.copy(
                         permanentAddress = s.permanentAddress.copy(
-                            province = event.value,
-                            provinceError = null
+                            state = event.value,
+                            stateError = null
                         )
                     )
                 }
 
-                is KycEvent.PermanentAddressDistrictChanged -> _state.update { s ->
+                is KycEvent.PermanentAddressCityChanged -> _state.update { s ->
                     s.copy(
                         permanentAddress = s.permanentAddress.copy(
-                            district = event.value,
-                            districtError = null
+                            city = event.value,
+                            cityError = null
                         )
                     )
                 }
 
-                is KycEvent.PermanentAddressLocalUnitChanged -> _state.update { s ->
+                is KycEvent.PermanentAddressAddressLine1Changed -> _state.update { s ->
                     s.copy(
                         permanentAddress = s.permanentAddress.copy(
-                            localUnit = event.value,
-                            localUnitError = null
+                            addressLine1 = event.value,
+                            addressLine1Error = null
                         )
                     )
                 }
 
-                is KycEvent.PermanentAddressWardNoChanged -> _state.update { s ->
+                is KycEvent.PermanentAddressAddressLine2Changed -> _state.update { s ->
                     s.copy(
                         permanentAddress = s.permanentAddress.copy(
-                            wardNo = event.value,
-                            wardNoError = null
+                            addressLine2 = event.value,
+                            addressLine2Error = null
                         )
                     )
                 }
 
-                is KycEvent.PermanentAddressToleChanged -> _state.update { s ->
+                is KycEvent.PermanentAddressPostalCodeChanged -> _state.update { s ->
                     s.copy(
                         permanentAddress = s.permanentAddress.copy(
-                            tole = event.value,
-                            toleError = null
+                            postalCode = event.value,
+                            postalCodeError = null
                         )
                     )
                 }
@@ -317,11 +321,9 @@ class KycViewModel(
                         newState.copy(
                             currentAddress = s.currentAddress.copy(
                                 countryError = null,
-                                provinceError = null,
-                                districtError = null,
-                                localUnitError = null,
-                                wardNoError = null,
-                                toleError = null
+                                stateError = null,
+                                addressLine1Error = null,
+                                addressLine2Error = null
                             )
                         )
                     } else {
@@ -573,47 +575,36 @@ class KycViewModel(
         _state.update { it.copy(progress = 0.0f) }
 
         val currentAddressCountryValidation = validateNotBlank(_state.value.currentAddress.country)
-        val currentAddressProvinceValidation =
-            validateNotBlank(_state.value.currentAddress.province)
-        val currentAddressDistrictValidation =
-            validateNotBlank(_state.value.currentAddress.district)
-        val currentAddressLocalUnitValidation =
-            validateNotBlank(_state.value.currentAddress.localUnit)
-        val currentAddressWardNoValidation = validateNotBlank(_state.value.currentAddress.wardNo)
-        val currentAddressToleValidation = validateNotBlank(_state.value.currentAddress.tole)
+        val currentAddressStateValidation = validateNotBlank(_state.value.currentAddress.state)
+        val currentAddressCityValidation = validateNotBlank(_state.value.currentAddress.city)
+        val currentAddressAddressLine1Validation = validateNotBlank(_state.value.currentAddress.addressLine1)
+        val currentAddressAddressLine2Validation = validateNotBlank(_state.value.currentAddress.addressLine2)
+        val currentAddressPostalCodeValidation = validateNotBlank(_state.value.currentAddress.postalCode)
 
-        val permanentAddressCountryValidation =
-            validateNotBlank(_state.value.permanentAddress.country)
-        val permanentAddressProvinceValidation =
-            validateNotBlank(_state.value.permanentAddress.province)
-
-        val permanentAddressDistrictValidation =
-            validateNotBlank(_state.value.permanentAddress.district)
-
-        val permanentAddressLocalUnitValidation =
-            validateNotBlank(_state.value.permanentAddress.localUnit)
-
-        val permanentAddressWardNoValidation =
-            validateNotBlank(_state.value.permanentAddress.wardNo)
-        val permanentAddressToleValidation = validateNotBlank(_state.value.permanentAddress.tole)
+        val permanentAddressCountryValidation = validateNotBlank(_state.value.permanentAddress.country)
+        val permanentAddressStateValidation = validateNotBlank(_state.value.permanentAddress.state)
+        val permanentAddressCityValidation = validateNotBlank(_state.value.permanentAddress.city)
+        val permanentAddressAddressLine1Validation = validateNotBlank(_state.value.permanentAddress.addressLine1)
+        val permanentAddressAddressLine2Validation = validateNotBlank(_state.value.permanentAddress.addressLine2)
+        val permanentAddressPostalCodeValidation = validateNotBlank(_state.value.permanentAddress.postalCode)
 
         _state.update { s ->
             s.copy(
                 permanentAddress = s.permanentAddress.copy(
+                    addressLine1Error = permanentAddressAddressLine1Validation.errorMessage(),
+                    addressLine2Error = permanentAddressAddressLine2Validation.errorMessage(),
+                    cityError = permanentAddressCityValidation.errorMessage(),
+                    stateError = permanentAddressStateValidation.errorMessage(),
                     countryError = permanentAddressCountryValidation.errorMessage(),
-                    provinceError = permanentAddressProvinceValidation.errorMessage(),
-                    districtError = permanentAddressDistrictValidation.errorMessage(),
-                    localUnitError = permanentAddressLocalUnitValidation.errorMessage(),
-                    wardNoError = permanentAddressWardNoValidation.errorMessage(),
-                    toleError = permanentAddressToleValidation.errorMessage()
+                    postalCodeError = permanentAddressPostalCodeValidation.errorMessage(),
                 ),
                 currentAddress = s.currentAddress.copy(
+                    addressLine1Error = currentAddressAddressLine1Validation.errorMessage(),
+                    addressLine2Error = currentAddressAddressLine2Validation.errorMessage(),
+                    cityError = currentAddressCityValidation.errorMessage(),
+                    stateError = currentAddressStateValidation.errorMessage(),
                     countryError = currentAddressCountryValidation.errorMessage(),
-                    provinceError = currentAddressProvinceValidation.errorMessage(),
-                    districtError = currentAddressDistrictValidation.errorMessage(),
-                    localUnitError = currentAddressLocalUnitValidation.errorMessage(),
-                    wardNoError = currentAddressWardNoValidation.errorMessage(),
-                    toleError = currentAddressToleValidation.errorMessage()
+                    postalCodeError = currentAddressPostalCodeValidation.errorMessage(),
                 ),
             )
         }

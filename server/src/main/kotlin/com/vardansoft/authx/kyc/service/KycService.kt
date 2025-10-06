@@ -85,17 +85,17 @@ class KycService(
 
         val entity = existing.copy(
             permanentAddressCountry = data.permanentAddress.country,
-            permanentAddressProvince = data.permanentAddress.province,
-            permanentAddressDistrict = data.permanentAddress.district,
-            permanentAddressLocalUnit = data.permanentAddress.localUnit,
-            permanentAddressWardNo = data.permanentAddress.wardNo,
-            permanentAddressTole = data.permanentAddress.tole,
+            permanentAddressState = data.permanentAddress.state,
+            permanentAddressCity = data.permanentAddress.city,
+            permanentAddressLine1 = data.permanentAddress.addressLine1,
+            permanentAddressLine2 = data.permanentAddress.addressLine2,
+            permanentAddressPostalCode = data.permanentAddress.postalCode,
             currentAddressCountry = data.currentAddress.country,
-            currentAddressProvince = data.currentAddress.province,
-            currentAddressDistrict = data.currentAddress.district,
-            currentAddressLocalUnit = data.currentAddress.localUnit,
-            currentAddressWardNo = data.currentAddress.wardNo,
-            currentAddressTole = data.currentAddress.tole
+            currentAddressState = data.currentAddress.state,
+            currentAddressCity = data.currentAddress.city,
+            currentAddressLine1 = data.currentAddress.addressLine1,
+            currentAddressLine2 = data.currentAddress.addressLine2,
+            currentAddressPostalCode = data.currentAddress.postalCode
         )
         return kycRepo.save(entity).toResponse()
     }

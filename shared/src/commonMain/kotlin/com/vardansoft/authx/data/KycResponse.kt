@@ -31,11 +31,11 @@ data class KycResponse(
     @Serializable
     data class AddressInformation(
         val country: String?,
-        val province: String?,
-        val district: String?,
-        val localUnit: String?,
-        val wardNo: String?,
-        val tole: String?
+        val state: String?,
+        val city: String?,
+        val addressLine1: String?,
+        val addressLine2: String?,
+        val postalCode: String?,
     )
 
     enum class Status { PENDING, APPROVED, REJECTED }

@@ -26,19 +26,19 @@ fun KycVerification.toResponse() = KycResponse(
     ),
     currentAddress = KycResponse.AddressInformation(
         country = currentAddressCountry,
-        province = currentAddressProvince,
-        district = currentAddressDistrict,
-        localUnit = currentAddressLocalUnit,
-        wardNo = currentAddressWardNo,
-        tole = currentAddressTole
+        state = currentAddressState,
+        city = currentAddressCity,
+        addressLine1 = currentAddressLine1,
+        addressLine2 = currentAddressLine2,
+        postalCode = currentAddressPostalCode
     ),
     permanentAddress = KycResponse.AddressInformation(
         country = permanentAddressCountry,
-        province = permanentAddressProvince,
-        district = permanentAddressDistrict,
-        localUnit = permanentAddressLocalUnit,
-        wardNo = permanentAddressWardNo,
-        tole = permanentAddressTole
+        state = permanentAddressState,
+        city = permanentAddressCity,
+        addressLine1 = permanentAddressLine1,
+        addressLine2 = permanentAddressLine2,
+        postalCode = permanentAddressPostalCode
     ),
     documentInformation = KycResponse.DocumentInformationResponse(
         documentType = documentType,

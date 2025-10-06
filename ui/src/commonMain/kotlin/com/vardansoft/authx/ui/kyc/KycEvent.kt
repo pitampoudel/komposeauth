@@ -26,20 +26,19 @@ sealed interface KycEvent {
     data class EmailChanged(val value: String) : KycEvent
 
     // Address Details Events
-
     data class CurrentAddressCountryChanged(val value: String) : KycEvent
-    data class CurrentAddressProvinceChanged(val value: String) : KycEvent
-    data class CurrentAddressDistrictChanged(val value: String) : KycEvent
-    data class CurrentAddressLocalUnitChanged(val value: String) : KycEvent
-    data class CurrentAddressWardNoChanged(val value: String) : KycEvent
-    data class CurrentAddressToleChanged(val value: String) : KycEvent
+    data class CurrentAddressStateChanged(val value: String) : KycEvent
+    data class CurrentAddressCityChanged(val value: String) : KycEvent
+    data class CurrentAddressAddressLine1Changed(val value: String) : KycEvent
+    data class CurrentAddressAddressLine2Changed(val value: String) : KycEvent
+    data class CurrentAddressPostalCodeChanged(val value: String) : KycEvent
 
     data class PermanentAddressCountryChanged(val value: String) : KycEvent
-    data class PermanentAddressProvinceChanged(val value: String) : KycEvent
-    data class PermanentAddressDistrictChanged(val value: String) : KycEvent
-    data class PermanentAddressLocalUnitChanged(val value: String) : KycEvent
-    data class PermanentAddressWardNoChanged(val value: String) : KycEvent
-    data class PermanentAddressToleChanged(val value: String) : KycEvent
+    data class PermanentAddressStateChanged(val value: String) : KycEvent
+    data class PermanentAddressCityChanged(val value: String) : KycEvent
+    data class PermanentAddressAddressLine1Changed(val value: String) : KycEvent
+    data class PermanentAddressAddressLine2Changed(val value: String) : KycEvent
+    data class PermanentAddressPostalCodeChanged(val value: String) : KycEvent
 
     data class CurrentAddressSameAsPermanentChanged(val value: Boolean) : KycEvent
 

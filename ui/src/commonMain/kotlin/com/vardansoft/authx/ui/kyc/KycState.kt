@@ -1,11 +1,11 @@
 package com.vardansoft.authx.ui.kyc
 
+import com.vardansoft.authx.data.Country
 import com.vardansoft.authx.data.DocumentInformation
 import com.vardansoft.authx.data.DocumentType
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.PersonalInformation
 import com.vardansoft.authx.data.UpdateAddressDetailsRequest
-import com.vardansoft.authx.data.Country
 import com.vardansoft.core.domain.KmpFile
 import com.vardansoft.core.presentation.InfoMessage
 import kotlinx.datetime.LocalDate
@@ -13,24 +13,24 @@ import kotlinx.datetime.LocalDate
 data class AddressState(
     val country: String = "",
     val countryError: String? = null,
-    val province: String = "",
-    val provinceError: String? = null,
-    val district: String = "",
-    val districtError: String? = null,
-    val localUnit: String = "",
-    val localUnitError: String? = null,
-    val wardNo: String = "",
-    val wardNoError: String? = null,
-    val tole: String = "",
-    val toleError: String? = null
+    val state: String = "",
+    val stateError: String? = null,
+    val city: String = "",
+    val cityError: String? = null,
+    val addressLine1: String = "",
+    val addressLine1Error: String? = null,
+    val addressLine2: String = "",
+    val addressLine2Error: String? = null,
+    val postalCode: String = "",
+    val postalCodeError: String? = null,
 ) {
     fun hasError(): Boolean {
         return countryError != null ||
-                provinceError != null ||
-                districtError != null ||
-                localUnitError != null ||
-                wardNoError != null ||
-                toleError != null
+                stateError != null ||
+                cityError != null ||
+                addressLine1Error != null ||
+                addressLine2Error != null ||
+                postalCodeError != null
     }
 
     fun toRequest(): KycResponse.AddressInformation {
@@ -38,11 +38,11 @@ data class AddressState(
 
         return KycResponse.AddressInformation(
             country = country,
-            province = province,
-            district = district,
-            localUnit = localUnit,
-            wardNo = wardNo,
-            tole = tole
+            state = state,
+            city = city,
+            addressLine1 = addressLine1,
+            addressLine2 = addressLine2,
+            postalCode = postalCode,
         )
     }
 
@@ -51,11 +51,11 @@ data class AddressState(
         fun fromData(data: KycResponse.AddressInformation): AddressState {
             return AddressState(
                 country = data.country.orEmpty(),
-                province = data.province.orEmpty(),
-                district = data.district.orEmpty(),
-                localUnit = data.localUnit.orEmpty(),
-                wardNo = data.wardNo.orEmpty(),
-                tole = data.tole.orEmpty()
+                state = data.state.orEmpty(),
+                city = data.city.orEmpty(),
+                addressLine1 = data.addressLine1.orEmpty(),
+                addressLine2 = data.addressLine2.orEmpty(),
+                postalCode = data.postalCode.orEmpty(),
             )
         }
     }

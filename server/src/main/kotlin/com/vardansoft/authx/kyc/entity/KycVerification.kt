@@ -47,19 +47,20 @@ data class KycVerification(
     val selfieUrl: String? = null,
     // ADDRESS
     // PERMANENT
-    val permanentAddressTole: String? = null,
-    val permanentAddressWardNo: String? = null,
-    val permanentAddressLocalUnit: String? = null,
-    val permanentAddressDistrict: String? = null,
-    val permanentAddressProvince: String? = null,
     val permanentAddressCountry: String? = null,
+    val permanentAddressState: String? = null,
+    val permanentAddressCity: String? = null,
+    val permanentAddressLine1: String? = null,
+    val permanentAddressLine2: String? = null,
+    val permanentAddressPostalCode: String? = null,
     // CURRENT
-    val currentAddressTole: String? = null,
-    val currentAddressWardNo: String? = null,
-    val currentAddressLocalUnit: String? = null,
-    val currentAddressDistrict: String? = null,
-    val currentAddressProvince: String? = null,
+
     val currentAddressCountry: String? = null,
+    val currentAddressState: String? = null,
+    val currentAddressCity: String? = null,
+    val currentAddressLine1: String? = null,
+    val currentAddressLine2: String? = null,
+    val currentAddressPostalCode: String? = null,
     // OTHER
     val status: KycResponse.Status = KycResponse.Status.PENDING,
     val remarks: String? = null,
