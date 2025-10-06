@@ -250,15 +250,6 @@ class KycViewModel(
                 }
 
 
-                is KycEvent.CurrentAddressPostalCodeChanged -> _state.update { s ->
-                    s.copy(
-                        currentAddress = s.currentAddress.copy(
-                            postalCode = event.value,
-                            postalCodeError = null
-                        )
-                    )
-                }
-
 
                 // Permanent Address Events
                 is KycEvent.PermanentAddressCountryChanged -> _state.update { s ->
@@ -306,14 +297,7 @@ class KycViewModel(
                     )
                 }
 
-                is KycEvent.PermanentAddressPostalCodeChanged -> _state.update { s ->
-                    s.copy(
-                        permanentAddress = s.permanentAddress.copy(
-                            postalCode = event.value,
-                            postalCodeError = null
-                        )
-                    )
-                }
+
 
                 is KycEvent.CurrentAddressSameAsPermanentChanged -> _state.update { s ->
                     val newState = s.copy(currentAddressSameAsPermanent = event.value)
@@ -579,14 +563,12 @@ class KycViewModel(
         val currentAddressCityValidation = validateNotBlank(_state.value.currentAddress.city)
         val currentAddressAddressLine1Validation = validateNotBlank(_state.value.currentAddress.addressLine1)
         val currentAddressAddressLine2Validation = validateNotBlank(_state.value.currentAddress.addressLine2)
-        val currentAddressPostalCodeValidation = validateNotBlank(_state.value.currentAddress.postalCode)
 
         val permanentAddressCountryValidation = validateNotBlank(_state.value.permanentAddress.country)
         val permanentAddressStateValidation = validateNotBlank(_state.value.permanentAddress.state)
         val permanentAddressCityValidation = validateNotBlank(_state.value.permanentAddress.city)
         val permanentAddressAddressLine1Validation = validateNotBlank(_state.value.permanentAddress.addressLine1)
         val permanentAddressAddressLine2Validation = validateNotBlank(_state.value.permanentAddress.addressLine2)
-        val permanentAddressPostalCodeValidation = validateNotBlank(_state.value.permanentAddress.postalCode)
 
         _state.update { s ->
             s.copy(
@@ -596,7 +578,6 @@ class KycViewModel(
                     cityError = permanentAddressCityValidation.errorMessage(),
                     stateError = permanentAddressStateValidation.errorMessage(),
                     countryError = permanentAddressCountryValidation.errorMessage(),
-                    postalCodeError = permanentAddressPostalCodeValidation.errorMessage(),
                 ),
                 currentAddress = s.currentAddress.copy(
                     addressLine1Error = currentAddressAddressLine1Validation.errorMessage(),
@@ -604,7 +585,6 @@ class KycViewModel(
                     cityError = currentAddressCityValidation.errorMessage(),
                     stateError = currentAddressStateValidation.errorMessage(),
                     countryError = currentAddressCountryValidation.errorMessage(),
-                    postalCodeError = currentAddressPostalCodeValidation.errorMessage(),
                 ),
             )
         }

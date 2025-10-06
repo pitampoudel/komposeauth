@@ -30,7 +30,6 @@ fun KycVerification.toResponse() = KycResponse(
         city = currentAddressCity,
         addressLine1 = currentAddressLine1,
         addressLine2 = currentAddressLine2,
-        postalCode = currentAddressPostalCode
     ),
     permanentAddress = KycResponse.AddressInformation(
         country = permanentAddressCountry,
@@ -38,7 +37,6 @@ fun KycVerification.toResponse() = KycResponse(
         city = permanentAddressCity,
         addressLine1 = permanentAddressLine1,
         addressLine2 = permanentAddressLine2,
-        postalCode = permanentAddressPostalCode
     ),
     documentInformation = KycResponse.DocumentInformationResponse(
         documentType = documentType,

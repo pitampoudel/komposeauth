@@ -20,17 +20,14 @@ data class AddressState(
     val addressLine1: String = "",
     val addressLine1Error: String? = null,
     val addressLine2: String = "",
-    val addressLine2Error: String? = null,
-    val postalCode: String = "",
-    val postalCodeError: String? = null,
+    val addressLine2Error: String? = null
 ) {
     fun hasError(): Boolean {
         return countryError != null ||
                 stateError != null ||
                 cityError != null ||
                 addressLine1Error != null ||
-                addressLine2Error != null ||
-                postalCodeError != null
+                addressLine2Error != null
     }
 
     fun toRequest(): KycResponse.AddressInformation {
@@ -41,8 +38,7 @@ data class AddressState(
             state = state,
             city = city,
             addressLine1 = addressLine1,
-            addressLine2 = addressLine2,
-            postalCode = postalCode,
+            addressLine2 = addressLine2
         )
     }
 
@@ -54,8 +50,7 @@ data class AddressState(
                 state = data.state.orEmpty(),
                 city = data.city.orEmpty(),
                 addressLine1 = data.addressLine1.orEmpty(),
-                addressLine2 = data.addressLine2.orEmpty(),
-                postalCode = data.postalCode.orEmpty(),
+                addressLine2 = data.addressLine2.orEmpty()
             )
         }
     }

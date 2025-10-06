@@ -89,13 +89,11 @@ class KycService(
             permanentAddressCity = data.permanentAddress.city,
             permanentAddressLine1 = data.permanentAddress.addressLine1,
             permanentAddressLine2 = data.permanentAddress.addressLine2,
-            permanentAddressPostalCode = data.permanentAddress.postalCode,
             currentAddressCountry = data.currentAddress.country,
             currentAddressState = data.currentAddress.state,
             currentAddressCity = data.currentAddress.city,
             currentAddressLine1 = data.currentAddress.addressLine1,
             currentAddressLine2 = data.currentAddress.addressLine2,
-            currentAddressPostalCode = data.currentAddress.postalCode
         )
         return kycRepo.save(entity).toResponse()
     }

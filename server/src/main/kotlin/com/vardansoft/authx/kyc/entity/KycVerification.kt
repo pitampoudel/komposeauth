@@ -52,7 +52,6 @@ data class KycVerification(
     val permanentAddressCity: String? = null,
     val permanentAddressLine1: String? = null,
     val permanentAddressLine2: String? = null,
-    val permanentAddressPostalCode: String? = null,
     // CURRENT
 
     val currentAddressCountry: String? = null,
@@ -60,7 +59,6 @@ data class KycVerification(
     val currentAddressCity: String? = null,
     val currentAddressLine1: String? = null,
     val currentAddressLine2: String? = null,
-    val currentAddressPostalCode: String? = null,
     // OTHER
     val status: KycResponse.Status = KycResponse.Status.PENDING,
     val remarks: String? = null,

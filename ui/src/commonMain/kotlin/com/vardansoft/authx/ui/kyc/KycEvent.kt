@@ -31,14 +31,12 @@ sealed interface KycEvent {
     data class CurrentAddressCityChanged(val value: String) : KycEvent
     data class CurrentAddressAddressLine1Changed(val value: String) : KycEvent
     data class CurrentAddressAddressLine2Changed(val value: String) : KycEvent
-    data class CurrentAddressPostalCodeChanged(val value: String) : KycEvent
 
     data class PermanentAddressCountryChanged(val value: String) : KycEvent
     data class PermanentAddressStateChanged(val value: String) : KycEvent
     data class PermanentAddressCityChanged(val value: String) : KycEvent
     data class PermanentAddressAddressLine1Changed(val value: String) : KycEvent
     data class PermanentAddressAddressLine2Changed(val value: String) : KycEvent
-    data class PermanentAddressPostalCodeChanged(val value: String) : KycEvent
 
     data class CurrentAddressSameAsPermanentChanged(val value: Boolean) : KycEvent
 
