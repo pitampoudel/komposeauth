@@ -136,22 +136,21 @@ fun DateTimeField(
         )
 
     }
-    Box(Modifier.clickable { isShowingDatePickerDialog = true }) {
-        field(
-            when (type) {
-                DateTimeFieldType.DATE -> valueAsLocalDateTime?.date?.asDisplayDate().orEmpty()
-                DateTimeFieldType.TIME -> valueAsLocalDateTime?.time?.asDisplayTime().orEmpty()
-                DateTimeFieldType.DATE_AND_TIME -> valueAsLocalDateTime?.asDisplayDateTime()
-                    .orEmpty()
-            }
-        ) {
-            when (type) {
-                DateTimeFieldType.DATE -> isShowingDatePickerDialog = true
-                DateTimeFieldType.TIME -> isShowingTimePickerDialog = true
-                DateTimeFieldType.DATE_AND_TIME -> isShowingDatePickerDialog = true
-            }
+    field(
+        when (type) {
+            DateTimeFieldType.DATE -> valueAsLocalDateTime?.date?.asDisplayDate().orEmpty()
+            DateTimeFieldType.TIME -> valueAsLocalDateTime?.time?.asDisplayTime().orEmpty()
+            DateTimeFieldType.DATE_AND_TIME -> valueAsLocalDateTime?.asDisplayDateTime()
+                .orEmpty()
+        }
+    ) {
+        when (type) {
+            DateTimeFieldType.DATE -> isShowingDatePickerDialog = true
+            DateTimeFieldType.TIME -> isShowingTimePickerDialog = true
+            DateTimeFieldType.DATE_AND_TIME -> isShowingDatePickerDialog = true
         }
     }
+
 }
 
 
