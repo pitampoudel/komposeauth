@@ -250,7 +250,6 @@ class KycViewModel(
                 }
 
 
-
                 // Permanent Address Events
                 is KycEvent.PermanentAddressCountryChanged -> _state.update { s ->
                     s.copy(
@@ -296,7 +295,6 @@ class KycViewModel(
                         )
                     )
                 }
-
 
 
                 is KycEvent.CurrentAddressSameAsPermanentChanged -> _state.update { s ->
@@ -545,7 +543,7 @@ class KycViewModel(
                     refillAll(res.data)
                     _state.update {
                         it.copy(
-                            currentPage = it.currentPage + 1
+                            currentPage = it.currentPage?.plus(1)
                         )
                     }
                 }
@@ -561,14 +559,19 @@ class KycViewModel(
         val currentAddressCountryValidation = validateNotBlank(_state.value.currentAddress.country)
         val currentAddressStateValidation = validateNotBlank(_state.value.currentAddress.state)
         val currentAddressCityValidation = validateNotBlank(_state.value.currentAddress.city)
-        val currentAddressAddressLine1Validation = validateNotBlank(_state.value.currentAddress.addressLine1)
-        val currentAddressAddressLine2Validation = validateNotBlank(_state.value.currentAddress.addressLine2)
+        val currentAddressAddressLine1Validation =
+            validateNotBlank(_state.value.currentAddress.addressLine1)
+        val currentAddressAddressLine2Validation =
+            validateNotBlank(_state.value.currentAddress.addressLine2)
 
-        val permanentAddressCountryValidation = validateNotBlank(_state.value.permanentAddress.country)
+        val permanentAddressCountryValidation =
+            validateNotBlank(_state.value.permanentAddress.country)
         val permanentAddressStateValidation = validateNotBlank(_state.value.permanentAddress.state)
         val permanentAddressCityValidation = validateNotBlank(_state.value.permanentAddress.city)
-        val permanentAddressAddressLine1Validation = validateNotBlank(_state.value.permanentAddress.addressLine1)
-        val permanentAddressAddressLine2Validation = validateNotBlank(_state.value.permanentAddress.addressLine2)
+        val permanentAddressAddressLine1Validation =
+            validateNotBlank(_state.value.permanentAddress.addressLine1)
+        val permanentAddressAddressLine2Validation =
+            validateNotBlank(_state.value.permanentAddress.addressLine2)
 
         _state.update { s ->
             s.copy(
@@ -597,7 +600,7 @@ class KycViewModel(
                     refillAll(res.data)
                     _state.update {
                         it.copy(
-                            currentPage = it.currentPage + 1
+                            currentPage = it.currentPage?.plus(1)
                         )
                     }
                 }
@@ -642,7 +645,14 @@ class KycViewModel(
             val res = client.submitKycDocuments(req)
             when (res) {
                 is Result.Error -> _state.update { it.copy(infoMsg = res.message) }
-                is Result.Success -> refillAll(res.data)
+                is Result.Success -> {
+                    refillAll(res.data)
+                    _state.update {
+                        it.copy(
+                            currentPage = null
+                        )
+                    }
+                }
             }
         }
         _state.update { it.copy(progress = null) }

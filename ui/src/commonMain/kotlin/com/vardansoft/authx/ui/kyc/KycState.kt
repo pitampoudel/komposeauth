@@ -175,7 +175,7 @@ data class DocumentInformationState(
 }
 
 data class KycState(
-    val currentPage: Int = 1,
+    val currentPage: Int? = 1,
     val personalInfo: PersonalInformationState = PersonalInformationState(),
     val documentInfo: DocumentInformationState = DocumentInformationState(),
     val permanentAddress: AddressState = AddressState(),
