@@ -164,7 +164,7 @@ data class DocumentInformationState(
             documentType = documentType!!,
             documentNumber = documentNumber,
             documentIssuedDate = documentIssuedDate!!,
-            documentExpiryDate = documentExpiryDate!!,
+            documentExpiryDate = documentExpiryDate,
             documentIssuedPlace = documentIssuedPlace,
             documentFront = documentFront!!.toEncodedData(),
             documentBack = documentBack!!.toEncodedData(),

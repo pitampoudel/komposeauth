@@ -8,6 +8,7 @@ import com.vardansoft.core.domain.validators.ValidateNotBlank
 import com.vardansoft.core.domain.validators.ValidateNotNull
 import com.vardansoft.core.domain.Result
 import com.vardansoft.core.data.download
+import com.vardansoft.core.domain.validators.ValidationResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -617,8 +618,7 @@ class KycViewModel(
         val documentNumberValidation = validateNotBlank(_state.value.documentInfo.documentNumber)
         val documentIssuedDateValidation =
             validateNotNull(_state.value.documentInfo.documentIssuedDate)
-        val documentExpiryDateValidation =
-            validateNotNull(_state.value.documentInfo.documentExpiryDate)
+        val documentExpiryDateValidation = ValidationResult.Success
         val documentIssuedPlaceValidation =
             validateNotBlank(_state.value.documentInfo.documentIssuedPlace)
         val documentFrontValidation = validateNotNull(_state.value.documentInfo.documentFront)

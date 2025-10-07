@@ -29,7 +29,7 @@ data class DocumentInformation(
     val documentType: DocumentType,
     val documentNumber: String,
     val documentIssuedDate: LocalDate,
-    val documentExpiryDate: LocalDate,
+    val documentExpiryDate: LocalDate?,
     val documentIssuedPlace: String,
     val documentFront: EncodedData,
     val documentBack: EncodedData,
