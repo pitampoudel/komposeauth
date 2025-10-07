@@ -1,5 +1,7 @@
 package com.vardansoft.authx.ui.core.components
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.AlertDialog
@@ -13,7 +15,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
@@ -50,17 +51,10 @@ enum class DateTimeFieldType {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 fun DateTimeField(
-    modifier: Modifier = Modifier,
-    isError: Boolean = false,
-    leadingIcon: (@Composable () -> Unit)? = null,
-    supportingText: @Composable (() -> Unit)? = null,
-    enabled: Boolean = true,
-    label: (@Composable () -> Unit)? = null,
-    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
-    shape: Shape = OutlinedTextFieldDefaults.shape,
     type: DateTimeFieldType,
     value: Instant?,
     onValueChange: (Instant?) -> Unit,
+    field: @Composable (text: String, onClick: () -> Unit) -> Unit
 ) {
     val valueAsLocalDateTime = remember(value) {
         value?.toSystemLocalDateTime()
@@ -142,38 +136,69 @@ fun DateTimeField(
         )
 
     }
-
-    OutlinedTextField(
-        modifier = modifier.onFocusChanged {
-            if (it.hasFocus) {
-                isShowingDatePickerDialog = true
+    Box(Modifier.clickable { isShowingDatePickerDialog = true }) {
+        field(
+            when (type) {
+                DateTimeFieldType.DATE -> valueAsLocalDateTime?.date?.asDisplayDate().orEmpty()
+                DateTimeFieldType.TIME -> valueAsLocalDateTime?.time?.asDisplayTime().orEmpty()
+                DateTimeFieldType.DATE_AND_TIME -> valueAsLocalDateTime?.asDisplayDateTime()
+                    .orEmpty()
             }
-        },
-        colors = colors,
-        shape = shape,
-        enabled = enabled,
-        isError = isError,
-        value = when (type) {
-            DateTimeFieldType.DATE -> valueAsLocalDateTime?.date?.asDisplayDate().orEmpty()
-            DateTimeFieldType.TIME -> valueAsLocalDateTime?.time?.asDisplayTime().orEmpty()
-            DateTimeFieldType.DATE_AND_TIME -> valueAsLocalDateTime?.asDisplayDateTime().orEmpty()
-        },
-        onValueChange = {},
-        readOnly = true,
-        label = label,
-        supportingText = supportingText,
-        trailingIcon = {
-            IconButton(onClick = {
-                when (type) {
-                    DateTimeFieldType.DATE -> isShowingDatePickerDialog = true
-                    DateTimeFieldType.TIME -> isShowingTimePickerDialog = true
-                    DateTimeFieldType.DATE_AND_TIME -> isShowingDatePickerDialog = true
+        ) {
+            when (type) {
+                DateTimeFieldType.DATE -> isShowingDatePickerDialog = true
+                DateTimeFieldType.TIME -> isShowingTimePickerDialog = true
+                DateTimeFieldType.DATE_AND_TIME -> isShowingDatePickerDialog = true
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
+@Composable
+fun DateTimeField(
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+    leadingIcon: (@Composable () -> Unit)? = null,
+    supportingText: @Composable (() -> Unit)? = null,
+    enabled: Boolean = true,
+    label: (@Composable () -> Unit)? = null,
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
+    shape: Shape = OutlinedTextFieldDefaults.shape,
+    type: DateTimeFieldType,
+    value: Instant?,
+    onValueChange: (Instant?) -> Unit,
+) {
+    DateTimeField(
+        type = type,
+        value = value,
+        onValueChange = onValueChange
+    ) { text, onClick ->
+        OutlinedTextField(
+            modifier = modifier.onFocusChanged {
+                if (it.hasFocus) {
+                    onClick()
                 }
+            },
+            colors = colors,
+            shape = shape,
+            enabled = enabled,
+            isError = isError,
+            value = text,
+            onValueChange = {},
+            readOnly = true,
+            label = label,
+            supportingText = supportingText,
+            trailingIcon = {
+                IconButton(onClick = onClick) {
+                    Icon(Icons.Default.CalendarToday, null)
+                }
+            },
+            leadingIcon = leadingIcon
+        )
 
-            }) {
-                Icon(Icons.Default.CalendarToday, null)
-            }
-        },
-        leadingIcon = leadingIcon
-    )
+    }
+
+
 }
