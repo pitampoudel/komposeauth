@@ -15,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
+import org.springframework.web.servlet.resource.NoResourceFoundException
 import java.time.LocalDateTime
 import javax.security.auth.login.AccountNotFoundException
 
@@ -102,9 +103,9 @@ class GlobalExceptionHandler {
         return ResponseEntity(errorResponse, HttpStatus.NOT_FOUND)
     }
 
-    @ExceptionHandler(AccountNotFoundException::class)
+    @ExceptionHandler(AccountNotFoundException::class, NoResourceFoundException::class)
     fun handleAccountNotFoundException(
-        ex: AccountNotFoundException,
+        ex: Exception,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
