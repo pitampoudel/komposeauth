@@ -1,13 +1,14 @@
 package com.vardansoft.authx
 
 import io.sentry.Sentry
-import org.apache.coyote.BadRequestException // Added import
+import org.apache.coyote.BadRequestException
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
 import java.time.LocalDateTime
-import javax.security.auth.login.AccountNotFoundException // Added import
+import javax.security.auth.login.AccountNotFoundException
 
 @ControllerAdvice
 class GlobalExceptionHandler {
@@ -23,17 +24,24 @@ class GlobalExceptionHandler {
     private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     @ExceptionHandler(HttpMessageNotReadableException::class)
-    fun handleJsonParseException(ex: HttpMessageNotReadableException, request: WebRequest): ResponseEntity<ErrorResponse> {
+    fun handleJsonParseException(
+        ex: HttpMessageNotReadableException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
             timestamp = LocalDateTime.now(),
-            message = ex.rootCause?.message ?: ex.message ?: "Invalid request body: The provided JSON is malformed or invalid.",
+            message = ex.rootCause?.message ?: ex.message
+            ?: "Invalid request body: The provided JSON is malformed or invalid.",
             path = request.getDescription(false).removePrefix("uri=")
         )
         return ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST)
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
-    fun handleMethodNotSupported(ex: HttpRequestMethodNotSupportedException, request: WebRequest): ResponseEntity<ErrorResponse> {
+    fun handleMethodNotSupported(
+        ex: HttpRequestMethodNotSupportedException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
             timestamp = LocalDateTime.now(),
             message = ex.message ?: "Method not supported",
@@ -43,7 +51,10 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DuplicateKeyException::class)
-    fun handleDuplicateKeyException(ex: DuplicateKeyException, request: WebRequest): ResponseEntity<ErrorResponse> {
+    fun handleDuplicateKeyException(
+        ex: DuplicateKeyException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
             timestamp = LocalDateTime.now(),
             message = "A resource with the same unique identifier already exists.",
@@ -53,7 +64,10 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException::class)
-    fun handleDataIntegrityViolation(ex: DataIntegrityViolationException, request: WebRequest): ResponseEntity<ErrorResponse> {
+    fun handleDataIntegrityViolation(
+        ex: DataIntegrityViolationException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
             timestamp = LocalDateTime.now(),
             message = ex.rootCause?.message ?: ex.message ?: "Data integrity violation",
@@ -63,7 +77,10 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException::class)
-    fun handleIllegalArgumentException(ex: IllegalArgumentException, request: WebRequest): ResponseEntity<ErrorResponse> {
+    fun handleIllegalArgumentException(
+        ex: IllegalArgumentException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
             timestamp = LocalDateTime.now(),
             message = ex.message ?: "Invalid argument provided.",
@@ -73,7 +90,10 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UsernameNotFoundException::class)
-    fun handleUsernameNotFoundException(ex: UsernameNotFoundException, request: WebRequest): ResponseEntity<ErrorResponse> {
+    fun handleUsernameNotFoundException(
+        ex: UsernameNotFoundException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
             timestamp = LocalDateTime.now(),
             message = ex.message,
@@ -83,7 +103,10 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AccountNotFoundException::class)
-    fun handleAccountNotFoundException(ex: AccountNotFoundException, request: WebRequest): ResponseEntity<ErrorResponse> {
+    fun handleAccountNotFoundException(
+        ex: AccountNotFoundException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
             timestamp = LocalDateTime.now(),
             message = ex.message,
@@ -93,7 +116,10 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleValidationExceptions(ex: MethodArgumentNotValidException, request: WebRequest): ResponseEntity<ErrorResponse> {
+    fun handleValidationExceptions(
+        ex: MethodArgumentNotValidException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
         val errors = ex.bindingResult.fieldErrors.joinToString(", ") {
             it.defaultMessage ?: "Validation failed for field ${it.field}"
         }
@@ -106,13 +132,29 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BadRequestException::class)
-    fun handleApacheCoyoteBadRequestException(ex: BadRequestException, request: WebRequest): ResponseEntity<ErrorResponse> {
+    fun handleApacheCoyoteBadRequestException(
+        ex: BadRequestException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
             timestamp = LocalDateTime.now(),
             message = ex.message,
             path = request.getDescription(false).removePrefix("uri=")
         )
         return ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST)
+    }
+
+    @ExceptionHandler(AccessDeniedException::class)
+    fun handleAccessDeniedException(
+        ex: AccessDeniedException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
+        val errorResponse = ErrorResponse(
+            timestamp = LocalDateTime.now(),
+            message = ex.message ?: "You do not have permission to perform this action.",
+            path = request.getDescription(false).removePrefix("uri=")
+        )
+        return ResponseEntity(errorResponse, HttpStatus.FORBIDDEN)
     }
 
     @ExceptionHandler(Exception::class)
