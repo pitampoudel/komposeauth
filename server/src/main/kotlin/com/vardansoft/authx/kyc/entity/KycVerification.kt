@@ -53,7 +53,6 @@ data class KycVerification(
     val permanentAddressLine1: String? = null,
     val permanentAddressLine2: String? = null,
     // CURRENT
-
     val currentAddressCountry: String? = null,
     val currentAddressState: String? = null,
     val currentAddressCity: String? = null,

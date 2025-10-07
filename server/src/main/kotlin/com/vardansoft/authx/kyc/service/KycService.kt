@@ -22,6 +22,9 @@ class KycService(
 
     fun find(userId: ObjectId): KycResponse? = kycRepo.findByUserId(userId)?.toResponse()
 
+    fun getPending(): List<KycResponse> =
+        kycRepo.findAllByStatus(KycResponse.Status.PENDING).map { it.toResponse() }
+
     @Transactional
     fun submitPersonalInformation(
         userId: ObjectId,

@@ -39,6 +39,14 @@ class KycController(
     }
 
     @Operation(
+        summary = "Get all pending KYC submissions",
+        description = "Retrieves all KYC submissions with a 'PENDING' status. Requires ADMIN role."
+    )
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun getPending(): ResponseEntity<List<KycResponse>> = ResponseEntity.ok(kycService.getPending())
+
+    @Operation(
         summary = "Submit Personal Information",
         description = "Submits or updates the Personal information for the currently authenticated user."
     )
