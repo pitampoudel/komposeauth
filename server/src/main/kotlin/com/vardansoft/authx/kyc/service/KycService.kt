@@ -32,15 +32,11 @@ class KycService(
     ): KycResponse {
         val existing = kycRepo.findByUserId(userId)
 
-        if (existing?.status == KycResponse.Status.APPROVED) {
-            throw IllegalStateException("KYC already approved; cannot resubmit")
-        }
-
         if (existing != null && (existing.country != data.country || existing.nationality != data.nationality)) {
             throw IllegalStateException("KYC already submitted with different country or nationality; cannot resubmit")
         }
 
-        val kycRecord = existing?.copy(
+        val newKycData = existing?.copy(
             country = data.country,
             nationality = data.nationality,
             firstName = data.firstName,
@@ -75,18 +71,17 @@ class KycService(
             email = data.email
         )
 
-        return kycRepo.save(kycRecord).toResponse()
+        if (existing?.status == KycResponse.Status.APPROVED && existing != newKycData) {
+            throw IllegalStateException("KYC already approved; cannot resubmit")
+        }
+
+        return kycRepo.save(newKycData).toResponse()
     }
 
     @Transactional
     fun submitAddressDetails(userId: ObjectId, data: UpdateAddressDetailsRequest): KycResponse {
         val existing = kycRepo.findByUserId(userId) ?: throw BadRequestException("KYC not found")
-
-        if (existing.status == KycResponse.Status.APPROVED) {
-            throw IllegalStateException("KYC already approved; cannot resubmit")
-        }
-
-        val entity = existing.copy(
+        val newKycData = existing.copy(
             permanentAddressCountry = data.permanentAddress.country,
             permanentAddressState = data.permanentAddress.state,
             permanentAddressCity = data.permanentAddress.city,
@@ -98,7 +93,11 @@ class KycService(
             currentAddressLine1 = data.currentAddress.addressLine1,
             currentAddressLine2 = data.currentAddress.addressLine2,
         )
-        return kycRepo.save(entity).toResponse()
+        if (existing.status == KycResponse.Status.APPROVED && existing != newKycData) {
+            throw IllegalStateException("KYC already approved; cannot resubmit")
+        }
+
+        return kycRepo.save(newKycData).toResponse()
     }
 
     @Transactional
