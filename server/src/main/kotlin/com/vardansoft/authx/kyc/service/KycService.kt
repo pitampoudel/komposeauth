@@ -33,7 +33,7 @@ class KycService(
         val existing = kycRepo.findByUserId(userId)
 
         if (existing != null && (existing.country != data.country || existing.nationality != data.nationality)) {
-            throw IllegalStateException("KYC already submitted with different country or nationality; cannot resubmit")
+            throw BadRequestException("KYC already submitted with different country or nationality; cannot resubmit")
         }
 
         val newKycData = existing?.copy(
@@ -72,7 +72,7 @@ class KycService(
         )
 
         if (existing?.status == KycResponse.Status.APPROVED && existing != newKycData) {
-            throw IllegalStateException("KYC already approved; cannot resubmit")
+            throw BadRequestException("KYC already approved; cannot resubmit")
         }
 
         return kycRepo.save(newKycData).toResponse()
@@ -94,7 +94,7 @@ class KycService(
             currentAddressLine2 = data.currentAddress.addressLine2,
         )
         if (existing.status == KycResponse.Status.APPROVED && existing != newKycData) {
-            throw IllegalStateException("KYC already approved; cannot resubmit")
+            throw BadRequestException("KYC already approved; cannot resubmit")
         }
 
         return kycRepo.save(newKycData).toResponse()
@@ -105,7 +105,7 @@ class KycService(
         val existing = kycRepo.findByUserId(userId) ?: throw BadRequestException("KYC not found")
 
         if (existing.status == KycResponse.Status.APPROVED) {
-            throw IllegalStateException("KYC already approved; cannot resubmit")
+            throw BadRequestException("KYC already approved; cannot resubmit")
         }
 
         fun upload(label: String, encoded: EncodedData): String {
