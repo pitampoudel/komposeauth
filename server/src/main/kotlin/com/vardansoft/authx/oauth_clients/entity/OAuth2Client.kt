@@ -27,5 +27,9 @@ data class OAuth2Client(
     val createdAt: Instant = Instant.now(),
     @LastModifiedDate
     val updatedAt: Instant = Instant.now()
-)
+) {
+    companion object {
+        const val SCOPE_READ_ANY_USER = "user.read.any"
+    }
+}
 

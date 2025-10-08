@@ -46,8 +46,8 @@ fun OAuth2Client.toRegisteredClient(): RegisteredClient {
 
 fun CreateClientRequest.toEntity(): OAuth2Client {
     val id = clientId?.let { ObjectId(it) } ?: ObjectId()
-    val secret = UUID.randomUUID().toString().replace("-", "") +
-            UUID.randomUUID().toString().replace("-", "")
+    val secret = clientSecret ?: (UUID.randomUUID().toString().replace("-", "") +
+            UUID.randomUUID().toString().replace("-", ""))
     val authenticationMethods: Set<ClientAuthenticationMethod> = setOf(
         ClientAuthenticationMethod.CLIENT_SECRET_POST,
         ClientAuthenticationMethod.NONE
@@ -66,7 +66,7 @@ fun CreateClientRequest.toEntity(): OAuth2Client {
         redirectUris = this.redirectUris,
         clientUri = this.clientUri,
         logoUri = this.logoUri,
-        scopes = setOf(OidcScopes.PROFILE, OidcScopes.EMAIL, OidcScopes.OPENID, "offline_access"),
+        scopes = scopes,
         requireAuthorizationConsent = true,
         createdAt = Instant.now(),
         updatedAt = Instant.now()

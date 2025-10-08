@@ -100,7 +100,6 @@ LaunchedEffect(Unit) {
 
 ## Notes
 - Java toolchain: 17
-- Some protected APIs require SCOPE_user.read.any or SCOPE_user.write.any
 - OIDC userinfo includes KYC status when configured
 
 ## License

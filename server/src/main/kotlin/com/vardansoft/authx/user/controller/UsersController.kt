@@ -1,6 +1,5 @@
 package com.vardansoft.authx.user.controller
 
-import com.vardansoft.authx.core.service.EmailService
 import com.vardansoft.authx.core.service.JwtService
 import com.vardansoft.authx.data.ApiEndpoints
 import com.vardansoft.authx.data.CreateUserRequest
@@ -11,6 +10,7 @@ import com.vardansoft.authx.data.TokenRefreshRequest
 import com.vardansoft.authx.data.UserInfoResponse
 import com.vardansoft.authx.data.UserResponse
 import com.vardansoft.authx.kyc.service.KycService
+import com.vardansoft.authx.oauth_clients.entity.OAuth2Client.Companion.SCOPE_READ_ANY_USER
 import com.vardansoft.authx.user.dto.mapToResponseDto
 import com.vardansoft.authx.user.service.UserService
 import io.swagger.v3.oas.annotations.Operation
@@ -112,7 +112,7 @@ class UsersController(
         description = "Fetch a single user by their ID"
     )
     @Parameter(name = "id", description = "User ID", required = true)
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_user.read.any')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_READ_ANY_USER')")
     fun getUserById(@PathVariable id: String): ResponseEntity<UserResponse> {
         val user = userService.findUser(id) ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(user.mapToResponseDto())
@@ -124,7 +124,7 @@ class UsersController(
         description = "Fetch multiple users by a comma-separated list of IDs"
     )
     @Parameter(name = "ids", description = "Comma-separated list of user IDs", required = true)
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_user.read.any')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_READ_ANY_USER')")
     fun getUsersBatch(@RequestParam ids: String): ResponseEntity<List<UserResponse>> {
         val userIds = ids.split(",").map { it.trim() }.filter { it.isNotEmpty() }
 
