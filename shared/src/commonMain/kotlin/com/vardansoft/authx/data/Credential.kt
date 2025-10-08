@@ -32,4 +32,11 @@ sealed class Credential {
         val password: String
     ) : Credential()
 
+    @Serializable
+    @SerialName("REFRESH_TOKEN")
+    data class RefreshToken(
+        @SerialName("refreshToken")
+        val refreshToken: String
+    ) : Credential()
+
 }

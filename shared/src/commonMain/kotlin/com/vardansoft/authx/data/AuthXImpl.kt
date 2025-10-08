@@ -1,6 +1,5 @@
 package com.vardansoft.authx.data
 
-import com.vardansoft.authx.data.ApiEndpoints.REFRESH_TOKEN
 import com.vardansoft.authx.data.ApiEndpoints.TOKEN
 import com.vardansoft.authx.domain.AuthX
 import com.vardansoft.authx.domain.AuthXPreferences
@@ -46,9 +45,9 @@ class AuthXImpl internal constructor(
 
                 val result = safeApiCall<OAuth2TokenData> {
                     client.post(
-                        "$authUrl/$REFRESH_TOKEN",
+                        "$authUrl/$TOKEN",
                         block = {
-                            setBody(TokenRefreshRequest(refreshToken))
+                            setBody(Credential.RefreshToken(refreshToken) as Credential)
                         }
                     ).asResource { body() }
                 }
@@ -74,7 +73,7 @@ class AuthXImpl internal constructor(
             sendWithoutRequest {
                 val host = it.url.host
                 val urlString = it.url.toString()
-                val isAuthEndpoint = urlString.endsWith("/$REFRESH_TOKEN") || urlString.endsWith("/$TOKEN")
+                val isAuthEndpoint = urlString.endsWith("/$TOKEN")
                 (hosts.contains(host) || isIpAddress(host)) && !isAuthEndpoint
             }
         }

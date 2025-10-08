@@ -6,7 +6,6 @@ import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.OAuth2TokenData
-import com.vardansoft.authx.data.TokenRefreshRequest
 import com.vardansoft.authx.data.UserInfoResponse
 import com.vardansoft.authx.data.UserResponse
 import com.vardansoft.authx.kyc.service.KycService
@@ -15,7 +14,6 @@ import com.vardansoft.authx.user.dto.mapToResponseDto
 import com.vardansoft.authx.user.service.UserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
-import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
@@ -53,7 +51,7 @@ class UsersController(
     @PostMapping("/${ApiEndpoints.TOKEN}")
     @Operation(
         summary = "Login with credentials",
-        description = "Validate credentials (email/password, Google ID token, or Google OAuth2 authorization code) and returns JWT tokens directly"
+        description = "Validate credentials and returns JWT tokens directly."
     )
     fun token(@RequestBody request: Credential): ResponseEntity<OAuth2TokenData> {
         val user = when (request) {
@@ -68,6 +66,10 @@ class UsersController(
                 codeVerifier = request.codeVerifier,
                 redirectUri = request.redirectUri
             )
+            is Credential.RefreshToken -> {
+                val userId = jwtService.validateRefreshToken(request.refreshToken)
+                userService.findUser(userId) ?: throw UsernameNotFoundException("User not found")
+            }
         } ?: throw UsernameNotFoundException("User not found or invalid credentials")
 
         val accessToken = jwtService.generateAccessToken(user)
@@ -82,29 +84,6 @@ class UsersController(
             )
         )
     }
-
-    @PostMapping("/${ApiEndpoints.REFRESH_TOKEN}")
-    @Operation(
-        summary = "Refresh access token",
-        description = "Use refresh token to get a new access token"
-    )
-    fun refreshToken(@RequestBody @Valid request: TokenRefreshRequest): ResponseEntity<OAuth2TokenData> {
-        val userId = jwtService.validateRefreshToken(request.refreshToken)
-        val user =
-            userService.findUser(userId) ?: throw UsernameNotFoundException("User not found")
-
-        val newAccessToken = jwtService.generateAccessToken(user)
-
-        return ResponseEntity.ok(
-            OAuth2TokenData(
-                accessToken = newAccessToken,
-                refreshToken = request.refreshToken, // Keep the same refresh token
-                tokenType = "Bearer",
-                expiresIn = 3600,
-            )
-        )
-    }
-
 
     @GetMapping("/users/{id}")
     @Operation(

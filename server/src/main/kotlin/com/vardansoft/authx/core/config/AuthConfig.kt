@@ -72,7 +72,6 @@ class AuthConfig(
                         "/oauth2/jwks",
                         "/login",
                         "/${ApiEndpoints.TOKEN}",
-                        "/${ApiEndpoints.REFRESH_TOKEN}",
                         "/signup",
                         "/api/auth/**",
                         "/users",
