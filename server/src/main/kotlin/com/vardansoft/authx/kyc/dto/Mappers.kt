@@ -5,7 +5,6 @@ import com.vardansoft.authx.data.PersonalInformation
 import com.vardansoft.authx.kyc.entity.KycVerification
 
 fun KycVerification.toResponse() = KycResponse(
-    id = id.toHexString(),
     userId = userId.toHexString(),
     personalInformation = PersonalInformation(
         country = country,

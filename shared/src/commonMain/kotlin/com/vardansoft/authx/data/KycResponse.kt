@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class KycResponse(
-    val id: String,
     val userId: String,
     val personalInformation: PersonalInformation,
     val currentAddress: AddressInformation,

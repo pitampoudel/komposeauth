@@ -80,22 +80,22 @@ class KycController(
         summary = "Approve KYC",
         description = "Approves a KYC record by its ID. Requires ADMIN role."
     )
-    @PostMapping("/{kycId}/approve")
+    @PostMapping("/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
-    fun approve(@PathVariable kycId: String): ResponseEntity<KycResponse> = ResponseEntity.ok(
-        kycService.approve(ObjectId(kycId))
+    fun approve(@PathVariable id: String): ResponseEntity<KycResponse> = ResponseEntity.ok(
+        kycService.approve(ObjectId(id))
     )
 
     @Operation(
         summary = "Reject KYC",
-        description = "Rejects a KYC record by its ID, with an optional reason. Requires ADMIN role."
+        description = "Rejects a KYC record by its id, with an optional reason. Requires ADMIN role."
     )
-    @PostMapping("/{kycId}/reject")
+    @PostMapping("/{id}/reject")
     @PreAuthorize("hasRole('ADMIN')")
     fun reject(
-        @PathVariable kycId: String,
+        @PathVariable id: String,
         @RequestParam(required = false) reason: String?
     ): ResponseEntity<KycResponse> = ResponseEntity.ok(
-        kycService.reject(ObjectId(kycId), reason)
+        kycService.reject(ObjectId(id), reason)
     )
 }

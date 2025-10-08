@@ -15,8 +15,7 @@ import java.time.Instant
 @Document(collection = "kyc_verifications")
 @TypeAlias("kyc_verification")
 data class KycVerification(
-    @Id val id: ObjectId = ObjectId.get(),
-    @Indexed(unique = true)
+    @Id
     val userId: ObjectId,
     // PERSONAL
     val country: String,
