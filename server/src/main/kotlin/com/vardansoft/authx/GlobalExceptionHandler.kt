@@ -18,6 +18,7 @@ import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import java.time.LocalDateTime
 import javax.security.auth.login.AccountNotFoundException
+import javax.security.auth.login.AccountLockedException
 
 @ControllerAdvice
 class GlobalExceptionHandler {
@@ -145,9 +146,9 @@ class GlobalExceptionHandler {
         return ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST)
     }
 
-    @ExceptionHandler(AccessDeniedException::class)
+    @ExceptionHandler(AccessDeniedException::class,AccountLockedException::class)
     fun handleAccessDeniedException(
-        ex: AccessDeniedException,
+        ex: Exception,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
