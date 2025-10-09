@@ -65,6 +65,12 @@ class ProfileViewModel(
 
                 }
 
+                ProfileEvent.DismissDeactivateConfirmation -> {
+                    _state.update {
+                        it.copy(askingDeactivateConfirmation = false)
+                    }
+                }
+
                 ProfileEvent.LogOut -> authXPreferences.clear()
             }
         }
