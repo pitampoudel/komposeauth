@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.http.MediaType
+import org.springframework.security.authentication.AccountStatusException
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -32,6 +33,7 @@ import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import javax.security.auth.login.AccountLockedException
 
 @Configuration
 @EnableWebSecurity
@@ -98,6 +100,11 @@ class AuthConfig(
                 object : DaoAuthenticationProvider(UserDetailsService { email ->
                     val user = userService.findUserByEmailOrPhone(email)
                         ?: throw UsernameNotFoundException("User not found with email: $email")
+
+                    if (user.deactivated) {
+                        throw AccountLockedException("User account is deactivated")
+                    }
+
                     User.withUsername(user.email)
                         .password(user.passwordHash)
                         .authorities(user.roles.map {

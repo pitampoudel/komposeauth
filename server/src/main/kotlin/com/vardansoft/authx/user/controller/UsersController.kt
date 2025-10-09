@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
+import javax.security.auth.login.AccountLockedException
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinInstant
@@ -74,6 +75,10 @@ class UsersController(
                 userService.findUser(userId) ?: throw UsernameNotFoundException("User not found")
             }
         } ?: throw UsernameNotFoundException("User not found or invalid credentials")
+
+        if (user.deactivated) {
+            throw AccountLockedException("User account is deactivated")
+        }
 
         val accessToken = jwtService.generateAccessToken(user)
         val refreshToken = jwtService.generateRefreshToken(user)
