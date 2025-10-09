@@ -35,7 +35,14 @@ data class KycResponse(
         val addressLine2: String?,
     )
 
-    enum class Status { DRAFT, PENDING, APPROVED, REJECTED }
+    enum class Status {
+        DRAFT, PENDING, APPROVED, REJECTED;
+
+        companion object {
+            fun submitted() = listOf(PENDING, APPROVED)
+        }
+    }
+
     enum class Gender { MALE, FEMALE, OTHER }
     enum class MaritalStatus { MARRIED, UNMARRIED }
 

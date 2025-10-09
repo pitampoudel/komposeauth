@@ -75,8 +75,8 @@ class KycService(
             email = data.email
         )
 
-        if (existing?.status == KycResponse.Status.APPROVED && existing != newKycData) {
-            throw BadRequestException("KYC already approved; cannot resubmit")
+        if (existing?.status in KycResponse.Status.submitted() && existing != newKycData) {
+            throw BadRequestException("KYC already submitted; cannot resubmit")
         }
 
         return kycRepo.save(newKycData).toResponse()
@@ -97,8 +97,8 @@ class KycService(
             currentAddressLine1 = data.currentAddress.addressLine1,
             currentAddressLine2 = data.currentAddress.addressLine2,
         )
-        if (existing.status == KycResponse.Status.APPROVED && existing != newKycData) {
-            throw BadRequestException("KYC already approved; cannot resubmit")
+        if (existing.status in KycResponse.Status.submitted() && existing != newKycData) {
+            throw BadRequestException("KYC already submitted; cannot resubmit")
         }
 
         return kycRepo.save(newKycData).toResponse()
@@ -108,8 +108,8 @@ class KycService(
     fun submitDocumentDetails(userId: ObjectId, data: DocumentInformation): KycResponse {
         val existing = kycRepo.findByUserId(userId) ?: throw BadRequestException("KYC not found")
 
-        if (existing.status == KycResponse.Status.APPROVED) {
-            throw BadRequestException("KYC already approved; cannot resubmit")
+        if (existing.status in KycResponse.Status.submitted()) {
+            throw BadRequestException("KYC already submitted; cannot resubmit")
         }
 
         fun upload(label: String, encoded: EncodedData): String {
