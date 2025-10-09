@@ -28,8 +28,8 @@ class ProfileViewModel(
                 it.copy(
                     userInfo = info,
                     editingState = it.editingState.copy(
-                        info?.givenName ?: it.editingState.givenName,
-                        info?.familyName ?: it.editingState.familyName
+                        givenName = info?.givenName ?: it.editingState.givenName,
+                        familyName = info?.familyName ?: it.editingState.familyName
                     )
                 )
             }
@@ -123,6 +123,7 @@ class ProfileViewModel(
                             is Result.Error -> _state.update {
                                 it.copy(infoMsg = res.message)
                             }
+
                             is Result.Success<*> -> _state.update {
                                 it.copy(editingState = ProfileState.EditingState())
                             }
