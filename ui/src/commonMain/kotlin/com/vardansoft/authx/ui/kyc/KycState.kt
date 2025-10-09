@@ -187,6 +187,10 @@ data class KycState(
     val countries: List<Country> = emptyList(),
     val occupations: List<String> = emptyList()
 ) {
+    fun isEditable(): Boolean {
+        return status == KycResponse.Status.DRAFT || status == KycResponse.Status.REJECTED
+    }
+
     fun hasAddressDetailsError(): Boolean {
         val currentAddressError = if (!currentAddressSameAsPermanent) {
             currentAddress.hasError()

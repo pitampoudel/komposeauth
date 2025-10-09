@@ -11,8 +11,7 @@ data class KycResponse(
     val currentAddress: AddressInformation,
     val permanentAddress: AddressInformation,
     val documentInformation: DocumentInformationResponse,
-    val status: Status,
-    val remarks: String?
+    val status: Status
 ) {
 
     @Serializable
@@ -36,7 +35,7 @@ data class KycResponse(
         val addressLine2: String?,
     )
 
-    enum class Status { PENDING, APPROVED, REJECTED }
+    enum class Status { DRAFT, PENDING, APPROVED, REJECTED }
     enum class Gender { MALE, FEMALE, OTHER }
     enum class MaritalStatus { MARRIED, UNMARRIED }
 

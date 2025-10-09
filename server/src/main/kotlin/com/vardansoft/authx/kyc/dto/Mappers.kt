@@ -47,6 +47,5 @@ fun KycVerification.toResponse() = KycResponse(
         documentBackUrl = documentBackUrl,
         selfieUrl = selfieUrl
     ),
-    status = status,
-    remarks = remarks
+    status = status
 )

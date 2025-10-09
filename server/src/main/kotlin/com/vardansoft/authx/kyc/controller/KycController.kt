@@ -7,6 +7,7 @@ import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.PersonalInformation
 import com.vardansoft.authx.data.UpdateAddressDetailsRequest
 import com.vardansoft.authx.kyc.service.KycService
+import com.vardansoft.authx.user.service.UserService
 import io.swagger.v3.oas.annotations.Operation
 import org.bson.types.ObjectId
 import org.springframework.http.ResponseEntity
@@ -19,10 +20,12 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import javax.security.auth.login.AccountNotFoundException
 
 @RestController
 @RequestMapping("/${ApiEndpoints.KYC}")
 class KycController(
+    val userService: UserService,
     private val userContextService: UserContextService,
     private val kycService: KycService,
 ) {
@@ -83,7 +86,7 @@ class KycController(
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     fun approve(@PathVariable id: String): ResponseEntity<KycResponse> = ResponseEntity.ok(
-        kycService.approve(ObjectId(id))
+        kycService.approve(userService.findUser(id)?:throw AccountNotFoundException("User not found"))
     )
 
     @Operation(
@@ -96,6 +99,6 @@ class KycController(
         @PathVariable id: String,
         @RequestParam(required = false) reason: String?
     ): ResponseEntity<KycResponse> = ResponseEntity.ok(
-        kycService.reject(ObjectId(id), reason)
+        kycService.reject(userService.findUser(id)?:throw AccountNotFoundException("User not found"), reason)
     )
 }

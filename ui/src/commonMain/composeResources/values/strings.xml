@@ -61,6 +61,7 @@
     <string name="kyc_status_approved">Approved</string>
     <string name="kyc_status_pending">Pending</string>
     <string name="kyc_status_rejected">Rejected</string>
+    <string name="kyc_status_draft">Draft</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="sign_in_to_continue">Sign in to continue</string>

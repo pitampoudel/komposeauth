@@ -8,7 +8,6 @@ import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.annotation.TypeAlias
-import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
 
@@ -58,8 +57,7 @@ data class KycVerification(
     val currentAddressLine1: String? = null,
     val currentAddressLine2: String? = null,
     // OTHER
-    val status: KycResponse.Status = KycResponse.Status.PENDING,
-    val remarks: String? = null,
+    val status: KycResponse.Status = KycResponse.Status.DRAFT,
     @CreatedDate val createdAt: Instant = Instant.now(),
     @LastModifiedDate val updatedAt: Instant = Instant.now()
 )

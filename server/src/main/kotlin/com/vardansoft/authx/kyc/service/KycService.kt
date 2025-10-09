@@ -1,5 +1,6 @@
 package com.vardansoft.authx.kyc.service
 
+import com.vardansoft.authx.core.service.EmailService
 import com.vardansoft.authx.core.service.StorageService
 import com.vardansoft.authx.data.DocumentInformation
 import com.vardansoft.authx.data.KycResponse
@@ -8,16 +9,19 @@ import com.vardansoft.authx.data.UpdateAddressDetailsRequest
 import com.vardansoft.authx.kyc.dto.toResponse
 import com.vardansoft.authx.kyc.entity.KycVerification
 import com.vardansoft.authx.kyc.repository.KycVerificationRepository
+import com.vardansoft.authx.user.entity.User
 import com.vardansoft.core.data.EncodedData
 import org.apache.coyote.BadRequestException
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
+
 @Service
 class KycService(
     private val kycRepo: KycVerificationRepository,
     private val storage: StorageService,
+    val emailService: EmailService
 ) {
 
     fun find(userId: ObjectId): KycResponse? = kycRepo.findByUserId(userId)?.toResponse()
@@ -133,19 +137,37 @@ class KycService(
     }
 
     @Transactional
-    fun approve(kycId: ObjectId): KycResponse =
-        updateStatus(kycId, KycResponse.Status.APPROVED, null)
+    fun approve(user: User): KycResponse {
+        val res = updateStatus(user.id, KycResponse.Status.APPROVED)
+        user.email?.let {
+            emailService.sendSimpleMail(
+                to = it,
+                subject = "Your KYC has been approved",
+                text = "Congratulations! Your KYC has been approved."
+            )
+        }
+        return res
+    }
+
 
     @Transactional
-    fun reject(kycId: ObjectId, reason: String?): KycResponse =
-        updateStatus(kycId, KycResponse.Status.REJECTED, reason)
+    fun reject(user: User, reason: String?): KycResponse {
+        val res = updateStatus(user.id, KycResponse.Status.REJECTED)
+        user.email?.let {
+            emailService.sendSimpleMail(
+                to = it,
+                subject = "Your KYC has been rejected",
+                text = "We are sorry to inform you that your KYC has been rejected. Reason: $reason"
+            )
+        }
+        return res
+    }
 
     private fun updateStatus(
         kycId: ObjectId,
         status: KycResponse.Status,
-        remarks: String?
     ): KycResponse =
         kycRepo.findById(kycId).map { current ->
-            kycRepo.save(current.copy(status = status, remarks = remarks)).toResponse()
+            kycRepo.save(current.copy(status = status)).toResponse()
         }.orElseThrow { IllegalArgumentException("KYC not found") }
 }
