@@ -1,5 +1,6 @@
 package com.vardansoft.authx.user.controller
 
+import com.vardansoft.authx.core.config.UserContextService
 import com.vardansoft.authx.core.service.JwtService
 import com.vardansoft.authx.data.ApiEndpoints
 import com.vardansoft.authx.data.CreateUserRequest
@@ -12,6 +13,7 @@ import com.vardansoft.authx.kyc.service.KycService
 import com.vardansoft.authx.oauth_clients.entity.OAuth2Client.Companion.SCOPE_READ_ANY_USER
 import com.vardansoft.authx.user.dto.mapToResponseDto
 import com.vardansoft.authx.user.service.UserService
+import com.vardansoft.core.data.MessageResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import org.springframework.http.ResponseEntity
@@ -35,7 +37,8 @@ class UsersController(
     val userService: UserService,
     val jwtService: JwtService,
     private val passwordEncoder: PasswordEncoder,
-    val kycService: KycService
+    val kycService: KycService,
+    private val userContextService: UserContextService
 ) {
     @PostMapping("/users")
     @Operation(
@@ -142,6 +145,17 @@ class UsersController(
         )
 
         return ResponseEntity.ok(userInfo)
+    }
+
+    @PostMapping("/${ApiEndpoints.DEACTIVATE}")
+    @Operation(
+        summary = "Deactivate account",
+        description = "Deactivates the currently authenticated user's account."
+    )
+    fun deactivate(): ResponseEntity<MessageResponse> {
+        val user = userContextService.getCurrentUser()
+        userService.deactivateUser(user.id)
+        return ResponseEntity.ok(MessageResponse("User account deactivated successfully"))
     }
 
 }

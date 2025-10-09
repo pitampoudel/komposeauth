@@ -182,4 +182,9 @@ class UserService(
         return user
     }
 
+    fun deactivateUser(userId: ObjectId) {
+        val user = userRepository.findById(userId).orElseThrow() 
+        userRepository.save(user.copy(deactivated = true))
+    }
+
 }

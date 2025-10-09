@@ -35,6 +35,7 @@ data class User(
     val socialLinks: List<String> = listOf(),
     val passwordHash: String? = null,
     val roles: List<String> = listOf(),
+    val deactivated: Boolean = false,
     @CreatedDate
     val createdAt: Instant = Instant.now(),
     @LastModifiedDate

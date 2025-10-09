@@ -1,6 +1,7 @@
 package com.vardansoft.authx.data
 
 import com.vardansoft.authx.data.ApiEndpoints.CONFIG
+import com.vardansoft.authx.data.ApiEndpoints.DEACTIVATE
 import com.vardansoft.authx.data.ApiEndpoints.KYC
 import com.vardansoft.authx.data.ApiEndpoints.ME
 import com.vardansoft.authx.data.ApiEndpoints.TOKEN
@@ -43,6 +44,12 @@ class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXCl
             httpClient.get("$authUrl/$ME") {
                 accessToken?.let { bearerAuth(accessToken) }
             }.asResource { body() }
+        }
+    }
+
+    override suspend fun deactivate(): Result<HttpResponse> {
+        return safeApiCall {
+            httpClient.post("$authUrl/$DEACTIVATE").asResource { this }
         }
     }
 

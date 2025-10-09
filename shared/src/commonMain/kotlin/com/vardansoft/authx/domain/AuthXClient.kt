@@ -18,6 +18,7 @@ interface AuthXClient {
     suspend fun fetchConfig(desktop: Boolean = false): Result<ConfigResponse>
     suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2TokenData>
     suspend fun fetchUserInfo(accessToken: String? = null): Result<UserInfoResponse>
+    suspend fun deactivate(): Result<HttpResponse>
     suspend fun verifyPhoneOtp(req: VerifyPhoneOtpRequest): Result<HttpResponse>
     suspend fun sendPhoneOtp(request: UpdatePhoneNumberRequest): Result<HttpResponse>
     suspend fun fetchMyKyc(): Result<KycResponse?>
