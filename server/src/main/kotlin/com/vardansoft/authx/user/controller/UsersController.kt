@@ -7,6 +7,7 @@ import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.data.Credential
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.OAuth2TokenData
+import com.vardansoft.authx.data.UpdateProfileRequest
 import com.vardansoft.authx.data.UserInfoResponse
 import com.vardansoft.authx.data.UserResponse
 import com.vardansoft.authx.kyc.service.KycService
@@ -70,6 +71,7 @@ class UsersController(
                 codeVerifier = request.codeVerifier,
                 redirectUri = request.redirectUri
             )
+
             is Credential.RefreshToken -> {
                 val userId = jwtService.validateRefreshToken(request.refreshToken)
                 userService.findUser(userId) ?: throw UsernameNotFoundException("User not found")
@@ -162,5 +164,15 @@ class UsersController(
         userService.deactivateUser(user.id)
         return ResponseEntity.ok(MessageResponse("User account deactivated successfully"))
     }
+
+    @PostMapping("/${ApiEndpoints.UPDATE}")
+    @Operation(
+        summary = "Update current user information"
+    )
+    fun update(@RequestBody request: UpdateProfileRequest): ResponseEntity<UserResponse> {
+        val user = userContextService.getCurrentUser()
+        return ResponseEntity.ok(userService.updateUser(user.id, request))
+    }
+
 
 }

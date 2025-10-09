@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.AuthXPreferences
 import com.vardansoft.core.domain.Result
+import com.vardansoft.core.domain.validators.ValidateNotBlank
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
@@ -14,7 +15,8 @@ import kotlinx.coroutines.launch
 
 class ProfileViewModel(
     val authXPreferences: AuthXPreferences,
-    val client: AuthXClient
+    val client: AuthXClient,
+    val validateNotBlank: ValidateNotBlank
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileState())
@@ -23,7 +25,13 @@ class ProfileViewModel(
     init {
         authXPreferences.userInfoResponse.onEach { info ->
             _state.update {
-                it.copy(userInfo = info)
+                it.copy(
+                    userInfo = info,
+                    editingState = it.editingState.copy(
+                        info?.givenName ?: it.editingState.givenName,
+                        info?.familyName ?: it.editingState.familyName
+                    )
+                )
             }
         }.launchIn(viewModelScope)
     }
@@ -32,7 +40,7 @@ class ProfileViewModel(
         viewModelScope.launch {
             when (event) {
                 ProfileEvent.DismissInfoMsg -> _state.update {
-                    it.copy()
+                    it.copy(infoMsg = null)
                 }
 
                 is ProfileEvent.Deactivate -> {
@@ -72,6 +80,57 @@ class ProfileViewModel(
                 }
 
                 ProfileEvent.LogOut -> authXPreferences.clear()
+
+                is ProfileEvent.EditEvent.GivenNameChanged -> _state.update {
+                    it.copy(
+                        editingState = it.editingState.copy(
+                            givenName = event.value,
+                            givenNameError = null
+                        )
+                    )
+                }
+
+                is ProfileEvent.EditEvent.FamilyNameChanged -> _state.update {
+                    it.copy(
+                        editingState = it.editingState.copy(
+                            familyName = event.value,
+                            familyNameError = null
+                        )
+                    )
+                }
+
+
+                is ProfileEvent.EditEvent.Submit -> {
+                    _state.update { it.copy(progress = 0.0f) }
+
+                    val givenName = state.value.editingState.givenName
+                    val familyName = state.value.editingState.familyName
+
+                    val givenNameValidation = validateNotBlank(givenName)
+                    val familyNameValidation = validateNotBlank(familyName)
+
+                    _state.update { s ->
+                        s.copy(
+                            editingState = s.editingState.copy(
+                                givenNameError = givenNameValidation.errorMessage(),
+                                familyNameError = familyNameValidation.errorMessage()
+                            )
+                        )
+                    }
+
+                    _state.value.editingState.toRequest()?.let { req ->
+                        when (val res = client.updateProfile(req)) {
+                            is Result.Error -> _state.update {
+                                it.copy(infoMsg = res.message)
+                            }
+                            is Result.Success<*> -> _state.update {
+                                it.copy(editingState = ProfileState.EditingState())
+                            }
+                        }
+                    }
+
+                    _state.update { it.copy(progress = null) }
+                }
             }
         }
     }

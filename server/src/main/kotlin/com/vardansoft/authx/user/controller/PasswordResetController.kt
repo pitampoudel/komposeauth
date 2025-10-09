@@ -2,14 +2,19 @@ package com.vardansoft.authx.user.controller
 
 import com.vardansoft.authx.core.service.EmailService
 import com.vardansoft.authx.core.service.JwtService
-import com.vardansoft.authx.data.UpdateUserRequest
+import com.vardansoft.authx.data.UpdateProfileRequest
 import com.vardansoft.authx.user.service.UserService
 import com.vardansoft.core.data.MessageResponse
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.ResponseBody
 
 @Controller
 @RequestMapping("/reset-password")
@@ -68,7 +73,7 @@ class PasswordResetController(
 
         userService.updateUser(
             userId = user.id,
-            req = UpdateUserRequest(
+            req = UpdateProfileRequest(
                 password = newPassword,
                 confirmPassword = confirmPassword
             )

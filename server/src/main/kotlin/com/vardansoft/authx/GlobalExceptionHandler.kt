@@ -146,7 +146,7 @@ class GlobalExceptionHandler {
         return ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST)
     }
 
-    @ExceptionHandler(AccessDeniedException::class,AccountLockedException::class)
+    @ExceptionHandler(AccessDeniedException::class, AccountLockedException::class)
     fun handleAccessDeniedException(
         ex: Exception,
         request: WebRequest

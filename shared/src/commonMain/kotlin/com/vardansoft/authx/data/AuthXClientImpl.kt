@@ -5,6 +5,7 @@ import com.vardansoft.authx.data.ApiEndpoints.DEACTIVATE
 import com.vardansoft.authx.data.ApiEndpoints.KYC
 import com.vardansoft.authx.data.ApiEndpoints.ME
 import com.vardansoft.authx.data.ApiEndpoints.TOKEN
+import com.vardansoft.authx.data.ApiEndpoints.UPDATE
 import com.vardansoft.authx.data.ApiEndpoints.UPDATE_PHONE_NUMBER
 import com.vardansoft.authx.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import com.vardansoft.authx.domain.AuthXClient
@@ -107,6 +108,12 @@ class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXCl
     override suspend fun fetchCountries(): Result<List<Country>> {
         return safeApiCall {
             httpClient.get("$authUrl/countries.json").asResource { body() }
+        }
+    }
+
+    override suspend fun updateProfile(request: UpdateProfileRequest): Result<HttpResponse> {
+        return safeApiCall {
+            httpClient.post("$authUrl/$UPDATE") { setBody(request) }.asResource { this }
         }
     }
 }

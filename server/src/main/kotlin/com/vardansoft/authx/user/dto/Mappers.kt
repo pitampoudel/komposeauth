@@ -1,7 +1,7 @@
 package com.vardansoft.authx.user.dto
 
 import com.vardansoft.authx.data.CreateUserRequest
-import com.vardansoft.authx.data.UpdateUserRequest
+import com.vardansoft.authx.data.UpdateProfileRequest
 import com.vardansoft.authx.data.UserResponse
 import com.vardansoft.authx.user.entity.User
 import com.vardansoft.core.data.parsePhoneNumber
@@ -26,11 +26,12 @@ fun CreateUserRequest.mapToEntity(passwordEncoder: PasswordEncoder): @Valid User
     )
 }
 
-fun User.update(req: UpdateUserRequest, passwordEncoder: PasswordEncoder): @Valid User {
+fun User.update(req: UpdateProfileRequest, passwordEncoder: PasswordEncoder): @Valid User {
     return copy(
-        firstName = req.firstName ?: firstName,
-        lastName = req.lastName ?: lastName,
+        firstName = req.givenName ?: firstName,
+        lastName = req.familyName ?: lastName,
         email = req.email ?: email,
+        emailVerified = if (req.email == null || req.email == email) emailVerified else false,
         passwordHash = req.password?.let {
             passwordEncoder.encode(req.password)
         } ?: passwordHash

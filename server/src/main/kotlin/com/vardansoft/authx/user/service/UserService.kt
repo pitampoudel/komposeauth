@@ -10,8 +10,8 @@ import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
 import com.vardansoft.authx.core.utils.validateGoogleIdToken
 import com.vardansoft.authx.data.CreateUserRequest
 import com.vardansoft.authx.data.UpdatePhoneNumberRequest
+import com.vardansoft.authx.data.UpdateProfileRequest
 import com.vardansoft.authx.data.VerifyPhoneOtpRequest
-import com.vardansoft.authx.data.UpdateUserRequest
 import com.vardansoft.authx.data.UserResponse
 import com.vardansoft.authx.user.dto.mapToEntity
 import com.vardansoft.authx.user.dto.mapToResponseDto
@@ -101,7 +101,7 @@ class UserService(
         return userRepository.insert(newUser)
     }
 
-    fun updateUser(userId: ObjectId, req: UpdateUserRequest): UserResponse {
+    fun updateUser(userId: ObjectId, req: UpdateProfileRequest): UserResponse {
         val existingUser = userRepository.findById(userId).orElse(null)
             ?: throw IllegalStateException("User not found")
         val result = userRepository.save(existingUser.update(req, passwordEncoder))
@@ -183,7 +183,7 @@ class UserService(
     }
 
     fun deactivateUser(userId: ObjectId) {
-        val user = userRepository.findById(userId).orElseThrow() 
+        val user = userRepository.findById(userId).orElseThrow()
         userRepository.save(user.copy(deactivated = true))
     }
 
