@@ -1,12 +1,14 @@
 package com.vardansoft.core.domain
 
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format.Padding
+import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @OptIn(ExperimentalTime::class)
 fun Instant.toSystemLocalDateTime() = toLocalDateTime(TimeZone.currentSystemDefault())
@@ -14,6 +16,26 @@ fun Instant.toSystemLocalDateTime() = toLocalDateTime(TimeZone.currentSystemDefa
 @OptIn(ExperimentalTime::class)
 fun Instant.toSystemLocalDate() = toSystemLocalDateTime().date
 
-expect fun LocalDate.asDisplayDate(): String
-expect fun LocalDateTime.asDisplayDateTime(): String
-expect fun LocalTime.asDisplayTime(): String
+fun LocalDate.asDisplayDate(): String {
+    val f = LocalDate.Format {
+        year(); char('-'); monthNumber(); char('-');day(padding = Padding.ZERO)
+    }
+    return f.format(this)
+}
+
+fun LocalDateTime.asDisplayDateTime(): String {
+    val f = LocalDateTime.Format {
+        date(LocalDate.Format {
+            year(); char('-'); monthNumber(); char('-');
+            day(padding = Padding.ZERO)
+        })
+        char(' ')
+        hour(); char(':'); minute(); char(':'); second()
+    }
+    return f.format(this)
+}
+
+fun LocalTime.asDisplayTime(): String {
+    val f = LocalTime.Format { hour(); char(':'); minute(); char(':'); second() }
+    return f.format(this)
+}
