@@ -34,7 +34,6 @@ class AuthSuccessHandler(
                     principal.getAttribute<Boolean>("emailVerified") == true
                 user = userService.findOrCreateUser(
                     CreateUserRequest(
-                        id = null,
                         firstName = firstName,
                         lastName = lastName,
                         email = email,

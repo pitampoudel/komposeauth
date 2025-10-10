@@ -6,8 +6,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreateUserRequest(
-    @SerialName("id")
-    val id: String? = null,
     @SerialName("firstName")
     val firstName: String,
     @SerialName("lastName")
@@ -24,17 +22,27 @@ data class CreateUserRequest(
     val picture: String? = null
 ) {
     init {
-        require(firstName.isNotBlank())
-        require(lastName?.isNotBlank() == true)
+        require(firstName.isNotBlank()){
+            "First name cannot be blank"
+        }
+        require(lastName?.isNotBlank() == true){
+            "Last name cannot be blank"
+        }
         require(password == null || Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$").matches(password)) {
             "Password must contain at least one uppercase letter, one lowercase letter, and one digit"
         }
         require(password == confirmPassword) {
             "Password and confirmation password must match"
         }
-        require(email.isNullOrBlank() || email.isValidEmail())
-        require(phoneNumber.isNullOrBlank() || phoneNumber.isValidPhoneNumber())
-        require(email != null || phoneNumber != null)
+        require(email.isNullOrBlank() || email.isValidEmail()){
+            "Invalid email format"
+        }
+        require(phoneNumber.isNullOrBlank() || phoneNumber.isValidPhoneNumber()){
+            "Invalid phone number format"
+        }
+        require(email != null || phoneNumber != null){
+            "Either email or phone number must be provided"
+        }
     }
 
     private fun String.isValidPhoneNumber(): Boolean {

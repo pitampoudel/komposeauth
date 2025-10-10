@@ -13,7 +13,7 @@ import kotlin.time.toKotlinInstant
 
 fun CreateUserRequest.mapToEntity(passwordEncoder: PasswordEncoder): @Valid User {
     return User(
-        id = id?.let { ObjectId(it) } ?: ObjectId(),
+        id = ObjectId(),
         firstName = firstName,
         lastName = lastName,
         email = email,
@@ -22,7 +22,6 @@ fun CreateUserRequest.mapToEntity(passwordEncoder: PasswordEncoder): @Valid User
         }?.fullNumberInInternationalFormat,
         picture = picture,
         passwordHash = password?.let { passwordEncoder.encode(it) }
-
     )
 }
 
