@@ -11,11 +11,16 @@ class EmailService(val javaMailSender: JavaMailSender) {
         to: String,
         subject: String? = null,
         text: String? = null
-    ) {
-        val mailMessage = SimpleMailMessage()
-        mailMessage.setTo(to)
-        mailMessage.text = text
-        mailMessage.subject = subject
-        javaMailSender.send(mailMessage)
+    ): Boolean {
+        return try {
+            val mailMessage = SimpleMailMessage()
+            mailMessage.setTo(to)
+            mailMessage.text = text
+            mailMessage.subject = subject
+            javaMailSender.send(mailMessage)
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 }

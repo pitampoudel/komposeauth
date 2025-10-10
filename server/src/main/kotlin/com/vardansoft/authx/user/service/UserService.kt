@@ -20,6 +20,7 @@ import com.vardansoft.authx.user.entity.User
 import com.vardansoft.authx.user.repository.UserRepository
 import com.vardansoft.core.data.parsePhoneNumber
 import jakarta.validation.Valid
+import org.apache.coyote.BadRequestException
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -89,15 +90,20 @@ class UserService(
 
     fun createUser(req: CreateUserRequest): User {
         val newUser = req.mapToEntity(passwordEncoder)
-        if (newUser.email != null && !newUser.emailVerified) emailService.sendSimpleMail(
-            to = newUser.email,
-            subject = "Email Verification",
-            text = "Please click the link to verify your email address: ${
-                jwtService.generateEmailVerificationLink(
-                    userId = newUser.id.toHexString()
-                )
-            }"
-        )
+        if (newUser.email != null && !newUser.emailVerified) {
+            val emailSent = emailService.sendSimpleMail(
+                to = newUser.email,
+                subject = "Email Verification",
+                text = "Please click the link to verify your email address: ${
+                    jwtService.generateEmailVerificationLink(
+                        userId = newUser.id.toHexString()
+                    )
+                }"
+            )
+            if (!emailSent) {
+                throw BadRequestException("Failed to send verification email.")
+            }
+        }
         return userRepository.insert(newUser)
     }
 
