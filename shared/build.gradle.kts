@@ -46,6 +46,7 @@ kotlin {
                 implementation(libs.multiplatform.settings.serialization)
                 // lifecycle viewmodel
                 api(libs.jetbrains.lifecycle.viewmodel)
+                implementation(libs.libphonenumber.kotlin)
             }
         }
         val commonTest by getting {
@@ -54,16 +55,10 @@ kotlin {
             }
         }
         val jvmMain by getting {
-            dependencies {
-                // Phone Number
-                implementation(libs.libphonenumber)
-            }
+
         }
         val androidMain by getting {
-            dependencies {
-                // Phone Number
-                implementation(libs.libphonenumber)
-            }
+         
         }
 
     }
