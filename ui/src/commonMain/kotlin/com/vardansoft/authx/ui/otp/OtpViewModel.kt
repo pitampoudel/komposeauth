@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.domain.AuthXPreferences
 import com.vardansoft.authx.domain.use_cases.ValidateOtpCode
+import com.vardansoft.authx.ui.core.ResultUiEvent
 import com.vardansoft.core.domain.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -22,7 +23,7 @@ internal class OtpViewModel(
     private val _state = MutableStateFlow(OtpState())
     val state = _state.asStateFlow()
 
-    private val uiEventChannel = Channel<OtpUiEvent>()
+    private val uiEventChannel = Channel<ResultUiEvent>()
     val uiEvents = uiEventChannel.receiveAsFlow()
     fun onEvent(event: OtpEvent) {
         viewModelScope.launch(Dispatchers.Default) {
@@ -64,7 +65,7 @@ internal class OtpViewModel(
 
                                     is Result.Success -> {
                                         authXPreferences.updateUserInformation(res.data)
-                                        uiEventChannel.send(OtpUiEvent.Verified)
+                                        uiEventChannel.send(ResultUiEvent.Completed)
                                     }
                                 }
 
