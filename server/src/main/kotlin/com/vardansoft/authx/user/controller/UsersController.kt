@@ -24,6 +24,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -50,6 +51,14 @@ class UsersController(
     fun create(@RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
         return ResponseEntity.ok().body(userService.createUser(request).mapToResponseDto())
 
+    }
+    @PatchMapping("/users")
+    @Operation(
+        summary = "Create a user or return existing",
+        description = "Creates a new user account or returns existing user",
+    )
+    fun findOrCreateUser(@RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
+        return ResponseEntity.ok().body(userService.findOrCreateUser(request).mapToResponseDto())
     }
 
 
