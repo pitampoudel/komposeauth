@@ -9,6 +9,7 @@ data class MessageResponse(
     @SerialName("message")
     val message: String
 )
+
 @Serializable
 data class ErrorResponse(
     @SerialName("error")
@@ -18,7 +19,9 @@ data class ErrorResponse(
 @Serializable
 data class DetailResponse(
     @SerialName("detail")
-    val detail: String
+    val detail: String,
+    @SerialName("status_code")
+    val statusCode: Int? = null
 )
 
 @Serializable
