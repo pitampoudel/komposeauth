@@ -25,7 +25,7 @@ actual fun rememberFilePicker(
                     val f = File(dir, file)
                     val bytes = Files.readAllBytes(f.toPath())
                     val mime = Files.probeContentType(f.toPath())
-                    onPicked(listOf(KmpFile(bytes, mime)))
+                    onPicked(listOf(KmpFile(byteArray = bytes, mimeType = mime, name = f.name)))
                 }
             }
         }

@@ -29,7 +29,8 @@ suspend fun downloadAll(
                     val response: HttpResponse = client.get(imageUrl)
                     KmpFile(
                         byteArray = response.readRawBytes(),
-                        mimeType = response.contentType()?.toString() ?: "application/octet-stream"
+                        mimeType = response.contentType()?.toString() ?: "application/octet-stream",
+                        name = imageUrl.substringAfterLast("/")
                     )
                 }
             }
@@ -47,7 +48,8 @@ suspend fun download(
         Result.Success(
             KmpFile(
                 byteArray = response.readRawBytes(),
-                mimeType = response.contentType()?.toString() ?: "application/octet-stream"
+                mimeType = response.contentType()?.toString() ?: "application/octet-stream",
+                name = url.substringAfterLast("/")
             )
         )
     }

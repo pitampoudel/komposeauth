@@ -10,7 +10,13 @@ data class EncodedData(
     @SerialName("base64EncodedData")
     val base64EncodedData: String,
     @SerialName("mime_type")
-    val mimeType: String
+    val mimeType: String,
+    @SerialName("name")
+    val name: String
 ) {
-    fun toKmpFile() = KmpFile(base64EncodedData.decodeBase64Bytes(), mimeType)
+    fun toKmpFile() = KmpFile(
+        byteArray = base64EncodedData.decodeBase64Bytes(),
+        mimeType = mimeType,
+        name = name
+    )
 }

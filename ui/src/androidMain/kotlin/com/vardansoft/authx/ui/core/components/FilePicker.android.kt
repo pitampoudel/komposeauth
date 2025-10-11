@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.Composable
@@ -25,7 +26,15 @@ actual fun rememberFilePicker(
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
             val mime = context.contentResolver.getType(uri)
             if (bytes != null && mime != null) {
-                onPicked(listOf(KmpFile(bytes, mime)))
+                onPicked(
+                    listOf(
+                        KmpFile(
+                            byteArray = bytes,
+                            mimeType = mime,
+                            name = uri.getFileName(context)
+                        )
+                    )
+                )
             }
         }
     }
@@ -36,7 +45,11 @@ actual fun rememberFilePicker(
         val files = uris.mapNotNull { uri ->
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
             val mime = context.contentResolver.getType(uri)
-            if (bytes != null && mime != null) KmpFile(bytes, mime) else null
+            if (bytes != null && mime != null) KmpFile(
+                byteArray = bytes,
+                mimeType = mime,
+                name = uri.getFileName(context)
+            ) else null
         }
         onPicked(files)
     }
@@ -50,6 +63,14 @@ actual fun rememberFilePicker(
             }
         }
     }
+}
+
+private fun Uri.getFileName(context: Context): String {
+    return context.contentResolver.query(this, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
+        val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        it.moveToFirst()
+        it.getString(nameIndex)
+    } ?: lastPathSegment ?: "unknown"
 }
 
 private object GetContentWithMimeTypes : ActivityResultContract<List<String>, Uri?>() {
@@ -74,7 +95,8 @@ private object GetContentWithMimeTypes : ActivityResultContract<List<String>, Ur
     }
 }
 
-private object GetMultipleContentsWithMimeTypes : ActivityResultContract<List<String>, List<Uri>>() {
+private object GetMultipleContentsWithMimeTypes :
+    ActivityResultContract<List<String>, List<Uri>>() {
     override fun createIntent(context: Context, input: List<String>): Intent {
         return Intent(Intent.ACTION_GET_CONTENT)
             .addCategory(Intent.CATEGORY_OPENABLE)

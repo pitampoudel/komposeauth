@@ -3,7 +3,7 @@ package com.vardansoft.core.domain
 import com.vardansoft.core.data.EncodedData
 import io.ktor.util.encodeBase64
 
-data class KmpFile(val byteArray: ByteArray, val mimeType: String) {
+data class KmpFile(val byteArray: ByteArray, val mimeType: String, val name: String) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || this::class != other::class) return false
@@ -19,6 +19,7 @@ data class KmpFile(val byteArray: ByteArray, val mimeType: String) {
 
     fun toEncodedData() = EncodedData(
         base64EncodedData = byteArray.encodeBase64(),
-        mimeType = mimeType
+        mimeType = mimeType,
+        name = name
     )
 }
