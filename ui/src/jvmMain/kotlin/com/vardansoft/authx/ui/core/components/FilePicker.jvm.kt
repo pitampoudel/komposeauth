@@ -10,7 +10,7 @@ import java.nio.file.Files
 
 @Composable
 actual fun rememberFilePicker(
-    input: String,
+    input: List<String>,
     selectionMode: SelectionMode,
     onPicked: (List<KmpFile>) -> Unit
 ): FilePicker {

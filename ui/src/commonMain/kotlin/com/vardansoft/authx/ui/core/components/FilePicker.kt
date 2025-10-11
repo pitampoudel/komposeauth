@@ -14,7 +14,7 @@ interface FilePicker {
 
 @Composable
 expect fun rememberFilePicker(
-    input: String,
+    input: List<String> = emptyList(),
     selectionMode: SelectionMode = SelectionMode.SINGLE,
     onPicked: (List<KmpFile>) -> Unit
 ): FilePicker
