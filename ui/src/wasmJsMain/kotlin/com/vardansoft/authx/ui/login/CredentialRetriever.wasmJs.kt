@@ -4,23 +4,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.russhwolf.settings.ObservableSettings
 import com.vardansoft.authx.data.Credential
-import com.vardansoft.authx.data.Credential.GoogleId
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.core.domain.Result
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.algorithms.digest.SHA256
 import dev.whyoleg.cryptography.providers.webcrypto.WebCrypto
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.forms.submitForm
-import io.ktor.http.Parameters
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.parseQueryString
 import io.ktor.util.encodeBase64
 import kotlinx.browser.window
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.koin.mp.KoinPlatform.getKoin
 import kotlin.random.Random
 
@@ -61,8 +54,7 @@ private fun buildGoogleAuthUrl(
 
 private class WasmCredentialRetriever(
     private val settings: ObservableSettings,
-    private val authXClient: AuthXClient,
-    private val httpClient: HttpClient
+    private val authXClient: AuthXClient
 ) : CredentialRetriever {
 
     override suspend fun getCredential(): Result<Credential> {
@@ -79,7 +71,7 @@ private class WasmCredentialRetriever(
 
 
     private suspend fun startLogin(): Result<Credential> {
-        val config = when (val configResult = authXClient.fetchConfig(desktop = true)) {
+        val config = when (val configResult = authXClient.fetchConfig(pkce = true)) {
             is Result.Error -> return configResult
             is Result.Success -> configResult.data
         }
@@ -100,7 +92,7 @@ private class WasmCredentialRetriever(
         suspendCancellableCoroutine<Nothing> { }
     }
 
-    private suspend fun handleRedirect(code: String, state: String): Result<Credential> {
+    private fun handleRedirect(code: String, state: String): Result<Credential> {
         val savedState = settings.getStringOrNull("oauth_state")
         if (savedState != state) {
             return Result.Error("Invalid state parameter from redirect.")
@@ -111,44 +103,11 @@ private class WasmCredentialRetriever(
             ?: return Result.Error("Missing PKCE verifier.")
         settings.remove("pkce_verifier")
 
-        val config = when (val configResult = authXClient.fetchConfig(desktop = true)) {
-            is Result.Error -> return configResult
-            is Result.Success -> configResult.data
-        }
-
-        val redirectUri = window.location.origin + "/callback"
-
         return try {
-            val token = exchangeToken(
-                code = code,
-                clientId = config.googleClientId,
-                redirectUri = redirectUri,
-                verifier = verifier,
-            )
-            Result.Success(GoogleId(token))
+            Result.Success(Credential.AuthCode(code, verifier, window.location.origin))
         } catch (e: Exception) {
             Result.Error(e.message ?: "Failed to exchange token for credential.")
         }
-    }
-
-    private suspend fun exchangeToken(
-        code: String,
-        clientId: String,
-        redirectUri: String,
-        verifier: String
-    ): String {
-        val response: JsonObject = httpClient.submitForm(
-            url = "https://oauth2.googleapis.com/token",
-            formParameters = Parameters.build {
-                append("grant_type", "authorization_code")
-                append("code", code)
-                append("client_id", clientId)
-                append("redirect_uri", redirectUri)
-                append("code_verifier", verifier)
-            }
-        ).body()
-
-        return response["id_token"]?.jsonPrimitive?.content ?: error("No id_token in response")
     }
 }
 
@@ -158,8 +117,7 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
         val koin = getKoin()
         WasmCredentialRetriever(
             settings = koin.get(),
-            authXClient = koin.get(),
-            httpClient = koin.get()
+            authXClient = koin.get()
         )
     }
 }

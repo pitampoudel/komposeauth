@@ -23,10 +23,10 @@ import io.ktor.client.statement.HttpResponse
 
 class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXClient {
 
-    override suspend fun fetchConfig(desktop: Boolean): Result<ConfigResponse> {
+    override suspend fun fetchConfig(pkce: Boolean): Result<ConfigResponse> {
         return safeApiCall {
             httpClient.get("$authUrl/$CONFIG") {
-                parameter("desktop", desktop.toString())
+                parameter("desktop", pkce.toString())
             }.asResource { body<ConfigResponse>() }
         }
     }
