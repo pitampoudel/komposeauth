@@ -13,6 +13,13 @@ sealed class Credential {
     ) : Credential()
 
     @Serializable
+    @SerialName("APPLE_ID")
+    class AppleId(
+        @SerialName("idToken")
+        val idToken: String
+    ) : Credential()
+
+    @Serializable
     @SerialName("AUTH_CODE")
     class AuthCode(
         @SerialName("code")

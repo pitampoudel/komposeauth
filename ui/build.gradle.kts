@@ -53,6 +53,9 @@ kotlin {
 
                 // JetBrains Lifecycle
                 implementation(libs.lifecycle.runtime.compose)
+
+                // Cryptography
+                implementation("dev.whyoleg.cryptography:cryptography-core:0.3.0")
             }
         }
 
@@ -84,6 +87,11 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
+            }
+        }
+        val wasmJsMain by getting {
+            dependencies {
+                implementation("dev.whyoleg.cryptography:cryptography-provider-webcrypto:0.3.0")
             }
         }
     }

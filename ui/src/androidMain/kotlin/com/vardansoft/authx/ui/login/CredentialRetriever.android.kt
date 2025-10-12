@@ -31,8 +31,7 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
             override suspend fun getCredential(): Result<Credential> {
                 // Fetch Google OAuth client-id dynamically from server
                 val authXClient = getKoin().get<AuthXClient>()
-                val res = authXClient.fetchConfig()
-                when (res) {
+                when (val res = authXClient.fetchConfig()) {
                     is Result.Error -> return res
                     is Result.Success -> {
                         val googleAuthClientId = res.data.googleClientId

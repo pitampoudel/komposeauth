@@ -41,7 +41,7 @@ kotlin {
                 api(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.auth)
                 // settings
-                implementation(libs.multiplatformSettings.noArg)
+                api(libs.multiplatformSettings.noArg)
                 implementation(libs.multiplatformSettings.coroutines)
                 implementation(libs.multiplatformSettings.serialization)
                 implementation(libs.multiplatformSettings.makeObservable)
