@@ -43,7 +43,8 @@ kotlin {
                 // settings
                 implementation(libs.multiplatformSettings.noArg)
                 implementation(libs.multiplatformSettings.coroutines)
-                implementation(libs.multiplatform.settings.serialization)
+                implementation(libs.multiplatformSettings.serialization)
+                implementation(libs.multiplatformSettings.makeObservable)
                 // lifecycle viewmodel
                 api(libs.jetbrains.lifecycle.viewmodel)
                 implementation(libs.libphonenumber.kotlin)
