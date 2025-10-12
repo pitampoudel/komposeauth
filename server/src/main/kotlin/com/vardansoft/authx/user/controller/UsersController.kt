@@ -85,6 +85,8 @@ class UsersController(
                 val userId = jwtService.validateRefreshToken(request.refreshToken)
                 userService.findUser(userId) ?: throw UsernameNotFoundException("User not found")
             }
+
+            is Credential.AppleId -> TODO()
         } ?: throw UsernameNotFoundException("User not found or invalid credentials")
 
         if (user.deactivated) {

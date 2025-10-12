@@ -64,5 +64,5 @@ app:
   name: ${APP_NAME:AuthX}
   expectedGcpProjectId: ${GCP_PROJECT_ID}
   logoUrl: ${APP_LOGO_URL}
-  googleAuthDesktopClientId: ${GOOGLE_AUTH_DESKTOP_CLIENT_ID}
-  googleAuthDesktopClientSecret: ${GOOGLE_AUTH_DESKTOP_CLIENT_SECRET}
+  googleAuthPublicClientId: ${GOOGLE_AUTH_DESKTOP_CLIENT_ID}
+  googleAuthPublicClientSecret: ${GOOGLE_AUTH_DESKTOP_CLIENT_SECRET}

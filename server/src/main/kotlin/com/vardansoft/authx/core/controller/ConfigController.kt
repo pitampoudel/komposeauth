@@ -22,17 +22,17 @@ class ConfigController(
 
     @Operation(
         summary = "Get client configuration",
-        description = "Returns client configuration, such as the Google Client ID. The `desktop` parameter can be used to request a client ID for desktop applications."
+        description = "Returns client configuration, such as the Google Client ID. The `pkce` parameter can be used to request a client ID for desktop, browser applications."
     )
     @GetMapping
     fun getConfig(
         @RequestParam(
-            name = "desktop",
+            name = "pkce",
             required = false,
             defaultValue = "false"
-        ) desktop: Boolean
+        ) pkce: Boolean
     ): ResponseEntity<ConfigResponse> {
-        val clientId = if (desktop) appProperties.googleAuthDesktopClientId else googleClientId
+        val clientId = if (pkce) appProperties.googleAuthPublicClientId else googleClientId
         return ResponseEntity.ok(ConfigResponse(clientId))
     }
 }

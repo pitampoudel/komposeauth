@@ -26,7 +26,7 @@ class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXCl
     override suspend fun fetchConfig(pkce: Boolean): Result<ConfigResponse> {
         return safeApiCall {
             httpClient.get("$authUrl/$CONFIG") {
-                parameter("desktop", pkce.toString())
+                parameter("pkce", pkce.toString())
             }.asResource { body<ConfigResponse>() }
         }
     }

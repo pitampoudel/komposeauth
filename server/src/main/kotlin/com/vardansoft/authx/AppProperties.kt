@@ -20,8 +20,8 @@ class AppProperties {
     lateinit var name: String
     lateinit var expectedGcpProjectId: String
     lateinit var logoUrl: String
-    lateinit var googleAuthDesktopClientId: String
-    lateinit var googleAuthDesktopClientSecret: String
+    lateinit var googleAuthPublicClientId: String
+    lateinit var googleAuthPublicClientSecret: String
 
     var samayeApiKey: String? = null
     var twilioAccountSid: String? = null
