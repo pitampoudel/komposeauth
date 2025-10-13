@@ -2,7 +2,8 @@ package com.vardansoft.authx.domain.use_cases
 
 import com.vardansoft.core.domain.validators.ValidationResult
 
-class ValidateOtpCode {
+object ValidateOtpCode {
+    const val OTP_LENGTH = 6
     operator fun invoke(code: String): ValidationResult {
         return if (code.isBlank()) {
             ValidationResult.Error("Must not be blank")
@@ -11,9 +12,5 @@ class ValidateOtpCode {
         } else {
             ValidationResult.Success
         }
-    }
-
-    companion object {
-        const val OTP_LENGTH = 6
     }
 }

@@ -33,7 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.vardansoft.authx.data.UpdatePhoneNumberRequest
-import com.vardansoft.authx.domain.use_cases.ValidateOtpCode.Companion.OTP_LENGTH
+import com.vardansoft.authx.domain.use_cases.ValidateOtpCode.OTP_LENGTH
 import com.vardansoft.authx.ui.core.ResultUiEvent
 import com.vardansoft.authx.ui.core.components.CountryPicker
 import com.vardansoft.authx.ui.core.wrapper.screenstate.ScreenStateWrapper

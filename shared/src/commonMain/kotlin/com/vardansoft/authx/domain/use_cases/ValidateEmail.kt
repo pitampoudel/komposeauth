@@ -2,7 +2,7 @@ package com.vardansoft.authx.domain.use_cases
 
 import com.vardansoft.core.domain.validators.ValidationResult
 
-class ValidateEmail {
+object ValidateEmail {
     operator fun invoke(email: String): ValidationResult {
         return if (email.isBlank()) {
             ValidationResult.Error("Must not be blank")

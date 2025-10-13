@@ -14,9 +14,9 @@ data class ChangePasswordRequest(
     val confirmPassword: String
 ) {
     init {
-        require(ValidatePassword().invoke(newPassword) is ValidationResult.Success)
+        require(ValidatePassword(newPassword) is ValidationResult.Success)
         require(
-            ValidateConfirmPassword().invoke(
+            ValidateConfirmPassword(
                 password = newPassword,
                 confirmPassword = confirmPassword
             ) is ValidationResult.Success

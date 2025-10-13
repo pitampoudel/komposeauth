@@ -1,6 +1,6 @@
 package com.vardansoft.core.domain.validators
 
-class ValidateNotNull {
+object ValidateNotNull {
     operator fun <T> invoke(value: T?): ValidationResult {
         return if (value == null) {
             ValidationResult.Error("Must be selected")

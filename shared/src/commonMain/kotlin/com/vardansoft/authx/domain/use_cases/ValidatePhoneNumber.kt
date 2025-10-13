@@ -3,7 +3,9 @@ package com.vardansoft.authx.domain.use_cases
 import com.vardansoft.core.data.parsePhoneNumber
 import com.vardansoft.core.domain.validators.ValidationResult
 
-class ValidatePhoneNumber {
+object ValidatePhoneNumber {
+    const val DEFAULT_COUNTRY_NAME_CODE = "NP"
+
     operator fun invoke(phoneNumber: String, countryNameCode: String): ValidationResult {
         return if (phoneNumber.isBlank()) {
             ValidationResult.Error("Must not be blank")
@@ -16,9 +18,5 @@ class ValidatePhoneNumber {
         } else {
             ValidationResult.Success
         }
-    }
-
-    companion object {
-        const val DEFAULT_COUNTRY_NAME_CODE = "NP"
     }
 }
