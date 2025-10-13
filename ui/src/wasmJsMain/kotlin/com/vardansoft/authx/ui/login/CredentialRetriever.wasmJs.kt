@@ -57,12 +57,14 @@ private class WasmCredentialRetriever(
     private val authXClient: AuthXClient
 ) : CredentialRetriever {
 
+    @OptIn(ExperimentalWasmJsInterop::class)
     override suspend fun getCredential(): Result<Credential> {
         val params = parseQueryString(window.location.search.drop(1))
         val code = params["code"]
         val state = params["state"]
 
         return if (code != null && state != null) {
+            window.history.replaceState(null, "", window.location.pathname)
             handleRedirect(code, state)
         } else {
             startLogin()
