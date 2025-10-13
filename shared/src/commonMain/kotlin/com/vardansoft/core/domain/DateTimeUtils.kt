@@ -6,19 +6,18 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-@OptIn(ExperimentalTime::class)
+
+expect fun now(): Instant
 fun Instant.toSystemLocalDateTime() = toLocalDateTime(TimeZone.currentSystemDefault())
-
-@OptIn(ExperimentalTime::class)
+fun LocalDateTime.toInstant(): Instant = toInstant(TimeZone.currentSystemDefault())
 fun Instant.toSystemLocalDate() = toSystemLocalDateTime().date
-
 fun LocalDate.asDisplayDate(): String {
     val f = LocalDate.Format {
-        year(); char('-'); monthNumber(); char('-');day(padding = Padding.ZERO)
+        year(); char('-'); monthNumber(); char('-'); day(padding = Padding.ZERO)
     }
     return f.format(this)
 }

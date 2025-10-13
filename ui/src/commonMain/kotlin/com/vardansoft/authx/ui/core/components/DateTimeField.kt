@@ -1,7 +1,5 @@
 package com.vardansoft.authx.ui.core.components
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.AlertDialog
@@ -29,14 +27,13 @@ import androidx.compose.ui.graphics.Shape
 import com.vardansoft.core.domain.asDisplayDate
 import com.vardansoft.core.domain.asDisplayDateTime
 import com.vardansoft.core.domain.asDisplayTime
+import com.vardansoft.core.domain.toInstant
 import com.vardansoft.core.domain.toSystemLocalDateTime
 import com.vardansoft.ui.generated.resources.Res
 import com.vardansoft.ui.generated.resources.cancel
 import com.vardansoft.ui.generated.resources.ok
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -115,7 +112,7 @@ fun DateTimeField(
                             LocalDateTime(
                                 date = date,
                                 time = LocalTime(timePickerState.hour, timePickerState.minute)
-                            ).toInstant(TimeZone.currentSystemDefault())
+                            ).toInstant()
                         }
                     )
                     isShowingTimePickerDialog = false

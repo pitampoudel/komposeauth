@@ -1,12 +1,12 @@
 package com.vardansoft.authx.data
 
+import com.vardansoft.core.domain.now
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 
@@ -17,7 +17,7 @@ fun isTokenExpired(refreshToken: String): Boolean {
         if (refreshToken.contains(".")) {
             val payload = decodeJWTPayload(refreshToken)
             val expirationTime = payload["exp"]?.jsonPrimitive?.long?.times(1000) ?: return false
-            val currentTime = Clock.System.now().toEpochMilliseconds()
+            val currentTime = now().toEpochMilliseconds()
 
             currentTime >= expirationTime
         } else {

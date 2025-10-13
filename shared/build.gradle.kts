@@ -25,6 +25,9 @@ kotlin {
     wasmJs {
         browser()
     }
+    sourceSets.all {
+        languageSettings.optIn("kotlin.time.ExperimentalTime")
+    }
 
     sourceSets {
         val commonMain by getting {
@@ -59,7 +62,7 @@ kotlin {
 
         }
         val androidMain by getting {
-         
+
         }
 
     }
