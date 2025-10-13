@@ -10,11 +10,13 @@ import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.algorithms.digest.SHA256
 import dev.whyoleg.cryptography.providers.webcrypto.WebCrypto
 import io.ktor.http.encodeURLParameter
-import io.ktor.http.parseQueryString
 import io.ktor.util.encodeBase64
 import kotlinx.browser.window
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.koin.mp.KoinPlatform.getKoin
+import org.w3c.dom.MessageEvent
+import org.w3c.dom.events.Event
+import kotlin.coroutines.resume
 import kotlin.random.Random
 
 private fun generateCodeVerifier(length: Int = 64): String {
@@ -52,74 +54,108 @@ private fun buildGoogleAuthUrl(
             params.entries.joinToString("&") { (k, v) -> "${k}=${v.encodeURLParameter()}" }
 }
 
-private class WasmCredentialRetriever(
-    private val settings: ObservableSettings,
-    private val authXClient: AuthXClient
-) : CredentialRetriever {
-
-    @OptIn(ExperimentalWasmJsInterop::class)
-    override suspend fun getCredential(): Result<Credential> {
-        val params = parseQueryString(window.location.search.drop(1))
-        val code = params["code"]
-        val state = params["state"]
-
-        return if (code != null && state != null) {
-            window.history.replaceState(null, "", window.location.pathname)
-            handleRedirect(code, state)
-        } else {
-            startLogin()
-        }
-    }
-
-
-    private suspend fun startLogin(): Result<Credential> {
-        val config = when (val configResult = authXClient.fetchConfig(pkce = true)) {
-            is Result.Error -> return configResult
-            is Result.Success -> configResult.data
-        }
-
-        val googleAuthClientId = config.googleClientId
-        val redirectUri = window.location.origin
-
-        val codeVerifier = generateCodeVerifier()
-        val codeChallenge = sha256Base64Url(codeVerifier)
-        val newState = "random-${Random.nextDouble()}"
-        settings.putString("pkce_verifier", codeVerifier)
-        settings.putString("oauth_state", newState)
-
-        val authUrl = buildGoogleAuthUrl(googleAuthClientId, redirectUri, codeChallenge, newState)
-        window.location.href = authUrl
-
-        // Suspend indefinitely since we are redirecting away from the page
-        suspendCancellableCoroutine<Nothing> { }
-    }
-
-    private fun handleRedirect(code: String, state: String): Result<Credential> {
-        val savedState = settings.getStringOrNull("oauth_state")
-        if (savedState != state) {
-            return Result.Error("Invalid state parameter from redirect.")
-        }
-        settings.remove("oauth_state")
-
-        val verifier = settings.getStringOrNull("pkce_verifier")
-            ?: return Result.Error("Missing PKCE verifier.")
-        settings.remove("pkce_verifier")
-
-        return try {
-            Result.Success(Credential.AuthCode(code, verifier, window.location.origin))
-        } catch (e: Exception) {
-            Result.Error(e.message ?: "Failed to exchange token for credential.")
-        }
-    }
+@OptIn(ExperimentalWasmJsInterop::class)
+private external interface OAuthMessageData : JsAny {
+    val code: String?
+    val state: String?
+    val error: String?
 }
 
+@OptIn(ExperimentalWasmJsInterop::class)
 @Composable
 actual fun rememberCredentialRetriever(): CredentialRetriever {
     return remember {
         val koin = getKoin()
-        WasmCredentialRetriever(
-            settings = koin.get(),
-            authXClient = koin.get()
-        )
+        val authXClient = koin.get<AuthXClient>()
+        val settings = koin.get<ObservableSettings>()
+        object : CredentialRetriever {
+            override suspend fun getCredential(): Result<Credential> {
+                val config = when (val result = authXClient.fetchConfig(pkce = true)) {
+                    is Result.Error -> return result
+                    is Result.Success -> result.data
+                }
+                val verifier = generateCodeVerifier()
+                val challenge = sha256Base64Url(verifier)
+                val state = "state-${Random.nextInt()}"
+                val redirectUri = window.location.origin
+
+                settings.putString("pkce_verifier", verifier)
+                settings.putString("oauth_state", state)
+
+                val authUrl = buildGoogleAuthUrl(
+                    clientId = config.googleClientId,
+                    redirectUri = redirectUri,
+                    codeChallenge = challenge,
+                    state = state
+                )
+
+                return openAuthPopupAndWait(authUrl)
+            }
+
+            private suspend fun openAuthPopupAndWait(authUrl: String): Result<Credential> {
+                return suspendCancellableCoroutine { continuation ->
+                    val popup = window.open(
+                        url = authUrl,
+                        target = "_blank",
+                        features = "width=500,height=700"
+                    ) ?: run {
+                        continuation.resume(Result.Error("Failed to open authentication popup."))
+                        return@suspendCancellableCoroutine
+                    }
+
+                    lateinit var listener: (Event) -> Unit
+                    listener = { event ->
+                        if (event is MessageEvent && event.origin == window.location.origin) {
+                            val data = event.data?.unsafeCast<OAuthMessageData>()
+                            if (data != null) {
+                                val code = data.code
+                                val state = data.state
+                                val error = data.error
+
+                                if (error != null) {
+                                    popup.close()
+                                    window.removeEventListener("message", listener)
+                                    continuation.resume(Result.Error("Authentication failed: $error"))
+                                }
+
+                                if (code != null && state != null) {
+                                    popup.close()
+                                    window.removeEventListener("message", listener)
+                                    continuation.resume(handleCallback(code, state))
+                                }
+                            }
+                        }
+                    }
+
+                    // Register message listener
+                    window.addEventListener("message", listener)
+
+                    // Clean up if coroutine is cancelled
+                    continuation.invokeOnCancellation {
+                        window.removeEventListener("message", listener)
+                        popup.close()
+                    }
+                }
+            }
+
+
+            private fun handleCallback(code: String, state: String): Result<Credential> {
+                val savedState = settings.getStringOrNull("oauth_state")
+                if (savedState != state) return Result.Error("Invalid state.")
+                val verifier = settings.getStringOrNull("pkce_verifier")
+                    ?: return Result.Error("Missing PKCE verifier.")
+
+                settings.remove("pkce_verifier")
+                settings.remove("oauth_state")
+
+                return Result.Success(
+                    Credential.AuthCode(
+                        code = code,
+                        codeVerifier = verifier,
+                        redirectUri = window.location.origin
+                    )
+                )
+            }
+        }
     }
 }
