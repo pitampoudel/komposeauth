@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
 data class EncodedData(
     @SerialName("base64EncodedData")
     val base64EncodedData: String,
-    @SerialName("mime_type")
+    @SerialName("mimeType")
     val mimeType: String,
     @SerialName("name")
     val name: String
