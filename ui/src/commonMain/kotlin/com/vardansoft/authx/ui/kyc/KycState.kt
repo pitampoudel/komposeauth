@@ -8,19 +8,20 @@ import com.vardansoft.authx.data.PersonalInformation
 import com.vardansoft.authx.data.UpdateAddressDetailsRequest
 import com.vardansoft.core.domain.KmpFile
 import com.vardansoft.core.presentation.InfoMessage
+import com.vardansoft.core.domain.validators.AuthXValidationError
 import kotlinx.datetime.LocalDate
 
 data class AddressState(
     val country: String = "",
-    val countryError: String? = null,
+    val countryError: AuthXValidationError? = null,
     val state: String = "",
-    val stateError: String? = null,
+    val stateError: AuthXValidationError? = null,
     val city: String = "",
-    val cityError: String? = null,
+    val cityError: AuthXValidationError? = null,
     val addressLine1: String = "",
-    val addressLine1Error: String? = null,
+    val addressLine1Error: AuthXValidationError? = null,
     val addressLine2: String = "",
-    val addressLine2Error: String? = null
+    val addressLine2Error: AuthXValidationError? = null
 ) {
     fun hasError(): Boolean {
         return countryError != null ||
@@ -58,35 +59,35 @@ data class AddressState(
 
 data class PersonalInformationState(
     val country: String = "",
-    val countryError: String? = null,
+    val countryError: AuthXValidationError? = null,
     val nationality: String = "",
-    val nationalityError: String? = null,
+    val nationalityError: AuthXValidationError? = null,
     val firstName: String = "",
-    val firstNameError: String? = null,
+    val firstNameError: AuthXValidationError? = null,
     val middleName: String = "",
-    val middleNameError: String? = null,
+    val middleNameError: AuthXValidationError? = null,
     val lastName: String = "",
-    val lastNameError: String? = null,
+    val lastNameError: AuthXValidationError? = null,
     val dateOfBirth: LocalDate? = null,
-    val dateOfBirthError: String? = null,
+    val dateOfBirthError: AuthXValidationError? = null,
     val gender: KycResponse.Gender? = null,
-    val genderError: String? = null,
+    val genderError: AuthXValidationError? = null,
     val fatherName: String = "",
-    val fatherNameError: String? = null,
+    val fatherNameError: AuthXValidationError? = null,
     val grandFatherName: String = "",
-    val grandFatherNameError: String? = null,
+    val grandFatherNameError: AuthXValidationError? = null,
     val motherName: String = "",
-    val motherNameError: String? = null,
+    val motherNameError: AuthXValidationError? = null,
     val grandMotherName: String = "",
-    val grandMotherNameError: String? = null,
+    val grandMotherNameError: AuthXValidationError? = null,
     val maritalStatus: KycResponse.MaritalStatus? = null,
-    val maritalStatusError: String? = null,
+    val maritalStatusError: AuthXValidationError? = null,
     val occupation: String = "",
-    val occupationError: String? = null,
+    val occupationError: AuthXValidationError? = null,
     val pan: String = "",
-    val panError: String? = null,
+    val panError: AuthXValidationError? = null,
     val email: String = "",
-    val emailError: String? = null
+    val emailError: AuthXValidationError? = null
 ) {
 
     fun hasError(): Boolean {
@@ -130,21 +131,21 @@ data class PersonalInformationState(
 
 data class DocumentInformationState(
     val documentType: DocumentType? = null,
-    val documentTypeError: String? = null,
+    val documentTypeError: AuthXValidationError? = null,
     val documentNumber: String = "",
-    val documentNumberError: String? = null,
+    val documentNumberError: AuthXValidationError? = null,
     val documentIssuedDate: LocalDate? = null,
-    val documentIssuedDateError: String? = null,
+    val documentIssuedDateError: AuthXValidationError? = null,
     val documentIssuedPlace: String = "",
-    val documentIssuedPlaceError: String? = null,
+    val documentIssuedPlaceError: AuthXValidationError? = null,
     val documentExpiryDate: LocalDate? = null,
-    val documentExpiryDateError: String? = null,
+    val documentExpiryDateError: AuthXValidationError? = null,
     val documentFront: KmpFile? = null,
-    val documentFrontError: String? = null,
+    val documentFrontError: AuthXValidationError? = null,
     val documentBack: KmpFile? = null,
-    val documentBackError: String? = null,
+    val documentBackError: AuthXValidationError? = null,
     val selfie: KmpFile? = null,
-    val selfieError: String? = null
+    val selfieError: AuthXValidationError? = null
 ) {
     fun hasError(): Boolean {
         return documentTypeError != null

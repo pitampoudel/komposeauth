@@ -42,12 +42,11 @@ internal class OtpViewModel(
                     }
 
                     _state.update {
-                        it.copy(codeError = validateOtpCode(state.value.code).errorMessage())
+                        it.copy(codeError = validateOtpCode(state.value.code).error())
                     }
 
                     state.value.verifyParam()?.let { req ->
-                        val res = client.verifyPhoneOtp(req)
-                        when (res) {
+                        when (val res = client.verifyPhoneOtp(req)) {
                             is Result.Error -> {
                                 _state.update {
                                     it.copy(infoMsg = res.message)

@@ -15,9 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class KycViewModel(
-    private val client: AuthXClient,
-    val validateNotBlank: ValidateNotBlank,
-    val validateNotNull: ValidateNotNull
+    private val client: AuthXClient
 ) : ViewModel() {
     private val _state = MutableStateFlow(KycState())
     val state = _state.asStateFlow()
@@ -505,33 +503,33 @@ class KycViewModel(
     private suspend fun submitPersonalInfo() {
         _state.update { it.copy(progress = 0.0f) }
 
-        val countryValidation = validateNotBlank(_state.value.personalInfo.country)
-        val nationalityValidation = validateNotBlank(_state.value.personalInfo.nationality)
-        val firstNameValidation = validateNotBlank(_state.value.personalInfo.firstName)
-        val lastNameValidation = validateNotBlank(_state.value.personalInfo.lastName)
-        val dateOfBirthValidation = validateNotNull(_state.value.personalInfo.dateOfBirth)
-        val genderValidation = validateNotNull(_state.value.personalInfo.gender)
-        val fatherNameValidation = validateNotBlank(_state.value.personalInfo.fatherName)
-        val grandFatherNameValidation = validateNotBlank(_state.value.personalInfo.grandFatherName)
-        val motherNameValidation = validateNotBlank(_state.value.personalInfo.motherName)
-        val grandMotherNameValidation = validateNotBlank(_state.value.personalInfo.grandMotherName)
-        val maritalStatusValidation = validateNotNull(_state.value.personalInfo.maritalStatus)
+        val countryValidation = ValidateNotBlank(_state.value.personalInfo.country)
+        val nationalityValidation = ValidateNotBlank(_state.value.personalInfo.nationality)
+        val firstNameValidation = ValidateNotBlank(_state.value.personalInfo.firstName)
+        val lastNameValidation = ValidateNotBlank(_state.value.personalInfo.lastName)
+        val dateOfBirthValidation = ValidateNotNull(_state.value.personalInfo.dateOfBirth)
+        val genderValidation = ValidateNotNull(_state.value.personalInfo.gender)
+        val fatherNameValidation = ValidateNotBlank(_state.value.personalInfo.fatherName)
+        val grandFatherNameValidation = ValidateNotBlank(_state.value.personalInfo.grandFatherName)
+        val motherNameValidation = ValidateNotBlank(_state.value.personalInfo.motherName)
+        val grandMotherNameValidation = ValidateNotBlank(_state.value.personalInfo.grandMotherName)
+        val maritalStatusValidation = ValidateNotNull(_state.value.personalInfo.maritalStatus)
 
 
         _state.update { s ->
             s.copy(
                 personalInfo = s.personalInfo.copy(
-                    countryError = countryValidation.errorMessage(),
-                    nationalityError = nationalityValidation.errorMessage(),
-                    firstNameError = firstNameValidation.errorMessage(),
-                    lastNameError = lastNameValidation.errorMessage(),
-                    dateOfBirthError = dateOfBirthValidation.errorMessage(),
-                    genderError = genderValidation.errorMessage(),
-                    fatherNameError = fatherNameValidation.errorMessage(),
-                    grandFatherNameError = grandFatherNameValidation.errorMessage(),
-                    motherNameError = motherNameValidation.errorMessage(),
-                    grandMotherNameError = grandMotherNameValidation.errorMessage(),
-                    maritalStatusError = maritalStatusValidation.errorMessage()
+                    countryError = countryValidation.error(),
+                    nationalityError = nationalityValidation.error(),
+                    firstNameError = firstNameValidation.error(),
+                    lastNameError = lastNameValidation.error(),
+                    dateOfBirthError = dateOfBirthValidation.error(),
+                    genderError = genderValidation.error(),
+                    fatherNameError = fatherNameValidation.error(),
+                    grandFatherNameError = grandFatherNameValidation.error(),
+                    motherNameError = motherNameValidation.error(),
+                    grandMotherNameError = grandMotherNameValidation.error(),
+                    maritalStatusError = maritalStatusValidation.error()
                 )
             )
         }
@@ -557,38 +555,38 @@ class KycViewModel(
     private suspend fun submitAddressDetails() {
         _state.update { it.copy(progress = 0.0f) }
 
-        val currentAddressCountryValidation = validateNotBlank(_state.value.currentAddress.country)
-        val currentAddressStateValidation = validateNotBlank(_state.value.currentAddress.state)
-        val currentAddressCityValidation = validateNotBlank(_state.value.currentAddress.city)
+        val currentAddressCountryValidation = ValidateNotBlank(_state.value.currentAddress.country)
+        val currentAddressStateValidation = ValidateNotBlank(_state.value.currentAddress.state)
+        val currentAddressCityValidation = ValidateNotBlank(_state.value.currentAddress.city)
         val currentAddressAddressLine1Validation =
-            validateNotBlank(_state.value.currentAddress.addressLine1)
+            ValidateNotBlank(_state.value.currentAddress.addressLine1)
         val currentAddressAddressLine2Validation =
-            validateNotBlank(_state.value.currentAddress.addressLine2)
+            ValidateNotBlank(_state.value.currentAddress.addressLine2)
 
         val permanentAddressCountryValidation =
-            validateNotBlank(_state.value.permanentAddress.country)
-        val permanentAddressStateValidation = validateNotBlank(_state.value.permanentAddress.state)
-        val permanentAddressCityValidation = validateNotBlank(_state.value.permanentAddress.city)
+            ValidateNotBlank(_state.value.permanentAddress.country)
+        val permanentAddressStateValidation = ValidateNotBlank(_state.value.permanentAddress.state)
+        val permanentAddressCityValidation = ValidateNotBlank(_state.value.permanentAddress.city)
         val permanentAddressAddressLine1Validation =
-            validateNotBlank(_state.value.permanentAddress.addressLine1)
+            ValidateNotBlank(_state.value.permanentAddress.addressLine1)
         val permanentAddressAddressLine2Validation =
-            validateNotBlank(_state.value.permanentAddress.addressLine2)
+            ValidateNotBlank(_state.value.permanentAddress.addressLine2)
 
         _state.update { s ->
             s.copy(
                 permanentAddress = s.permanentAddress.copy(
-                    addressLine1Error = permanentAddressAddressLine1Validation.errorMessage(),
-                    addressLine2Error = permanentAddressAddressLine2Validation.errorMessage(),
-                    cityError = permanentAddressCityValidation.errorMessage(),
-                    stateError = permanentAddressStateValidation.errorMessage(),
-                    countryError = permanentAddressCountryValidation.errorMessage(),
+                    addressLine1Error = permanentAddressAddressLine1Validation.error(),
+                    addressLine2Error = permanentAddressAddressLine2Validation.error(),
+                    cityError = permanentAddressCityValidation.error(),
+                    stateError = permanentAddressStateValidation.error(),
+                    countryError = permanentAddressCountryValidation.error(),
                 ),
                 currentAddress = s.currentAddress.copy(
-                    addressLine1Error = currentAddressAddressLine1Validation.errorMessage(),
-                    addressLine2Error = currentAddressAddressLine2Validation.errorMessage(),
-                    cityError = currentAddressCityValidation.errorMessage(),
-                    stateError = currentAddressStateValidation.errorMessage(),
-                    countryError = currentAddressCountryValidation.errorMessage(),
+                    addressLine1Error = currentAddressAddressLine1Validation.error(),
+                    addressLine2Error = currentAddressAddressLine2Validation.error(),
+                    cityError = currentAddressCityValidation.error(),
+                    stateError = currentAddressStateValidation.error(),
+                    countryError = currentAddressCountryValidation.error(),
                 ),
             )
         }
@@ -614,28 +612,28 @@ class KycViewModel(
     private suspend fun submitDocuments() {
         _state.update { it.copy(progress = 0.0f) }
 
-        val documentTypeValidation = validateNotNull(_state.value.documentInfo.documentType)
-        val documentNumberValidation = validateNotBlank(_state.value.documentInfo.documentNumber)
+        val documentTypeValidation = ValidateNotNull(_state.value.documentInfo.documentType)
+        val documentNumberValidation = ValidateNotBlank(_state.value.documentInfo.documentNumber)
         val documentIssuedDateValidation =
-            validateNotNull(_state.value.documentInfo.documentIssuedDate)
+            ValidateNotNull(_state.value.documentInfo.documentIssuedDate)
         val documentExpiryDateValidation = ValidationResult.Success
         val documentIssuedPlaceValidation =
-            validateNotBlank(_state.value.documentInfo.documentIssuedPlace)
-        val documentFrontValidation = validateNotNull(_state.value.documentInfo.documentFront)
-        val documentBackValidation = validateNotNull(_state.value.documentInfo.documentBack)
-        val selfieValidation = validateNotNull(_state.value.documentInfo.selfie)
+            ValidateNotBlank(_state.value.documentInfo.documentIssuedPlace)
+        val documentFrontValidation = ValidateNotNull(_state.value.documentInfo.documentFront)
+        val documentBackValidation = ValidateNotNull(_state.value.documentInfo.documentBack)
+        val selfieValidation = ValidateNotNull(_state.value.documentInfo.selfie)
 
         _state.update { s ->
             s.copy(
                 documentInfo = s.documentInfo.copy(
-                    documentTypeError = documentTypeValidation.errorMessage(),
-                    documentNumberError = documentNumberValidation.errorMessage(),
-                    documentIssuedDateError = documentIssuedDateValidation.errorMessage(),
-                    documentExpiryDateError = documentExpiryDateValidation.errorMessage(),
-                    documentIssuedPlaceError = documentIssuedPlaceValidation.errorMessage(),
-                    documentFrontError = documentFrontValidation.errorMessage(),
-                    documentBackError = documentBackValidation.errorMessage(),
-                    selfieError = selfieValidation.errorMessage()
+                    documentTypeError = documentTypeValidation.error(),
+                    documentNumberError = documentNumberValidation.error(),
+                    documentIssuedDateError = documentIssuedDateValidation.error(),
+                    documentExpiryDateError = documentExpiryDateValidation.error(),
+                    documentIssuedPlaceError = documentIssuedPlaceValidation.error(),
+                    documentFrontError = documentFrontValidation.error(),
+                    documentBackError = documentBackValidation.error(),
+                    selfieError = selfieValidation.error()
                 )
             )
         }

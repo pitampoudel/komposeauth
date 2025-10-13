@@ -1,13 +1,14 @@
 package com.vardansoft.authx.domain.use_cases
 
 import com.vardansoft.core.domain.validators.ValidationResult
+import com.vardansoft.core.domain.validators.AuthXValidationError
 
 object ValidatePassword {
     operator fun invoke(password: String): ValidationResult {
         return if (password.isBlank()) {
-            ValidationResult.Error("Must not be blank")
+            ValidationResult.Error(AuthXValidationError.VALIDATION_ERROR_MUST_NOT_BE_BLANK)
         } else if (!matchesPasswordRequirements(password)) {
-            ValidationResult.Error("Password must be strong")
+            ValidationResult.Error(AuthXValidationError.VALIDATION_ERROR_TOO_SHORT)
         } else {
             ValidationResult.Success
         }

@@ -22,10 +22,10 @@ fun KoinApplication.configureAuthX(authUrl: String, hosts: List<String>) {
                 LoginViewModel(get(), get())
             }
             viewModel<KycViewModel> {
-                KycViewModel(get(), get(), get())
+                KycViewModel(get())
             }
             viewModel<ProfileViewModel> {
-                ProfileViewModel(get(), get(), get())
+                ProfileViewModel( get(), get())
             }
         }
     )

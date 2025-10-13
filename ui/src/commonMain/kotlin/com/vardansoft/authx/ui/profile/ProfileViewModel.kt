@@ -18,8 +18,7 @@ import kotlinx.coroutines.launch
 
 class ProfileViewModel(
     val authXPreferences: AuthXPreferences,
-    val client: AuthXClient,
-    val validateNotBlank: ValidateNotBlank
+    val client: AuthXClient
 ) : ViewModel() {
 
     private val uiEventChannel = Channel<ResultUiEvent>()
@@ -111,14 +110,14 @@ class ProfileViewModel(
                     val givenName = state.value.editingState.givenName
                     val familyName = state.value.editingState.familyName
 
-                    val givenNameValidation = validateNotBlank(givenName)
-                    val familyNameValidation = validateNotBlank(familyName)
+                    val givenNameValidation = ValidateNotBlank(givenName)
+                    val familyNameValidation = ValidateNotBlank(familyName)
 
                     _state.update { s ->
                         s.copy(
                             editingState = s.editingState.copy(
-                                givenNameError = givenNameValidation.errorMessage(),
-                                familyNameError = familyNameValidation.errorMessage()
+                                givenNameError = givenNameValidation.error(),
+                                familyNameError = familyNameValidation.error()
                             )
                         )
                     }

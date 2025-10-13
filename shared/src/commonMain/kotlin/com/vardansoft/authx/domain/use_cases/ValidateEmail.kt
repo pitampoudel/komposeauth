@@ -1,13 +1,14 @@
 package com.vardansoft.authx.domain.use_cases
 
 import com.vardansoft.core.domain.validators.ValidationResult
+import com.vardansoft.core.domain.validators.AuthXValidationError
 
 object ValidateEmail {
     operator fun invoke(email: String): ValidationResult {
         return if (email.isBlank()) {
-            ValidationResult.Error("Must not be blank")
+            ValidationResult.Error(AuthXValidationError.VALIDATION_ERROR_MUST_NOT_BE_BLANK)
         } else if (!matchesEmailRegex(email)) {
-            ValidationResult.Error("Must be an email")
+            ValidationResult.Error(AuthXValidationError.VALIDATION_ERROR_INVALID_EMAIL)
         } else {
             ValidationResult.Success
         }
