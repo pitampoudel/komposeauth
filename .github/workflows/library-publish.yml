@@ -1,6 +1,8 @@
 name: Publish Client Library
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
   release:
     types: [ released, prereleased ]
 env:
