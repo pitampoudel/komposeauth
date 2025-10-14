@@ -1,5 +1,9 @@
 package com.vardansoft.authx
 
+import com.vardansoft.authx.data.Platform
+import com.vardansoft.authx.data.Platform.DESKTOP
+import com.vardansoft.authx.data.Platform.WEB
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import java.net.Inet4Address
@@ -20,14 +24,31 @@ class AppProperties {
     lateinit var name: String
     lateinit var expectedGcpProjectId: String
     lateinit var logoUrl: String
-    lateinit var googleAuthPublicClientId: String
-    lateinit var googleAuthPublicClientSecret: String
+    private lateinit var googleAuthClientId: String
+    private lateinit var googleAuthClientSecret: String
+    lateinit var googleAuthDesktopClientId: String
+    lateinit var googleAuthDesktopClientSecret: String
 
     var samayeApiKey: String? = null
     var twilioAccountSid: String? = null
     var twilioAuthToken: String? = null
     var twilioFromNumber: String? = null
     var twilioVerifyServiceSid: String? = null
+
+    fun googleClientId(platform: Platform): String {
+        return when (platform) {
+            DESKTOP -> googleAuthDesktopClientId
+            WEB -> googleAuthClientId
+        }
+    }
+
+    fun googleClientSecret(platform: Platform): String {
+        return when (platform) {
+            DESKTOP -> googleAuthDesktopClientSecret
+            WEB -> googleAuthClientSecret
+        }
+    }
+
 
     fun getLocalIpAddress(): String? {
         val excludePrefixes = listOf(

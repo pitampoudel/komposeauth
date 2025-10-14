@@ -9,6 +9,7 @@ import com.vardansoft.authx.core.service.JwtService
 import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
 import com.vardansoft.authx.core.utils.validateGoogleIdToken
 import com.vardansoft.authx.data.CreateUserRequest
+import com.vardansoft.authx.data.Platform
 import com.vardansoft.authx.data.UpdatePhoneNumberRequest
 import com.vardansoft.authx.data.UpdateProfileRequest
 import com.vardansoft.authx.data.VerifyPhoneOtpRequest
@@ -48,15 +49,20 @@ class UserService(
         return userRepository.findById(ObjectId(id)).orElse(null)
     }
 
-    fun findOrCreateUserByAuthCode(code: String, codeVerifier: String, redirectUri: String): User {
+    fun findOrCreateUserByAuthCode(
+        code: String,
+        codeVerifier: String,
+        redirectUri: String,
+        platform: Platform
+    ): User {
         val client = HttpClient.newHttpClient()
         val form = String.format(
             "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&code_verifier=%s&client_secret=%s",
-            URLEncoder.encode(appProperties.googleAuthPublicClientId, StandardCharsets.UTF_8),
+            URLEncoder.encode(appProperties.googleClientId(platform), StandardCharsets.UTF_8),
             URLEncoder.encode(code, StandardCharsets.UTF_8),
             URLEncoder.encode(redirectUri, StandardCharsets.UTF_8),
             URLEncoder.encode(codeVerifier, StandardCharsets.UTF_8),
-            URLEncoder.encode(appProperties.googleAuthPublicClientSecret, StandardCharsets.UTF_8)
+            URLEncoder.encode(appProperties.googleClientSecret(platform), StandardCharsets.UTF_8)
         )
         val request = HttpRequest.newBuilder()
             .uri(URI.create("https://oauth2.googleapis.com/token"))
@@ -169,7 +175,7 @@ class UserService(
 
     fun findOrCreateUserByGoogleIdToken(idToken: String): User {
         val payload = validateGoogleIdToken(
-            clientIds = listOf(googleClientId, appProperties.googleAuthPublicClientId),
+            clientIds = listOf(googleClientId, appProperties.googleAuthDesktopClientId),
             idToken = idToken
         )
         val user = findOrCreateUser(

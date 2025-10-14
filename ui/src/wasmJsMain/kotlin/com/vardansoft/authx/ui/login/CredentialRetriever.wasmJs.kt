@@ -70,7 +70,7 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
         val settings = koin.get<ObservableSettings>()
         object : CredentialRetriever {
             override suspend fun getCredential(): Result<Credential> {
-                val config = when (val result = authXClient.fetchConfig(pkce = true)) {
+                val config = when (val result = authXClient.fetchConfig()) {
                     is Result.Error -> return result
                     is Result.Success -> result.data
                 }
