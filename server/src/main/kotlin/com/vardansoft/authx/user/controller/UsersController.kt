@@ -78,7 +78,8 @@ class UsersController(
             is Credential.AuthCode -> userService.findOrCreateUserByAuthCode(
                 code = request.code,
                 codeVerifier = request.codeVerifier,
-                redirectUri = request.redirectUri
+                redirectUri = request.redirectUri,
+                platform = request.platform
             )
 
             is Credential.RefreshToken -> {

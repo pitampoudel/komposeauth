@@ -36,7 +36,8 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                         val credential = Credential.AuthCode(
                             code = code,
                             codeVerifier = verifier,
-                            redirectUri = redirectUri
+                            redirectUri = redirectUri,
+                            platform = Platform.DESKTOP
                         )
                         return Result.Success(credential)
                     }

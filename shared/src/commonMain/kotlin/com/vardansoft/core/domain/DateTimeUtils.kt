@@ -8,10 +8,11 @@ import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 
-expect fun now(): Instant
+fun now(): Instant = Clock.System.now()
 fun Instant.toSystemLocalDateTime() = toLocalDateTime(TimeZone.currentSystemDefault())
 fun LocalDateTime.toInstant(): Instant = toInstant(TimeZone.currentSystemDefault())
 fun Instant.toSystemLocalDate() = toSystemLocalDateTime().date

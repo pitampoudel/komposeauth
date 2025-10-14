@@ -22,6 +22,8 @@ sealed class Credential {
     @Serializable
     @SerialName("AUTH_CODE")
     class AuthCode(
+        @SerialName("platform")
+        val platform: Platform,
         @SerialName("code")
         val code: String,
         @SerialName("codeVerifier")

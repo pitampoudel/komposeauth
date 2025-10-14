@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.russhwolf.settings.ObservableSettings
 import com.vardansoft.authx.data.Credential
+import com.vardansoft.authx.data.Platform
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.core.domain.Result
 import dev.whyoleg.cryptography.CryptographyProvider
@@ -152,7 +153,8 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                     Credential.AuthCode(
                         code = code,
                         codeVerifier = verifier,
-                        redirectUri = window.location.origin
+                        redirectUri = window.location.origin,
+                        platform = Platform.WEB
                     )
                 )
             }
