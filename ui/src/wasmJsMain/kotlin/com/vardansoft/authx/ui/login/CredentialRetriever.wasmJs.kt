@@ -8,7 +8,7 @@ import com.vardansoft.authx.data.Platform
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.core.domain.Result
 import dev.whyoleg.cryptography.CryptographyProvider
-import dev.whyoleg.cryptography.algorithms.digest.SHA256
+import dev.whyoleg.cryptography.algorithms.SHA256
 import dev.whyoleg.cryptography.providers.webcrypto.WebCrypto
 import io.ktor.http.encodeURLParameter
 import io.ktor.util.encodeBase64

@@ -1,5 +1,6 @@
 [versions]
 agp = "8.13.0"
+cryptography = "0.5.0"
 kotlin = "2.2.20"
 android-minSdk = "24"
 android-compileSdk = "36"
@@ -22,6 +23,8 @@ playServicesAuthApiPhone = "18.3.0"
 ccp = "2.7.3"
 
 [libraries]
+cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptography" }
+cryptography-provider-webcrypto = { module = "dev.whyoleg.cryptography:cryptography-provider-webcrypto", version.ref = "cryptography" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
 coil3-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.3.0" }
 coil3-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version = "3.3.0" }

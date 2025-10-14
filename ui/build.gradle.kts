@@ -43,6 +43,7 @@ kotlin {
                 implementation(libs.compose.material3)
                 implementation(compose.materialIconsExtended)
                 implementation(compose.components.resources)
+                implementation(libs.kotlinx.datetime)
 
                 // Coil 3 (Multiplatform Compose image loading)
                 implementation(libs.coil3.compose)
@@ -57,7 +58,7 @@ kotlin {
                 implementation(libs.lifecycle.runtime.compose)
 
                 // Cryptography
-                implementation("dev.whyoleg.cryptography:cryptography-core:0.3.0")
+                implementation(libs.cryptography.core)
             }
         }
 
@@ -93,7 +94,7 @@ kotlin {
         }
         val wasmJsMain by getting {
             dependencies {
-                implementation("dev.whyoleg.cryptography:cryptography-provider-webcrypto:0.3.0")
+                implementation(libs.cryptography.provider.webcrypto)
             }
         }
     }

@@ -5,7 +5,7 @@ plugins {
     kotlin("plugin.spring") version "1.9.25"
     id("org.springframework.boot") version "3.5.6"
     id("io.spring.dependency-management") version "1.1.7"
-    id("io.sentry.jvm.gradle") version "5.11.0"
+    id("io.sentry.jvm.gradle") version "5.12.1"
     alias(libs.plugins.kotlinx.serialization)
 }
 
@@ -40,6 +40,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-mail")
 
+    implementation(libs.kotlinx.datetime)
+
     // kotlinx serialization
     implementation(libs.kotlinx.serialization.json.jvm)
     implementation(libs.kotlinx.serialization.core.jvm)
@@ -48,7 +50,7 @@ dependencies {
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
 
     // Sentry for error tracking
-    implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.21.1")
+    implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.22.0")
 
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.0.0")
