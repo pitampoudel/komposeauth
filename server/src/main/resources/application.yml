@@ -52,8 +52,8 @@ server:
   address: 0.0.0.0
   forward-headers-strategy: framework
 app:
-  baseUrl: ${BASE_URL:}
-  gcpBucketName: ${GCP_BUCKET_NAME}
+  base-url: ${BASE_URL:}
+  gcp-bucket-name: ${GCP_BUCKET_NAME}
   # Optional
   samaye-api-key: ${SAMAYE_API_KEY:}
   # Twilio configuration (optional)
@@ -62,9 +62,9 @@ app:
   twilio-from-number: ${TWILIO_FROM_NUMBER:}
   twilio-verify-service-sid: ${TWILIO_VERIFY_SERVICE_SID:}
   name: ${APP_NAME:AuthX}
-  expectedGcpProjectId: ${GCP_PROJECT_ID}
-  logoUrl: ${APP_LOGO_URL}
-  googleAuthClientId: ${GOOGLE_OAUTH_CLIENT_ID}
-  googleAuthClientSecret: ${GOOGLE_OAUTH_CLIENT_SECRET}
-  googleAuthDesktopClientId: ${GOOGLE_AUTH_DESKTOP_CLIENT_ID}
-  googleAuthDesktopClientSecret: ${GOOGLE_AUTH_DESKTOP_CLIENT_SECRET}
+  expected-gcp-project-id: ${GCP_PROJECT_ID}
+  logo-url: ${APP_LOGO_URL}
+  google-auth-client-id: ${GOOGLE_OAUTH_CLIENT_ID}
+  google-auth-client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET}
+  google-auth-desktop-client-id: ${GOOGLE_AUTH_DESKTOP_CLIENT_ID}
+  google-auth-desktop-client-secret: ${GOOGLE_AUTH_DESKTOP_CLIENT_SECRET}

@@ -3,7 +3,6 @@ package com.vardansoft.authx
 import com.vardansoft.authx.data.Platform
 import com.vardansoft.authx.data.Platform.DESKTOP
 import com.vardansoft.authx.data.Platform.WEB
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import java.net.Inet4Address
@@ -24,8 +23,8 @@ class AppProperties {
     lateinit var name: String
     lateinit var expectedGcpProjectId: String
     lateinit var logoUrl: String
-    private lateinit var googleAuthClientId: String
-    private lateinit var googleAuthClientSecret: String
+    lateinit var googleAuthClientId: String
+    lateinit var googleAuthClientSecret: String
     lateinit var googleAuthDesktopClientId: String
     lateinit var googleAuthDesktopClientSecret: String
 
