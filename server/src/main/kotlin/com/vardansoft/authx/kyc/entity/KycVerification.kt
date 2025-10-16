@@ -1,6 +1,6 @@
 package com.vardansoft.authx.kyc.entity
 
-import com.vardansoft.authx.data.DocumentType
+import com.vardansoft.authx.domain.DocumentType
 import com.vardansoft.authx.data.KycResponse
 import kotlinx.datetime.LocalDate
 import org.bson.types.ObjectId

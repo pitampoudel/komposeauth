@@ -32,11 +32,6 @@ spring:
   jmx:
     enabled: false
 
-logging:
-  level:
-    org.springframework.security: DEBUG
-    com.vardansoft.authx.core.service: DEBUG
-
 sentry:
   logs.enabled: true
   dsn: ${SENTRY_DSN}

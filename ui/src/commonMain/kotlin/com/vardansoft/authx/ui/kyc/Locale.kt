@@ -1,6 +1,6 @@
 package com.vardansoft.authx.ui.kyc
 
-import com.vardansoft.authx.data.DocumentType
+import com.vardansoft.authx.domain.DocumentType
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.ui.generated.resources.Res
 import com.vardansoft.ui.generated.resources.kyc_document_type_citizenship

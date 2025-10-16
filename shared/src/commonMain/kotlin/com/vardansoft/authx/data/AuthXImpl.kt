@@ -15,7 +15,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 
-class AuthXImpl internal constructor(
+internal class AuthXImpl internal constructor(
     private val authXPreferences: AuthXPreferences,
     override val authUrl: String,
     override val serverUrls: List<String>

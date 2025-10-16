@@ -3,7 +3,7 @@ package com.vardansoft.authx.ui.login
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.vardansoft.authx.data.Credential
-import com.vardansoft.authx.data.Platform
+import com.vardansoft.authx.domain.Platform
 import com.vardansoft.authx.domain.AuthXClient
 import com.vardansoft.authx.ui.login.OAuthUtils.buildAuthUrl
 import com.vardansoft.authx.ui.login.OAuthUtils.generateCodeChallenge

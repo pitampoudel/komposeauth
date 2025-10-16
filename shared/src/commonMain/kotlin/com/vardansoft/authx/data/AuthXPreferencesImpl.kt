@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalSettingsApi::class)
-class AuthXPreferencesImpl(
+internal class AuthXPreferencesImpl(
     private val settings: ObservableSettings
 ) : AuthXPreferences {
     private val suspendSettings = settings.toSuspendSettings()

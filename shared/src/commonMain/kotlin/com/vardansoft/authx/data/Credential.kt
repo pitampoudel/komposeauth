@@ -1,5 +1,6 @@
 package com.vardansoft.authx.data
 
+import com.vardansoft.authx.domain.Platform
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

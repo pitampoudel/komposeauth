@@ -2,7 +2,7 @@ package com.vardansoft.authx.ui.kyc
 
 import com.vardansoft.authx.data.Country
 import com.vardansoft.authx.data.DocumentInformation
-import com.vardansoft.authx.data.DocumentType
+import com.vardansoft.authx.domain.DocumentType
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.authx.data.PersonalInformation
 import com.vardansoft.authx.data.UpdateAddressDetailsRequest

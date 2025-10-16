@@ -1,8 +1,8 @@
 package com.vardansoft.authx.core.controller
 
 import com.vardansoft.authx.AppProperties
-import com.vardansoft.authx.data.Platform
-import com.vardansoft.authx.data.Platform.*
+import com.vardansoft.authx.domain.Platform
+import com.vardansoft.authx.domain.Platform.*
 import io.swagger.v3.oas.annotations.Operation // Added import
 import kotlinx.serialization.Serializable
 import org.springframework.beans.factory.annotation.Value

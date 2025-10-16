@@ -11,7 +11,7 @@ import kotlin.time.ExperimentalTime
 
 
 @OptIn(ExperimentalTime::class)
-fun isTokenExpired(refreshToken: String): Boolean {
+internal fun isTokenExpired(refreshToken: String): Boolean {
     return try {
         // Some refresh tokens are also JWTs, others might be opaque
         if (refreshToken.contains(".")) {

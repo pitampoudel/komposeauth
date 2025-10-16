@@ -7,9 +7,9 @@ Full‑stack authentication for Kotlin Multiplatform: Spring Authorization Serve
 
 ## What is AuthX?
 AuthX is a production‑ready auth platform tailored for Kotlin Multiplatform apps.
-- Server (Spring Boot): OAuth 2.1 Authorization Server + Resource Server, OIDC userinfo, Google sign‑in, password login, email verification, phone OTP, client registration, JWT with custom claims, MongoDB persistence, OpenAPI docs.
-- Shared KMP SDK (artifact: authx): Auth client with token storage and auto‑refresh, Koin DI module, helpers for configuring Ktor Auth.
-- Compose Multiplatform UI (artifact: authx-ui): Login flow building blocks (LoginViewModel, OTP UI), KYC/Profile screens, logout handler, CompositionLocals, and platform credential retrieval utilities.
+- Server (Spring Boot): OAuth 2.1 Authorization Server + Resource Server, OIDC userinfo, Google sign‑in, password login, email, phone OTP, kyc verification oauth client registration, OpenAPI docs, Sentry Logging
+- Shared KMP SDK (artifact: authx): AuthX (primary sdk class), Koin DI module, helpers for configuring Ktor Auth, utilities like validators, datetime utils, phone number parser, ktor utils etc, classes like KmpFile, encoded data
+- Compose Multiplatform UI (artifact: authx-ui): Login flow building blocks (LoginViewModel, OTPViewModel, CountryPicker, OTPField), KYC/Profile screens, logout handler, CompositionLocals, and platform credential retrieval utilities.
 
 Modules in this repository:
 1. shared – Core KMP client library (published as com.vardansoft:authx)
@@ -100,16 +100,18 @@ val httpClient = HttpClient {
 ```
 
 ### UI components (Compose Multiplatform)
+- Screen state wrapper with progress and info dialogs
 - Current user CompositionLocals and providers
 - Logout handler
 - OTP ViewModel
 - LoginViewModel + platform credential retrieval
+- Profile Viewmodel (current profile, update, deactivate)
 - KYC and Profile screens (ui module)
 - Utilities: CountryPicker, FilePicker, OTP Field
 
 Examples:
 ```kotlin
-ProvideUserInfo {
+ProvideAuthX {
     val userInfoState = LocalUserInfoState.current
     // render using userInfoState (LazyState<UserInfo>)
 }

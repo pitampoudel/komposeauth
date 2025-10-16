@@ -9,7 +9,7 @@ import com.vardansoft.authx.core.service.JwtService
 import com.vardansoft.authx.core.service.sms.PhoneNumberVerificationService
 import com.vardansoft.authx.core.utils.validateGoogleIdToken
 import com.vardansoft.authx.data.CreateUserRequest
-import com.vardansoft.authx.data.Platform
+import com.vardansoft.authx.domain.Platform
 import com.vardansoft.authx.data.UpdatePhoneNumberRequest
 import com.vardansoft.authx.data.UpdateProfileRequest
 import com.vardansoft.authx.data.VerifyPhoneOtpRequest

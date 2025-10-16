@@ -11,7 +11,7 @@ import com.vardansoft.authx.data.UpdatePhoneNumberRequest
 import com.vardansoft.authx.data.UserInfoResponse
 import com.vardansoft.authx.data.VerifyPhoneOtpRequest
 import com.vardansoft.authx.data.Country
-import com.vardansoft.authx.data.Platform
+import com.vardansoft.authx.domain.Platform
 import com.vardansoft.authx.data.UpdateProfileRequest
 import com.vardansoft.core.domain.Result
 import io.ktor.client.statement.HttpResponse

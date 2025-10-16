@@ -3,7 +3,7 @@ package com.vardansoft.authx.data
 /**
  * Centralized API endpoint path segments shared between client and server.
  */
-object ApiEndpoints {
+internal object ApiEndpoints {
     const val TOKEN = "token"
     const val ME = "me"
     const val DEACTIVATE = "deactivate"

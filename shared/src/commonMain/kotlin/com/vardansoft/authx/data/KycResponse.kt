@@ -1,5 +1,6 @@
 package com.vardansoft.authx.data
 
+import com.vardansoft.authx.domain.DocumentType
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 

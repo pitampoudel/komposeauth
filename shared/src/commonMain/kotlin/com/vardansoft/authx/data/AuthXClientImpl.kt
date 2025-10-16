@@ -9,6 +9,7 @@ import com.vardansoft.authx.data.ApiEndpoints.UPDATE
 import com.vardansoft.authx.data.ApiEndpoints.UPDATE_PHONE_NUMBER
 import com.vardansoft.authx.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import com.vardansoft.authx.domain.AuthXClient
+import com.vardansoft.authx.domain.Platform
 import com.vardansoft.core.data.asResource
 import com.vardansoft.core.data.safeApiCall
 import com.vardansoft.core.domain.Result
@@ -21,7 +22,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 
-class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXClient {
+internal class AuthXClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthXClient {
 
     override suspend fun fetchConfig(platform: Platform): Result<ConfigResponse> {
         return safeApiCall {

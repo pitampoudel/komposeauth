@@ -1,6 +1,6 @@
 package com.vardansoft.authx.ui.kyc
 
-import com.vardansoft.authx.data.DocumentType
+import com.vardansoft.authx.domain.DocumentType
 import com.vardansoft.authx.data.KycResponse
 import com.vardansoft.core.domain.KmpFile
 import kotlinx.datetime.LocalDate

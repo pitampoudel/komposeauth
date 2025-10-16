@@ -1,8 +1,8 @@
 package com.vardansoft.authx
 
-import com.vardansoft.authx.data.Platform
-import com.vardansoft.authx.data.Platform.DESKTOP
-import com.vardansoft.authx.data.Platform.WEB
+import com.vardansoft.authx.domain.Platform
+import com.vardansoft.authx.domain.Platform.DESKTOP
+import com.vardansoft.authx.domain.Platform.WEB
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import java.net.Inet4Address
