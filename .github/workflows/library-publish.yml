@@ -1,10 +1,9 @@
 name: Publish Client Library
 on:
   push:
-    branches:
-      - main
-  release:
-    types: [ released, prereleased ]
+    tags:
+      - 'v*'
+  workflow_dispatch:
 env:
   ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
   ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
@@ -14,15 +13,32 @@ env:
 jobs:
   publish:
     name: Publish with Ubuntu Runner
-    runs-on: [ ubuntu-latest ]
+    runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: 21
+
+      - name: Extract version from tag
+        id: extract_tag
+        run: |
+          echo "TAG=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          # Strip leading 'v' to get pure SemVer number
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Validate SemVer tag
+        shell: bash
+        run: |
+          if [[ ! "${{ steps.extract_tag.outputs.TAG }}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Tag '${{ steps.extract_tag.outputs.TAG }}' is not a valid SemVer (expected vMAJOR.MINOR.PATCH optionally with pre-release)" >&2
+            exit 1
+          fi
+
       - name: Publish to MavenCentral
-        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
+        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache -Pversion=${{ steps.extract_tag.outputs.VERSION }}
 
