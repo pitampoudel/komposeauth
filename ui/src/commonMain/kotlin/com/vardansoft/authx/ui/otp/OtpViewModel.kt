@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-internal class OtpViewModel(
+class OtpViewModel(
     val client: AuthXClient,
     val authXPreferences: AuthXPreferences
 ) : ViewModel() {

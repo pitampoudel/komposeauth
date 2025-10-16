@@ -1,132 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- OTP -->
-    <string name="otp_enter_mobile_title">Enter your mobile number</string>
-    <string name="otp_phone_label">Phone Number</string>
-    <string name="otp_phone_placeholder">e.g. 9812345678</string>
-    <string name="otp_send_button">Send OTP</string>
-    <string name="otp_fill_code_title">Fill The Code</string>
-    <string name="otp_sent_to">An OTP has been sent to %1$s</string>
-    <string name="otp_verify_button">Verify</string>
-    <string name="common_skip">Skip</string>
-
-    <!-- KYC -->
-    <string name="kyc_title">KYC Verification</string>
-    <string name="kyc_provide_details">Provide your details</string>
-    <string name="kyc_subtitle">We securely verify your identity to keep your account safe.</string>
-    <string name="kyc_current_status">Current status: %1$s</string>
-    <string name="kyc_remarks">Remarks: %1$s</string>
-    <string name="kyc_full_name_label">Full name</string>
-    <string name="kyc_full_name_placeholder">Enter your full legal name</string>
-    <string name="kyc_document_type_label">Document type</string>
-    <string name="kyc_document_type_placeholder">e.g., Passport, Driver License</string>
-    <string name="kyc_document_number_label">Document number</string>
-    <string name="kyc_document_number_placeholder">Enter document number</string>
-    <string name="kyc_country_label">Country</string>
-    <string name="kyc_country_placeholder">Issuing country</string>
-    <string name="kyc_doc_front_label">Document front URL (optional)</string>
-    <string name="kyc_doc_front_placeholder">Link to front image</string>
-    <string name="kyc_doc_back_label">Document back URL (optional)</string>
-    <string name="kyc_doc_back_placeholder">Link to back image</string>
-    <string name="kyc_selfie_label">Selfie URL (optional)</string>
-    <string name="kyc_selfie_placeholder">Link to a selfie for verification</string>
-    <string name="kyc_submit">Submit for Review</string>
-    <string name="kyc_submission_in_progress">Submission in progress or completed</string>
-    <string name="kyc_documents_section_title">Documents</string>
-    <string name="kyc_document_front_title">Document front</string>
-    <string name="kyc_document_front_hint">Upload the front side (JPG, PNG, PDF)</string>
-    <string name="kyc_document_back_title">Document back</string>
-    <string name="kyc_document_back_hint">Upload the back side (JPG, PNG, PDF)</string>
-    <string name="kyc_selfie_title">Selfie</string>
-    <string name="kyc_selfie_hint">Upload a selfie for verification</string>
-    <string name="file_selected">File selected</string>
-    <string name="file_not_selected">No file selected</string>
-    <string name="change_file">Change file</string>
-    <string name="choose_file">Choose file</string>
-    <string name="kyc_submit_progress">Submitting...</string>
-    <string name="kyc_submit_pending">Submission pending review</string>
-    <string name="kyc_submit_approved">KYC approved</string>
-    <string name="kyc_submit_action">Submit for review</string>
-    <string name="kyc_document_type_passport">Passport</string>
-    <string name="kyc_document_type_driver_license">Driver license</string>
-    <string name="kyc_document_type_national_id">National ID</string>
-    <string name="kyc_document_type_citizenship">Citizenship</string>
-    <string name="kyc_personal_info_section_title">Personal Information</string>
-    <string name="kyc_document_details_section_title">Document Details</string>
-    <string name="kyc_document_issue_date_label">Document Issue Date</string>
-    <string name="kyc_document_expiry_date_label">Document Expiry Date</string>
-    <string name="kyc_document_issued_place_label">Document Issued Place</string>
-    <string name="kyc_document_issued_place_placeholder">Enter document issued place</string>
-    <string name="file_selected_size">File selected - %1$s KB</string>
+    <!-- KYC Status -->
     <string name="kyc_status_approved">Approved</string>
     <string name="kyc_status_pending">Pending</string>
     <string name="kyc_status_rejected">Rejected</string>
     <string name="kyc_status_draft">Draft</string>
+     <!-- General-->
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="sign_in_to_continue">Sign in to continue</string>
-    <string name="label_first_name">First Name</string>
-    <string name="label_last_name">Last Name</string>
-    <string name="label_email">Email</string>
-    <string name="label_password">Password</string>
-    <string name="label_phone_number">Phone Number</string>
-    <string name="label_confirm_password">Confirm Password</string>
-    <string name="dont_know_password_what">Don't know password?</string>
-    <string name="title_reset_password">Reset Password</string>
-    <string name="button_email_sign_in">Sign In with Email</string>
-    <string name="or">Or</string>
-    <string name="dont_have_account_">Don't have an account?</string>
-    <string name="button_sign_in">Sign in</string>
-    <string name="welcome_back">Welcome back!</string>
-    <string name="sign_in_to_access">Sign in to access your account</string>
-    <string name="sign_in_security_note">Secure authentication with Google</string>
-    <string name="sign_in_terms_and_conditions">By signing in, you agree to our Terms of Service and
-        Privacy Policy
-    </string>
-    <string name="button_signup">Create New Account</string>
-    <string name="title_signup">Signup</string>
-    <string name="button_reset">Reset</string>
-    
-    <!-- KYC Form Fields -->
-    <string name="kyc_nationality_label">Nationality</string>
-    <string name="kyc_nationality_placeholder">Enter your nationality</string>
-    <string name="kyc_first_name_label">First Name</string>
-    <string name="kyc_first_name_placeholder">Enter your first name</string>
-    <string name="kyc_middle_name_label">Middle Name (Optional)</string>
-    <string name="kyc_middle_name_placeholder">Enter your middle name</string>
-    <string name="kyc_last_name_label">Last Name</string>
-    <string name="kyc_last_name_placeholder">Enter your last name</string>
-    <string name="kyc_date_of_birth_label">Date of Birth</string>
-    <string name="kyc_gender_label">Gender</string>
-    <string name="kyc_gender_placeholder">Enter your gender</string>
-    <string name="kyc_family_details_title">Family Details</string>
-    <string name="kyc_father_name_label">Father's Name</string>
-    <string name="kyc_father_name_placeholder">Enter your father's name</string>
-    <string name="kyc_mother_name_label">Mother's Name</string>
-    <string name="kyc_mother_name_placeholder">Enter your mother's name</string>
-    <string name="kyc_marital_status_label">Marital Status</string>
-    <string name="kyc_marital_status_placeholder">Enter your marital status</string>
-    <string name="kyc_gender_male">Male</string>
-    <string name="kyc_gender_female">Female</string>
-    <string name="kyc_gender_other">Other</string>
-    <string name="kyc_marital_status_married">Married</string>
-    <string name="kyc_marital_status_unmarried">Unmarried</string>
-    <string name="kyc_current_address_title">Current Address</string>
-    <string name="kyc_temporary_address_title">Temporary Address</string>
-    <string name="kyc_address_country_label">Country</string>
-    <string name="kyc_address_country_placeholder">Enter country</string>
-    <string name="kyc_address_province_label">Province</string>
-    <string name="kyc_address_province_placeholder">Enter province</string>
-    <string name="kyc_address_district_label">District</string>
-    <string name="kyc_address_district_placeholder">Enter district</string>
-    <string name="kyc_address_municipality_label">Municipality/City</string>
-    <string name="kyc_address_municipality_placeholder">Enter municipality/city</string>
-    <string name="kyc_address_ward_no_label">Ward No.</string>
-    <string name="kyc_address_ward_no_placeholder">Enter ward number</string>
-    <string name="kyc_address_tole_label">Tole/Street</string>
-    <string name="kyc_address_tole_placeholder">Enter tole/street</string>
-    <string name="kyc_temporary_address_same_as_permanent">Same as Permanent Address</string>
-
     <!-- Validation Errors -->
     <string name="must_not_be_blank">Must not be blank</string>
     <string name="must_not_be_empty">Must not be empty</string>

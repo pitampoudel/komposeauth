@@ -4,4 +4,4 @@ import androidx.compose.runtime.Composable
 
 
 @Composable
-internal expect fun registerSmsOtpRetriever(onRetrieved: (String) -> Unit): Boolean?
+expect fun registerSmsOtpRetriever(onRetrieved: (String) -> Unit): Boolean?

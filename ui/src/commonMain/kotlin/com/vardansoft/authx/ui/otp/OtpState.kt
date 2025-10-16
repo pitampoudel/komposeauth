@@ -5,7 +5,7 @@ import com.vardansoft.authx.data.VerifyPhoneOtpRequest
 import com.vardansoft.core.presentation.InfoMessage
 import com.vardansoft.core.domain.validators.AuthXValidationError
 
-internal data class OtpState(
+data class OtpState(
     val progress: Float? = null,
     val infoMsg: InfoMessage? = null,
     val req: UpdatePhoneNumberRequest? = null,
