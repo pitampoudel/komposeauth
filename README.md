@@ -2,12 +2,6 @@
 
 Full‑stack authentication for Kotlin Multiplatform: Spring Authorization Server + Kotlin Multiplatform SDK + Compose Multiplatform UI.
 
-## Maven Central
-
-Artifacts are published under group `com.vardansoft`
-
-- Core SDK: com.vardansoft:authx:x.x.x
-- UI Kit: com.vardansoft:authx-ui:x.x.x
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/authx/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/authx)
 
@@ -140,4 +134,4 @@ LaunchedEffect(Unit) {
 - OIDC userinfo can include KYC status when configured
 
 ## License
-Apache 2.0. See project metadata for details.
+Apache 2.0.
