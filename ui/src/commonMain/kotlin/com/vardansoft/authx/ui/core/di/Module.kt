@@ -16,7 +16,7 @@ fun KoinApplication.configureAuthX(authUrl: String, hosts: List<String>) {
             serverUrls = hosts
         ) + module {
             viewModel<OtpViewModel> {
-                OtpViewModel(get(), get(), get())
+                OtpViewModel(get(), get())
             }
             viewModel<LoginViewModel> {
                 LoginViewModel(get(), get())

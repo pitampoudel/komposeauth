@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 internal class OtpViewModel(
-    val validateOtpCode: ValidateOtpCode,
     val client: AuthXClient,
     val authXPreferences: AuthXPreferences
 ) : ViewModel() {
@@ -42,7 +41,7 @@ internal class OtpViewModel(
                     }
 
                     _state.update {
-                        it.copy(codeError = validateOtpCode(state.value.code).error())
+                        it.copy(codeError = ValidateOtpCode(state.value.code).error())
                     }
 
                     state.value.verifyParam()?.let { req ->
@@ -54,8 +53,7 @@ internal class OtpViewModel(
                             }
 
                             is Result.Success -> {
-                                val res = client.fetchUserInfo()
-                                when (res) {
+                                when (val res = client.fetchUserInfo()) {
                                     is Result.Error -> {
                                         _state.update {
                                             it.copy(infoMsg = res.message)
