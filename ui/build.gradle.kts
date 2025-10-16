@@ -40,7 +40,7 @@ kotlin {
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.ui)
-                implementation(libs.compose.material3)
+                implementation(compose.material3)
                 implementation(compose.materialIconsExtended)
                 implementation(compose.components.resources)
                 implementation(libs.kotlinx.datetime)

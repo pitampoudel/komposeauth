@@ -22,23 +22,23 @@ configurations.all {
 
 dependencies {
     implementation(project(":shared"))
-    implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    "developmentOnly"("org.springframework.boot:spring-boot-devtools")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation(libs.spring.boot.starter)
+    implementation(libs.spring.boot.starter.thymeleaf)
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.data.mongodb)
+    implementation(libs.kotlin.reflect)
+    implementation(libs.spring.boot.starter.actuator)
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.kotlin.test.junit5)
+    "developmentOnly"(libs.spring.boot.devtools)
+    testRuntimeOnly(libs.junit.platform.launcher)
 
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.security:spring-security-crypto")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
-    implementation("org.springframework.security:spring-security-oauth2-authorization-server")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-mail")
+    implementation(libs.spring.boot.starter.security)
+    implementation(libs.spring.security.crypto)
+    implementation(libs.spring.boot.starter.oauth2.client)
+    implementation(libs.spring.security.oauth2.authorization.server)
+    implementation(libs.spring.boot.starter.validation)
+    implementation(libs.spring.boot.starter.mail)
 
     implementation(libs.kotlinx.datetime)
 
@@ -47,26 +47,26 @@ dependencies {
     implementation(libs.kotlinx.serialization.core.jvm)
 
     // Load .env into Spring Environment so application.yml can use ${VAR}
-    implementation("me.paulschwarz:spring-dotenv:4.0.0")
+    implementation(libs.spring.dotenv)
 
     // Sentry for error tracking
-    implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.22.0")
+    implementation(libs.sentry.spring.boot.starter.jakarta)
 
-    testImplementation("org.springframework.security:spring-security-test")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:6.0.0")
+    testImplementation(libs.spring.security.test)
+    testImplementation(libs.mockito.kotlin)
 
-    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
+    implementation(libs.jjwt.api)
+    runtimeOnly(libs.jjwt.impl)
 
     // Google Cloud Platform
-    implementation("com.google.cloud:spring-cloud-gcp-storage:6.2.3")
+    implementation(libs.spring.cloud.gcp.storage)
 
     // OpenAPI documentation
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
 
-    testImplementation("org.testcontainers:testcontainers:1.21.3")
-    testImplementation("org.testcontainers:junit-jupiter:1.21.3")
-    testImplementation("org.testcontainers:mongodb")
+    testImplementation(libs.testcontainers)
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.mongodb)
 
 }
 

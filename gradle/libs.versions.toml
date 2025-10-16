@@ -1,37 +1,52 @@
 [versions]
 agp = "8.13.0"
 cryptography = "0.5.0"
+jjwtApi = "0.13.0"
+junitJupiter = "1.21.3"
 kotlin = "2.2.20"
 android-minSdk = "24"
 android-compileSdk = "36"
 koin-bom = "4.1.1"
 ktor = "3.3.1"
 libphonenumberKotlin = "0.1.8"
+mockitoKotlin = "6.1.0"
 multiplatformSettings = "1.3.0"
 kotlinx-serialization = "2.2.20"
 kotlinxSerializationCore = "1.9.0"
 kotlinxSerializationJson = "1.9.0"
-jetbrains-lifecycle = "2.9.4"
+jetbrains-lifecycle = "2.9.5"
 kotlinx-datetime = "0.7.1"
-compose = "1.9.0"
-compose-material3 = "1.9.0-beta06"
+compose = "1.9.1"
 androidx-credentials = "1.5.0"
 googleid = "1.1.1"
 playServicesAuth = "21.4.0"
 playServicesAuthApiPhone = "18.3.0"
 ccp = "2.7.3"
+sentrySpringBootStarterJakarta = "8.23.0"
+springCloudGcpStorage = "7.4.0"
+springdocOpenapiStarterWebmvcUi = "2.8.13"
+springDotenv = "4.0.0"
+testcontainers = "2.0.0"
 
 [libraries]
 cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptography" }
 cryptography-provider-webcrypto = { module = "dev.whyoleg.cryptography:cryptography-provider-webcrypto", version.ref = "cryptography" }
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwtApi" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwtApi" }
+junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "junitJupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
 coil3-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.3.0" }
 coil3-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version = "3.3.0" }
 koin-core = { module = "io.insert-koin:koin-core" }
 koin-compose = { module = "io.insert-koin:koin-compose" }
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
+kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5" }
 libphonenumber-kotlin = { module = "io.github.luca992.libphonenumber-kotlin:libphonenumber", version.ref = "libphonenumberKotlin" }
 lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "jetbrains-lifecycle" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }
+mongodb = { module = "org.testcontainers:mongodb" }
 multiplatformSettings-serialization = { module = "com.russhwolf:multiplatform-settings-serialization", version.ref = "multiplatformSettings" }
 multiplatformSettings-noArg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings" }
 multiplatformSettings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version.ref = "multiplatformSettings" }
@@ -47,13 +62,31 @@ jetbrains-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", na
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 compose-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-tooling-preview", version.ref = "compose" }
-compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-material3" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "androidx-credentials" }
 androidx-credentials-playServicesAuth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "androidx-credentials" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-auth-api-phone = { module = "com.google.android.gms:play-services-auth-api-phone", version.ref = "playServicesAuthApiPhone" }
 ccp = { module = "com.hbb20:ccp", version.ref = "ccp" }
+sentry-spring-boot-starter-jakarta = { module = "io.sentry:sentry-spring-boot-starter-jakarta", version.ref = "sentrySpringBootStarterJakarta" }
+spring-boot-devtools = { module = "org.springframework.boot:spring-boot-devtools" }
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb" }
+spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail" }
+spring-boot-starter-oauth2-client = { module = "org.springframework.boot:spring-boot-starter-oauth2-client" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-thymeleaf = { module = "org.springframework.boot:spring-boot-starter-thymeleaf" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-cloud-gcp-storage = { module = "com.google.cloud:spring-cloud-gcp-storage", version.ref = "springCloudGcpStorage" }
+spring-dotenv = { module = "me.paulschwarz:spring-dotenv", version.ref = "springDotenv" }
+spring-security-crypto = { module = "org.springframework.security:spring-security-crypto" }
+spring-security-oauth2-authorization-server = { module = "org.springframework.security:spring-security-oauth2-authorization-server" }
+spring-security-test = { module = "org.springframework.security:spring-security-test" }
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdocOpenapiStarterWebmvcUi" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
