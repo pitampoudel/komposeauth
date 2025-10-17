@@ -26,7 +26,7 @@ subprojects {
 
                 pom {
                     inceptionYear = "2025"
-                    url = "https://github.com/pitampoudel/AuthX"
+                    url = "https://github.com/pitampoudel/komposeauth"
                     licenses {
                         license {
                             name = "The Apache License, Version 2.0"
@@ -42,9 +42,9 @@ subprojects {
                         }
                     }
                     scm {
-                        url = "https://github.com/pitampoudel/AuthX"
-                        connection = "scm:git:https://github.com/pitampoudel/AuthX.git"
-                        developerConnection = "scm:git:ssh://git@github.com:pitampoudel/AuthX.git"
+                        url = "https://github.com/pitampoudel/komposeauth"
+                        connection = "scm:git:https://github.com/pitampoudel/komposeauth.git"
+                        developerConnection = "scm:git:ssh://git@github.com:pitampoudel/komposeauth.git"
                     }
                 }
             }

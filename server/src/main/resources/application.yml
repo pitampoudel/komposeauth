@@ -1,6 +1,6 @@
 spring:
   application:
-    name: "AuthX"
+    name: "komposeauth"
   security:
     oauth2:
       client:
@@ -56,7 +56,7 @@ app:
   twilio-auth-token: ${TWILIO_AUTH_TOKEN:}
   twilio-from-number: ${TWILIO_FROM_NUMBER:}
   twilio-verify-service-sid: ${TWILIO_VERIFY_SERVICE_SID:}
-  name: ${APP_NAME:AuthX}
+  name: ${APP_NAME}
   expected-gcp-project-id: ${GCP_PROJECT_ID}
   logo-url: ${APP_LOGO_URL}
   google-auth-client-id: ${GOOGLE_OAUTH_CLIENT_ID}

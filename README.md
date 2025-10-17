@@ -1,8 +1,8 @@
-# AuthX
+# komposeauth
 
 Full-stack auth for Kotlin Multiplatform: Spring Authorization Server + KMP SDK + Compose Multiplatform UI.
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/authx/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/authx)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/komposeauth/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/komposeauth)
 [![Compose Multiplatform](https://img.shields.io/badge/Compose-Multiplatform-42a5f5)](https://www.jetbrains.com/lp/compose-multiplatform/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
@@ -13,17 +13,16 @@ Full-stack auth for Kotlin Multiplatform: Spring Authorization Server + KMP SDK 
 - Shared KMP SDK: core APIs, Ktor Auth integration.
 - Compose Multiplatform UI: ViewModels, CompositionLocals, platform utilities, components.
 
-## Server
+## server
 ### Features
-- OAuth 2.1 Authorization Server and Direct Auth endpoints
+- OAuth 2.1 Authorization Server and Direct Auth
 - Google OAuth, password login, email verification, phone OTP
-- Public client support (mobile/desktop)
-- SMS via Twilio or Samaye (optional); SMTP email
 - OpenAPI/Swagger (https://auth.vardansoft.com/swagger-ui.html)
 
-
 ### Setup
-Environment Variables
+- docker pull pitampoudel/komposeauth:latest
+
+#### Environment Variables
 ```
 APP_NAME=
 APP_LOGO_URL=
@@ -47,16 +46,33 @@ SENTRY_AUTH_TOKEN=
 BASE_URL=
 ```
 
-## Client
-Install (Gradle)
-- implementation("com.vardansoft:authx:x.x.x")
-- implementation("com.vardansoft:authx-ui:x.x.x")
+## shared
+* Install (Gradle)
+```
+implementation("com.vardansoft:komposeauth-shared:x.x.x")
+```
+* Components
+- DTOs shared between client and server 
+- Result<T>, InfoMessage, RegexUtils, KmpFile, DateTimeUtils, KtorClientUtils, PhoneNumberParser, validators etc
 
-Setup AuthX
+## client
+* Install (Gradle)
+```
+implementation("com.vardansoft:komposeauth-client:x.x.x")
+```
+* Utilities
+  - ScreenStateWrapper(...) with InfoDialog and Progress dialog
+  - CountryPicker(...), DateTimeField(...), OTPTextField(...)
+  - rememberFilePicker(input, selectionMode, onPicked)
+  - rememberCredentialRetriever()
+  - registerSmsOtpRetriever(onRetrieved)
+
+Setup komposeauth
+* Setup
 ```kotlin
 koinApplication {
     modules(
-        configureAuthX(
+        configureKomposeauth(
             authUrl = "https://your-auth-server",
             hosts = listOf("https://your-api-server")
         )
@@ -68,8 +84,8 @@ Setup (Ktor Auth)
 ```kotlin
 val httpClient = HttpClient {
     install(Auth) {
-        val authX = get<AuthX>()
-        authX.configureBearer(this)
+        val ktorBearerHandler = get<KtorBearerHandler>()
+      ktorBearerHandler.configureBearer(this)
     }
 }
 ```
@@ -77,8 +93,8 @@ val httpClient = HttpClient {
 UI Usage
 - Composition Local
 ```kotlin
-ProvideAuthX {
-    val userState = LocalUserState.current // LazyState<UserInfoResponse>
+ProvideLocalUser {
+    val userState = LocalUserState.current
 }
 ```
 - Login
@@ -93,7 +109,9 @@ LaunchedEffect(Unit) {
 - OTP
 ```kotlin
 val vm = koinViewModel<OtpViewModel>()
-registerSmsOtpRetriever { code -> vm.onEvent(OtpEvent.CodeChanged(code)) }
+registerSmsOtpRetriever { code -> 
+    
+}
 ```
 - Profile
 ```kotlin
@@ -103,25 +121,14 @@ val vm = koinViewModel<ProfileViewModel>()
 ```kotlin
 val vm = koinViewModel<KycViewModel>()
 ```
-- Components and utilities
-  - CountryPicker(...)
-  - rememberFilePicker(input, selectionMode, onPicked)
-  - rememberCredentialRetriever()
-  - registerSmsOtpRetriever(onRetrieved)
 
-Public Utility classes (shared module)
-- Result<T>, InfoMessage, KmpFile, EncodedData etc
-
-UI Components (ui module)
-- rememberCredentialRetriever(), registerSmsOtpRetriever(onRetrieved), CountryPicker(...), rememberFilePicker(...)
-
-Contributing
+# Contributing
 - Issues and PRs are welcome.
 - Please run ./gradlew build before submitting a PR.
 - For larger changes, consider opening an issue first to discuss direction.
 
-Security
+# Security
 If you discover a security vulnerability, please email the maintainers or open a private security advisory. Avoid filing public issues with sensitive details.
 
-License
+# License
 Apache License 2.0. See LICENSE for details.

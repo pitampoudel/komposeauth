@@ -32,25 +32,9 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                // kotlin
                 implementation(libs.kotlinx.datetime)
-                // koin
-                api(project.dependencies.platform(libs.koin.bom))
-                api(libs.koin.core)
-                // ktor client
-                api(libs.ktor.client.core)
-                implementation(libs.ktor.client.contentNegotiation)
-                implementation(libs.ktor.client.logging)
-                api(libs.ktor.serialization.kotlinx.json)
-                implementation(libs.ktor.client.auth)
-                // settings
-                api(libs.multiplatformSettings.noArg)
-                implementation(libs.multiplatformSettings.coroutines)
-                implementation(libs.multiplatformSettings.serialization)
-                implementation(libs.multiplatformSettings.makeObservable)
-                // lifecycle viewmodel
-                api(libs.jetbrains.lifecycle.viewmodel)
                 implementation(libs.libphonenumber.kotlin)
+                implementation(libs.ktor.client.core)
             }
         }
         val commonTest by getting {
@@ -58,18 +42,11 @@ kotlin {
                 implementation(libs.kotlin.test)
             }
         }
-        val jvmMain by getting {
-
-        }
-        val androidMain by getting {
-
-        }
-
     }
 }
 
 android {
-    namespace = "com.vardansoft.authx"
+    namespace = project.properties["group"] as String + ".komposeauth.shared"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -81,10 +58,10 @@ android {
 }
 
 mavenPublishing {
-    coordinates(group.toString(), "authx", version.toString())
+    coordinates(group.toString(), "komposeauth-shared", version.toString())
 
     pom {
-        name = "AuthX"
-        description = "Kotlin Multiplatform authentication library"
+        name = "komposeauth shared module"
+        description = "Shared module for the komposeauth library"
     }
 }

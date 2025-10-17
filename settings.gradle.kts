@@ -13,7 +13,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AuthX"
+rootProject.name = "komposeauth"
 include(":shared")
-include(":ui")
+include(":client")
 include(":server")

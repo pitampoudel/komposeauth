@@ -1,6 +1,6 @@
 spring:
   application:
-    name: "AuthX-Test"
+    name: "komposeauth-Test"
   security:
     oauth2:
       client:

@@ -12,7 +12,7 @@ plugins {
 sentry {
     includeSourceContext = true
     org = "vardan-soft-pvt-ltd"
-    projectName = "authx"
+    projectName = "komposeauth"
     authToken = System.getenv("SENTRY_AUTH_TOKEN")
 }
 
