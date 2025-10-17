@@ -1,26 +1,27 @@
 # komposeauth
 
-Full-stack auth for Kotlin Multiplatform: Spring Authorization Server + KMP SDK + Compose Multiplatform UI.
+Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Compose Multiplatform UI.
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/komposeauth/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/komposeauth)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/komposeauth-shared/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/komposeauth-shared)
 [![Compose Multiplatform](https://img.shields.io/badge/Compose-Multiplatform-42a5f5)](https://www.jetbrains.com/lp/compose-multiplatform/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
 ---
 
 ## Overview
-- Server: OAuth 2.1/OIDC, federated authorization with Google, username/password, email, phone OTP, KYC, OpenAPI, Sentry.
-- Shared KMP SDK: core APIs, Ktor Auth integration.
-- Compose Multiplatform UI: ViewModels, CompositionLocals, platform utilities, components.
+* Server: OAuth 2.1/OIDC, Direct Auth (REST API)
 
-## server
-### Features
-- OAuth 2.1 Authorization Server and Direct Auth
-- Google OAuth, password login, email verification, phone OTP
+* Shared KMP SDK: Shared DTOs and utilities between client and server
+
+* Client CMP SDK: Ktor, ViewModels, CompositionLocals, platform utilities, components.
+
+## Server
+- OAuth 2.1 Authorization Server and Direct Auth (REST API)
+- Federated authorization with Google, username/password, email verification, phone OTP, KYC, OpenAPI, Sentry.
 - OpenAPI/Swagger (https://auth.vardansoft.com/swagger-ui.html)
 
 ### Setup
-- docker pull pitampoudel/komposeauth:latest
+`docker pull pitampoudel/komposeauth:latest`
 
 #### Environment Variables
 ```
@@ -46,29 +47,21 @@ SENTRY_AUTH_TOKEN=
 BASE_URL=
 ```
 
-## shared
-* Install (Gradle)
+## Shared KMP SDK
 ```
 implementation("com.vardansoft:komposeauth-shared:x.x.x")
 ```
-* Components
+### Components
 - DTOs shared between client and server 
-- Result<T>, InfoMessage, RegexUtils, KmpFile, DateTimeUtils, KtorClientUtils, PhoneNumberParser, validators etc
+- RegexUtils, KmpFile, DateTimeUtils, KtorClientUtils, PhoneNumberParser, validators etc
 
-## client
-* Install (Gradle)
+## Client CMP SDK
+
+### Setup
 ```
 implementation("com.vardansoft:komposeauth-client:x.x.x")
 ```
-* Utilities
-  - ScreenStateWrapper(...) with InfoDialog and Progress dialog
-  - CountryPicker(...), DateTimeField(...), OTPTextField(...)
-  - rememberFilePicker(input, selectionMode, onPicked)
-  - rememberCredentialRetriever()
-  - registerSmsOtpRetriever(onRetrieved)
 
-Setup komposeauth
-* Setup
 ```kotlin
 koinApplication {
     modules(
@@ -80,7 +73,7 @@ koinApplication {
 }
 ```
 
-Setup (Ktor Auth)
+#### Setup Ktor Client
 ```kotlin
 val httpClient = HttpClient {
     install(Auth) {
@@ -89,14 +82,22 @@ val httpClient = HttpClient {
 }
 ```
 
-UI Usage
-- Composition Local
+### Utilities
+  - ScreenStateWrapper(...) with InfoDialog and Progress dialog
+  - CountryPicker(...), DateTimeField(...), OTPTextField(...)
+  - rememberFilePicker(input, selectionMode, onPicked)
+  - rememberCredentialRetriever()
+  - registerSmsOtpRetriever(onRetrieved)
+
+
+### UI Usage
+Composition Local
 ```kotlin
 ProvideLocalUser {
     val userState = LocalUserState.current
 }
 ```
-- Login
+Login
 ```kotlin
 val vm = koinViewModel<LoginViewModel>()
 val credentialRetriever = rememberCredentialRetriever()
@@ -105,18 +106,18 @@ LaunchedEffect(Unit) {
     vm.onEvent(LoginEvent.Login(cred))
 }
 ```
-- OTP
+OTP
 ```kotlin
 val vm = koinViewModel<OtpViewModel>()
 registerSmsOtpRetriever { code -> 
     
 }
 ```
-- Profile
+Profile
 ```kotlin
 val vm = koinViewModel<ProfileViewModel>()
 ```
-- KYC
+KYC
 ```kotlin
 val vm = koinViewModel<KycViewModel>()
 ```
