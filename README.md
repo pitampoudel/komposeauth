@@ -94,11 +94,9 @@ val httpClient = HttpClient {
 
 
 ### UI Usage
-CompositionLocal
+Current User
 ```kotlin
-ProvideLocalUser {
-    val userState = LocalUserState.current
-}
+val userState = rememberCurrentUser()
 ```
 Login
 ```kotlin

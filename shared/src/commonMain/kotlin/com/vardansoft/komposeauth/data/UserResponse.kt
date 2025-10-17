@@ -2,11 +2,10 @@ package com.vardansoft.komposeauth.data
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 @Serializable
-data class UserResponse @OptIn(ExperimentalTime::class) constructor(
+data class UserResponse(
     val id: String,
     val firstName: String,
     val lastName: String?,
@@ -23,4 +22,6 @@ data class UserResponse @OptIn(ExperimentalTime::class) constructor(
     init {
         require(email != null || phoneNumber != null)
     }
+    fun verifiedPhoneNumber() = if (phoneNumberVerified) phoneNumber else null
+    fun fullName() = "$firstName ${lastName ?: ""}"
 }
