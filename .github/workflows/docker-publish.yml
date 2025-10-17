@@ -52,10 +52,10 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/authx:latest
-            ghcr.io/${{ github.repository_owner }}/authx:${{ steps.extract_tag.outputs.VERSION }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/authx:latest
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/authx:${{ steps.extract_tag.outputs.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/komposeauth:latest
+            ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.extract_tag.outputs.VERSION }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:latest
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.extract_tag.outputs.VERSION }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.version=${{ steps.extract_tag.outputs.VERSION }}

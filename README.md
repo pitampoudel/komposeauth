@@ -2,7 +2,8 @@
 
 Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Compose Multiplatform UI.
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/komposeauth-shared/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.vardansoft/komposeauth-shared)
+[![Maven Central (shared)](https://img.shields.io/maven-central/v/com.vardansoft/komposeauth-shared.svg)](https://central.sonatype.com/artifact/com.vardansoft/komposeauth-shared)
+[![Maven Central (client)](https://img.shields.io/maven-central/v/com.vardansoft/komposeauth-client.svg)](https://central.sonatype.com/artifact/com.vardansoft/komposeauth-client)
 [![Compose Multiplatform](https://img.shields.io/badge/Compose-Multiplatform-42a5f5)](https://www.jetbrains.com/lp/compose-multiplatform/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
@@ -18,7 +19,7 @@ Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Compose
 ## Server
 - OAuth 2.1 Authorization Server and Direct Auth (REST API)
 - Federated authorization with Google, username/password, email verification, phone OTP, KYC, OpenAPI, Sentry.
-- OpenAPI/Swagger (https://auth.vardansoft.com/swagger-ui.html)
+- OpenAPI/Swagger: https://auth.vardansoft.com/swagger-ui.html
 
 ### Setup
 `docker pull pitampoudel/komposeauth:latest`
@@ -48,7 +49,8 @@ BASE_URL=
 ```
 
 ## Shared KMP SDK
-```
+```kotlin
+// Check the badge above for the latest version
 implementation("com.vardansoft:komposeauth-shared:x.x.x")
 ```
 ### Components
@@ -58,7 +60,8 @@ implementation("com.vardansoft:komposeauth-shared:x.x.x")
 ## Client CMP SDK
 
 ### Setup
-```
+```kotlin
+// Check the badge above for the latest version
 implementation("com.vardansoft:komposeauth-client:x.x.x")
 ```
 
@@ -77,7 +80,7 @@ koinApplication {
 ```kotlin
 val httpClient = HttpClient {
     install(Auth) {
-      setupBearerAuth(this)
+        setupBearerAuth(this)
     }
 }
 ```
@@ -91,7 +94,7 @@ val httpClient = HttpClient {
 
 
 ### UI Usage
-Composition Local
+CompositionLocal
 ```kotlin
 ProvideLocalUser {
     val userState = LocalUserState.current
@@ -110,7 +113,7 @@ OTP
 ```kotlin
 val vm = koinViewModel<OtpViewModel>()
 registerSmsOtpRetriever { code -> 
-    
+    // vm.onEvent(OtpEvent.CodeChanged(code))
 }
 ```
 Profile
@@ -124,7 +127,7 @@ val vm = koinViewModel<KycViewModel>()
 
 # Contributing
 - Issues and PRs are welcome.
-- Please run ./gradlew build before submitting a PR.
+- Please run ./gradlew build (or gradlew.bat build on Windows) before submitting a PR.
 - For larger changes, consider opening an issue first to discuss direction.
 
 # Security
