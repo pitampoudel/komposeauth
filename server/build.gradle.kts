@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.spring.dotenv)
 
     // Sentry for error tracking
+    implementation(platform(libs.sentry.bom))
     implementation(libs.sentry.spring.boot.starter.jakarta)
 
     testImplementation(libs.spring.security.test)

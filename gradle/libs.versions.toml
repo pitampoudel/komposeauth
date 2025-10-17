@@ -22,6 +22,7 @@ googleid = "1.1.1"
 playServicesAuth = "21.4.0"
 playServicesAuthApiPhone = "18.3.0"
 ccp = "2.7.3"
+sentryBom = "8.23.0"
 sentrySpringBootStarterJakarta = "8.23.0"
 springCloudGcpStorage = "7.4.0"
 springdocOpenapiStarterWebmvcUi = "2.8.13"
@@ -68,6 +69,7 @@ googleid = { module = "com.google.android.libraries.identity.googleid:googleid",
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-auth-api-phone = { module = "com.google.android.gms:play-services-auth-api-phone", version.ref = "playServicesAuthApiPhone" }
 ccp = { module = "com.hbb20:ccp", version.ref = "ccp" }
+sentry-bom = { module = "io.sentry:sentry-bom", version.ref = "sentryBom" }
 sentry-spring-boot-starter-jakarta = { module = "io.sentry:sentry-spring-boot-starter-jakarta", version.ref = "sentrySpringBootStarterJakarta" }
 spring-boot-devtools = { module = "org.springframework.boot:spring-boot-devtools" }
 spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
