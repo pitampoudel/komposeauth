@@ -70,7 +70,7 @@ koinApplication {
     modules(
         configureKomposeauth(
             authUrl = "https://your-auth-server",
-            hosts = listOf("https://your-api-server")
+            hosts = listOf("https://your-resource-server")
         )
     )
 }

@@ -1,4 +1,4 @@
-package com.vardansoft.komposeauth.client.core.presentation.components
+package com.vardansoft.core.presentation.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
