@@ -1,14 +1,14 @@
 package com.vardansoft.komposeauth.ui.core.data
 
-import com.vardansoft.komposeauth.data.ApiEndpoints.TOKEN
-import com.vardansoft.komposeauth.data.Credential
-import com.vardansoft.komposeauth.data.OAuth2TokenData
-import com.vardansoft.komposeauth.ui.core.domain.KtorBearerHandler
-import com.vardansoft.komposeauth.ui.core.domain.AuthPreferences
 import com.vardansoft.core.data.asResource
 import com.vardansoft.core.data.safeApiCall
 import com.vardansoft.core.domain.Result
 import com.vardansoft.core.domain.now
+import com.vardansoft.komposeauth.data.ApiEndpoints.TOKEN
+import com.vardansoft.komposeauth.data.Credential
+import com.vardansoft.komposeauth.data.OAuth2TokenData
+import com.vardansoft.komposeauth.ui.core.domain.AuthPreferences
+import com.vardansoft.komposeauth.ui.core.domain.KtorBearerHandler
 import io.ktor.client.call.body
 import io.ktor.client.plugins.auth.AuthConfig
 import io.ktor.client.plugins.auth.providers.BearerTokens
@@ -34,7 +34,7 @@ internal class KtorBearerHandlerImpl internal constructor(
         Url(it).host
     }
 
-    override fun configureBearer(auth: AuthConfig) {
+    override fun configure(auth: AuthConfig) {
         auth.bearer {
             loadTokens {
                 authPreferences.oAuth2TokenData()?.let {

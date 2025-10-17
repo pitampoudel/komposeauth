@@ -84,8 +84,7 @@ Setup (Ktor Auth)
 ```kotlin
 val httpClient = HttpClient {
     install(Auth) {
-        val ktorBearerHandler = get<KtorBearerHandler>()
-      ktorBearerHandler.configureBearer(this)
+      setupBearerAuth(this)
     }
 }
 ```

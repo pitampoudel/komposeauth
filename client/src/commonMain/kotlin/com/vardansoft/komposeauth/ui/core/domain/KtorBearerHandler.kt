@@ -5,5 +5,5 @@ import io.ktor.client.plugins.auth.AuthConfig
 internal interface KtorBearerHandler {
     val authUrl: String
     val serverUrls: List<String>
-    fun configureBearer(auth: AuthConfig)
+    fun configure(auth: AuthConfig)
 }
