@@ -10,60 +10,75 @@ Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Compose
 ---
 
 ## Overview
-* Server: OAuth 2.1/OIDC, Direct Auth (REST API)
 
-* Shared KMP SDK: Shared DTOs and utilities between client and server
-
-* Client CMP SDK: Ktor, ViewModels, CompositionLocals, platform utilities, components.
+- Server: OAuth 2.1/OIDC Authorization Server + Direct Auth (REST API)
+- Shared KMP SDK: Shared DTOs and utilities used by client and server
+- Client CMP SDK: Ktor, ViewModels, platform utilities, and reusable UI components
 
 ## Server
+
 - OAuth 2.1 Authorization Server and Direct Auth (REST API)
-- Federated authorization with Google, username/password, email verification, phone OTP, KYC, OpenAPI, Sentry.
-- OpenAPI/Swagger: https://auth.vardansoft.com/swagger-ui.html
-
-### Setup
-`docker pull pitampoudel/komposeauth:latest`
-
-#### Environment Variables
-```
-APP_NAME=
-APP_LOGO_URL=
-MONGODB_URI=
-GOOGLE_OAUTH_CLIENT_ID=
-GOOGLE_OAUTH_CLIENT_SECRET=
-GOOGLE_AUTH_DESKTOP_CLIENT_ID=
-GOOGLE_AUTH_DESKTOP_CLIENT_SECRET=
-SMTP_USERNAME=
-SMTP_PASSWORD=
-SMTP_FROM=
-SAMAYE_API_KEY=
-TWILIO_ACCOUNT_SID=
-TWILIO_VERIFY_SERVICE_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_FROM_NUMBER=
-GCP_BUCKET_NAME=
-GCP_PROJECT_ID=
-SENTRY_DSN=
-SENTRY_AUTH_TOKEN=
-BASE_URL=
-```
+- Federated authorization with Google, username/password, email verification, phone OTP, KYC,
+  OpenAPI, Sentry.
+- Swagger/OpenAPI: https://localhost:8080/swagger-ui.html
 
 ## Shared KMP SDK
+
+- DTOs shared between client and server
+- RegexUtils, KmpFile, DateTimeUtils, KtorClientUtils, PhoneNumberParser, validators etc
+
+## Quickstart
+
+### 1) Run the Auth Server (Docker)
+
+```bash
+docker pull pitampoudel/komposeauth:latest
+# Example run (configure env vars as needed)
+docker run -p 8080:8080 --env-file .env pitampoudel/komposeauth:latest
+```
+
+### Environment variables
+
+```
+APP_NAME=                    # Display name used in emails and UI
+APP_LOGO_URL=                # Public URL for logo used in emails/UI
+MONGODB_URI=                 # MongoDB connection string
+GOOGLE_OAUTH_CLIENT_ID=      # Google OAuth web client id
+GOOGLE_OAUTH_CLIENT_SECRET=  # Google OAuth web client secret
+GOOGLE_AUTH_DESKTOP_CLIENT_ID=      # Google OAuth desktop client id
+GOOGLE_AUTH_DESKTOP_CLIENT_SECRET=  # Google OAuth desktop client secret
+SMTP_USERNAME=               # SMTP username for sending emails
+SMTP_PASSWORD=               # SMTP password
+SMTP_FROM=                   # Sender email address
+SAMAYE_API_KEY=              
+TWILIO_ACCOUNT_SID=         
+TWILIO_VERIFY_SERVICE_SID=  
+TWILIO_AUTH_TOKEN=          
+TWILIO_FROM_NUMBER=         
+GCP_BUCKET_NAME=             # For file uploads
+GCP_PROJECT_ID=              # GCP project id
+SENTRY_DSN=                  # Sentry DSN
+SENTRY_AUTH_TOKEN=           # Sentry auth token
+BASE_URL=                    # Public base URL of this server
+```
+
+### 2) Add the SDKs to your KMP project
+
+Shared module
+
 ```kotlin
 // Check the badge above for the latest version
 implementation("com.vardansoft:komposeauth-shared:x.x.x")
 ```
-### Components
-- DTOs shared between client and server 
-- RegexUtils, KmpFile, DateTimeUtils, KtorClientUtils, PhoneNumberParser, validators etc
 
-## Client CMP SDK
+Client module
 
-### Setup
 ```kotlin
 // Check the badge above for the latest version
 implementation("com.vardansoft:komposeauth-client:x.x.x")
 ```
+
+Initialize client
 
 ```kotlin
 koinApplication {
@@ -76,7 +91,8 @@ koinApplication {
 }
 ```
 
-#### Setup Ktor Client
+Ktor client with Bearer auth
+
 ```kotlin
 val httpClient = HttpClient {
     install(Auth) {
@@ -85,20 +101,24 @@ val httpClient = HttpClient {
 }
 ```
 
-### Utilities
-  - ScreenStateWrapper(...) with InfoDialog and Progress dialog
-  - CountryPicker(...), DateTimeField(...), OTPTextField(...)
-  - rememberFilePicker(input, selectionMode, onPicked)
-  - rememberCredentialRetriever()
-  - registerSmsOtpRetriever(onRetrieved)
+## Usage snippets (Client)
 
+Utilities
 
-### UI Usage
-Current User
+- ScreenStateWrapper(...) with InfoDialog and Progress dialog
+- CountryPicker(...), DateTimeField(...), OTPTextField(...)
+- rememberFilePicker(input, selectionMode, onPicked)
+- rememberCredentialRetriever()
+- registerSmsOtpRetriever(onRetrieved)
+
+Current user
+
 ```kotlin
 val userState = rememberCurrentUser()
 ```
-Login
+
+Login with Credential Manager
+
 ```kotlin
 val vm = koinViewModel<LoginViewModel>()
 val credentialRetriever = rememberCredentialRetriever()
@@ -107,29 +127,38 @@ LaunchedEffect(Unit) {
     vm.onEvent(LoginEvent.Login(cred))
 }
 ```
+
 OTP
+
 ```kotlin
 val vm = koinViewModel<OtpViewModel>()
-registerSmsOtpRetriever { code -> 
+registerSmsOtpRetriever { code ->
     // vm.onEvent(OtpEvent.CodeChanged(code))
 }
 ```
-Profile
+
+Profiles and KYC
+
 ```kotlin
-val vm = koinViewModel<ProfileViewModel>()
-```
-KYC
-```kotlin
-val vm = koinViewModel<KycViewModel>()
+val profileVm = koinViewModel<ProfileViewModel>()
+val kycVm = koinViewModel<KycViewModel>()
 ```
 
-# Contributing
-- Issues and PRs are welcome.
-- Please run ./gradlew build (or gradlew.bat build on Windows) before submitting a PR.
-- For larger changes, consider opening an issue first to discuss direction.
+## Development
 
-# Security
-If you discover a security vulnerability, please email the maintainers or open a private security advisory. Avoid filing public issues with sensitive details.
+- Build everything: `./gradlew build` (or `gradlew.bat build` on Windows)
 
-# License
-Apache License 2.0. See LICENSE for details.
+## Contributing
+
+- Issues and PRs are welcome
+- Please run `./gradlew build` before submitting a PR
+- For larger changes, consider opening an issue first to discuss direction
+
+## Security
+
+If you discover a security vulnerability, please email the maintainers or open a private security
+advisory. Avoid filing public issues with sensitive details.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE) for details.
