@@ -29,9 +29,9 @@ import com.vardansoft.core.domain.asDisplayDateTime
 import com.vardansoft.core.domain.asDisplayTime
 import com.vardansoft.core.domain.toInstant
 import com.vardansoft.core.domain.toSystemLocalDateTime
-import com.vardansoft.ui.generated.resources.Res
-import com.vardansoft.ui.generated.resources.cancel
-import com.vardansoft.ui.generated.resources.ok
+import com.vardansoft.client.generated.resources.Res
+import com.vardansoft.client.generated.resources.cancel
+import com.vardansoft.client.generated.resources.ok
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource

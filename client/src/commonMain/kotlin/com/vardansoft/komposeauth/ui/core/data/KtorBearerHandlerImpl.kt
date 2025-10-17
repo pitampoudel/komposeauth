@@ -30,7 +30,7 @@ internal class KtorBearerHandlerImpl internal constructor(
     override val authUrl: String,
     override val serverUrls: List<String>
 ) : KtorBearerHandler {
-    val hosts = (serverUrls + authUrl).map {
+    private val authorizedHosts = (serverUrls + authUrl).map {
         Url(it).host
     }
 
@@ -84,7 +84,7 @@ internal class KtorBearerHandlerImpl internal constructor(
                 val host = it.url.host
                 val urlString = it.url.toString()
                 val isAuthEndpoint = urlString.endsWith("/$TOKEN")
-                (hosts.contains(host) || isIpAddress(host)) && !isAuthEndpoint
+                (authorizedHosts.contains(host) || isIpAddress(host)) && !isAuthEndpoint
             }
         }
     }
@@ -105,7 +105,7 @@ internal class KtorBearerHandlerImpl internal constructor(
         return try {
             // Some refresh tokens are also JWTs, others might be opaque
             if (refreshToken.contains(".")) {
-                val payload = decodeJWTPayload(refreshToken)
+                val payload = decodeAndParseJwtPayload(refreshToken)
                 val expirationTime =
                     payload["exp"]?.jsonPrimitive?.long?.times(1000) ?: return false
                 val currentTime = now().toEpochMilliseconds()
@@ -123,7 +123,7 @@ internal class KtorBearerHandlerImpl internal constructor(
     }
 
     @OptIn(ExperimentalEncodingApi::class)
-    private fun decodeJWTPayload(token: String): JsonObject {
+    private fun decodeAndParseJwtPayload(token: String): JsonObject {
         val parts = token.split(".")
         if (parts.size != 3) {
             throw IllegalArgumentException("Invalid JWT token format")

@@ -5,9 +5,25 @@
     <string name="kyc_status_pending">Pending</string>
     <string name="kyc_status_rejected">Rejected</string>
     <string name="kyc_status_draft">Draft</string>
+    
+    <!-- Document Type -->
+    <string name="kyc_document_type_passport">Passport</string>
+    <string name="kyc_document_type_national_id">National ID</string>
+    <string name="kyc_document_type_citizenship">Citizenship</string>
+
+    <!-- Gender -->
+    <string name="kyc_gender_male">Male</string>
+    <string name="kyc_gender_female">Female</string>
+    <string name="kyc_gender_other">Other</string>
+
+    <!--  Marital Status  -->
+    <string name="kyc_marital_status_married">Married</string>
+    <string name="kyc_marital_status_unmarried">Unmarried</string>
+
      <!-- General-->
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+
     <!-- Validation Errors -->
     <string name="must_not_be_blank">Must not be blank</string>
     <string name="must_not_be_empty">Must not be empty</string>

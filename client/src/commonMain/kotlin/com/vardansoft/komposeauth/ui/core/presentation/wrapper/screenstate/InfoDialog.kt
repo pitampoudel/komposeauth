@@ -21,9 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.vardansoft.komposeauth.ui.core.presentation.GREEN
 import com.vardansoft.core.presentation.InfoMessage
-import com.vardansoft.ui.generated.resources.Res
-import com.vardansoft.ui.generated.resources.checked
-import com.vardansoft.ui.generated.resources.ok
+import com.vardansoft.client.generated.resources.Res
+import com.vardansoft.client.generated.resources.checked
+import com.vardansoft.client.generated.resources.ok
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
