@@ -20,7 +20,7 @@ Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Compose
 - OAuth 2.1 Authorization Server and Direct Auth (REST API)
 - Federated authorization with Google, username/password, email verification, phone OTP, KYC,
   OpenAPI, Sentry.
-- Swagger/OpenAPI: https://localhost:8080/swagger-ui.html
+- Swagger/OpenAPI (eg: https://auth.vardansoft.com/swagger-ui.html)
 
 ## Shared KMP SDK
 
