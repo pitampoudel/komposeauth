@@ -21,7 +21,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 @Composable
-actual fun rememberCredentialRetriever(): CredentialRetriever {
+actual fun rememberKmpCredentialManager(): KmpCredentialManager {
     val retriever = remember {
         object : NSObject(), ASAuthorizationControllerDelegateProtocol,
             ASAuthorizationControllerPresentationContextProvidingProtocol {
@@ -70,9 +70,13 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
             }
         }
     }
-    return object : CredentialRetriever {
+    return object : KmpCredentialManager {
         override suspend fun getCredential(): Result<Credential> {
             return retriever.getCredential()
+        }
+
+        override suspend fun createPassKeyAndRetrieveJson(): Result<String> {
+            TODO("Not yet implemented")
         }
     }
 }

@@ -12,13 +12,14 @@ import java.util.Collections
 @Configuration
 @ConfigurationProperties(prefix = "app")
 class AppProperties {
-    // TODO it is always localhost in development but it should be ip address
     var baseUrl: String? = null
         get() {
             val raw = field?.trim().orEmpty()
             if (raw.isNotEmpty()) return raw
             return "http://${getLocalIpAddress()}:8080"
         }
+
+    fun baseUrl() = baseUrl!!
     lateinit var gcpBucketName: String
     lateinit var name: String
     lateinit var expectedGcpProjectId: String

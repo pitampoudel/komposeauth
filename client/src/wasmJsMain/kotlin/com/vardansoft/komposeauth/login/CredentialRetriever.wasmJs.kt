@@ -64,14 +64,14 @@ private external interface OAuthMessageData : JsAny {
 
 @OptIn(ExperimentalWasmJsInterop::class)
 @Composable
-actual fun rememberCredentialRetriever(): CredentialRetriever {
+actual fun rememberKmpCredentialManager(): KmpCredentialManager {
     return remember {
         val koin = getKoin()
         val authClient = koin.get<AuthClient>()
         val settings = koin.get<ObservableSettings>()
-        object : CredentialRetriever {
+        object : KmpCredentialManager {
             override suspend fun getCredential(): Result<Credential> {
-                val config = when (val result = authClient.fetchConfig()) {
+                val config = when (val result = authClient.fetchLoginConfig()) {
                     is Result.Error -> return result
                     is Result.Success -> result.data
                 }
@@ -91,6 +91,10 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                 )
 
                 return openAuthPopupAndWait(authUrl)
+            }
+
+            override suspend fun createPassKeyAndRetrieveJson(): Result<String> {
+                TODO("Not yet implemented")
             }
 
             private suspend fun openAuthPopupAndWait(authUrl: String): Result<Credential> {

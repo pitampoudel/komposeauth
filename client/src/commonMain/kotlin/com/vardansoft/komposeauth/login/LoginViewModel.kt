@@ -2,10 +2,9 @@ package com.vardansoft.komposeauth.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vardansoft.komposeauth.data.Credential
+import com.vardansoft.core.domain.Result
 import com.vardansoft.komposeauth.core.domain.AuthClient
 import com.vardansoft.komposeauth.core.domain.AuthPreferences
-import com.vardansoft.core.domain.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -25,17 +24,14 @@ class LoginViewModel internal constructor(
                     _state.update {
                         it.copy(progress = 0.0F)
                     }
-                    when {
-                        event.credential is Result.Error -> _state.update {
-                            it.copy(infoMsg = event.credential.message)
-                        }
-
-                        event.credential is Result.Success -> login(event.credential.data)
-                    }
-
+                    login(event)
                     _state.update {
                         it.copy(progress = null)
                     }
+                }
+
+                is LoginEvent.ShowInfoMsg -> _state.update {
+                    it.copy(infoMsg = event.message)
                 }
 
                 LoginEvent.DismissInfoMsg -> _state.update {
@@ -45,8 +41,8 @@ class LoginViewModel internal constructor(
         }
     }
 
-    suspend fun login(cred: Credential) {
-        val res = authClient.exchangeCredentialForToken(cred)
+    suspend fun login(event: LoginEvent.Login) {
+        val res = authClient.exchangeCredentialForToken(event.credential)
         when (res) {
             is Result.Error -> _state.update {
                 it.copy(infoMsg = res.message)

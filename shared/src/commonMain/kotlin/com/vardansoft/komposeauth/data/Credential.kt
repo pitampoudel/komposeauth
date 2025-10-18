@@ -43,6 +43,13 @@ sealed class Credential {
     ) : Credential()
 
     @Serializable
+    @SerialName("PUBLIC_KEY")
+    data class PublicKey(
+        @SerialName("authenticationResponseJson")
+        val authenticationResponseJson: String
+    ) : Credential()
+
+    @Serializable
     @SerialName("REFRESH_TOKEN")
     data class RefreshToken(
         @SerialName("refreshToken")

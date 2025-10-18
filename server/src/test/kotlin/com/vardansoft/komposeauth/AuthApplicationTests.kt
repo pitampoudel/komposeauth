@@ -1,20 +1,28 @@
 package com.vardansoft.komposeauth
 
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
-import kotlin.test.Test
 
 
 @SpringBootTest
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test")
+@AutoConfigureMockMvc
 class AuthApplicationTests {
+
+    @Autowired
+    private lateinit var mockMvc: MockMvc
 
     companion object {
         @Container
@@ -31,5 +39,15 @@ class AuthApplicationTests {
 
     @Test
     fun contextLoads() {
+    }
+
+    @Test
+    fun `unsupported operation should return 501 Not Implemented`() {
+        mockMvc.get("/test/unsupported-operation") {
+        }.andExpect {
+            status {
+                isNotImplemented()
+            }
+        }
     }
 }

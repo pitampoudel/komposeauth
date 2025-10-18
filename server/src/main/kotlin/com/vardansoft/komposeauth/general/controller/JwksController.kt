@@ -1,4 +1,4 @@
-package com.vardansoft.komposeauth.core.controller
+package com.vardansoft.komposeauth.general.controller
 
 import com.nimbusds.jose.jwk.JWKSet
 import io.swagger.v3.oas.annotations.Operation

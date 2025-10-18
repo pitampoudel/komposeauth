@@ -2,11 +2,11 @@ package com.vardansoft.komposeauth.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vardansoft.komposeauth.core.domain.AuthClient
-import com.vardansoft.komposeauth.core.domain.AuthPreferences
-import com.vardansoft.core.presentation.ResultUiEvent
 import com.vardansoft.core.domain.Result
 import com.vardansoft.core.domain.validators.ValidateNotBlank
+import com.vardansoft.core.presentation.ResultUiEvent
+import com.vardansoft.komposeauth.core.domain.AuthClient
+import com.vardansoft.komposeauth.core.domain.AuthPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,8 +43,30 @@ class ProfileViewModel internal constructor(
     fun onEvent(event: ProfileEvent) {
         viewModelScope.launch {
             when (event) {
-                ProfileEvent.DismissInfoMsg -> _state.update {
-                    it.copy(infoMsg = null)
+                is ProfileEvent.InfoMsgChanged -> {
+                    _state.update {
+                        it.copy(infoMsg = event.msg)
+                    }
+                }
+
+                is ProfileEvent.RegisterPublicKey -> {
+                    _state.update {
+                        it.copy(progress = 0.0F)
+                    }
+                    val res = client.registerPublicKey(event.publicKey)
+                    when (res) {
+                        is Result.Error -> _state.update {
+                            it.copy(infoMsg = res.message)
+                        }
+
+                        is Result.Success -> {
+
+                        }
+                    }
+                    _state.update {
+                        it.copy(progress = null)
+                    }
+
                 }
 
                 is ProfileEvent.Deactivate -> {

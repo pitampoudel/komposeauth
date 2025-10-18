@@ -2,15 +2,16 @@ package com.vardansoft.komposeauth.core.config
 
 import com.vardansoft.komposeauth.user.entity.User
 import com.vardansoft.komposeauth.user.service.UserService
-import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.stereotype.Service
 
 @Service
 class UserContextService(val userService: UserService) {
-    fun getCurrentUser(): User {
-        return when (val authentication = SecurityContextHolder.getContext().authentication) {
+    fun getUserFromAuthentication(authentication: Authentication = SecurityContextHolder.getContext().authentication): User {
+        return when (authentication) {
             is JwtAuthenticationToken -> {
                 val jwt = authentication.principal as org.springframework.security.oauth2.jwt.Jwt
                 if (jwt.subject.isNullOrEmpty() || jwt.claims.containsKey("client_id")) throw IllegalStateException(
@@ -21,12 +22,16 @@ class UserContextService(val userService: UserService) {
                     ?: throw IllegalStateException("User not found")
             }
 
+            is UsernamePasswordAuthenticationToken -> {
+                val email = authentication.name
+                email?.let { userService.findUserByEmailOrPhone(email) } ?: throw IllegalStateException(
+                    "No user associated with authentication context"
+                )
+            }
+
+
             else -> throw IllegalStateException("Unsupported authentication type: ${authentication.javaClass.name}")
         }
-    }
-
-    fun authorities(): Collection<GrantedAuthority> {
-        return SecurityContextHolder.getContext().authentication.authorities
     }
 
 }

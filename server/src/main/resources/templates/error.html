@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Error - Something Went Wrong</title>
@@ -10,41 +11,49 @@
             background-color: #f9f9f9;
             color: #333;
         }
+
         h1 {
             color: #c0392b;
         }
+
         pre {
             background-color: #fff;
             border: 1px solid #ddd;
             padding: 15px;
-            white-space: pre-wrap; /* wrap stack trace lines */
+            white-space: pre-wrap;
+            /* wrap stack trace lines */
             word-wrap: break-word;
             margin-top: 10px;
         }
+
         .container {
             max-width: 800px;
             margin: auto;
         }
+
         .details {
             margin-top: 20px;
         }
+
         p strong {
             color: #2c3e50;
         }
     </style>
 </head>
-<body>
-<div class="container">
-    <h1>Oops! Something went wrong</h1>
-    <p>Status: <strong th:text="${status}"></strong></p>
-    <p>Error: <strong th:text="${error}"></strong></p>
-    <p>Message: <strong th:text="${message}"></strong></p>
-    <p>Path: <strong th:text="${path}"></strong></p>
 
-    <div class="details" th:if="${trace}">
-        <h3>Stack Trace</h3>
-        <pre th:text="${trace}"></pre>
+<body>
+    <div class="container">
+        <h1>Oops! Something went wrong</h1>
+        <p>Status: <strong th:text="${status}"></strong></p>
+        <p>Error: <strong th:text="${error}"></strong></p>
+        <p>Message: <strong th:text="${message}"></strong></p>
+        <p>Path: <strong th:text="${path}"></strong></p>
+
+        <div class="details" th:if="${trace}">
+            <h3>Stack Trace</h3>
+            <pre th:text="${trace}"></pre>
+        </div>
     </div>
-</div>
 </body>
+
 </html>

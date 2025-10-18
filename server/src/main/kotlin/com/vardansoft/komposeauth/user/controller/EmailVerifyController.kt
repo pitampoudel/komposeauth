@@ -24,7 +24,7 @@ class EmailVerifyController(
     )
     @PostMapping
     fun sendVerificationEmail(): ResponseEntity<MessageResponse> {
-        val user = userContextService.getCurrentUser()
+        val user = userContextService.getUserFromAuthentication()
 
         // Check if user email exists
         if (user.email == null) {

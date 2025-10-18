@@ -4,7 +4,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ConfigResponse(
+data class LoginConfigResponse(
     @SerialName("googleClientId")
-    val googleClientId: String
+    val googleClientId: String,
+    @SerialName("publicKeyAuthOptionsJson")
+    val publicKeyAuthOptionsJson: String?
 )

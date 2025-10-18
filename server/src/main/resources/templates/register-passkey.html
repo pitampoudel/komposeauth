@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Passkey</title>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      padding: 2rem;
+    }
+
+    .register-card {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 0.375rem;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #1d4ed8;
+    }
+
+    .error-message {
+      color: #ef4444;
+      margin-top: 1rem;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <div class="register-card">
+      <h1 class="title">Register a Passkey</h1>
+      <p class="subtitle">Create a new passkey for fast and secure login.</p>
+      <button id="register-passkey-btn" class="btn-primary">Register a new passkey</button>
+      <div id="error-message" class="error-message" role="alert" aria-live="polite"></div>
+    </div>
+  </main>
+  <script th:src="@{/js/webauthn.js}"></script>
+  <script>
+
+
+    const registerBtn = document.getElementById('register-passkey-btn');
+    const errorMessage = document.getElementById('error-message');
+
+    registerBtn.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/webauthn/register/options', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const options = await response.json();
+        // Convert binary fields from Base64URL to ArrayBuffers for WebAuthn API
+        options.challenge = base64urlToArrayBuffer(options.challenge);
+        options.user.id = base64urlToArrayBuffer(options.user.id);
+
+        const credential = await navigator.credentials.create({ publicKey: options });
+
+        // Convert back from ArrayBuffers → Base64URL strings for server
+        const credentialData = {
+          publicKey: {
+            credential: {
+              id: credential.id,
+              rawId: arrayBufferToBase64url(credential.rawId),
+              type: credential.type,
+              response: {
+                attestationObject: arrayBufferToBase64url(credential.response.attestationObject),
+                clientDataJSON: arrayBufferToBase64url(credential.response.clientDataJSON)
+              }
+            },
+            label: "1password"
+          }
+        };
+
+        const registrationResponse = await fetch('/webauthn/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(credentialData)
+        });
+
+        if (!registrationResponse.ok) {
+          const error = await registrationResponse.json();
+          errorMessage.textContent = error.message || 'Registration failed. Please try again.';
+        } else {
+          errorMessage.style.color = '#10b981';
+          errorMessage.textContent = '✅ Passkey registered successfully!';
+        }
+
+      } catch (e) {
+        console.error('An error occurred:', e);
+        errorMessage.textContent = 'An unexpected error occurred. Please try again.';
+      }
+    });
+  </script>
+</body>
+
+</html>

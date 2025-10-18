@@ -41,8 +41,9 @@ data class User(
     @LastModifiedDate
     val updatedAt: Instant = Instant.now()
 ) {
+    fun verifiedEmail() = if (emailVerified) email else null
     fun asAuthToken() = UsernamePasswordAuthenticationToken(
-        id.toHexString(),
+        email,
         null,
         roles.map { SimpleGrantedAuthority("ROLE_$it") }
     )

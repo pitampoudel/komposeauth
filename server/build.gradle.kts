@@ -40,6 +40,10 @@ dependencies {
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.mail)
 
+    // Passkeys
+    implementation(libs.spring.security.web)
+    implementation(libs.webauthn4j.core)
+
     implementation(libs.kotlinx.datetime)
 
     // kotlinx serialization

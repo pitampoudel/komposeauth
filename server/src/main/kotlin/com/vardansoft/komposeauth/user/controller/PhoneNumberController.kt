@@ -27,7 +27,7 @@ class PhoneNumberController(
     )
     @PostMapping("/update")
     fun initiatePhoneNumberUpdate(@Valid @RequestBody request: UpdatePhoneNumberRequest): ResponseEntity<MessageResponse> {
-        val user = userContextService.getCurrentUser()
+        val user = userContextService.getUserFromAuthentication()
         val success = userService.initiatePhoneNumberUpdate(request)
         return if (success) {
             ResponseEntity.ok(MessageResponse("An OTP has just been sent to ${request.phoneNumber}"))
@@ -44,7 +44,7 @@ class PhoneNumberController(
     fun verifyPhoneNumberUpdate(
         @Valid @RequestBody request: VerifyPhoneOtpRequest
     ): ResponseEntity<UserResponse> {
-        val user = userContextService.getCurrentUser()
+        val user = userContextService.getUserFromAuthentication()
         return try {
             ResponseEntity.ok(userService.verifyPhoneNumberUpdate(user.id, request))
         } catch (e: IllegalArgumentException) {

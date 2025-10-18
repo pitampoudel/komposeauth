@@ -1,13 +1,19 @@
 package com.vardansoft.komposeauth.login
 
 
+import android.os.Build
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CreatePublicKeyCredentialRequest
+import androidx.credentials.CreatePublicKeyCredentialResponse
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetPublicKeyCredentialOption
+import androidx.credentials.PublicKeyCredential
+import androidx.credentials.exceptions.CreateCredentialException
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.GetCredentialProviderConfigurationException
@@ -15,26 +21,27 @@ import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
-import com.vardansoft.komposeauth.data.Credential
-import com.vardansoft.komposeauth.core.domain.AuthClient
 import com.vardansoft.core.domain.Result
+import com.vardansoft.komposeauth.core.domain.AuthClient
+import com.vardansoft.komposeauth.data.Credential
 import org.koin.java.KoinJavaComponent.getKoin
 
 @Composable
-actual fun rememberCredentialRetriever(): CredentialRetriever {
+actual fun rememberKmpCredentialManager(): KmpCredentialManager {
     val activity = LocalActivity.current ?: throw Exception("No activity found")
     val credentialManager = remember {
         CredentialManager.create(activity)
     }
     return remember {
-        object : CredentialRetriever {
+        object : KmpCredentialManager {
             override suspend fun getCredential(): Result<Credential> {
                 // Fetch Google OAuth client-id dynamically from server
                 val authClient = getKoin().get<AuthClient>()
-                when (val res = authClient.fetchConfig()) {
+                when (val res = authClient.fetchLoginConfig()) {
                     is Result.Error -> return res
                     is Result.Success -> {
                         val googleAuthClientId = res.data.googleClientId
+                        val publicKeyVerificationOptionsJson = res.data.publicKeyAuthOptionsJson
 
                         val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
                             .setFilterByAuthorizedAccounts(false)
@@ -43,6 +50,15 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
 
                         val request = GetCredentialRequest.Builder()
                             .addCredentialOption(googleIdOption)
+                            .also { req ->
+                                publicKeyVerificationOptionsJson?.let {
+                                    req.addCredentialOption(
+                                        GetPublicKeyCredentialOption(
+                                            requestJson = publicKeyVerificationOptionsJson
+                                        )
+                                    )
+                                }
+                            }
                             .build()
 
                         try {
@@ -52,6 +68,14 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                             )
                             val credential: Result<Credential> =
                                 when (val credential = result.credential) {
+                                    is PublicKeyCredential -> {
+                                        Result.Success(
+                                            Credential.PublicKey(
+                                                authenticationResponseJson = credential.authenticationResponseJson
+                                            )
+                                        )
+                                    }
+
                                     is CustomCredential -> {
                                         if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                                             try {
@@ -95,6 +119,43 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                         }
                     }
                 }
+            }
+
+            override suspend fun createPassKeyAndRetrieveJson(): Result<String> {
+                val authClient = getKoin().get<AuthClient>()
+                val res = authClient.fetchRegistrationOptions()
+
+                when (res) {
+                    is Result.Error -> return res
+
+                    is Result.Success<String> -> {
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return Result.Error("Android version not supported")
+
+
+                        val response = try {
+                            credentialManager.createCredential(
+                                context = activity,
+                                request = CreatePublicKeyCredentialRequest(res.data)
+                            )
+                        } catch (e: CreateCredentialException) {
+                            e.printStackTrace()
+                            return Result.Error(e.message.orEmpty())
+                        }
+
+                        return when (response) {
+
+                            is CreatePublicKeyCredentialResponse -> {
+                                Result.Success(response.registrationResponseJson)
+                            }
+
+                            else -> {
+                                Result.Error("Unknown credential")
+                            }
+                        }
+
+                    }
+                }
+
             }
 
         }

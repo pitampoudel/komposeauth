@@ -35,7 +35,7 @@ class KycController(
     )
     @GetMapping
     fun getMine(): ResponseEntity<KycResponse> {
-        val user = userContextService.getCurrentUser()
+        val user = userContextService.getUserFromAuthentication()
         val kyc = kycService.find(user.id)
         return if (kyc != null) ResponseEntity.ok(kyc) else ResponseEntity.notFound().build()
     }
@@ -54,7 +54,7 @@ class KycController(
     )
     @PostMapping("/personal-info")
     fun submitPersonalInformation(@Validated @RequestBody data: PersonalInformation): ResponseEntity<KycResponse> {
-        val user = userContextService.getCurrentUser()
+        val user = userContextService.getUserFromAuthentication()
         return ResponseEntity.ok(kycService.submitPersonalInformation(user.id, data))
     }
 
@@ -64,7 +64,7 @@ class KycController(
     )
     @PostMapping("/address")
     fun submitAddressDetails(@Validated @RequestBody data: UpdateAddressDetailsRequest): ResponseEntity<KycResponse> {
-        val user = userContextService.getCurrentUser()
+        val user = userContextService.getUserFromAuthentication()
         return ResponseEntity.ok(kycService.submitAddressDetails(user.id, data))
     }
 
@@ -74,7 +74,7 @@ class KycController(
     )
     @PostMapping("/documents")
     fun submitDocumentDetails(@Validated @RequestBody data: DocumentInformation): ResponseEntity<KycResponse> {
-        val user = userContextService.getCurrentUser()
+        val user = userContextService.getUserFromAuthentication()
         return ResponseEntity.ok(kycService.submitDocumentDetails(user.id, data))
     }
 

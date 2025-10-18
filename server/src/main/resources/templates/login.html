@@ -145,12 +145,31 @@
             position: relative;
             overflow: hidden;
         }
+        
+        .btn-secondary {
+            width: 100%;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 0.875rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
 
         .btn-primary:hover:not(:disabled) {
             background: #1d4ed8;
         }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: #4338ca;
+        }
 
-        .btn-primary:disabled {
+        .btn-primary:disabled, .btn-secondary:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
@@ -279,6 +298,7 @@
 
         /* Focus styles for better accessibility */
         .btn-primary:focus,
+        .btn-secondary:focus,
         .btn-google:focus,
         a:focus {
             outline: 2px solid #2563eb;
@@ -384,6 +404,10 @@
             <div id="submit-status" class="sr-only" aria-live="polite"></div>
         </form>
 
+        <button class="btn-secondary" id="passkey-login-btn">
+            Sign in with a passkey
+        </button>
+
         <!-- Divider -->
         <div class="divider" role="separator" aria-label="or">
             <span>or</span>
@@ -414,13 +438,16 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>&copy; 2025 <span th:text="${@appProperties.name}">komposeauth</span>. All rights reserved.
+            <p>&copy; 2025 <span th:text="${@appProperties.name}">komposeauth</span>. All rights
+                reserved.
             </p>
         </footer>
     </div>
 </main>
+<script th:src="@{/js/webauthn.js}"></script>
 
 <script>
+
     // Enhanced form handling with loading states and validation
     (function () {
         'use strict';
@@ -505,6 +532,83 @@
                 }
             }
         });
+        
+        const passkeyLoginBtn = document.getElementById('passkey-login-btn');
+
+        passkeyLoginBtn.addEventListener('click', async () => {
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.classList.add('btn-loading');
+            submitText.textContent = 'Signing in with passkey...';
+            submitStatus.textContent = 'Processing your request...';
+
+            try {
+                // 1️⃣ Fetch authentication (assertion) options
+                const response = await fetch('/config/login?platform=WEB', {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const options = JSON.parse((await response.json())["publicKeyAuthOptionsJson"]);
+
+                // 2️⃣ Convert challenge + allowed credentials to ArrayBuffers
+                options.challenge = base64urlToArrayBuffer(options.challenge);
+                if (options.allowCredentials) {
+                    options.allowCredentials = options.allowCredentials.map(cred => ({
+                        ...cred,
+                        id: base64urlToArrayBuffer(cred.id)
+                    }));
+                }
+
+                // 3️⃣ Request credential from authenticator
+                const credential = await navigator.credentials.get({ publicKey: options });
+
+                // 4️⃣ Convert binary fields to Base64URL-safe encoding
+                const credentialData = {
+                    id: credential.id,
+                    rawId: arrayBufferToBase64url(credential.rawId),
+                    type: credential.type,
+                    response: {
+                        authenticatorData: arrayBufferToBase64url(credential.response.authenticatorData),
+                        clientDataJSON: arrayBufferToBase64url(credential.response.clientDataJSON),
+                        signature: arrayBufferToBase64url(credential.response.signature),
+                        userHandle: credential.response.userHandle
+                            ? arrayBufferToBase64url(credential.response.userHandle)
+                            : null
+                    }
+                };
+
+                // 5️⃣ Send credential back to server
+                const result = await fetch('/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'PUBLIC_KEY',
+                        authenticationResponseJson: JSON.stringify(credentialData)
+                    })
+                });
+
+                if (!result.ok) {
+                    throw new Error('Server rejected assertion');
+                }
+
+                // ✅ Passkey login successful
+                submitStatus.textContent = 'Login successful!';
+                // Redirect to dashboard or intended page
+                const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/';
+                window.location.href = redirectUrl;
+
+            } catch (e) {
+                console.error('Passkey login error:', e);
+                showFieldError('email-error', 'Passkey login failed. Please try again.');
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('btn-loading');
+                submitText.textContent = 'Sign In';
+                submitStatus.textContent = '';
+            }
+        });
+
+
     })();
 </script>
 </body>

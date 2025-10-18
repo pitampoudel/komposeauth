@@ -1,9 +1,10 @@
 package com.vardansoft.komposeauth.login
 
+import com.vardansoft.core.presentation.InfoMessage
 import com.vardansoft.komposeauth.data.Credential
-import com.vardansoft.core.domain.Result
 
 sealed interface LoginEvent {
-    data class Login(val credential: Result<Credential>) : LoginEvent
+    data class Login(val credential: Credential) : LoginEvent
+    data class ShowInfoMsg(val message: InfoMessage) : LoginEvent
     data object DismissInfoMsg : LoginEvent
 }

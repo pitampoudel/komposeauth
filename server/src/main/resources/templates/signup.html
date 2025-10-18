@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Create your account securely. Join our platform and start managing your services."
-          th:content="|Create your ${@appProperties.name} account securely. Join our platform and start managing your services.|">
+        th:content="|Create your ${@appProperties.name} account securely. Join our platform and start managing your services.|">
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#2563eb">
 
@@ -96,7 +97,8 @@
         }
 
         .form-input:invalid,
-        .form-input.invalid-input { /* Style for server-side invalid inputs too */
+        .form-input.invalid-input {
+            /* Style for server-side invalid inputs too */
             border-color: #ef4444;
         }
 
@@ -276,12 +278,14 @@
         }
     </style>
 </head>
+
 <body>
     <main class="container" role="main">
         <div class="signup-card">
             <!-- Logo and Header -->
             <header class="logo-section">
-                <img src="https://vardansoft.com/logo.svg" th:src="${@appProperties.logoUrl}" alt="Logo" th:alt="|${@appProperties.name} Logo|" class="logo" loading="eager">
+                <img src="https://vardansoft.com/logo.svg" th:src="${@appProperties.logoUrl}" alt="Logo"
+                    th:alt="|${@appProperties.name} Logo|" class="logo" loading="eager">
                 <h1 class="title">Welcome</h1>
                 <p class="subtitle">Create your account to get started</p>
             </header>
@@ -290,18 +294,18 @@
             <div th:if="${param.error}" class="error-message" role="alert" aria-live="polite">
                 <svg class="error-icon" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
-                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                          clip-rule="evenodd"/>
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                        clip-rule="evenodd" />
                 </svg>
                 <span>Failed to create your account. Please try again.</span>
             </div>
-            
+
             <!-- API Error Message -->
             <div id="apiErrorMessage" class="error-message" role="alert" aria-live="polite" style="display: none;">
                 <svg class="error-icon" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
-                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                          clip-rule="evenodd"/>
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                        clip-rule="evenodd" />
                 </svg>
                 <span id="apiErrorMessageText"></span>
             </div>
@@ -315,17 +319,9 @@
                         First Name
                         <span class="sr-only">(required)</span>
                     </label>
-                    <input
-                            type="text"
-                            id="firstName"
-                            name="firstName"
-                            class="form-input"
-                            required
-                            autocomplete="given-name"
-                            aria-describedby="firstName-error"
-                            placeholder="Enter your first name"
-                            minlength="2"
-                    >
+                    <input type="text" id="firstName" name="firstName" class="form-input" required
+                        autocomplete="given-name" aria-describedby="firstName-error" placeholder="Enter your first name"
+                        minlength="2">
                     <div id="firstName-error" class="sr-only" aria-live="polite"></div>
                 </div>
 
@@ -335,17 +331,9 @@
                         Last Name
                         <span class="sr-only">(required)</span>
                     </label>
-                    <input
-                            type="text"
-                            id="lastName"
-                            name="lastName"
-                            class="form-input"
-                            required
-                            autocomplete="family-name"
-                            aria-describedby="lastName-error"
-                            placeholder="Enter your last name"
-                            minlength="2"
-                    >
+                    <input type="text" id="lastName" name="lastName" class="form-input" required
+                        autocomplete="family-name" aria-describedby="lastName-error" placeholder="Enter your last name"
+                        minlength="2">
                     <div id="lastName-error" class="sr-only" aria-live="polite"></div>
                 </div>
 
@@ -355,16 +343,8 @@
                         Email address
                         <span class="sr-only">(required)</span>
                     </label>
-                    <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            class="form-input"
-                            required
-                            autocomplete="email"
-                            aria-describedby="email-error"
-                            placeholder="Enter your email address"
-                    >
+                    <input type="email" id="email" name="email" class="form-input" required autocomplete="email"
+                        aria-describedby="email-error" placeholder="Enter your email address">
                     <div id="email-error" class="sr-only" aria-live="polite"></div>
                 </div>
 
@@ -374,17 +354,9 @@
                         Password
                         <span class="sr-only">(required)</span>
                     </label>
-                    <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            class="form-input"
-                            required
-                            autocomplete="new-password"
-                            aria-describedby="password-error password-requirements"
-                            placeholder="Enter your password"
-                            minlength="6"
-                    >
+                    <input type="password" id="password" name="password" class="form-input" required
+                        autocomplete="new-password" aria-describedby="password-error password-requirements"
+                        placeholder="Enter your password" minlength="6">
                     <div id="password-requirements" class="password-requirements">
                         Password must be at least 6 characters long
                     </div>
@@ -397,17 +369,9 @@
                         Confirm Password
                         <span class="sr-only">(required)</span>
                     </label>
-                    <input
-                            type="password"
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            class="form-input"
-                            required
-                            autocomplete="new-password"
-                            aria-describedby="confirmPassword-error"
-                            placeholder="Confirm your password"
-                            minlength="6"
-                    >
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" required
+                        autocomplete="new-password" aria-describedby="confirmPassword-error"
+                        placeholder="Confirm your password" minlength="6">
                     <div id="confirmPassword-error" class="sr-only" aria-live="polite"></div>
                 </div>
 
@@ -454,7 +418,7 @@
             const passwordInput = document.getElementById('password');
             const confirmPasswordInput = document.getElementById('confirmPassword');
             const passwordRequirements = document.getElementById('password-requirements');
-            
+
             const allInputs = [firstNameInput, lastNameInput, emailInput, passwordInput, confirmPasswordInput];
 
             // Form submission handling
@@ -470,27 +434,27 @@
 
                 if (firstNameInput.value.trim().length < 2) {
                     showFieldError('firstName-error', 'First name must be at least 2 characters long', firstNameInput);
-                    if(isValid) firstNameInput.focus();
+                    if (isValid) firstNameInput.focus();
                     isValid = false;
                 }
                 if (lastNameInput.value.trim().length < 2) {
                     showFieldError('lastName-error', 'Last name must be at least 2 characters long', lastNameInput);
-                     if(isValid) lastNameInput.focus();
+                    if (isValid) lastNameInput.focus();
                     isValid = false;
                 }
                 if (!emailInput.validity.valid || emailInput.value.trim() === '') {
                     showFieldError('email-error', 'Please enter a valid email address', emailInput);
-                    if(isValid) emailInput.focus();
+                    if (isValid) emailInput.focus();
                     isValid = false;
                 }
                 if (passwordInput.value.length < 6) {
                     showFieldError('password-error', 'Password must be at least 6 characters long', passwordInput);
-                    if(isValid) passwordInput.focus();
+                    if (isValid) passwordInput.focus();
                     isValid = false;
                 }
                 if (passwordInput.value !== confirmPasswordInput.value) {
                     showFieldError('confirmPassword-error', 'Passwords do not match', confirmPasswordInput);
-                    if(isValid) confirmPasswordInput.focus();
+                    if (isValid) confirmPasswordInput.focus();
                     isValid = false;
                 }
 
@@ -543,7 +507,7 @@
                 submitStatus.textContent = '';
                 allInputs.forEach(input => input.classList.remove('invalid-input'));
             }
-            
+
             function showApiError(message) {
                 apiErrorMessageText.textContent = message;
                 apiErrorMessageDiv.style.display = 'flex';
@@ -587,7 +551,7 @@
                     this.setAttribute('aria-invalid', 'false');
                 });
             });
-            
+
             // Handle back button navigation
             window.addEventListener('pageshow', function (event) {
                 if (event.persisted) { // If the page was loaded from bfcache
@@ -596,13 +560,13 @@
                     allInputs.forEach(input => {
                         input.classList.remove('invalid-input');
                         input.setAttribute('aria-invalid', 'false');
-                         const errorId = input.id + '-error';
-                         const errorElement = document.getElementById(errorId);
-                         if(errorElement) errorElement.classList.add('sr-only');
+                        const errorId = input.id + '-error';
+                        const errorElement = document.getElementById(errorId);
+                        if (errorElement) errorElement.classList.add('sr-only');
                     });
-                     passwordRequirements.textContent = 'Password must be at least 6 characters long';
-                     passwordRequirements.className = 'password-requirements';
-                     apiErrorMessageDiv.style.display = 'none';
+                    passwordRequirements.textContent = 'Password must be at least 6 characters long';
+                    passwordRequirements.className = 'password-requirements';
+                    apiErrorMessageDiv.style.display = 'none';
                 }
             });
 
@@ -613,8 +577,8 @@
                     if (currentForm && currentForm.id === 'signupForm') {
                         const submitButton = form.querySelector('button[type="submit"]');
                         if (submitButton && !submitButton.disabled) {
-                           // submitButton.click(); // Programmatic click might not trigger all event listeners consistently
-                           form.requestSubmit(); // Use this for better standards compliance
+                            // submitButton.click(); // Programmatic click might not trigger all event listeners consistently
+                            form.requestSubmit(); // Use this for better standards compliance
                         }
                     }
                 }
@@ -622,4 +586,5 @@
         })();
     </script>
 </body>
+
 </html>

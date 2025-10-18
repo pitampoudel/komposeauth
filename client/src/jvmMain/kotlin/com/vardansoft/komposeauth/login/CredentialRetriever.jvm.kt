@@ -16,13 +16,13 @@ import java.net.ServerSocket
 import java.net.URI
 
 @Composable
-actual fun rememberCredentialRetriever(): CredentialRetriever {
+actual fun rememberKmpCredentialManager(): KmpCredentialManager {
     return remember {
-        object : CredentialRetriever {
+        object : KmpCredentialManager {
             override suspend fun getCredential(): Result<Credential> {
                 // Fetch Google OAuth client-id dynamically from server
                 val authClient = getKoin().get<AuthClient>()
-                when (val res = authClient.fetchConfig(platform = Platform.DESKTOP)) {
+                when (val res = authClient.fetchLoginConfig(platform = Platform.DESKTOP)) {
                     is Result.Error -> return res
                     is Result.Success -> {
                         val googleAuthClientId = res.data.googleClientId
@@ -42,6 +42,10 @@ actual fun rememberCredentialRetriever(): CredentialRetriever {
                         return Result.Success(credential)
                     }
                 }
+            }
+
+            override suspend fun createPassKeyAndRetrieveJson(): Result<String> {
+                TODO("Not yet implemented")
             }
         }
     }

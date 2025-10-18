@@ -81,9 +81,7 @@ kotlin {
                 implementation(libs.compose.ui.tooling.preview)
                 // CREDENTIAL MANAGER API
                 implementation(libs.androidx.credentials)
-                // optional - needed for credentials support from play services, for devices running
-                // Android 13 and below.
-                implementation(libs.androidx.credentials.playServicesAuth)
+                implementation(libs.androidx.credentials.play.services.auth)
                 // Google sign In
                 implementation(libs.googleid)
                 // OTP code retriever

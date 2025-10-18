@@ -1,5 +1,7 @@
 [versions]
 agp = "8.13.0"
+credentials = "1.6.0-beta02"
+credentialsPlayServicesAuth = "1.6.0-beta02"
 cryptography = "0.5.0"
 jjwtApi = "0.13.0"
 junitJupiter = "1.21.3"
@@ -17,7 +19,6 @@ kotlinxSerializationJson = "1.9.0"
 jetbrains-lifecycle = "2.9.5"
 kotlinx-datetime = "0.7.1"
 compose = "1.9.1"
-androidx-credentials = "1.5.0"
 googleid = "1.1.1"
 playServicesAuth = "21.4.0"
 playServicesAuthApiPhone = "18.3.0"
@@ -28,8 +29,11 @@ springCloudGcpStorage = "7.4.0"
 springdocOpenapiStarterWebmvcUi = "2.8.13"
 springDotenv = "4.0.0"
 testcontainers = "2.0.0"
+webauthn4jCore = "0.29.7.RELEASE"
 
 [libraries]
+androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentialsPlayServicesAuth" }
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptography" }
 cryptography-provider-webcrypto = { module = "dev.whyoleg.cryptography:cryptography-provider-webcrypto", version.ref = "cryptography" }
 jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwtApi" }
@@ -63,8 +67,6 @@ jetbrains-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", na
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 compose-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-tooling-preview", version.ref = "compose" }
-androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "androidx-credentials" }
-androidx-credentials-playServicesAuth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "androidx-credentials" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-auth-api-phone = { module = "com.google.android.gms:play-services-auth-api-phone", version.ref = "playServicesAuthApiPhone" }
@@ -87,8 +89,10 @@ spring-dotenv = { module = "me.paulschwarz:spring-dotenv", version.ref = "spring
 spring-security-crypto = { module = "org.springframework.security:spring-security-crypto" }
 spring-security-oauth2-authorization-server = { module = "org.springframework.security:spring-security-oauth2-authorization-server" }
 spring-security-test = { module = "org.springframework.security:spring-security-test" }
+spring-security-web = { module = "org.springframework.security:spring-security-web" }
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdocOpenapiStarterWebmvcUi" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+webauthn4j-core = { module = "com.webauthn4j:webauthn4j-core", version.ref = "webauthn4jCore" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
