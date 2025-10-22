@@ -7,6 +7,11 @@ on:
     branches:
       - main
 
+env:
+  REGISTRY_GHCR: ghcr.io
+  REGISTRY_DOCKERHUB: docker.io
+  IMAGE_NAME: komposeauth
+
 jobs:
   build-and-push:
     name: Build and Push Docker Image
@@ -16,81 +21,186 @@ jobs:
       contents: read
       packages: write
       id-token: write
+      attestations: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 21
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-cache-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-cache-
+
       - name: Run tests
         run: ./gradlew clean :shared:check :server:check --no-daemon
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY_GHCR }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY_DOCKERHUB }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Determine tags
-        id: determine_tags
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            TAG="${{ github.event.release.tag_name }}"
-            VERSION="${TAG#v}"
-            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-            echo "TAG=$TAG" >> $GITHUB_OUTPUT
-          else
-            BRANCH="${{ github.ref_name }}"
-            SANITIZED_BRANCH=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._-]/-/g')
-            SHORT_SHA="${{ github.sha }}"
-            SHORT_SHA="${SHORT_SHA:0:7}"
-            echo "SNAPSHOT_TAG=${SANITIZED_BRANCH}-${SHORT_SHA}" >> $GITHUB_OUTPUT
-            echo "BRANCH_TAG=${SANITIZED_BRANCH}" >> $GITHUB_OUTPUT
-          fi
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+            ${{ env.REGISTRY_DOCKERHUB }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}},event=release
+            type=raw,value={{branch}}-{{sha}},enable={{is_default_branch}},event=push
+            type=raw,value={{branch}}-latest,enable={{is_default_branch}},event=push
+          labels: |
+            org.opencontainers.image.title=KomposeAuth
+            org.opencontainers.image.description=Authentication service for Compose Multiplatform
+            org.opencontainers.image.vendor=${{ github.repository_owner }}
 
       - name: Validate SemVer tag (releases only)
         if: github.event_name == 'release'
         shell: bash
         run: |
-          if [[ ! "${{ steps.determine_tags.outputs.TAG }}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "Tag '${{ steps.determine_tags.outputs.TAG }}' is not a valid SemVer (expected vMAJOR.MINOR.PATCH optionally with pre-release)" >&2
+          TAG="${{ github.event.release.tag_name }}"
+          if [[ ! "$TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Error: Tag '$TAG' is not valid SemVer format" >&2
+            echo "Expected: vMAJOR.MINOR.PATCH (e.g., v1.2.3, v1.0.0-beta.1)" >&2
             exit 1
           fi
+          echo "✓ Tag '$TAG' is valid SemVer"
 
-      - name: Build and push Docker image (Release)
+      - name: Build and push Docker image
+        id: build-push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: mode=max
+          sbom: true
+
+      - name: Generate artifact attestation (Release only)
         if: github.event_name == 'release'
-        uses: docker/build-push-action@v6
+        uses: actions/attest-build-provenance@v1
         with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/komposeauth:latest
-            ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.determine_tags.outputs.VERSION }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:latest
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.VERSION }}
-          labels: |
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=${{ steps.determine_tags.outputs.VERSION }}
-            org.opencontainers.image.revision=${{ github.sha }}
+          subject-name: ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build-push.outputs.digest }}
+          push-to-registry: true
 
-      - name: Build and push Docker image (Snapshot)
-        if: github.event_name == 'push'
-        uses: docker/build-push-action@v6
+      - name: Scan image for vulnerabilities
+        if: github.event_name == 'release' || github.event_name == 'push'
+        uses: aquasecurity/trivy-action@master
         with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.determine_tags.outputs.SNAPSHOT_TAG }}
-            ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.determine_tags.outputs.BRANCH_TAG }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.SNAPSHOT_TAG }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.BRANCH_TAG }}
-          labels: |
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=${{ steps.determine_tags.outputs.SNAPSHOT_TAG }}
-            org.opencontainers.image.revision=${{ github.sha }}
+          image-ref: ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}@${{ steps.build-push.outputs.digest }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      - name: Upload Trivy scan results to GitHub Security
+        if: github.event_name == 'release' || github.event_name == 'push'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Fail on vulnerabilities (Release only)
+        if: github.event_name == 'release'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}@${{ steps.build-push.outputs.digest }}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Generate SBOM
+        if: github.event_name == 'release'
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}@${{ steps.build-push.outputs.digest }}
+          format: 'spdx-json'
+          output-file: 'sbom.spdx.json'
+
+      - name: Upload SBOM to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: sbom.spdx.json
+
+      - name: Update Docker Hub description
+        if: github.event_name == 'release'
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          short-description: ${{ github.event.repository.description }}
+          readme-filepath: ./README.md
+
+      - name: Create release summary
+        if: github.event_name == 'release'
+        run: |
+          echo "## 🚀 Docker Images Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull commands:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# GitHub Container Registry" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Docker Hub" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY_DOCKERHUB }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Available tags:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ steps.meta.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Platforms:" >> $GITHUB_STEP_SUMMARY
+          echo "- linux/amd64" >> $GITHUB_STEP_SUMMARY
+          echo "- linux/arm64" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create snapshot summary
+        if: github.event_name == 'push'
+        run: |
+          echo "## 📦 Snapshot Images Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull commands:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# Latest main snapshot" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:main-latest" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ Snapshot images are for testing only and may be unstable." >> $GITHUB_STEP_SUMMARY
