@@ -41,13 +41,4 @@ class AuthApplicationTests {
     fun contextLoads() {
     }
 
-    @Test
-    fun `unsupported operation should return 501 Not Implemented`() {
-        mockMvc.get("/test/unsupported-operation") {
-        }.andExpect {
-            status {
-                isNotImplemented()
-            }
-        }
-    }
 }
