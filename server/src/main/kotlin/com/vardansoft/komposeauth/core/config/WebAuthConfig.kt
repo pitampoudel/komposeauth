@@ -1,7 +1,7 @@
 package com.vardansoft.komposeauth.core.config
 
 import com.vardansoft.komposeauth.AppProperties
-import com.vardansoft.komposeauth.core.converters.OAuth2PublicClientAuthConverter
+import com.vardansoft.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import com.vardansoft.komposeauth.core.providers.OAuth2PublicClientAuthProvider
 import com.vardansoft.komposeauth.data.KycResponse
 import com.vardansoft.komposeauth.kyc.service.KycService

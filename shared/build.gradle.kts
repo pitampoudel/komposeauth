@@ -46,7 +46,7 @@ kotlin {
 }
 
 android {
-    namespace = project.properties["group"] as String + ".komposeauth.shared"
+    namespace = project.properties["group"] as String + ".komposeauth"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -58,10 +58,13 @@ android {
 }
 
 mavenPublishing {
-    coordinates(group.toString(), "komposeauth-shared", version.toString())
-
+    coordinates(
+        groupId = project.group.toString(),
+        artifactId = "komposeauth-shared",
+        version = project.version.toString()
+    )
     pom {
-        name = "komposeauth shared module"
-        description = "Shared module for the komposeauth library"
+        name.set("komposeauth Shared")
+        description.set("Shared module for the komposeauth library")
     }
 }

@@ -49,7 +49,7 @@ class SharedAuthClient(
         accessToken: String
     ): Result<Map<String, UserResponse>> {
         return safeApiCall {
-            httpClient.get("$accessToken/users/batch") {
+            httpClient.get("$authUrl/users/batch") {
                 headers {
                     append(HttpHeaders.Authorization, "Bearer $accessToken")
                 }

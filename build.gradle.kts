@@ -17,44 +17,46 @@ buildscript {
     }
 }
 
-group = (findProperty("group") as String)
-version = (findProperty("version") as String)
+group = property("group") as String
+version = property("version") as String
 
 subprojects {
+    // Apply to modules that use vanniktech plugin
     plugins.withId("com.vanniktech.maven.publish") {
         configure<MavenPublishBaseExtension> {
             publishToMavenCentral()
             signAllPublications()
-
             pom {
-                name = project.name
-                inceptionYear = "2025"
-                url = "https://github.com/pitampoudel/komposeauth"
+                name.set(project.name)
+                description.set("A Kotlin Multiplatform authentication system.")
+                inceptionYear.set("2025")
+                url.set("https://github.com/pitampoudel/komposeauth")
+
                 licenses {
                     license {
-                        name = "The Apache License, Version 2.0"
-                        url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
-                        distribution = "repo"
+                        name.set("The Apache License, Version 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                        distribution.set("repo")
                     }
                 }
                 developers {
                     developer {
-                        id = "pitampoudel"
-                        name = "Pitam Poudel"
-                        url = "https://www.pitam.com.np/"
+                        id.set("pitampoudel")
+                        name.set("Pitam Poudel")
+                        url.set("https://www.pitam.com.np/")
                     }
                 }
                 scm {
-                    url = "https://github.com/pitampoudel/komposeauth"
-                    connection = "scm:git:https://github.com/pitampoudel/komposeauth.git"
-                    developerConnection = "scm:git:ssh://git@github.com:pitampoudel/komposeauth.git"
+                    url.set("https://github.com/pitampoudel/komposeauth")
+                    connection.set("scm:git:https://github.com/pitampoudel/komposeauth.git")
+                    developerConnection.set("scm:git:ssh://git@github.com:pitampoudel/komposeauth.git")
                 }
             }
         }
 
-        // Disable signing for local publishing
+        // Skip signing for snapshots
         tasks.withType<Sign>().configureEach {
-            onlyIf { !gradle.startParameter.taskNames.any { it.contains("publishToMavenLocal") } }
+            onlyIf { !project.version.toString().endsWith("SNAPSHOT") }
         }
     }
 }

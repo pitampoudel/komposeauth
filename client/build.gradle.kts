@@ -113,7 +113,7 @@ kotlin {
 }
 
 android {
-    namespace = project.properties["group"] as String + ".komposeauth.client"
+    namespace = "${project.properties["group"]}.komposeauth"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -125,10 +125,13 @@ android {
 }
 
 mavenPublishing {
-    coordinates(group.toString(), "komposeauth-client", version.toString())
-
+    coordinates(
+        groupId = project.group.toString(),
+        artifactId = "komposeauth-client",
+        version = project.version.toString()
+    )
     pom {
-        name = "komposeauth Client"
-        description = "Client library for komposeauth"
+        name.set("komposeauth Client")
+        description.set("Client library for komposeauth")
     }
 }

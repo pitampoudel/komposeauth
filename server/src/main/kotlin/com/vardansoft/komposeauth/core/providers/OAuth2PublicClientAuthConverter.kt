@@ -1,6 +1,5 @@
-package com.vardansoft.komposeauth.core.converters
+package com.vardansoft.komposeauth.core.providers
 
-import com.vardansoft.komposeauth.core.providers.OAuth2PublicClientAuthToken
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException
