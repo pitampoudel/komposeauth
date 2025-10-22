@@ -1,5 +1,4 @@
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import org.gradle.plugins.signing.Sign
 
 plugins {
     alias(libs.plugins.androidLibrary) apply false
@@ -24,10 +23,11 @@ version = (findProperty("version") as String)
 subprojects {
     plugins.withId("com.vanniktech.maven.publish") {
         configure<MavenPublishBaseExtension> {
-            publishToMavenCentral(true)
+            publishToMavenCentral()
             signAllPublications()
 
             pom {
+                name = project.name
                 inceptionYear = "2025"
                 url = "https://github.com/pitampoudel/komposeauth"
                 licenses {
