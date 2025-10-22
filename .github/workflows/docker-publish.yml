@@ -3,6 +3,10 @@ name: Publish Docker Image
 on:
   release:
     types: [published]
+  push:
+    branches:
+      - main
+
 jobs:
   build-and-push:
     name: Build and Push Docker Image
@@ -30,33 +34,60 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract version tag
-        id: extract_tag
+      - name: Determine tags
+        id: determine_tags
         run: |
-          TAG="${{ github.event.release.tag_name }}"
-          echo "TAG=$TAG" >> $GITHUB_OUTPUT
-          # Strip leading 'v' to get pure SemVer number
-          echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            TAG="${{ github.event.release.tag_name }}"
+            VERSION="${TAG#v}"
+            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+            echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          else
+            BRANCH="${{ github.ref_name }}"
+            SANITIZED_BRANCH=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._-]/-/g')
+            SHORT_SHA="${{ github.sha }}"
+            SHORT_SHA="${SHORT_SHA:0:7}"
+            echo "SNAPSHOT_TAG=${SANITIZED_BRANCH}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+            echo "BRANCH_TAG=${SANITIZED_BRANCH}" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Validate SemVer tag
+      - name: Validate SemVer tag (releases only)
+        if: github.event_name == 'release'
         shell: bash
         run: |
-          if [[ ! "${{ steps.extract_tag.outputs.TAG }}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "Tag '${{ steps.extract_tag.outputs.TAG }}' is not a valid SemVer (expected vMAJOR.MINOR.PATCH optionally with pre-release)" >&2
+          if [[ ! "${{ steps.determine_tags.outputs.TAG }}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Tag '${{ steps.determine_tags.outputs.TAG }}' is not a valid SemVer (expected vMAJOR.MINOR.PATCH optionally with pre-release)" >&2
             exit 1
           fi
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image (Release)
+        if: github.event_name == 'release'
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/komposeauth:latest
-            ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.extract_tag.outputs.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.determine_tags.outputs.VERSION }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:latest
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.extract_tag.outputs.VERSION }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.VERSION }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=${{ steps.extract_tag.outputs.VERSION }}
+            org.opencontainers.image.version=${{ steps.determine_tags.outputs.VERSION }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Build and push Docker image (Snapshot)
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.determine_tags.outputs.SNAPSHOT_TAG }}
+            ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.determine_tags.outputs.BRANCH_TAG }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.SNAPSHOT_TAG }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.BRANCH_TAG }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.determine_tags.outputs.SNAPSHOT_TAG }}
             org.opencontainers.image.revision=${{ github.sha }}
