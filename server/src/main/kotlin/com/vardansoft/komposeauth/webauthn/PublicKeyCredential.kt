@@ -6,16 +6,12 @@ import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.annotation.TypeAlias
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
-import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.security.web.webauthn.api.AuthenticatorTransport
 import org.springframework.security.web.webauthn.api.Bytes
 import org.springframework.security.web.webauthn.api.CredentialRecord
 import org.springframework.security.web.webauthn.api.PublicKeyCose
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialType
-import org.springframework.security.web.webauthn.management.UserCredentialRepository
-import org.springframework.stereotype.Repository
 import java.time.Instant
-import kotlin.jvm.optionals.getOrNull
 
 @Document(collection = "public_key_credentials")
 @TypeAlias("public_key_credential")
@@ -103,47 +99,4 @@ data class PublicKeyCredential(
     override fun getCreated(): Instant {
         return createdAt
     }
-}
-
-@Repository
-interface WebAuthnCredentialRepository : MongoRepository<PublicKeyCredential, Bytes> {
-    fun findAllByPublicKeyUserId(publicKeyUserId: Bytes): List<PublicKeyCredential>
-}
-
-@Repository
-class UserCredentialRepositoryImpl(
-    private val credentialRepository: WebAuthnCredentialRepository
-) : UserCredentialRepository {
-    override fun delete(credentialId: Bytes) {
-        credentialRepository.deleteById(credentialId)
-    }
-
-    override fun save(credentialRecord: CredentialRecord) {
-        credentialRepository.save(
-            PublicKeyCredential(
-                id = credentialRecord.credentialId,
-                publicKeyUserId = credentialRecord.userEntityUserId,
-                label = credentialRecord.label,
-                attestationClientDataJSON = credentialRecord.attestationClientDataJSON,
-                attestationObject = credentialRecord.attestationObject,
-                signatureCount = credentialRecord.signatureCount,
-                transports = credentialRecord.transports,
-                publicKey = credentialRecord.publicKey,
-                backupEligible = credentialRecord.isBackupEligible,
-                backupState = credentialRecord.isBackupState,
-                uvInitialized = credentialRecord.isUvInitialized,
-                credentialType = credentialRecord.credentialType,
-                lastUsed = credentialRecord.lastUsed
-            )
-        )
-    }
-
-    override fun findByCredentialId(credentialId: Bytes): CredentialRecord? {
-        return credentialRepository.findById(credentialId).getOrNull()
-    }
-
-    override fun findByUserId(userId: Bytes): List<CredentialRecord> {
-        return credentialRepository.findAllByPublicKeyUserId(userId)
-    }
-
 }
