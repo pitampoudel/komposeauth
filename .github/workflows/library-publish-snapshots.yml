@@ -1,0 +1,40 @@
+name: Publish Snapshots
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+  ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+  ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
+
+jobs:
+  snapshot:
+    name: Publish Snapshot
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 21
+
+      - name: Determine snapshot version
+        id: version
+        run: |
+          BASE_VERSION=$(grep '^version=' gradle.properties | cut -d'=' -f2)
+          SNAPSHOT_VERSION="${BASE_VERSION}-SNAPSHOT"
+          echo "version=$SNAPSHOT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Run tests
+        run: ./gradlew clean check --no-daemon
+
+      - name: Publish to MavenCentral
+        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache -Pversion=${{ steps.extract_tag.outputs.version }}

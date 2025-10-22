@@ -1,7 +1,9 @@
 name: Publish Client Library
+
 on:
   release:
     types: [published]
+
 env:
   ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
   ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
@@ -10,34 +12,48 @@ env:
   ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
 jobs:
   publish:
-    name: Publish with Ubuntu Runner
+    name: Publish to Maven Central
     runs-on: ubuntu-latest
     steps:
-      - name: Check out code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: 21
 
-      - name: Extract version from tag
-        id: extract_tag
-        run: |
-          TAG="${{ github.event.release.tag_name }}"
-          echo "TAG=$TAG" >> $GITHUB_OUTPUT
-          # Strip leading 'v' to get pure SemVer number
-          echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-cache-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-cache-
 
-      - name: Validate SemVer tag
+      - name: Extract and validate release tag
+        id: tag
         shell: bash
         run: |
-          if [[ ! "${{ steps.extract_tag.outputs.TAG }}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "Tag '${{ steps.extract_tag.outputs.TAG }}' is not a valid SemVer (expected vMAJOR.MINOR.PATCH optionally with pre-release)" >&2
+          TAG="${{ github.event.release.tag_name }}"
+          if [[ -z "$TAG" ]]; then
+            echo "No release tag found" >&2
             exit 1
           fi
+          # Validate simple SemVer with optional pre-release (vMAJOR.MINOR.PATCH(-prerelease))
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid tag format: $TAG (expected vMAJOR.MINOR.PATCH)" >&2
+            exit 1
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Run tests
+        run: ./gradlew clean check --no-daemon
 
       - name: Publish to MavenCentral
-        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache -Pversion=${{ steps.extract_tag.outputs.VERSION }}
-
+        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache -Pversion=${{ steps.extract_tag.outputs.version }}
