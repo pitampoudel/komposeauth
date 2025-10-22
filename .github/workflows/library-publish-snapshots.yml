@@ -27,7 +27,7 @@ jobs:
           java-version: 21
 
       - name: Run tests
-        run: ./gradlew clean check --no-daemon
+        run: ./gradlew clean :shared:check :client:check --no-daemon
 
       - name: Publish to MavenCentral
         run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
