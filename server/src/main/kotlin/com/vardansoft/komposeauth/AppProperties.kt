@@ -28,6 +28,7 @@ class AppProperties {
     lateinit var googleAuthClientSecret: String
     lateinit var googleAuthDesktopClientId: String
     lateinit var googleAuthDesktopClientSecret: String
+    var assetLinksJson: String? = null
 
     var samayeApiKey: String? = null
     var twilioAccountSid: String? = null

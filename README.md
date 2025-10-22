@@ -60,6 +60,7 @@ GCP_PROJECT_ID=              # GCP project id
 SENTRY_DSN=                  # Sentry DSN
 SENTRY_AUTH_TOKEN=           # Sentry auth token
 BASE_URL=                    # Public base URL of this server
+ASSET_LINKS_JSON
 ```
 
 ### 2) Add the SDKs to your KMP project

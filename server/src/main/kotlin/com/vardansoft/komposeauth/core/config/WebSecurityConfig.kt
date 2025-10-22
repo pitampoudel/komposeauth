@@ -72,7 +72,8 @@ class WebSecurityConfig(
                         "/v3/api-docs/**",
                         "/verify-email",
                         "/reset-password",
-                        "/countries.json"
+                        "/countries.json",
+                        "/.well-known/**"
                     ).permitAll()
                     .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD)
                     .permitAll()

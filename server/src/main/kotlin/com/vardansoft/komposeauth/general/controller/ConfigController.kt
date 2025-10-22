@@ -7,6 +7,8 @@ import com.webauthn4j.converter.util.ObjectConverter
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
 import org.springframework.security.web.webauthn.management.ImmutablePublicKeyCredentialRequestOptionsRequest
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/config")
+@RequestMapping
 class ConfigController(
     private val appProperties: AppProperties,
     private val objectConverter: ObjectConverter,
@@ -29,7 +31,7 @@ class ConfigController(
         summary = "Get configuration for login",
         description = "Returns client configuration, such as the Google Client ID and public key registration options JSON"
     )
-    @GetMapping("/login")
+    @GetMapping("/config/login")
     fun getConfig(
         @RequestParam(name = "platform", required = true)
         platform: Platform,
@@ -48,5 +50,16 @@ class ConfigController(
                 publicKeyAuthOptionsJson = json
             )
         )
+    }
+
+    @GetMapping("/.well-known/assetlinks.json")
+    fun getAssetLinks(): ResponseEntity<String> {
+        val assetLinksJson = appProperties.assetLinksJson
+        if (assetLinksJson.isNullOrBlank()) {
+            return ResponseEntity.notFound().build()
+        }
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        return ResponseEntity(assetLinksJson, headers, org.springframework.http.HttpStatus.OK)
     }
 }
