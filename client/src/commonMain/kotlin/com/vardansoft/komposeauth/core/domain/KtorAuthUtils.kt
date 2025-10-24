@@ -1,6 +1,5 @@
-package com.vardansoft.komposeauth.core.data
+package com.vardansoft.komposeauth.core.domain
 
-import com.vardansoft.komposeauth.core.domain.KtorBearerHandler
 import io.ktor.client.plugins.auth.AuthConfig
 import org.koin.core.scope.Scope
 

@@ -28,7 +28,6 @@ subprojects {
             signAllPublications()
             pom {
                 name.set(project.name)
-                description.set("A Kotlin Multiplatform authentication system.")
                 inceptionYear.set("2025")
                 url.set("https://github.com/pitampoudel/komposeauth")
 

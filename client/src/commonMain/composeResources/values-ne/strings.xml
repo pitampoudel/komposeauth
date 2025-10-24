@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- KYC Status -->
+    <string name="kyc_status_approved">स्वीकृत</string>
+    <string name="kyc_status_pending">बाँकी</string>
+    <string name="kyc_status_rejected">अस्वीकृत</string>
+    <string name="kyc_status_draft">ड्राफ्ट</string>
+    
+    <!-- Document Type -->
+    <string name="kyc_document_type_passport">राहदानी</string>
+    <string name="kyc_document_type_national_id">राष्ट्रिय परिचयपत्र</string>
+    <string name="kyc_document_type_citizenship">नागरिकता</string>
+
+    <!-- Gender -->
+    <string name="kyc_gender_male">पुरुष</string>
+    <string name="kyc_gender_female">महिला</string>
+    <string name="kyc_gender_other">अन्य</string>
+
+    <!--  Marital Status  -->
+    <string name="kyc_marital_status_married">विवाहित</string>
+    <string name="kyc_marital_status_unmarried">अविवाहित</string>
+
+     <!-- General-->
+    <string name="ok">ठीक छ</string>
+    <string name="cancel">रद्द गर्नुहोस्</string>
+
+    <!-- Validation Errors -->
+    <string name="must_not_be_blank">खाली हुनु हुँदैन</string>
+    <string name="must_not_be_empty">खाली हुनु हुँदैन</string>
+    <string name="must_be_selected">चयन गर्नुपर्छ</string>
+    <string name="too_short">धेरै छोटो</string>
+    <string name="invalid_url">अमान्य URL</string>
+    <string name="invalid_email">अमान्य इमेल</string>
+    <string name="invalid_phone_number">अमान्य फोन नम्बर</string>
+    <string name="passwords_dont_match">पासवर्डहरू मेल खाँदैनन्</string>
+</resources>
