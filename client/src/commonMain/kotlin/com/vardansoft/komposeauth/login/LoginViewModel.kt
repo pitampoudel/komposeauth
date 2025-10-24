@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vardansoft.core.domain.Result
 import com.vardansoft.komposeauth.core.domain.AuthClient
 import com.vardansoft.komposeauth.core.domain.AuthPreferences
+import com.vardansoft.komposeauth.domain.currentPlatform
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -16,6 +17,25 @@ class LoginViewModel internal constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(LoginState())
     val state = _state.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val res = authClient.fetchLoginConfig(currentPlatform())
+            val config = when (res) {
+                is Result.Error -> {
+                    _state.update {
+                        it.copy(infoMsg = res.message)
+                    }
+                    null
+                }
+
+                is Result.Success -> res.data
+            }
+            _state.update {
+                it.copy(loginConfig = config)
+            }
+        }
+    }
 
     fun onEvent(event: LoginEvent) {
         viewModelScope.launch {

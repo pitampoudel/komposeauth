@@ -1,7 +1,7 @@
 package com.vardansoft.komposeauth.core.domain
 
 import com.vardansoft.core.data.MessageResponse
-import com.vardansoft.komposeauth.data.LoginConfigResponse
+import com.vardansoft.komposeauth.data.LoginOptions
 import com.vardansoft.komposeauth.data.Credential
 import com.vardansoft.komposeauth.data.DocumentInformation
 import com.vardansoft.komposeauth.data.KycResponse
@@ -18,7 +18,7 @@ import com.vardansoft.core.domain.Result
 import io.ktor.client.statement.HttpResponse
 
 internal interface AuthClient {
-    suspend fun fetchLoginConfig(platform: Platform = Platform.WEB): Result<LoginConfigResponse>
+    suspend fun fetchLoginConfig(platform: Platform = Platform.WEB): Result<LoginOptions>
     suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2TokenData>
     suspend fun fetchUserInfo(accessToken: String? = null): Result<UserInfoResponse>
     suspend fun deactivate(): Result<HttpResponse>
@@ -30,6 +30,6 @@ internal interface AuthClient {
     suspend fun submitKycAddressDetails(body: UpdateAddressDetailsRequest): Result<KycResponse>
     suspend fun fetchCountries(): Result<List<Country>>
     suspend fun updateProfile(request: UpdateProfileRequest): Result<HttpResponse>
-    suspend fun fetchRegistrationOptions(): Result<String>
+    suspend fun fetchWebAuthnRegistrationOptions(): Result<String>
     suspend fun registerPublicKey(request: String): Result<MessageResponse>
 }

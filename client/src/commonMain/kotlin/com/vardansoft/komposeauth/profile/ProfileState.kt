@@ -10,7 +10,8 @@ data class ProfileState(
     val infoMsg: InfoMessage? = null,
     val userInfo: UserInfoResponse? = null,
     val askingDeactivateConfirmation: Boolean = false,
-    val editingState: EditingState = EditingState()
+    val editingState: EditingState = EditingState(),
+    val webAuthnRegistrationOptions: String? = null
 ) {
     data class EditingState(
         val givenName: String = "",

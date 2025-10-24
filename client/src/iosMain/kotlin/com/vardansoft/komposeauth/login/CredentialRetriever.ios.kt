@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.vardansoft.komposeauth.data.Credential
 import com.vardansoft.core.domain.Result
+import com.vardansoft.komposeauth.data.LoginOptions
 import platform.AuthenticationServices.ASAuthorization
 import platform.AuthenticationServices.ASAuthorizationAppleIDCredential
 import platform.AuthenticationServices.ASAuthorizationAppleIDProvider
@@ -71,11 +72,11 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
         }
     }
     return object : KmpCredentialManager {
-        override suspend fun getCredential(): Result<Credential> {
+        override suspend fun getCredential(options: LoginOptions): Result<Credential> {
             return retriever.getCredential()
         }
 
-        override suspend fun createPassKeyAndRetrieveJson(): Result<String> {
+        override suspend fun createPassKeyAndRetrieveJson(options: String): Result<String> {
             TODO("Not yet implemented")
         }
     }

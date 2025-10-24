@@ -27,6 +27,22 @@ class ProfileViewModel internal constructor(
     val state = _state.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            val res = client.fetchWebAuthnRegistrationOptions()
+            val options = when (res) {
+                is Result.Error -> {
+                    _state.update {
+                        it.copy(infoMsg = res.message,)
+                    }
+                    null
+                }
+
+                is Result.Success -> res.data
+            }
+            _state.update {
+                it.copy(webAuthnRegistrationOptions = options)
+            }
+        }
         authPreferences.userInfoResponse.onEach { info ->
             _state.update {
                 it.copy(
@@ -34,7 +50,7 @@ class ProfileViewModel internal constructor(
                     editingState = it.editingState.copy(
                         givenName = info?.givenName ?: it.editingState.givenName,
                         familyName = info?.familyName ?: it.editingState.familyName
-                    )
+                    ),
                 )
             }
         }.launchIn(viewModelScope)
@@ -45,18 +61,18 @@ class ProfileViewModel internal constructor(
             when (event) {
                 is ProfileEvent.InfoMsgChanged -> {
                     _state.update {
-                        it.copy(infoMsg = event.msg)
+                        it.copy(infoMsg = event.msg,)
                     }
                 }
 
                 is ProfileEvent.RegisterPublicKey -> {
                     _state.update {
-                        it.copy(progress = 0.0F)
+                        it.copy(progress = 0.0F,)
                     }
                     val res = client.registerPublicKey(event.publicKey)
                     when (res) {
                         is Result.Error -> _state.update {
-                            it.copy(infoMsg = res.message)
+                            it.copy(infoMsg = res.message,)
                         }
 
                         is Result.Success -> {
@@ -72,7 +88,7 @@ class ProfileViewModel internal constructor(
                 is ProfileEvent.Deactivate -> {
                     if (event.confirmed) {
                         _state.update {
-                            it.copy(progress = 0.0F)
+                            it.copy(progress = 0.0F,)
                         }
 
                         when (val res = client.deactivate()) {
@@ -93,7 +109,7 @@ class ProfileViewModel internal constructor(
 
                     } else {
                         _state.update {
-                            it.copy(askingDeactivateConfirmation = true)
+                            it.copy(askingDeactivateConfirmation = true,)
                         }
                     }
 
@@ -112,7 +128,7 @@ class ProfileViewModel internal constructor(
                         editingState = it.editingState.copy(
                             givenName = event.value,
                             givenNameError = null
-                        )
+                        ),
                     )
                 }
 
@@ -121,13 +137,13 @@ class ProfileViewModel internal constructor(
                         editingState = it.editingState.copy(
                             familyName = event.value,
                             familyNameError = null
-                        )
+                        ),
                     )
                 }
 
 
                 is ProfileEvent.EditEvent.Submit -> {
-                    _state.update { it.copy(progress = 0.0f) }
+                    _state.update { it.copy(progress = 0.0f,) }
 
                     val givenName = state.value.editingState.givenName
                     val familyName = state.value.editingState.familyName
@@ -140,19 +156,19 @@ class ProfileViewModel internal constructor(
                             editingState = s.editingState.copy(
                                 givenNameError = givenNameValidation.error(),
                                 familyNameError = familyNameValidation.error()
-                            )
+                            ),
                         )
                     }
 
                     _state.value.editingState.toRequest()?.let { req ->
                         when (val res = client.updateProfile(req)) {
                             is Result.Error -> _state.update {
-                                it.copy(infoMsg = res.message)
+                                it.copy(infoMsg = res.message,)
                             }
 
                             is Result.Success<*> -> {
                                 _state.update {
-                                    it.copy(editingState = ProfileState.EditingState())
+                                    it.copy(editingState = ProfileState.EditingState(),)
                                 }
                                 uiEventChannel.send(ResultUiEvent.Completed)
                             }

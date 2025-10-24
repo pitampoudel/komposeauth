@@ -17,7 +17,7 @@ import com.vardansoft.komposeauth.data.Country
 import com.vardansoft.komposeauth.data.Credential
 import com.vardansoft.komposeauth.data.DocumentInformation
 import com.vardansoft.komposeauth.data.KycResponse
-import com.vardansoft.komposeauth.data.LoginConfigResponse
+import com.vardansoft.komposeauth.data.LoginOptions
 import com.vardansoft.komposeauth.data.OAuth2TokenData
 import com.vardansoft.komposeauth.data.PersonalInformation
 import com.vardansoft.komposeauth.data.UpdateAddressDetailsRequest
@@ -37,11 +37,11 @@ import io.ktor.client.statement.HttpResponse
 
 internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClient {
 
-    override suspend fun fetchLoginConfig(platform: Platform): Result<LoginConfigResponse> {
+    override suspend fun fetchLoginConfig(platform: Platform): Result<LoginOptions> {
         return safeApiCall {
             httpClient.get("$authUrl/$CONFIG/login") {
                 parameter("platform", platform)
-            }.asResource { body<LoginConfigResponse>() }
+            }.asResource { body<LoginOptions>() }
         }
     }
 
@@ -131,7 +131,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
     }
 
-    override suspend fun fetchRegistrationOptions(): Result<String> {
+    override suspend fun fetchWebAuthnRegistrationOptions(): Result<String> {
         return safeApiCall {
             httpClient.post("$authUrl/webauthn/register/options").asResource { body() }
         }

@@ -22,9 +22,8 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.vardansoft.core.domain.Result
-import com.vardansoft.komposeauth.core.domain.AuthClient
 import com.vardansoft.komposeauth.data.Credential
-import org.koin.java.KoinJavaComponent.getKoin
+import com.vardansoft.komposeauth.data.LoginOptions
 
 @Composable
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
@@ -34,128 +33,118 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
     }
     return remember {
         object : KmpCredentialManager {
-            override suspend fun getCredential(): Result<Credential> {
-                // Fetch Google OAuth client-id dynamically from server
-                val authClient = getKoin().get<AuthClient>()
-                when (val res = authClient.fetchLoginConfig()) {
-                    is Result.Error -> return res
-                    is Result.Success -> {
-                        val googleAuthClientId = res.data.googleClientId
-                        val publicKeyVerificationOptionsJson = res.data.publicKeyAuthOptionsJson
+            override suspend fun getCredential(options: LoginOptions): Result<Credential> {
 
-                        val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
-                            .setFilterByAuthorizedAccounts(false)
-                            .setServerClientId(googleAuthClientId)
-                            .build()
+                val googleAuthClientId = options.googleClientId
+                val publicKeyVerificationOptionsJson = options.publicKeyAuthOptionsJson
 
-                        val request = GetCredentialRequest.Builder()
-                            .addCredentialOption(googleIdOption)
-                            .also { req ->
-                                publicKeyVerificationOptionsJson?.let {
-                                    req.addCredentialOption(
-                                        GetPublicKeyCredentialOption(
-                                            requestJson = publicKeyVerificationOptionsJson
-                                        )
-                                    )
-                                }
-                            }
-                            .build()
+                val googleIdOption: GetGoogleIdOption? = googleAuthClientId?.let {
+                    GetGoogleIdOption.Builder()
+                        .setFilterByAuthorizedAccounts(false)
+                        .setServerClientId(googleAuthClientId)
+                        .build()
+                }
 
-                        try {
-                            val result = credentialManager.getCredential(
-                                context = activity,
-                                request = request
+                val request = GetCredentialRequest.Builder()
+                    .also { req ->
+                        googleIdOption?.let {
+                            req.addCredentialOption(googleIdOption)
+                        }
+                        publicKeyVerificationOptionsJson?.let {
+                            req.addCredentialOption(
+                                GetPublicKeyCredentialOption(
+                                    requestJson = publicKeyVerificationOptionsJson
+                                )
                             )
-                            val credential: Result<Credential> =
-                                when (val credential = result.credential) {
-                                    is PublicKeyCredential -> {
+                        }
+                    }
+                    .build()
+
+                try {
+                    val result = credentialManager.getCredential(
+                        context = activity,
+                        request = request
+                    )
+                    val credential: Result<Credential> =
+                        when (val credential = result.credential) {
+                            is PublicKeyCredential -> {
+                                Result.Success(
+                                    Credential.PublicKey(
+                                        authenticationResponseJson = credential.authenticationResponseJson
+                                    )
+                                )
+                            }
+
+                            is CustomCredential -> {
+                                if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                    try {
+                                        val googleIdTokenCredential =
+                                            GoogleIdTokenCredential.createFrom(credential.data)
                                         Result.Success(
-                                            Credential.PublicKey(
-                                                authenticationResponseJson = credential.authenticationResponseJson
+                                            Credential.GoogleId(
+                                                idToken = googleIdTokenCredential.idToken
                                             )
                                         )
+                                    } catch (e: GoogleIdTokenParsingException) {
+                                        Result.Error(e.message.orEmpty())
                                     }
-
-                                    is CustomCredential -> {
-                                        if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                                            try {
-                                                val googleIdTokenCredential =
-                                                    GoogleIdTokenCredential.createFrom(credential.data)
-                                                Result.Success(
-                                                    Credential.GoogleId(
-                                                        idToken = googleIdTokenCredential.idToken
-                                                    )
-                                                )
-                                            } catch (e: GoogleIdTokenParsingException) {
-                                                Result.Error(e.message.orEmpty())
-                                            }
-                                        } else {
-                                            Result.Error("Unexpected type of credential")
-                                        }
-
-                                    }
-
-                                    else -> Result.Error("Unknown credential type")
+                                } else {
+                                    Result.Error("Unexpected type of credential")
                                 }
-                            credentialManager.clearCredentialState(ClearCredentialStateRequest())
-                            return credential
-                        } catch (e: GetCredentialCancellationException) {
-                            e.printStackTrace()
-                            return Result.Error(e.message.orEmpty())
 
-                        } catch (e: GetCredentialException) {
-                            e.printStackTrace()
-                            val userMessage = when (e) {
-                                is GetCredentialProviderConfigurationException ->
-                                    "Google Play services on this device is missing, out of date, or not compatible to sign in with Google. Please update/install Google Play services and try again."
-
-                                is NoCredentialException ->
-                                    "No Google account available for sign-in on this device. Please add a Google account and try again."
-
-                                else -> e.message
-                                    ?: "Unable to retrieve credentials at the moment. Please try again."
                             }
-                            return Result.Error(userMessage)
+
+                            else -> Result.Error("Unknown credential type")
                         }
+                    credentialManager.clearCredentialState(ClearCredentialStateRequest())
+                    return credential
+                } catch (e: GetCredentialCancellationException) {
+                    e.printStackTrace()
+                    return Result.Error(e.message.orEmpty())
+
+                } catch (e: GetCredentialException) {
+                    e.printStackTrace()
+                    val userMessage = when (e) {
+                        is GetCredentialProviderConfigurationException ->
+                            "Google Play services on this device is missing, out of date, or not compatible to sign in with Google. Please update/install Google Play services and try again."
+
+                        is NoCredentialException ->
+                            "No Google account available for sign-in on this device. Please add a Google account and try again."
+
+                        else -> e.message
+                            ?: "Unable to retrieve credentials at the moment. Please try again."
                     }
+                    return Result.Error(userMessage)
                 }
+
+
             }
 
-            override suspend fun createPassKeyAndRetrieveJson(): Result<String> {
-                val authClient = getKoin().get<AuthClient>()
-                val res = authClient.fetchRegistrationOptions()
+            override suspend fun createPassKeyAndRetrieveJson(options: String): Result<String> {
 
-                when (res) {
-                    is Result.Error -> return res
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return Result.Error("Android version not supported")
 
-                    is Result.Success<String> -> {
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return Result.Error("Android version not supported")
+                val response = try {
+                    credentialManager.createCredential(
+                        context = activity,
+                        request = CreatePublicKeyCredentialRequest(options)
+                    )
 
-
-                        val response = try {
-                            credentialManager.createCredential(
-                                context = activity,
-                                request = CreatePublicKeyCredentialRequest(res.data)
-                            )
-                        } catch (e: CreateCredentialException) {
-                            e.printStackTrace()
-                            return Result.Error(e.message.orEmpty())
-                        }
-
-                        return when (response) {
-
-                            is CreatePublicKeyCredentialResponse -> {
-                                Result.Success(response.registrationResponseJson)
-                            }
-
-                            else -> {
-                                Result.Error("Unknown credential")
-                            }
-                        }
-
-                    }
+                } catch (e: CreateCredentialException) {
+                    e.printStackTrace()
+                    return Result.Error(e.message.orEmpty())
                 }
 
+                return when (response) {
+
+                    is CreatePublicKeyCredentialResponse -> {
+                        Result.Success(response.registrationResponseJson)
+                    }
+
+                    else -> {
+                        Result.Error("Unknown credential")
+                    }
+                }
             }
 
         }

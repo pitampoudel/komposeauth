@@ -37,6 +37,8 @@ kotlin {
                 // koin
                 implementation(project.dependencies.platform(libs.koin.bom))
                 implementation(libs.koin.core)
+                implementation(libs.koin.compose.viewmodel)
+
                 // ktor client
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.contentNegotiation)
@@ -61,11 +63,6 @@ kotlin {
                 // Coil 3 (Multiplatform Compose image loading)
                 implementation(libs.coil3.compose)
                 implementation(libs.coil3.network.ktor3)
-
-                // Koin for Compose
-                implementation(project.dependencies.platform(libs.koin.bom))
-                implementation(libs.koin.compose)
-                implementation(libs.koin.compose.viewmodel)
 
                 // JetBrains Lifecycle
                 implementation(libs.lifecycle.runtime.compose)

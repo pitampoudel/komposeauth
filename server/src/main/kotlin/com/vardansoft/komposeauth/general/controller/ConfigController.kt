@@ -1,7 +1,7 @@
 package com.vardansoft.komposeauth.general.controller
 
 import com.vardansoft.komposeauth.AppProperties
-import com.vardansoft.komposeauth.data.LoginConfigResponse
+import com.vardansoft.komposeauth.data.LoginOptions
 import com.vardansoft.komposeauth.domain.Platform
 import com.webauthn4j.converter.util.ObjectConverter
 import io.swagger.v3.oas.annotations.Operation
@@ -37,7 +37,7 @@ class ConfigController(
         platform: Platform,
         request: HttpServletRequest,
         response: HttpServletResponse
-    ): ResponseEntity<LoginConfigResponse> {
+    ): ResponseEntity<LoginOptions> {
         val credentialRequestOptions = rpOperations.createCredentialRequestOptions(
             ImmutablePublicKeyCredentialRequestOptionsRequest(null)
         )
@@ -45,7 +45,7 @@ class ConfigController(
         val json = objectConverter.jsonConverter.writeValueAsString(credentialRequestOptions)
 
         return ResponseEntity.ok(
-            LoginConfigResponse(
+            LoginOptions(
                 googleClientId = appProperties.googleClientId(platform),
                 publicKeyAuthOptionsJson = json
             )

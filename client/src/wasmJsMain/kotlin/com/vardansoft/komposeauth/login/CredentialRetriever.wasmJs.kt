@@ -3,10 +3,10 @@ package com.vardansoft.komposeauth.login
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.russhwolf.settings.ObservableSettings
-import com.vardansoft.komposeauth.data.Credential
-import com.vardansoft.komposeauth.domain.Platform
-import com.vardansoft.komposeauth.core.domain.AuthClient
 import com.vardansoft.core.domain.Result
+import com.vardansoft.komposeauth.data.Credential
+import com.vardansoft.komposeauth.data.LoginOptions
+import com.vardansoft.komposeauth.domain.Platform
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.algorithms.SHA256
 import dev.whyoleg.cryptography.providers.webcrypto.WebCrypto
@@ -67,14 +67,9 @@ private external interface OAuthMessageData : JsAny {
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
     return remember {
         val koin = getKoin()
-        val authClient = koin.get<AuthClient>()
         val settings = koin.get<ObservableSettings>()
         object : KmpCredentialManager {
-            override suspend fun getCredential(): Result<Credential> {
-                val config = when (val result = authClient.fetchLoginConfig()) {
-                    is Result.Error -> return result
-                    is Result.Success -> result.data
-                }
+            override suspend fun getCredential(options: LoginOptions): Result<Credential> {
                 val verifier = generateCodeVerifier()
                 val challenge = sha256Base64Url(verifier)
                 val state = "state-${Random.nextInt()}"
@@ -82,9 +77,10 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
 
                 settings.putString("pkce_verifier", verifier)
                 settings.putString("oauth_state", state)
-
+                val googleClientId = options.googleClientId
+                    ?: return Result.Error("Google client id is not provided")
                 val authUrl = buildGoogleAuthUrl(
-                    clientId = config.googleClientId,
+                    clientId = googleClientId,
                     redirectUri = redirectUri,
                     codeChallenge = challenge,
                     state = state
@@ -93,7 +89,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                 return openAuthPopupAndWait(authUrl)
             }
 
-            override suspend fun createPassKeyAndRetrieveJson(): Result<String> {
+            override suspend fun createPassKeyAndRetrieveJson(options: String): Result<String> {
                 TODO("Not yet implemented")
             }
 
