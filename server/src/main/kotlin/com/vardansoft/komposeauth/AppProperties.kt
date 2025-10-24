@@ -1,8 +1,6 @@
 package com.vardansoft.komposeauth
 
 import com.vardansoft.komposeauth.domain.Platform
-import com.vardansoft.komposeauth.domain.Platform.DESKTOP
-import com.vardansoft.komposeauth.domain.Platform.WEB
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import java.net.Inet4Address
@@ -38,15 +36,19 @@ class AppProperties {
 
     fun googleClientId(platform: Platform): String {
         return when (platform) {
-            DESKTOP -> googleAuthDesktopClientId
-            WEB -> googleAuthClientId
+            Platform.DESKTOP -> googleAuthDesktopClientId
+            Platform.WEB -> googleAuthClientId
+            Platform.ANDROID -> googleAuthClientId
+            Platform.IOS -> googleAuthClientId
         }
     }
 
     fun googleClientSecret(platform: Platform): String {
         return when (platform) {
-            DESKTOP -> googleAuthDesktopClientSecret
-            WEB -> googleAuthClientSecret
+            Platform.DESKTOP -> googleAuthDesktopClientSecret
+            Platform.WEB -> googleAuthClientSecret
+            Platform.ANDROID -> googleAuthClientSecret
+            Platform.IOS -> googleAuthClientSecret
         }
     }
 
