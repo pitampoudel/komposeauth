@@ -5,6 +5,7 @@ import com.vardansoft.core.data.asResource
 import com.vardansoft.core.data.safeApiCall
 import com.vardansoft.core.domain.Result
 import com.vardansoft.komposeauth.core.domain.AuthClient
+import com.vardansoft.komposeauth.data.*
 import com.vardansoft.komposeauth.data.ApiEndpoints.CONFIG
 import com.vardansoft.komposeauth.data.ApiEndpoints.DEACTIVATE
 import com.vardansoft.komposeauth.data.ApiEndpoints.KYC
@@ -13,18 +14,6 @@ import com.vardansoft.komposeauth.data.ApiEndpoints.TOKEN
 import com.vardansoft.komposeauth.data.ApiEndpoints.UPDATE
 import com.vardansoft.komposeauth.data.ApiEndpoints.UPDATE_PHONE_NUMBER
 import com.vardansoft.komposeauth.data.ApiEndpoints.VERIFY_PHONE_NUMBER
-import com.vardansoft.komposeauth.data.Country
-import com.vardansoft.komposeauth.data.Credential
-import com.vardansoft.komposeauth.data.DocumentInformation
-import com.vardansoft.komposeauth.data.KycResponse
-import com.vardansoft.komposeauth.data.LoginOptions
-import com.vardansoft.komposeauth.data.OAuth2TokenData
-import com.vardansoft.komposeauth.data.PersonalInformation
-import com.vardansoft.komposeauth.data.UpdateAddressDetailsRequest
-import com.vardansoft.komposeauth.data.UpdatePhoneNumberRequest
-import com.vardansoft.komposeauth.data.UpdateProfileRequest
-import com.vardansoft.komposeauth.data.UserInfoResponse
-import com.vardansoft.komposeauth.data.VerifyPhoneOtpRequest
 import com.vardansoft.komposeauth.domain.Platform
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -137,11 +126,11 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
     }
 
-    override suspend fun registerPublicKey(request: String): Result<MessageResponse> {
+    override suspend fun registerPublicKey(request: RegisterPublicKeyRequest): Result<HttpResponse> {
         return safeApiCall {
             httpClient.post("$authUrl/webauthn/register") {
                 setBody(request)
-            }.asResource { body() }
+            }.asResource { this }
         }
     }
 }

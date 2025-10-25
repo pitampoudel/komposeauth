@@ -2,16 +2,15 @@ package com.vardansoft.komposeauth.login
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.vardansoft.core.domain.Result
 import com.vardansoft.komposeauth.data.Credential
+import com.vardansoft.komposeauth.data.LoginOptions
 import com.vardansoft.komposeauth.domain.Platform
-import com.vardansoft.komposeauth.core.domain.AuthClient
 import com.vardansoft.komposeauth.login.OAuthUtils.buildAuthUrl
 import com.vardansoft.komposeauth.login.OAuthUtils.generateCodeChallenge
 import com.vardansoft.komposeauth.login.OAuthUtils.generateCodeVerifier
 import com.vardansoft.komposeauth.login.OAuthUtils.listenForCode
-import com.vardansoft.core.domain.Result
-import com.vardansoft.komposeauth.data.LoginOptions
-import org.koin.java.KoinJavaComponent.getKoin
+import kotlinx.serialization.json.JsonObject
 import java.awt.Desktop
 import java.net.ServerSocket
 import java.net.URI
@@ -40,7 +39,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                 return Result.Success(credential)
             }
 
-            override suspend fun createPassKeyAndRetrieveJson(options: String): Result<String> {
+            override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
                 TODO("Not yet implemented")
             }
         }

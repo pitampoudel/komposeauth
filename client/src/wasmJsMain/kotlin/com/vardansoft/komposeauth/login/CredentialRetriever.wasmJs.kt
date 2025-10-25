@@ -14,6 +14,7 @@ import io.ktor.http.encodeURLParameter
 import io.ktor.util.encodeBase64
 import kotlinx.browser.window
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.serialization.json.JsonObject
 import org.koin.mp.KoinPlatform.getKoin
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.events.Event
@@ -89,7 +90,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                 return openAuthPopupAndWait(authUrl)
             }
 
-            override suspend fun createPassKeyAndRetrieveJson(options: String): Result<String> {
+            override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
                 TODO("Not yet implemented")
             }
 

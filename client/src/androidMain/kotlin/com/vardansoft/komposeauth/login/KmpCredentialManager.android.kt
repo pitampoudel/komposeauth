@@ -24,6 +24,10 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingExcept
 import com.vardansoft.core.domain.Result
 import com.vardansoft.komposeauth.data.Credential
 import com.vardansoft.komposeauth.data.LoginOptions
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonObject
 
 @Composable
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
@@ -120,7 +124,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
 
             }
 
-            override suspend fun createPassKeyAndRetrieveJson(options: String): Result<String> {
+            override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
 
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return Result.Error("Android version not supported")
 
@@ -138,7 +142,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                 return when (response) {
 
                     is CreatePublicKeyCredentialResponse -> {
-                        Result.Success(response.registrationResponseJson)
+                        Result.Success(Json.parseToJsonElement(response.registrationResponseJson).jsonObject)
                     }
 
                     else -> {

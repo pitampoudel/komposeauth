@@ -7,6 +7,7 @@ import com.vardansoft.core.domain.validators.ValidateNotBlank
 import com.vardansoft.core.presentation.ResultUiEvent
 import com.vardansoft.komposeauth.core.domain.AuthClient
 import com.vardansoft.komposeauth.core.domain.AuthPreferences
+import com.vardansoft.komposeauth.data.RegisterPublicKeyRequest
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,7 +33,7 @@ class ProfileViewModel internal constructor(
             val options = when (res) {
                 is Result.Error -> {
                     _state.update {
-                        it.copy(infoMsg = res.message,)
+                        it.copy(infoMsg = res.message)
                     }
                     null
                 }
@@ -61,18 +62,20 @@ class ProfileViewModel internal constructor(
             when (event) {
                 is ProfileEvent.InfoMsgChanged -> {
                     _state.update {
-                        it.copy(infoMsg = event.msg,)
+                        it.copy(infoMsg = event.msg)
                     }
                 }
 
                 is ProfileEvent.RegisterPublicKey -> {
                     _state.update {
-                        it.copy(progress = 0.0F,)
+                        it.copy(progress = 0.0F)
                     }
-                    val res = client.registerPublicKey(event.publicKey)
+                    val res = client.registerPublicKey(
+                        RegisterPublicKeyRequest(event.credential)
+                    )
                     when (res) {
                         is Result.Error -> _state.update {
-                            it.copy(infoMsg = res.message,)
+                            it.copy(infoMsg = res.message)
                         }
 
                         is Result.Success -> {
@@ -88,7 +91,7 @@ class ProfileViewModel internal constructor(
                 is ProfileEvent.Deactivate -> {
                     if (event.confirmed) {
                         _state.update {
-                            it.copy(progress = 0.0F,)
+                            it.copy(progress = 0.0F)
                         }
 
                         when (val res = client.deactivate()) {
@@ -109,7 +112,7 @@ class ProfileViewModel internal constructor(
 
                     } else {
                         _state.update {
-                            it.copy(askingDeactivateConfirmation = true,)
+                            it.copy(askingDeactivateConfirmation = true)
                         }
                     }
 
@@ -143,7 +146,7 @@ class ProfileViewModel internal constructor(
 
 
                 is ProfileEvent.EditEvent.Submit -> {
-                    _state.update { it.copy(progress = 0.0f,) }
+                    _state.update { it.copy(progress = 0.0f) }
 
                     val givenName = state.value.editingState.givenName
                     val familyName = state.value.editingState.familyName
@@ -163,12 +166,12 @@ class ProfileViewModel internal constructor(
                     _state.value.editingState.toRequest()?.let { req ->
                         when (val res = client.updateProfile(req)) {
                             is Result.Error -> _state.update {
-                                it.copy(infoMsg = res.message,)
+                                it.copy(infoMsg = res.message)
                             }
 
                             is Result.Success<*> -> {
                                 _state.update {
-                                    it.copy(editingState = ProfileState.EditingState(),)
+                                    it.copy(editingState = ProfileState.EditingState())
                                 }
                                 uiEventChannel.send(ResultUiEvent.Completed)
                             }

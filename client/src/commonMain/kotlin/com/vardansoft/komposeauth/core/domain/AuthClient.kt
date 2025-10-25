@@ -7,6 +7,7 @@ import com.vardansoft.komposeauth.data.DocumentInformation
 import com.vardansoft.komposeauth.data.KycResponse
 import com.vardansoft.komposeauth.data.OAuth2TokenData
 import com.vardansoft.komposeauth.data.PersonalInformation
+import com.vardansoft.komposeauth.data.RegisterPublicKeyRequest
 import com.vardansoft.komposeauth.data.UpdateAddressDetailsRequest
 import com.vardansoft.komposeauth.data.UpdatePhoneNumberRequest
 import com.vardansoft.komposeauth.data.UserInfoResponse
@@ -31,5 +32,5 @@ internal interface AuthClient {
     suspend fun fetchCountries(): Result<List<Country>>
     suspend fun updateProfile(request: UpdateProfileRequest): Result<HttpResponse>
     suspend fun fetchWebAuthnRegistrationOptions(): Result<String>
-    suspend fun registerPublicKey(request: String): Result<MessageResponse>
+    suspend fun registerPublicKey(request: RegisterPublicKeyRequest): Result<HttpResponse>
 }

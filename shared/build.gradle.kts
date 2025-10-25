@@ -35,6 +35,7 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.libphonenumber.kotlin)
                 implementation(libs.ktor.client.core)
+                implementation(libs.ktor.serialization.kotlinx.json)
             }
         }
         val commonTest by getting {
