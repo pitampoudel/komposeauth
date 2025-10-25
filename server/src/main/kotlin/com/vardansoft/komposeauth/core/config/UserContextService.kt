@@ -18,13 +18,14 @@ class UserContextService(val userService: UserService) {
                     "No user associated with authentication context"
                 )
 
-                userService.findUser(jwt.subject)
+                userService.findByUserName(jwt.subject)
                     ?: throw IllegalStateException("User not found")
             }
 
             is UsernamePasswordAuthenticationToken -> {
-                val email = authentication.name
-                email?.let { userService.findUserByEmailOrPhone(email) } ?: throw IllegalStateException(
+                authentication.name?.let {
+                    userService.findByUserName(it)
+                } ?: throw IllegalStateException(
                     "No user associated with authentication context"
                 )
             }

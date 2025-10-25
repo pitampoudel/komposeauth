@@ -40,7 +40,7 @@ class PasswordResetController(
     @PutMapping
     @ResponseBody
     fun sendResetLink(@RequestParam email: String): ResponseEntity<MessageResponse> {
-        val user = userService.findUserByEmailOrPhone(email)
+        val user = userService.findByUserName(email)
             ?: return ResponseEntity.badRequest().body(MessageResponse("No user with that email"))
 
         val link = jwtService.generateResetPasswordLink(userId = user.id.toHexString())

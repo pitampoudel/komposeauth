@@ -2,6 +2,7 @@ package com.vardansoft.komposeauth.core.config
 
 import com.vardansoft.komposeauth.AppProperties
 import com.vardansoft.komposeauth.core.utils.WebAuthnUtils.webAuthnAllowedOrigins
+import com.vardansoft.komposeauth.user.repository.UserRepository
 import com.vardansoft.komposeauth.webauthn.PublicKeyCredential
 import com.vardansoft.komposeauth.webauthn.PublicKeyCredentialRepository
 import com.vardansoft.komposeauth.webauthn.PublicKeyUser
@@ -65,6 +66,7 @@ class UserCredentialRepositoryImpl(
 
 @Repository
 class PublicKeyCredentialUserEntityRepositoryImpl(
+    val userRepository: UserRepository,
     private val repository: PublicKeyUserRepository
 ) : PublicKeyCredentialUserEntityRepository {
     override fun findById(id: Bytes): PublicKeyCredentialUserEntity? {
@@ -72,7 +74,17 @@ class PublicKeyCredentialUserEntityRepositoryImpl(
     }
 
     override fun findByUsername(username: String): PublicKeyCredentialUserEntity? {
-        return repository.findByEmail(username)
+        var record = repository.findByEmail(username)
+        if (record == null) {
+            val user = userRepository.findByUserName(username) ?: return record
+            record = PublicKeyUser(
+                Bytes.random().toBase64UrlString(),
+                username,
+                user.fullName
+            )
+            repository.save(record)
+        }
+        return record
     }
 
     override fun save(userEntity: PublicKeyCredentialUserEntity) {

@@ -58,9 +58,9 @@ class WebAuthConfig() {
     @Bean
     fun userDetailsService(
         userService: UserService
-    ): UserDetailsService = UserDetailsService { email ->
-        val user = userService.findUserByEmailOrPhone(email)
-            ?: throw UsernameNotFoundException("User not found with email: $email")
+    ): UserDetailsService = UserDetailsService { username ->
+        val user = userService.findByUserName(username)
+            ?: throw UsernameNotFoundException("User not found with username: $username")
 
         if (user.deactivated) {
             throw AccountLockedException("User account is deactivated")
@@ -117,7 +117,7 @@ class WebAuthConfig() {
                 else -> {
                     if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN) {
                         val principal = context.getPrincipal<UsernamePasswordAuthenticationToken>()
-                        val user = userService.findUserByEmailOrPhone(principal.name)
+                        val user = userService.findByUserName(principal.name)
                             ?: throw AccountNotFoundException("User not found with email: ${principal.name}")
                         context.claims.claim(
                             "authorities",

@@ -1,29 +1,28 @@
 package com.vardansoft.komposeauth.user.service
 
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import com.vardansoft.core.data.parsePhoneNumber
 import com.vardansoft.komposeauth.AppProperties
 import com.vardansoft.komposeauth.core.service.EmailService
 import com.vardansoft.komposeauth.core.service.JwtService
 import com.vardansoft.komposeauth.core.service.sms.PhoneNumberVerificationService
 import com.vardansoft.komposeauth.core.utils.validateGoogleIdToken
 import com.vardansoft.komposeauth.data.CreateUserRequest
-import com.vardansoft.komposeauth.domain.Platform
 import com.vardansoft.komposeauth.data.UpdatePhoneNumberRequest
 import com.vardansoft.komposeauth.data.UpdateProfileRequest
-import com.vardansoft.komposeauth.data.VerifyPhoneOtpRequest
 import com.vardansoft.komposeauth.data.UserResponse
+import com.vardansoft.komposeauth.data.VerifyPhoneOtpRequest
+import com.vardansoft.komposeauth.domain.Platform
 import com.vardansoft.komposeauth.user.dto.mapToEntity
 import com.vardansoft.komposeauth.user.dto.mapToResponseDto
 import com.vardansoft.komposeauth.user.dto.update
 import com.vardansoft.komposeauth.user.entity.User
 import com.vardansoft.komposeauth.user.repository.UserRepository
-import com.vardansoft.core.data.parsePhoneNumber
 import jakarta.validation.Valid
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.apache.coyote.BadRequestException
 import org.bson.types.ObjectId
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import java.net.URI
@@ -39,8 +38,6 @@ class UserService(
     private val userRepository: UserRepository,
     val passwordEncoder: PasswordEncoder,
     private val phoneNumberVerificationService: PhoneNumberVerificationService,
-    @Value("\${spring.security.oauth2.client.registration.google.client-id}")
-    private val googleClientId: String,
     val appProperties: AppProperties,
     val emailService: EmailService,
     val jwtService: JwtService
@@ -90,8 +87,8 @@ class UserService(
         return userRepository.findByIdIn(objectIds)
     }
 
-    fun findUserByEmailOrPhone(value: String): User? {
-        return userRepository.findByEmail(value) ?: userRepository.findByPhoneNumber(value)
+    fun findByUserName(value: String): User? {
+        return userRepository.findByUserName(value)
     }
 
     fun createUser(req: CreateUserRequest): User {
@@ -135,7 +132,7 @@ class UserService(
                 phoneNumber = it
             )?.fullNumberInInternationalFormat
         }
-        return emailOrPhone?.let { findUserByEmailOrPhone(emailOrPhone) } ?: createUser(req)
+        return emailOrPhone?.let { findByUserName(emailOrPhone) } ?: createUser(req)
     }
 
     fun initiatePhoneNumberUpdate(@Valid req: UpdatePhoneNumberRequest): Boolean {
@@ -175,7 +172,10 @@ class UserService(
 
     fun findOrCreateUserByGoogleIdToken(idToken: String): User {
         val payload = validateGoogleIdToken(
-            clientIds = listOf(googleClientId, appProperties.googleAuthDesktopClientId),
+            clientIds = listOf(
+                appProperties.googleAuthClientId,
+                appProperties.googleAuthDesktopClientId
+            ),
             idToken = idToken
         )
         val user = findOrCreateUser(

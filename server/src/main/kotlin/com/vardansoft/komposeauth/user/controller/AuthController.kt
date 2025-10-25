@@ -45,7 +45,7 @@ class AuthController(
         httpServletResponse: HttpServletResponse
     ): ResponseEntity<OAuth2TokenData> {
         val user = when (request) {
-            is Credential.UsernamePassword -> userService.findUserByEmailOrPhone(request.username)
+            is Credential.UsernamePassword -> userService.findByUserName(request.username)
                 ?.takeIf {
                     passwordEncoder.matches(request.password, it.passwordHash)
                 }
@@ -73,13 +73,13 @@ class AuthController(
                 val requestOptions = requestOptionsRepository.load(httpServletRequest)
                 requestOptionsRepository.save(httpServletRequest, httpServletResponse, null)
 
-                val publicKeyCredentialUserEntity = webAuthnRelyingPartyOperations.authenticate(
+                val publicKeyUser = webAuthnRelyingPartyOperations.authenticate(
                     RelyingPartyAuthenticationRequest(
                         requestOptions,
                         json
                     )
                 )
-                userService.findUserByEmailOrPhone(publicKeyCredentialUserEntity.name as String)
+                userService.findByUserName(publicKeyUser.name as String)
             }
         } ?: throw UsernameNotFoundException("User not found or invalid credentials")
 

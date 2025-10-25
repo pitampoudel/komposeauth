@@ -60,8 +60,8 @@ class AuthSuccessHandler(
             }
 
             is UserDetails -> {
-                user = userService.findUserByEmailOrPhone(principal.username)
-                    ?: throw IllegalStateException("User not found with email: ${principal.username}")
+                user = userService.findByUserName(principal.username)
+                    ?: throw IllegalStateException("User not found with username: ${principal.username}")
             }
 
             else -> {
