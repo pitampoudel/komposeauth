@@ -109,7 +109,7 @@ Utilities
 - ScreenStateWrapper(...) with InfoDialog and Progress dialog
 - CountryPicker(...), DateTimeField(...), OTPTextField(...)
 - rememberFilePicker(input, selectionMode, onPicked)
-- rememberCredentialRetriever()
+- rememberCredentialManager()
 - registerSmsOtpRetriever(onRetrieved)
 
 Current user
@@ -122,9 +122,9 @@ Login with Credential Manager
 
 ```kotlin
 val vm = koinViewModel<LoginViewModel>()
-val credentialRetriever = rememberCredentialRetriever()
+val credentialManager = rememberCredentialManager()
 LaunchedEffect(Unit) {
-    val cred = credentialRetriever.getCredential()
+    val cred = credentialManager.getCredential(state.options)
     vm.onEvent(LoginEvent.Login(cred))
 }
 ```
@@ -144,6 +144,9 @@ Profiles and KYC
 val profileVm = koinViewModel<ProfileViewModel>()
 val kycVm = koinViewModel<KycViewModel>()
 ```
+Notes
+- The http client you use must have installed the http cookie ktor plugin to make public key authentication work
+- currently this project requires koin dependency injection to be used but will be generalize in future
 
 ## Development
 
