@@ -31,7 +31,7 @@ class AppProperties {
         }
 
     fun baseUrl() = baseUrl!!
-    val rpId: String = URL(baseUrl).host
+    fun rpId(): String = URL(baseUrl()).host
     lateinit var gcpBucketName: String
     lateinit var name: String
     lateinit var expectedGcpProjectId: String

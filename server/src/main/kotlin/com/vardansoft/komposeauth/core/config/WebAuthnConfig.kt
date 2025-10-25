@@ -117,7 +117,7 @@ class WebAuthnConfig(
         userCredentials: UserCredentialRepository,
         userEntities: PublicKeyCredentialUserEntityRepository
     ): WebAuthnRelyingPartyOperations {
-        val rpId = appProperties.rpId
+        val rpId = appProperties.rpId()
         return Webauthn4JRelyingPartyOperations(
             userEntities,
             userCredentials,
