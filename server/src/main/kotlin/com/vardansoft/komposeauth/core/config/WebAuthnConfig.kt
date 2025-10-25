@@ -106,7 +106,6 @@ class PublicKeyCredentialUserEntityRepositoryImpl(
 @Configuration
 class WebAuthnConfig(
     private val appProperties: AppProperties,
-    val userContextService: UserContextService
 ) {
     @Bean
     fun requestOptionsRepository(): PublicKeyCredentialRequestOptionsRepository {
@@ -127,7 +126,7 @@ class WebAuthnConfig(
                 .name(appProperties.name)
                 .build(),
             webAuthnAllowedOrigins(
-                rpBaseUrl = appProperties.baseUrl()
+                assetLinks = appProperties.assetLinks()
             ) + appProperties.baseUrl()
         )
     }

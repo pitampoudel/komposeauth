@@ -1,11 +1,9 @@
 package com.vardansoft.komposeauth.core.utils
 
 import com.vardansoft.komposeauth.AssetLink
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
-import java.net.URL
 import java.util.Base64
 
 object WebAuthnUtils {
@@ -28,20 +26,7 @@ object WebAuthnUtils {
         return "android:apk-key-hash:$base64Url"
     }
 
-    private fun fetchAssetLinks(rpBaseUrl: String): List<AssetLink> {
-        return try {
-            val assetLinksUrl = URL("$rpBaseUrl/.well-known/assetlinks.json")
-            Json.decodeFromString<List<AssetLink>>(
-                assetLinksUrl.readText()
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emptyList()
-        }
-    }
-
-    fun webAuthnAllowedOrigins(rpBaseUrl: String): Set<String> {
-        val assetLinks: List<AssetLink> = fetchAssetLinks(rpBaseUrl)
+    fun webAuthnAllowedOrigins(assetLinks: List<AssetLink>): Set<String> {
         return assetLinks.flatMap { assetLink ->
             assetLink.target["sha256_cert_fingerprints"]?.jsonArray?.mapNotNull {
                 it.jsonPrimitive.contentOrNull
