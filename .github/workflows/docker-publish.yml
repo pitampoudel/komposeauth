@@ -49,7 +49,7 @@ jobs:
             BRANCH="${{ github.ref_name }}"
             SANITIZED_BRANCH=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._-]/-/g')
             SHORT_SHA="${{ github.sha }}"
-            SHORT_SHA="${SHORT_SHA:0:7}"
+            SHORT_SHA="${SHORT_SHA:0:8}"
             echo "SNAPSHOT_TAG=${SANITIZED_BRANCH}-${SHORT_SHA}" >> $GITHUB_OUTPUT
             echo "BRANCH_TAG=${SANITIZED_BRANCH}" >> $GITHUB_OUTPUT
           fi
