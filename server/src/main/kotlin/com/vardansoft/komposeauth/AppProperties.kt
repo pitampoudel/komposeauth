@@ -1,11 +1,23 @@
 package com.vardansoft.komposeauth
 
 import com.vardansoft.komposeauth.domain.Platform
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.util.Collections
+
+@Serializable
+data class AssetLink(
+    @SerialName("relation")
+    val relation: List<String>,
+    @SerialName("target")
+    val target: JsonObject
+)
 
 @Configuration
 @ConfigurationProperties(prefix = "app")
@@ -26,7 +38,11 @@ class AppProperties {
     lateinit var googleAuthClientSecret: String
     lateinit var googleAuthDesktopClientId: String
     lateinit var googleAuthDesktopClientSecret: String
-    var assetLinksJson: String? = null
+    lateinit var assetLinksJson: String
+
+    fun assetLinks(): List<AssetLink> {
+        return Json.decodeFromString<List<AssetLink>>(assetLinksJson)
+    }
 
     var samayeApiKey: String? = null
     var twilioAccountSid: String? = null

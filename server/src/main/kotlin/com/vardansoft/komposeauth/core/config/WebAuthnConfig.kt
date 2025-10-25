@@ -1,6 +1,7 @@
 package com.vardansoft.komposeauth.core.config
 
 import com.vardansoft.komposeauth.AppProperties
+import com.vardansoft.komposeauth.core.utils.WebAuthnUtils.webAuthnAllowedOrigins
 import com.vardansoft.komposeauth.webauthn.PublicKeyCredential
 import com.vardansoft.komposeauth.webauthn.PublicKeyCredentialRepository
 import com.vardansoft.komposeauth.webauthn.PublicKeyUser
@@ -106,14 +107,17 @@ class WebAuthnConfig(
         userCredentials: UserCredentialRepository,
         userEntities: PublicKeyCredentialUserEntityRepository
     ): WebAuthnRelyingPartyOperations {
+        val rpId = URL(appProperties.baseUrl()).host
         return Webauthn4JRelyingPartyOperations(
             userEntities,
             userCredentials,
             PublicKeyCredentialRpEntity.builder()
-                .id(URL(appProperties.baseUrl()).host)
+                .id(rpId)
                 .name(appProperties.name)
                 .build(),
-            setOf(appProperties.baseUrl)
+            webAuthnAllowedOrigins(
+                rpId = rpId
+            ) + appProperties.baseUrl()
         )
     }
 

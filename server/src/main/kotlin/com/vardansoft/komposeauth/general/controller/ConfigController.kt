@@ -1,14 +1,13 @@
 package com.vardansoft.komposeauth.general.controller
 
 import com.vardansoft.komposeauth.AppProperties
+import com.vardansoft.komposeauth.AssetLink
 import com.vardansoft.komposeauth.data.LoginOptions
 import com.vardansoft.komposeauth.domain.Platform
 import com.webauthn4j.converter.util.ObjectConverter
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
 import org.springframework.security.web.webauthn.management.ImmutablePublicKeyCredentialRequestOptionsRequest
@@ -53,13 +52,8 @@ class ConfigController(
     }
 
     @GetMapping("/.well-known/assetlinks.json")
-    fun getAssetLinks(): ResponseEntity<String> {
-        val assetLinksJson = appProperties.assetLinksJson
-        if (assetLinksJson.isNullOrBlank()) {
-            return ResponseEntity.notFound().build()
-        }
-        val headers = HttpHeaders()
-        headers.contentType = MediaType.APPLICATION_JSON
-        return ResponseEntity(assetLinksJson, headers, org.springframework.http.HttpStatus.OK)
+    fun getAssetLinks(): ResponseEntity<List<AssetLink>> {
+        val assetLinksJson = appProperties.assetLinks()
+        return ResponseEntity.ok(assetLinksJson)
     }
 }

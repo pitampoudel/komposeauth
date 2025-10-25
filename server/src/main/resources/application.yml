@@ -31,6 +31,9 @@ spring:
     banner-mode: off
   jmx:
     enabled: false
+logging:
+  level:
+    root: ERROR
 
 sentry:
   logs.enabled: true
@@ -47,7 +50,7 @@ server:
   address: 0.0.0.0
   forward-headers-strategy: framework
 app:
-  assetLinksJson: ${ASSET_LINKS_JSON:}
+  assetLinksJson: ${ASSET_LINKS_JSON:[]}
   base-url: ${BASE_URL:}
   gcp-bucket-name: ${GCP_BUCKET_NAME}
   # Optional
