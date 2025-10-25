@@ -5,5 +5,5 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface PublicKeyUserRepository : MongoRepository<PublicKeyUser, String> {
-    fun findByEmail(email: String): PublicKeyUser?
+    fun findByName(name: String): PublicKeyUser?
 }

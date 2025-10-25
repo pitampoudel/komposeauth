@@ -74,13 +74,13 @@ class PublicKeyCredentialUserEntityRepositoryImpl(
     }
 
     override fun findByUsername(username: String): PublicKeyCredentialUserEntity? {
-        var record = repository.findByEmail(username)
+        var record = repository.findByName(username)
         if (record == null) {
             val user = userRepository.findByUserName(username) ?: return record
             record = PublicKeyUser(
-                Bytes.random().toBase64UrlString(),
-                username,
-                user.fullName
+                id = Bytes.random().toBase64UrlString(),
+                name = username,
+                displayName = user.fullName
             )
             repository.save(record)
         }
@@ -91,7 +91,7 @@ class PublicKeyCredentialUserEntityRepositoryImpl(
         repository.save(
             PublicKeyUser(
                 id = userEntity.id.toBase64UrlString(),
-                email = userEntity.name,
+                name = userEntity.name,
                 displayName = userEntity.displayName
             )
         )

@@ -11,12 +11,12 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEnti
 data class PublicKeyUser(
     @Id
     val id: String,
-    @get:JvmName("emailValue")
-    val email: String,
+    @get:JvmName("nameValue")
+    val name: String,
     @get:JvmName("displayNameValue")
     val displayName: String
 ) : PublicKeyCredentialUserEntity {
     override fun getId(): Bytes = Bytes.fromBase64(id)
-    override fun getName(): String = email
+    override fun getName(): String = name
     override fun getDisplayName(): String = displayName
 }
