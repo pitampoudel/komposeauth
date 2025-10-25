@@ -28,10 +28,11 @@ object WebAuthnUtils {
         return "android:apk-key-hash:$base64Url"
     }
 
-    private fun fetchAssetLinks(rpId: String): List<AssetLink> {
+    private fun fetchAssetLinks(rpBaseUrl: String): List<AssetLink> {
         return try {
+            val assetLinksUrl = URL("$rpBaseUrl/.well-known/assetlinks.json")
             Json.decodeFromString<List<AssetLink>>(
-                URL("https://$rpId/.well-known/assetlinks.json").readText()
+                assetLinksUrl.readText()
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -39,8 +40,8 @@ object WebAuthnUtils {
         }
     }
 
-    fun webAuthnAllowedOrigins(rpId: String): Set<String> {
-        val assetLinks: List<AssetLink> = fetchAssetLinks(rpId)
+    fun webAuthnAllowedOrigins(rpBaseUrl: String): Set<String> {
+        val assetLinks: List<AssetLink> = fetchAssetLinks(rpBaseUrl)
         return assetLinks.flatMap { assetLink ->
             assetLink.target["sha256_cert_fingerprints"]?.jsonArray?.mapNotNull {
                 it.jsonPrimitive.contentOrNull

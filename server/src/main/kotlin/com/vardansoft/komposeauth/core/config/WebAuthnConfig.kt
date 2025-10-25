@@ -23,7 +23,6 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations
 import org.springframework.stereotype.Repository
-import java.net.URL
 import kotlin.jvm.optionals.getOrNull
 
 @Repository
@@ -107,7 +106,7 @@ class WebAuthnConfig(
         userCredentials: UserCredentialRepository,
         userEntities: PublicKeyCredentialUserEntityRepository
     ): WebAuthnRelyingPartyOperations {
-        val rpId = URL(appProperties.baseUrl()).host
+        val rpId = appProperties.rpId
         return Webauthn4JRelyingPartyOperations(
             userEntities,
             userCredentials,
@@ -116,7 +115,7 @@ class WebAuthnConfig(
                 .name(appProperties.name)
                 .build(),
             webAuthnAllowedOrigins(
-                rpId = rpId
+                rpBaseUrl = appProperties.baseUrl()
             ) + appProperties.baseUrl()
         )
     }

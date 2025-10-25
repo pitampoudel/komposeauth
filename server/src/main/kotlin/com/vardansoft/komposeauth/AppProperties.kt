@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import java.net.Inet4Address
 import java.net.NetworkInterface
+import java.net.URL
 import java.util.Collections
 
 @Serializable
@@ -30,6 +31,7 @@ class AppProperties {
         }
 
     fun baseUrl() = baseUrl!!
+    val rpId: String = URL(baseUrl).host
     lateinit var gcpBucketName: String
     lateinit var name: String
     lateinit var expectedGcpProjectId: String
