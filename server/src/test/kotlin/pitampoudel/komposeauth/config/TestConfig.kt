@@ -1,4 +1,4 @@
-package pitampoudel.config
+package pitampoudel.komposeauth.config
 
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.test.context.TestPropertySource

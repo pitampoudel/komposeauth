@@ -1,4 +1,4 @@
-package pitampoudel
+package pitampoudel.komposeauth
 
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,7 +31,7 @@ class AuthApplicationTests {
         @DynamicPropertySource
         @JvmStatic
         fun setProperties(registry: DynamicPropertyRegistry) {
-            registry.add("spring.data.mongodb.uri") { mongo.replicaSetUrl }
+            registry.add("spring.data.mongodb.uri") { mongo.connectionString }
         }
     }
 

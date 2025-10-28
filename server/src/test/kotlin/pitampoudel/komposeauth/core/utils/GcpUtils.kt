@@ -1,4 +1,4 @@
-package pitampoudel.core.utils
+package pitampoudel.komposeauth.core.utils
 
 object GcpUtils {
     fun assertAuthenticatedProject(expectedProjectId: String) {

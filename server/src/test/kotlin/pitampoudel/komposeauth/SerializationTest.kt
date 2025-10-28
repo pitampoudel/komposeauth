@@ -1,4 +1,4 @@
-package pitampoudel
+package pitampoudel.komposeauth
 
 import pitampoudel.komposeauth.data.Credential
 import kotlinx.serialization.json.Json

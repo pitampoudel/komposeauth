@@ -1,10 +1,9 @@
-package pitampoudel
+package pitampoudel.komposeauth
 
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.boot.SpringApplication
 import org.springframework.test.context.ActiveProfiles
-import pitampoudel.komposeauth.AuthApplication
 
 @ActiveProfiles("production")
 class ProductionConfigTest {
