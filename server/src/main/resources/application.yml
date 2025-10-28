@@ -62,7 +62,7 @@ app:
   twilio-verify-service-sid: ${TWILIO_VERIFY_SERVICE_SID:}
   name: ${APP_NAME}
   expected-gcp-project-id: ${GCP_PROJECT_ID}
-  logo-url: ${APP_LOGO_URL}
+  logo-url: ${APP_LOGO_URL:}
   google-auth-client-id: ${GOOGLE_OAUTH_CLIENT_ID}
   google-auth-client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET}
   google-auth-desktop-client-id: ${GOOGLE_AUTH_DESKTOP_CLIENT_ID}

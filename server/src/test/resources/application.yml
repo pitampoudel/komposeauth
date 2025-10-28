@@ -38,6 +38,7 @@ server:
   forward-headers-strategy: framework
 app:
   baseUrl: http://localhost:8080
+  logo-url: http://localhost:8080/logo.png
   gcpBucketName: mock-bucket
   name: "KomposeAuth Test"
   expectedGcpProjectId: "test-project-id"
