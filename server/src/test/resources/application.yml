@@ -39,7 +39,6 @@ server:
 app:
   baseUrl: http://localhost:8080
   gcpBucketName: mock-bucket
-  logoUrl: https://vardansoft.com/logo.svg
   name: "KomposeAuth Test"
   expectedGcpProjectId: "test-project-id"
   googleAuthClientId: "test-client-id"

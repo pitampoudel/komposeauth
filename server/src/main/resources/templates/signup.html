@@ -11,10 +11,6 @@
 
     <title th:text="|Sign Up - ${@appProperties.name}|">Sign Up</title>
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="https://vardansoft.com/favicon.svg">
-    <link rel="icon" type="image/png" href="https://vardansoft.com/favicon.png">
-
     <!-- Preload critical resources -->
     <link rel="preload" th:href="${@appProperties.logoUrl}" as="image">
 
@@ -284,7 +280,7 @@
         <div class="signup-card">
             <!-- Logo and Header -->
             <header class="logo-section">
-                <img src="https://vardansoft.com/logo.svg" th:src="${@appProperties.logoUrl}" alt="Logo"
+                <img th:src="${@appProperties.logoUrl}" alt="Logo"
                     th:alt="|${@appProperties.name} Logo|" class="logo" loading="eager">
                 <h1 class="title">Welcome</h1>
                 <p class="subtitle">Create your account to get started</p>

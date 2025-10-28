@@ -2,8 +2,8 @@
 
 Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Compose Multiplatform UI.
 
-[![Maven Central (shared)](https://img.shields.io/maven-central/v/com.vardansoft/komposeauth-shared.svg)](https://central.sonatype.com/artifact/com.vardansoft/komposeauth-shared)
-[![Maven Central (client)](https://img.shields.io/maven-central/v/com.vardansoft/komposeauth-client.svg)](https://central.sonatype.com/artifact/com.vardansoft/komposeauth-client)
+[![Maven Central (shared)](https://img.shields.io/maven-central/v/io.github.pitampoudel/komposeauth-shared.svg)](https://central.sonatype.com/artifact/io.github.pitampoudel/komposeauth-shared)
+[![Maven Central (client)](https://img.shields.io/maven-central/v/io.github.pitampoudel/komposeauth-client.svg)](https://central.sonatype.com/artifact/io.github.pitampoudel/komposeauth-client)
 [![Compose Multiplatform](https://img.shields.io/badge/Compose-Multiplatform-42a5f5)](https://www.jetbrains.com/lp/compose-multiplatform/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
@@ -69,14 +69,14 @@ Shared module
 
 ```kotlin
 // Check the badge above for the latest version
-implementation("com.vardansoft:komposeauth-shared:x.x.x")
+implementation("io.github.pitampoudel:komposeauth-shared:x.x.x")
 ```
 
 Client module
 
 ```kotlin
 // Check the badge above for the latest version
-implementation("com.vardansoft:komposeauth-client:x.x.x")
+implementation("io.github.pitampoudel:komposeauth-client:x.x.x")
 ```
 
 Initialize client
