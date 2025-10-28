@@ -1,14 +1,14 @@
 package pitampoudel.komposeauth.domain.use_cases
 
-import pitampoudel.core.domain.validators.AuthValidationError
+import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.domain.validators.ValidationResult
 
 object ValidatePassword {
     operator fun invoke(password: String): ValidationResult {
         return if (password.isBlank()) {
-            ValidationResult.Error(AuthValidationError.VALIDATION_ERROR_MUST_NOT_BE_BLANK)
+            ValidationResult.Error(GeneralValidationError.VALIDATION_ERROR_MUST_NOT_BE_BLANK)
         } else if (!matchesPasswordRequirements(password)) {
-            ValidationResult.Error(AuthValidationError.VALIDATION_ERROR_TOO_SHORT)
+            ValidationResult.Error(GeneralValidationError.VALIDATION_ERROR_TOO_SHORT)
         } else {
             ValidationResult.Success
         }

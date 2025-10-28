@@ -8,20 +8,20 @@ import pitampoudel.komposeauth.data.PersonalInformation
 import pitampoudel.komposeauth.data.UpdateAddressDetailsRequest
 import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.presentation.InfoMessage
-import pitampoudel.core.domain.validators.AuthValidationError
+import pitampoudel.core.domain.validators.GeneralValidationError
 import kotlinx.datetime.LocalDate
 
 data class AddressState(
     val country: String = "",
-    val countryError: AuthValidationError? = null,
+    val countryError: GeneralValidationError? = null,
     val state: String = "",
-    val stateError: AuthValidationError? = null,
+    val stateError: GeneralValidationError? = null,
     val city: String = "",
-    val cityError: AuthValidationError? = null,
+    val cityError: GeneralValidationError? = null,
     val addressLine1: String = "",
-    val addressLine1Error: AuthValidationError? = null,
+    val addressLine1Error: GeneralValidationError? = null,
     val addressLine2: String = "",
-    val addressLine2Error: AuthValidationError? = null
+    val addressLine2Error: GeneralValidationError? = null
 ) {
     fun hasError(): Boolean {
         return countryError != null ||
@@ -59,35 +59,35 @@ data class AddressState(
 
 data class PersonalInformationState(
     val country: String = "",
-    val countryError: AuthValidationError? = null,
+    val countryError: GeneralValidationError? = null,
     val nationality: String = "",
-    val nationalityError: AuthValidationError? = null,
+    val nationalityError: GeneralValidationError? = null,
     val firstName: String = "",
-    val firstNameError: AuthValidationError? = null,
+    val firstNameError: GeneralValidationError? = null,
     val middleName: String = "",
-    val middleNameError: AuthValidationError? = null,
+    val middleNameError: GeneralValidationError? = null,
     val lastName: String = "",
-    val lastNameError: AuthValidationError? = null,
+    val lastNameError: GeneralValidationError? = null,
     val dateOfBirth: LocalDate? = null,
-    val dateOfBirthError: AuthValidationError? = null,
+    val dateOfBirthError: GeneralValidationError? = null,
     val gender: KycResponse.Gender? = null,
-    val genderError: AuthValidationError? = null,
+    val genderError: GeneralValidationError? = null,
     val fatherName: String = "",
-    val fatherNameError: AuthValidationError? = null,
+    val fatherNameError: GeneralValidationError? = null,
     val grandFatherName: String = "",
-    val grandFatherNameError: AuthValidationError? = null,
+    val grandFatherNameError: GeneralValidationError? = null,
     val motherName: String = "",
-    val motherNameError: AuthValidationError? = null,
+    val motherNameError: GeneralValidationError? = null,
     val grandMotherName: String = "",
-    val grandMotherNameError: AuthValidationError? = null,
+    val grandMotherNameError: GeneralValidationError? = null,
     val maritalStatus: KycResponse.MaritalStatus? = null,
-    val maritalStatusError: AuthValidationError? = null,
+    val maritalStatusError: GeneralValidationError? = null,
     val occupation: String = "",
-    val occupationError: AuthValidationError? = null,
+    val occupationError: GeneralValidationError? = null,
     val pan: String = "",
-    val panError: AuthValidationError? = null,
+    val panError: GeneralValidationError? = null,
     val email: String = "",
-    val emailError: AuthValidationError? = null
+    val emailError: GeneralValidationError? = null
 ) {
 
     fun hasError(): Boolean {
@@ -131,21 +131,21 @@ data class PersonalInformationState(
 
 data class DocumentInformationState(
     val documentType: DocumentType? = null,
-    val documentTypeError: AuthValidationError? = null,
+    val documentTypeError: GeneralValidationError? = null,
     val documentNumber: String = "",
-    val documentNumberError: AuthValidationError? = null,
+    val documentNumberError: GeneralValidationError? = null,
     val documentIssuedDate: LocalDate? = null,
-    val documentIssuedDateError: AuthValidationError? = null,
+    val documentIssuedDateError: GeneralValidationError? = null,
     val documentIssuedPlace: String = "",
-    val documentIssuedPlaceError: AuthValidationError? = null,
+    val documentIssuedPlaceError: GeneralValidationError? = null,
     val documentExpiryDate: LocalDate? = null,
-    val documentExpiryDateError: AuthValidationError? = null,
+    val documentExpiryDateError: GeneralValidationError? = null,
     val documentFront: KmpFile? = null,
-    val documentFrontError: AuthValidationError? = null,
+    val documentFrontError: GeneralValidationError? = null,
     val documentBack: KmpFile? = null,
-    val documentBackError: AuthValidationError? = null,
+    val documentBackError: GeneralValidationError? = null,
     val selfie: KmpFile? = null,
-    val selfieError: AuthValidationError? = null
+    val selfieError: GeneralValidationError? = null
 ) {
     fun hasError(): Boolean {
         return documentTypeError != null

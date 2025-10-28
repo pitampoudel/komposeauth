@@ -1,6 +1,6 @@
 package pitampoudel.komposeauth.profile
 
-import pitampoudel.core.domain.validators.AuthValidationError
+import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.komposeauth.data.UpdateProfileRequest
 import pitampoudel.komposeauth.data.UserInfoResponse
@@ -15,9 +15,9 @@ data class ProfileState(
 ) {
     data class EditingState(
         val givenName: String = "",
-        val givenNameError: AuthValidationError? = null,
+        val givenNameError: GeneralValidationError? = null,
         val familyName: String = "",
-        val familyNameError: AuthValidationError? = null
+        val familyNameError: GeneralValidationError? = null
     ) {
         fun hasError(): Boolean {
             return givenNameError != null || familyNameError != null

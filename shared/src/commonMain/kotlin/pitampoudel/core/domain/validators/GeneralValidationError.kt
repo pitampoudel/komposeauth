@@ -1,6 +1,6 @@
 package pitampoudel.core.domain.validators
 
-enum class AuthValidationError {
+enum class GeneralValidationError {
     VALIDATION_ERROR_MUST_NOT_BE_BLANK,
     VALIDATION_ERROR_MUST_BE_SELECTED,
     VALIDATION_ERROR_TOO_SHORT,

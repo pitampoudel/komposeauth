@@ -82,23 +82,23 @@ implementation("io.github.pitampoudel:komposeauth-client:x.x.x")
 Initialize client
 
 ```kotlin
-koinApplication {
-    modules(
-        configureKomposeauth(
-            authUrl = "https://your-auth-server",
-            hosts = listOf("https://your-resource-server")
-        )
-    )
-}
+initializeKomposeAuth(
+    authUrl = "https://your-auth-server",
+    hosts = listOf("https://your-resource-server")
+)
 ```
 
 Ktor client with Bearer auth
 
 ```kotlin
 val httpClient = HttpClient {
-    install(Auth) {
-        setupBearerAuth(this)
-    }
+  install(Auth) {
+    setupBearerAuth(this)
+  }
+  // required to to make public key authentication work
+  install(HttpCookies) {
+    storage = AcceptAllCookiesStorage()
+  }
 }
 ```
 
@@ -109,8 +109,9 @@ Utilities
 - ScreenStateWrapper(...) with InfoDialog and Progress dialog
 - CountryPicker(...), DateTimeField(...), OTPTextField(...)
 - rememberFilePicker(input, selectionMode, onPicked)
-- rememberCredentialManager()
+- rememberKmpCredentialManager()
 - registerSmsOtpRetriever(onRetrieved)
+- (ENUM, GeneralValidationError).toStringRes()
 
 Current user
 
@@ -144,9 +145,6 @@ Profiles and KYC
 val profileVm = koinViewModel<ProfileViewModel>()
 val kycVm = koinViewModel<KycViewModel>()
 ```
-Notes
-- The http client you use must have installed the http cookie ktor plugin to make public key authentication work
-- currently this project requires koin dependency injection to be used but will be generalize in future
 
 ## Development
 

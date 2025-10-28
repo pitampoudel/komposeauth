@@ -1,7 +1,7 @@
 package pitampoudel.komposeauth.domain.use_cases
 
 import pitampoudel.core.data.parsePhoneNumber
-import pitampoudel.core.domain.validators.AuthValidationError
+import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.domain.validators.ValidationResult
 
 object ValidatePhoneNumber {
@@ -9,13 +9,13 @@ object ValidatePhoneNumber {
 
     operator fun invoke(phoneNumber: String, countryNameCode: String): ValidationResult {
         return if (phoneNumber.isBlank()) {
-            ValidationResult.Error(AuthValidationError.VALIDATION_ERROR_MUST_NOT_BE_BLANK)
+            ValidationResult.Error(GeneralValidationError.VALIDATION_ERROR_MUST_NOT_BE_BLANK)
         } else if (parsePhoneNumber(
                 countryNameCode = countryNameCode,
                 phoneNumber = phoneNumber
             ) == null
         ) {
-            ValidationResult.Error(AuthValidationError.VALIDATION_ERROR_INVALID_PHONE_NUMBER)
+            ValidationResult.Error(GeneralValidationError.VALIDATION_ERROR_INVALID_PHONE_NUMBER)
         } else {
             ValidationResult.Success
         }

@@ -110,7 +110,7 @@ kotlin {
 }
 
 android {
-    namespace = "${project.properties["group"]}.komposeauth"
+    namespace = "komposeauth"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()

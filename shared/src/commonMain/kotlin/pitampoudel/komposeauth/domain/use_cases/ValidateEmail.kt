@@ -1,14 +1,14 @@
 package pitampoudel.komposeauth.domain.use_cases
 
-import pitampoudel.core.domain.validators.AuthValidationError
+import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.domain.validators.ValidationResult
 
 object ValidateEmail {
     operator fun invoke(email: String): ValidationResult {
         return if (email.isBlank()) {
-            ValidationResult.Error(AuthValidationError.VALIDATION_ERROR_MUST_NOT_BE_BLANK)
+            ValidationResult.Error(GeneralValidationError.VALIDATION_ERROR_MUST_NOT_BE_BLANK)
         } else if (!matchesEmailRegex(email)) {
-            ValidationResult.Error(AuthValidationError.VALIDATION_ERROR_INVALID_EMAIL)
+            ValidationResult.Error(GeneralValidationError.VALIDATION_ERROR_INVALID_EMAIL)
         } else {
             ValidationResult.Success
         }

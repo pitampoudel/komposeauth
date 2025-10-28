@@ -14,14 +14,15 @@ import io.ktor.http.parameters
 import pitampoudel.core.data.asResource
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.Result
+import pitampoudel.komposeauth.domain.SharedAuthClient
 
-class SharedAuthClient(
+class SharedAuthClientImpl(
     private val httpClient: HttpClient,
     val authUrl: String,
     val authClientId: String,
     val authClientSecret: String
-) {
-    suspend fun fetchNewToken(scope: String): Result<OAuth2TokenData> {
+) : SharedAuthClient {
+    override suspend fun fetchNewToken(scope: String): Result<OAuth2TokenData> {
         return safeApiCall {
             httpClient.submitForm(
                 url = "$authUrl/oauth2/token",
@@ -35,7 +36,7 @@ class SharedAuthClient(
         }
     }
 
-    suspend fun fetchUserInfo(userId: String, accessToken: String): Result<UserResponse> {
+    override suspend fun fetchUserInfo(userId: String, accessToken: String): Result<UserResponse> {
         return safeApiCall {
             httpClient.get("$authUrl/users/$userId") {
                 headers {
@@ -45,7 +46,7 @@ class SharedAuthClient(
         }
     }
 
-    suspend fun fetchUsersInfo(
+    override suspend fun fetchUsersInfo(
         userIds: List<String>,
         accessToken: String
     ): Result<Map<String, UserResponse>> {
@@ -59,7 +60,10 @@ class SharedAuthClient(
         }
     }
 
-    suspend fun getOrCreateUser(accessToken: String, req: CreateUserRequest): Result<UserResponse> {
+    override suspend fun getOrCreateUser(
+        accessToken: String,
+        req: CreateUserRequest
+    ): Result<UserResponse> {
         return safeApiCall {
             httpClient.patch("$authUrl/users") {
                 setBody(req)

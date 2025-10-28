@@ -3,7 +3,7 @@ package pitampoudel.core.domain.validators
 object ValidateNotNull {
     operator fun <T> invoke(value: T?): ValidationResult {
         return if (value == null) {
-            ValidationResult.Error(AuthValidationError.VALIDATION_ERROR_MUST_BE_SELECTED)
+            ValidationResult.Error(GeneralValidationError.VALIDATION_ERROR_MUST_BE_SELECTED)
         } else {
             ValidationResult.Success
         }

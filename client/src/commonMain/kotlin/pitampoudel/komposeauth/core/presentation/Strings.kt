@@ -10,17 +10,17 @@ import io.github.pitampoudel.client.generated.resources.must_not_be_empty
 import io.github.pitampoudel.client.generated.resources.passwords_dont_match
 import io.github.pitampoudel.client.generated.resources.too_short
 import org.jetbrains.compose.resources.StringResource
-import pitampoudel.core.domain.validators.AuthValidationError
-import pitampoudel.core.domain.validators.AuthValidationError.VALIDATION_ERROR_INVALID_EMAIL
-import pitampoudel.core.domain.validators.AuthValidationError.VALIDATION_ERROR_INVALID_PHONE_NUMBER
-import pitampoudel.core.domain.validators.AuthValidationError.VALIDATION_ERROR_INVALID_URL
-import pitampoudel.core.domain.validators.AuthValidationError.VALIDATION_ERROR_MUST_BE_SELECTED
-import pitampoudel.core.domain.validators.AuthValidationError.VALIDATION_ERROR_MUST_NOT_BE_BLANK
-import pitampoudel.core.domain.validators.AuthValidationError.VALIDATION_ERROR_MUST_NOT_BE_EMPTY
-import pitampoudel.core.domain.validators.AuthValidationError.VALIDATION_ERROR_PASSWORDS_DONT_MATCH
-import pitampoudel.core.domain.validators.AuthValidationError.VALIDATION_ERROR_TOO_SHORT
+import pitampoudel.core.domain.validators.GeneralValidationError
+import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_INVALID_EMAIL
+import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_INVALID_PHONE_NUMBER
+import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_INVALID_URL
+import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_MUST_BE_SELECTED
+import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_MUST_NOT_BE_BLANK
+import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_MUST_NOT_BE_EMPTY
+import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_PASSWORDS_DONT_MATCH
+import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_TOO_SHORT
 
-fun AuthValidationError.toStringRes(): StringResource {
+fun GeneralValidationError.toStringRes(): StringResource {
     return when (this) {
         VALIDATION_ERROR_MUST_NOT_BE_BLANK -> Res.string.must_not_be_blank
         VALIDATION_ERROR_MUST_BE_SELECTED -> Res.string.must_be_selected
