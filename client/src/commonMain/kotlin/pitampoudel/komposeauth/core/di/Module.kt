@@ -1,15 +1,14 @@
 package pitampoudel.komposeauth.core.di
 
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.produceState
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.observable.makeObservable
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.auth.AuthConfig
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.koinInject
-import org.koin.core.KoinApplication
 import org.koin.core.component.KoinComponent
 import org.koin.core.context.loadKoinModules
 import org.koin.core.context.startKoin
@@ -28,51 +27,72 @@ import pitampoudel.komposeauth.login.LoginViewModel
 import pitampoudel.komposeauth.otp.OtpViewModel
 import pitampoudel.komposeauth.profile.ProfileViewModel
 
-fun initializeKomposeAuth(koinApp: KoinApplication?, authUrl: String, hosts: List<String>) {
-    val module = module {
+/**
+ * Initialize the core KomposeAuth dependencies.
+ * Should be called *before* creating HttpClient since KtorBearerHandler may be required by it.
+ */
+fun initializeKomposeAuth(
+    authUrl: String,
+    hosts: List<String>
+) {
+    val coreModule = module {
         single<ObservableSettings> { Settings().makeObservable() }
         single<AuthPreferences> { AuthPreferencesImpl(get()) }
         single<KtorBearerHandler> {
             KtorBearerHandlerImpl(
-                authPreferences = get<AuthPreferences>(),
+                authPreferences = get(),
                 authUrl = authUrl,
                 serverUrls = hosts
             )
         }
     }
-    koinApp?.modules(module) ?: run {
-        startKoin {
-            modules(module)
-        }
+
+    when {
+        KomposeKoinComponent.getKoinSafely() == null -> startKoin { modules(coreModule) }
+        else -> loadKoinModules(coreModule)
     }
 }
 
+/**
+ * Initialize ViewModel layer dependencies that depend on HttpClient.
+ */
 fun initializeKomposeAuthViewModels(httpClient: HttpClient) {
-    loadKoinModules(
-        module {
-            single<AuthClient> {
-                AuthClientImpl(
-                    httpClient,
-                    KomposeKoinComponent.getKoin().get<KtorBearerHandler>().authUrl
-                )
-            }
-            viewModel<OtpViewModel> { OtpViewModel(get(), get()) }
-            viewModel<LoginViewModel> { LoginViewModel(get(), get()) }
-            viewModel<KycViewModel> { KycViewModel(get()) }
-            viewModel<ProfileViewModel> { ProfileViewModel(get(), get()) }
+    loadKoinModules(module {
+        single<AuthClient> {
+            AuthClientImpl(
+                httpClient = httpClient,
+                authUrl = get<KtorBearerHandler>().authUrl
+            )
         }
-    )
+        viewModel<OtpViewModel> { OtpViewModel(get(), get()) }
+        viewModel<LoginViewModel> { LoginViewModel(get(), get()) }
+        viewModel<KycViewModel> { KycViewModel(get()) }
+        viewModel<ProfileViewModel> { ProfileViewModel(get(), get()) }
+    })
 }
 
-private object KomposeKoinComponent : KoinComponent
-
+/**
+ * Enable authentication at http client
+ */
 fun setupBearerAuth(config: AuthConfig) {
     KomposeKoinComponent.getKoin().get<KtorBearerHandler>().configure(config)
 }
 
+/**
+ * Observe current authenticated user reactively in Compose.
+ */
 @Composable
 fun rememberCurrentUser(): LazyState<UserInfoResponse> {
-    return koinInject<AuthPreferences>().userInfoResponse.map {
-        LazyState.Loaded(it)
-    }.collectAsStateWithLifecycle(LazyState.Loading).value
+    val authPreferences = koinInject<AuthPreferences>()
+    return produceState<LazyState<UserInfoResponse>>(LazyState.Loading) {
+        authPreferences.userInfoResponse.collectLatest { user ->
+            value = LazyState.Loaded(user)
+        }
+    }.value
+}
+
+private object KomposeKoinComponent : KoinComponent {
+    fun getKoinSafely() = runCatching {
+        getKoin()
+    }.getOrElse { null }
 }
