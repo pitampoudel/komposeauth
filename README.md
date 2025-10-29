@@ -83,8 +83,11 @@ Initialize client
 
 ```kotlin
 initializeKomposeAuth(
-    authUrl = "https://your-auth-server",
-    hosts = listOf("https://your-resource-server")
+  authUrl = "https://your-auth-server",
+  hosts = listOf("https://your-resource-server")
+)
+initializeKomposeAuthViewModels(
+  httpClient=httpClient
 )
 ```
 

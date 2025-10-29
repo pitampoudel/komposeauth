@@ -9,10 +9,11 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.auth.AuthConfig
 import kotlinx.coroutines.flow.map
 import org.koin.compose.koinInject
+import org.koin.core.KoinApplication
+import org.koin.core.component.KoinComponent
+import org.koin.core.context.loadKoinModules
 import org.koin.core.context.startKoin
-import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
-import org.koin.core.scope.Scope
 import org.koin.dsl.module
 import pitampoudel.core.presentation.LazyState
 import pitampoudel.komposeauth.core.data.AuthClientImpl
@@ -27,43 +28,46 @@ import pitampoudel.komposeauth.login.LoginViewModel
 import pitampoudel.komposeauth.otp.OtpViewModel
 import pitampoudel.komposeauth.profile.ProfileViewModel
 
-internal fun komposeAuthModule(
-    httpClient: HttpClient,
-    authUrl: String,
-    hosts: List<String>
-): Module = module {
-    // library-managed settings & http client
-    single<ObservableSettings> { Settings().makeObservable() }
-
-    // core services
-    single<AuthClient> { AuthClientImpl(httpClient, authUrl) }
-    single<AuthPreferences> { AuthPreferencesImpl(get()) }
-    single<KtorBearerHandler> {
-        KtorBearerHandlerImpl(
-            authPreferences = get<AuthPreferences>(),
-            authUrl = authUrl,
-            serverUrls = hosts
-        )
+fun initializeKomposeAuth(koinApp: KoinApplication?, authUrl: String, hosts: List<String>) {
+    val module = module {
+        single<ObservableSettings> { Settings().makeObservable() }
+        single<AuthPreferences> { AuthPreferencesImpl(get()) }
+        single<KtorBearerHandler> {
+            KtorBearerHandlerImpl(
+                authPreferences = get<AuthPreferences>(),
+                authUrl = authUrl,
+                serverUrls = hosts
+            )
+        }
     }
-
-    // ViewModels
-    viewModel<OtpViewModel> { OtpViewModel(get(), get()) }
-    viewModel<LoginViewModel> { LoginViewModel(get(), get()) }
-    viewModel<KycViewModel> { KycViewModel(get()) }
-    viewModel<ProfileViewModel> { ProfileViewModel(get(), get()) }
-}
-
-
-// Public entrypoint
-fun initializeKomposeAuth(httpClient: HttpClient, authUrl: String, hosts: List<String>) {
-    startKoin {
-        modules(komposeAuthModule(httpClient = httpClient, authUrl, hosts))
+    koinApp?.modules(module) ?: run {
+        startKoin {
+            modules(module)
+        }
     }
 }
 
-fun Scope.setupBearerAuth(config: AuthConfig) {
-    val ktorBearerHandler = get<KtorBearerHandler>()
-    ktorBearerHandler.configure(config)
+fun initializeKomposeAuthViewModels(httpClient: HttpClient) {
+    loadKoinModules(
+        module {
+            single<AuthClient> {
+                AuthClientImpl(
+                    httpClient,
+                    KomposeKoinComponent.getKoin().get<KtorBearerHandler>().authUrl
+                )
+            }
+            viewModel<OtpViewModel> { OtpViewModel(get(), get()) }
+            viewModel<LoginViewModel> { LoginViewModel(get(), get()) }
+            viewModel<KycViewModel> { KycViewModel(get()) }
+            viewModel<ProfileViewModel> { ProfileViewModel(get(), get()) }
+        }
+    )
+}
+
+private object KomposeKoinComponent : KoinComponent
+
+fun setupBearerAuth(config: AuthConfig) {
+    KomposeKoinComponent.getKoin().get<KtorBearerHandler>().configure(config)
 }
 
 @Composable
