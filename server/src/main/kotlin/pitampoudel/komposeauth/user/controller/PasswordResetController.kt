@@ -46,11 +46,12 @@ class PasswordResetController(
 
         val link = jwtService.generateResetPasswordLink(userId = user.id.toHexString())
 
-        emailService.sendSimpleMail(
+        val sent = emailService.sendSimpleMail(
             to = email,
             subject = "Reset Your Password",
             text = "Click the link to reset your password: $link"
         )
+        if (!sent) throw Exception("Unable to send password reset email")
 
         return ResponseEntity.ok(MessageResponse("Reset link sent"))
     }

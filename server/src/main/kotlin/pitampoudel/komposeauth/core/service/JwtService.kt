@@ -67,7 +67,7 @@ class JwtService(
 
     fun generateEmailVerificationLink(userId: String): String {
         val token = generateToken(
-            audience = appProperties.baseUrl!!,
+            audience = appProperties.baseUrl,
             userId = userId,
             claims = mapOf("type" to TokenType.VERIFY_EMAIL.name),
             validity = 1.days
@@ -81,7 +81,7 @@ class JwtService(
 
     fun generateResetPasswordLink(userId: String): String {
         val token = generateToken(
-            audience = appProperties.baseUrl!!,
+            audience = appProperties.baseUrl,
             userId = userId,
             claims = mapOf("type" to TokenType.RESET_PASSWORD.name),
             validity = 1.days
@@ -97,7 +97,7 @@ class JwtService(
     fun generateAccessToken(user: User): String {
         val scopes = listOf("openid", "profile", "email")
         val token = generateToken(
-            audience = appProperties.baseUrl!!,
+            audience = appProperties.baseUrl,
             userId = user.id.toHexString(),
             claims = mapOf(
                 "type" to TokenType.ACCESS_TOKEN.name,
@@ -120,7 +120,7 @@ class JwtService(
 
     fun generateRefreshToken(user: User): String {
         val token = generateToken(
-            audience = appProperties.baseUrl!!,
+            audience = appProperties.baseUrl,
             userId = user.id.toHexString(),
             claims = mapOf(
                 "type" to TokenType.REFRESH_TOKEN.name

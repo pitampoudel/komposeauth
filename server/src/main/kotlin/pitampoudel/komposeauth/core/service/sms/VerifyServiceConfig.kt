@@ -20,7 +20,7 @@ class VerifyServiceConfig {
         } else if (!appProperties.samayeApiKey.isNullOrBlank()) {
             SamayePhoneNumberVerificationService(phoneOtpRepository, smsService, appProperties)
         } else {
-            throw Exception("No SMS service configured")
+            NoOpPhoneNumberVerificationService()
         }
     }
 }

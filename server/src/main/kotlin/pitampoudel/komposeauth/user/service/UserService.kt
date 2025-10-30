@@ -172,7 +172,7 @@ class UserService(
 
     fun findOrCreateUserByGoogleIdToken(idToken: String): User {
         val payload = validateGoogleIdToken(
-            clientIds = listOf(
+            clientIds = listOfNotNull(
                 appProperties.googleAuthClientId,
                 appProperties.googleAuthDesktopClientId
             ),

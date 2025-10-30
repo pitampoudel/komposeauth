@@ -15,14 +15,14 @@ spring:
       database: auth
       auto-index-creation: true
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${SMTP_USERNAME}
-    password: ${SMTP_PASSWORD}
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
     properties:
       mail:
         smtp:
-          from: ${SMTP_FROM}
+          from: ${SMTP_FROM:}
           auth: true
           starttls:
             enable: true
@@ -37,7 +37,7 @@ logging:
 
 sentry:
   logs.enabled: true
-  dsn: ${SENTRY_DSN}
+  dsn: ${SENTRY_DSN:}
   traces-sample-rate: 1.0
   logging:
     minimum-event-level: debug
@@ -50,9 +50,11 @@ server:
   address: 0.0.0.0
   forward-headers-strategy: framework
 app:
+  name: ${APP_NAME:komposeauth}
+  logo-url: ${APP_LOGO_URL:}
+  self-base-url: ${SELF_BASE_URL:}
   assetLinksJson: ${ASSET_LINKS_JSON:[]}
-  base-url: ${BASE_URL:}
-  gcp-bucket-name: ${GCP_BUCKET_NAME}
+  gcp-bucket-name: ${GCP_BUCKET_NAME:}
   # Optional
   samaye-api-key: ${SAMAYE_API_KEY:}
   # Twilio configuration (optional)
@@ -60,10 +62,8 @@ app:
   twilio-auth-token: ${TWILIO_AUTH_TOKEN:}
   twilio-from-number: ${TWILIO_FROM_NUMBER:}
   twilio-verify-service-sid: ${TWILIO_VERIFY_SERVICE_SID:}
-  name: ${APP_NAME}
-  expected-gcp-project-id: ${GCP_PROJECT_ID}
-  logo-url: ${APP_LOGO_URL:}
+  expected-gcp-project-id: ${EXPECTED_GCP_PROJECT_ID:}
   google-auth-client-id: ${GOOGLE_OAUTH_CLIENT_ID}
   google-auth-client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET}
-  google-auth-desktop-client-id: ${GOOGLE_AUTH_DESKTOP_CLIENT_ID}
-  google-auth-desktop-client-secret: ${GOOGLE_AUTH_DESKTOP_CLIENT_SECRET}
+  google-auth-desktop-client-id: ${GOOGLE_AUTH_DESKTOP_CLIENT_ID:}
+  google-auth-desktop-client-secret: ${GOOGLE_AUTH_DESKTOP_CLIENT_SECRET:}

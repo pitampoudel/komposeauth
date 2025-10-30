@@ -9,13 +9,6 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
 }
 
-sentry {
-    includeSourceContext = true
-    org = "vardan-soft-pvt-ltd"
-    projectName = "komposeauth"
-    authToken = System.getenv("SENTRY_AUTH_TOKEN")
-}
-
 configurations.all {
     exclude(group = "org.springframework.boot", module = "spring-boot-starter-json")
 }

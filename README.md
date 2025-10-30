@@ -43,27 +43,43 @@ docker run -p 8080:8080 --env-file .env pitampoudel/komposeauth:latest
 ### Environment variables
 
 ```
-APP_NAME=                    # Display name used in emails and UI
-APP_LOGO_URL=                # Public URL for logo used in emails/UI
-MONGODB_URI=                 # MongoDB connection string
-GOOGLE_OAUTH_CLIENT_ID=      # Google OAuth web client id
-GOOGLE_OAUTH_CLIENT_SECRET=  # Google OAuth web client secret
-GOOGLE_AUTH_DESKTOP_CLIENT_ID=      # Google OAuth desktop client id
-GOOGLE_AUTH_DESKTOP_CLIENT_SECRET=  # Google OAuth desktop client secret
-SMTP_USERNAME=               # SMTP username for sending emails
-SMTP_PASSWORD=               # SMTP password
-SMTP_FROM=                   # Sender email address
-SAMAYE_API_KEY=              
-TWILIO_ACCOUNT_SID=         
-TWILIO_VERIFY_SERVICE_SID=  
-TWILIO_AUTH_TOKEN=          
-TWILIO_FROM_NUMBER=         
-GCP_BUCKET_NAME=             # For file uploads
-GCP_PROJECT_ID=              # GCP project id
-SENTRY_DSN=                  # Sentry DSN
-SENTRY_AUTH_TOKEN=           # Sentry auth token
-BASE_URL=                    # Public base URL of this server
-ASSET_LINKS_JSON
+# App metadata
+APP_NAME=                    # Optional. Display name in emails/UI. Default: "komposeauth"
+APP_LOGO_URL=                # Optional. Public URL for logo used in emails/UI
+SELF_BASE_URL=               # Optional. Recommended in prod. If empty, defaults to http://<local-ip>:8080
+
+# Database
+MONGODB_URI=                 # Required. MongoDB connection string
+
+# Google OAuth
+GOOGLE_OAUTH_CLIENT_ID=      # Required if Google Sign-In needed
+GOOGLE_OAUTH_CLIENT_SECRET=  # Required if Google Sign-In needed
+GOOGLE_AUTH_DESKTOP_CLIENT_ID=      # Optional. Required if desktop login needed
+GOOGLE_AUTH_DESKTOP_CLIENT_SECRET=  # Optional. Required if desktop login needed
+
+# Email (SMTP)
+SMTP_HOST=                   # Optional. Default: smtp.gmail.com
+SMTP_PORT=                   # Optional. Default: 587
+SMTP_USERNAME=               # Optional. Required if you want to send emails
+SMTP_PASSWORD=               # Optional. Required if you want to send emails
+SMTP_FROM=                   # Optional. Recommended when sending emails
+
+# Phone OTP (Twilio)
+TWILIO_ACCOUNT_SID=          # Optional. Required if phone OTP is needed
+TWILIO_VERIFY_SERVICE_SID=   # Optional. Required if phone OTP is needed
+TWILIO_AUTH_TOKEN=           # Optional. Required if phone OTP is needed
+TWILIO_FROM_NUMBER=          # Optional. Required if phone OTP is needed
+
+# External services / integrations
+SAMAYE_API_KEY=              # Optional
+SENTRY_DSN=                  # Optional. Enables Sentry reporting
+
+# File uploads (GCP)
+GCP_BUCKET_NAME=             # Optional. Required if file uploads are enabled
+EXPECTED_GCP_PROJECT_ID=     # Optional
+
+# Android App Links / Digital Asset Links
+ASSET_LINKS_JSON=            # Optional. JSON array; default: []
 ```
 
 ### 2) Add the SDKs to your KMP project

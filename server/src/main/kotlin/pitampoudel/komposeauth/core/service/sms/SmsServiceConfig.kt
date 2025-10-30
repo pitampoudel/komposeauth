@@ -20,7 +20,7 @@ class SmsServiceConfig {
                 SamayaSmsService(appProperties, restTemplate)
             }
 
-            else -> throw Exception("No SMS service configured")
+            else -> NoOpSmsService()
         }
     }
 }

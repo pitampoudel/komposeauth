@@ -1,14 +1,18 @@
 package pitampoudel.komposeauth.user.controller
 
+import io.swagger.v3.oas.annotations.Operation
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.JwtService
-import pitampoudel.komposeauth.user.service.UserService
-import pitampoudel.core.data.MessageResponse
-import io.swagger.v3.oas.annotations.Operation
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
 import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_EMAIL
+import pitampoudel.komposeauth.user.service.UserService
 
 @RestController
 @RequestMapping("/$VERIFY_EMAIL")
@@ -34,11 +38,12 @@ class EmailVerifyController(
 
         val link = jwtService.generateEmailVerificationLink(userId = user.id.toHexString())
 
-        emailService.sendSimpleMail(
+        val sent = emailService.sendSimpleMail(
             to = user.email,
             subject = "Verify Your Email",
             text = "Click the link to verify your email: $link"
         )
+        if (!sent) throw Exception("Unable to send verification email")
 
         return ResponseEntity.ok(MessageResponse("Verification link sent to your email"))
     }

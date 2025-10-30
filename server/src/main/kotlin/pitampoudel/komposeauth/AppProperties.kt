@@ -1,12 +1,12 @@
 package pitampoudel.komposeauth
 
-import pitampoudel.komposeauth.domain.Platform
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
+import pitampoudel.komposeauth.domain.Platform
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.net.URL
@@ -23,51 +23,64 @@ data class AssetLink(
 @Configuration
 @ConfigurationProperties(prefix = "app")
 class AppProperties {
-    var baseUrl: String? = null
+    var baseUrl: String = ""
         get() {
-            val raw = field?.trim().orEmpty()
+            val raw = field.trim()
             if (raw.isNotEmpty()) return raw
             return "http://${getLocalIpAddress()}:8080"
         }
 
-    fun baseUrl() = baseUrl!!
-    fun rpId(): String = URL(baseUrl()).host
-    lateinit var gcpBucketName: String
+    var gcpBucketName: String? = null
+        get() = if (!field.isNullOrBlank()) field else null
     lateinit var name: String
-    lateinit var expectedGcpProjectId: String
-    lateinit var logoUrl: String
-    lateinit var googleAuthClientId: String
-    lateinit var googleAuthClientSecret: String
-    lateinit var googleAuthDesktopClientId: String
-    lateinit var googleAuthDesktopClientSecret: String
+    var logoUrl: String? = null
+        get() = if (!field.isNullOrBlank()) field else null
+    var expectedGcpProjectId: String? = null
+        get() = if (!field.isNullOrBlank()) field else null
+    var googleAuthClientId: String? = null
+        get() = if (!field.isNullOrBlank()) field else null
+    var googleAuthClientSecret: String? = null
+        get() = if (!field.isNullOrBlank()) field else null
+    var googleAuthDesktopClientId: String? = null
+        get() = if (!field.isNullOrBlank()) field else null
+    var googleAuthDesktopClientSecret: String? = null
+        get() = if (!field.isNullOrBlank()) field else null
     lateinit var assetLinksJson: String
+    var samayeApiKey: String? = null
+        get() = if (!field.isNullOrBlank()) field else null
+    var twilioAccountSid: String? = null
+        get() = if (!field.isNullOrBlank()) field else null
+    var twilioAuthToken: String? = null
+        get() = if (!field.isNullOrBlank()) field else null
+    var twilioFromNumber: String? = null
+        get() = if (!field.isNullOrBlank()) field else null
+    var twilioVerifyServiceSid: String? = null
+        get() = if (!field.isNullOrBlank()) field else null
+
+    fun rpId(): String = URL(baseUrl).host
 
     fun assetLinks(): List<AssetLink> {
         return Json.decodeFromString<List<AssetLink>>(assetLinksJson)
     }
 
-    var samayeApiKey: String? = null
-    var twilioAccountSid: String? = null
-    var twilioAuthToken: String? = null
-    var twilioFromNumber: String? = null
-    var twilioVerifyServiceSid: String? = null
-
-    fun googleClientId(platform: Platform): String {
-        return when (platform) {
+    fun googleClientId(platform: Platform): String? {
+        val value = when (platform) {
             Platform.DESKTOP -> googleAuthDesktopClientId
             Platform.WEB -> googleAuthClientId
             Platform.ANDROID -> googleAuthClientId
             Platform.IOS -> googleAuthClientId
         }
+        return value?.takeIf { it.isNotBlank() }
     }
 
-    fun googleClientSecret(platform: Platform): String {
-        return when (platform) {
+    fun googleClientSecret(platform: Platform): String? {
+        val value = when (platform) {
             Platform.DESKTOP -> googleAuthDesktopClientSecret
             Platform.WEB -> googleAuthClientSecret
             Platform.ANDROID -> googleAuthClientSecret
             Platform.IOS -> googleAuthClientSecret
         }
+        return value?.takeIf { it.isNotBlank() }
     }
 
 

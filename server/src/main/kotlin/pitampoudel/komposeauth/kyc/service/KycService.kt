@@ -140,7 +140,7 @@ class KycService(
     fun approve(user: User): KycResponse {
         val res = updateStatus(user.id, KycResponse.Status.APPROVED)
         user.email?.let {
-            emailService.sendSimpleMail(
+            val sent = emailService.sendSimpleMail(
                 to = it,
                 subject = "Your KYC has been approved",
                 text = "Congratulations! Your KYC has been approved."
@@ -154,7 +154,7 @@ class KycService(
     fun reject(user: User, reason: String?): KycResponse {
         val res = updateStatus(user.id, KycResponse.Status.REJECTED)
         user.email?.let {
-            emailService.sendSimpleMail(
+            val sent = emailService.sendSimpleMail(
                 to = it,
                 subject = "Your KYC has been rejected",
                 text = "We are sorry to inform you that your KYC has been rejected. Reason: $reason"
