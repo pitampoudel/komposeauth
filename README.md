@@ -46,37 +46,40 @@ docker run -p 8080:8080 --env-file .env pitampoudel/komposeauth:latest
 # App metadata
 APP_NAME=                    # Optional. Display name in emails/UI. Default: "komposeauth"
 APP_LOGO_URL=                # Optional. Public URL for logo used in emails/UI
-SELF_BASE_URL=               # Optional. Recommended in prod. If empty, defaults to http://<local-ip>:8080
+SELF_BASE_URL=               # Optional. In prod set to https://auth.example.com
+                              # If empty, server derives http://<local-ip>:8080 automatically
 
 # Database
-MONGODB_URI=                 # Required. MongoDB connection string
+MONGODB_URI=                 # Optional. Default: mongodb://localhost:27017 (db: auth)
+                              # NOTE: In Docker, localhost points to the container; you must
+                              #       set this to a reachable MongoDB URI.
 
-# Google OAuth
-GOOGLE_OAUTH_CLIENT_ID=      # Required if Google Sign-In needed
-GOOGLE_OAUTH_CLIENT_SECRET=  # Required if Google Sign-In needed
-GOOGLE_AUTH_DESKTOP_CLIENT_ID=      # Optional. Required if desktop login needed
-GOOGLE_AUTH_DESKTOP_CLIENT_SECRET=  # Optional. Required if desktop login needed
+# Google OAuth (Sign in with Google)
+GOOGLE_OAUTH_CLIENT_ID=      # Optional. If unset, Google login endpoints stay disabled
+GOOGLE_OAUTH_CLIENT_SECRET=  # Optional. If unset, Google login endpoints stay disabled
+GOOGLE_AUTH_DESKTOP_CLIENT_ID=      # Optional. Needed for desktop login flows
+GOOGLE_AUTH_DESKTOP_CLIENT_SECRET=  # Optional. Needed for desktop login flows
 
 # Email (SMTP)
 SMTP_HOST=                   # Optional. Default: smtp.gmail.com
 SMTP_PORT=                   # Optional. Default: 587
-SMTP_USERNAME=               # Optional. Required if you want to send emails
-SMTP_PASSWORD=               # Optional. Required if you want to send emails
+SMTP_USERNAME=               # Optional. Required only if you want to send emails
+SMTP_PASSWORD=               # Optional. Required only if you want to send emails
 SMTP_FROM=                   # Optional. Recommended when sending emails
 
 # Phone OTP (Twilio)
-TWILIO_ACCOUNT_SID=          # Optional. Required if phone OTP is needed
-TWILIO_VERIFY_SERVICE_SID=   # Optional. Required if phone OTP is needed
-TWILIO_AUTH_TOKEN=           # Optional. Required if phone OTP is needed
-TWILIO_FROM_NUMBER=          # Optional. Required if phone OTP is needed
+TWILIO_ACCOUNT_SID=          # Optional. Required only if phone OTP is needed
+TWILIO_VERIFY_SERVICE_SID=   # Optional. Required only if phone OTP is needed
+TWILIO_AUTH_TOKEN=           # Optional. Required only if phone OTP is needed
+TWILIO_FROM_NUMBER=          # Optional. Required only if phone OTP is needed
 
 # External services / integrations
 SAMAYE_API_KEY=              # Optional
 SENTRY_DSN=                  # Optional. Enables Sentry reporting
 
-# File uploads (GCP)
-GCP_BUCKET_NAME=             # Optional. Required if file uploads are enabled
-EXPECTED_GCP_PROJECT_ID=     # Optional
+# File uploads / key storage
+GCP_BUCKET_NAME=             # Optional. If set, uses Google Cloud Storage
+EXPECTED_GCP_PROJECT_ID=     # Optional. If set, app verifies it matches the active GCP project
 
 # Android App Links / Digital Asset Links
 ASSET_LINKS_JSON=            # Optional. JSON array; default: []
