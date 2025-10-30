@@ -50,7 +50,7 @@ SELF_BASE_URL=               # Optional. In prod set to https://auth.example.com
                               # If empty, server derives http://<local-ip>:8080 automatically
 
 # Database
-MONGODB_URI=                 # Optional. Default: mongodb://localhost:27017 (db: auth)
+MONGODB_URI=                 # Required. Default: mongodb://localhost:27017 (db: auth)
                               # NOTE: In Docker, localhost points to the container; you must
                               #       set this to a reachable MongoDB URI.
 

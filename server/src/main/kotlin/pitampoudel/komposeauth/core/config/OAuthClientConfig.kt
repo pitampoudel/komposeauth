@@ -12,7 +12,7 @@ import pitampoudel.komposeauth.AppProperties
 class OAuthClientConfig {
 
     @Bean
-    fun clientRegistrationRepository(appProperties: AppProperties): ClientRegistrationRepository? {
+    fun clientRegistrationRepository(appProperties: AppProperties): ClientRegistrationRepository {
         val registrations = mutableListOf<ClientRegistration>()
 
         val webClientId = appProperties.googleAuthClientId
@@ -27,8 +27,10 @@ class OAuthClientConfig {
                 .build()
         }
 
-        if (registrations.isEmpty()) return null
-
-        return InMemoryClientRegistrationRepository(registrations)
+        return if (registrations.isEmpty()) {
+            ClientRegistrationRepository { null }
+        } else {
+            InMemoryClientRegistrationRepository(registrations)
+        }
     }
 }
