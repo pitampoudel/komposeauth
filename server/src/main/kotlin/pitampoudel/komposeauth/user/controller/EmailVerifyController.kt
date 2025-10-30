@@ -8,9 +8,10 @@ import pitampoudel.core.data.MessageResponse
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_EMAIL
 
 @RestController
-@RequestMapping("/verify-email")
+@RequestMapping("/$VERIFY_EMAIL")
 class EmailVerifyController(
     private val jwtService: JwtService,
     private val emailService: EmailService,

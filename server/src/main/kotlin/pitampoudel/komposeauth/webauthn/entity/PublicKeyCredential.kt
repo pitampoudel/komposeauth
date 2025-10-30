@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.webauthn
+package pitampoudel.komposeauth.webauthn.entity
 
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id

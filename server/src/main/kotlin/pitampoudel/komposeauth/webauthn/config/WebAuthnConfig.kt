@@ -1,12 +1,5 @@
-package pitampoudel.komposeauth.core.config
+package pitampoudel.komposeauth.webauthn.config
 
-import pitampoudel.komposeauth.AppProperties
-import pitampoudel.komposeauth.core.utils.WebAuthnUtils.webAuthnAllowedOrigins
-import pitampoudel.komposeauth.user.repository.UserRepository
-import pitampoudel.komposeauth.webauthn.PublicKeyCredential
-import pitampoudel.komposeauth.webauthn.PublicKeyCredentialRepository
-import pitampoudel.komposeauth.webauthn.PublicKeyUser
-import pitampoudel.komposeauth.webauthn.PublicKeyUserRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -24,6 +17,13 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations
 import org.springframework.stereotype.Repository
+import pitampoudel.komposeauth.AppProperties
+import pitampoudel.komposeauth.webauthn.utils.WebAuthnUtils.webAuthnAllowedOrigins
+import pitampoudel.komposeauth.user.repository.UserRepository
+import pitampoudel.komposeauth.webauthn.entity.PublicKeyCredential
+import pitampoudel.komposeauth.webauthn.repository.PublicKeyCredentialRepository
+import pitampoudel.komposeauth.webauthn.entity.PublicKeyUser
+import pitampoudel.komposeauth.webauthn.repository.PublicKeyUserRepository
 import kotlin.jvm.optionals.getOrNull
 
 @Repository
@@ -114,13 +114,13 @@ class WebAuthnConfig(
 
     @Bean
     fun relyingPartyOperations(
-        userCredentials: UserCredentialRepository,
-        userEntities: PublicKeyCredentialUserEntityRepository
+        userCredentialRepository: UserCredentialRepository,
+        userEntityRepository: PublicKeyCredentialUserEntityRepository
     ): WebAuthnRelyingPartyOperations {
         val rpId = appProperties.rpId()
         return Webauthn4JRelyingPartyOperations(
-            userEntities,
-            userCredentials,
+            userEntityRepository,
+            userCredentialRepository,
             PublicKeyCredentialRpEntity.builder()
                 .id(rpId)
                 .name(appProperties.name)

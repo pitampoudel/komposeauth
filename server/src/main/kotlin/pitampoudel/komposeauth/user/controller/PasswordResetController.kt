@@ -15,9 +15,10 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseBody
+import pitampoudel.komposeauth.data.ApiEndpoints.RESET_PASSWORD
 
 @Controller
-@RequestMapping("/reset-password")
+@RequestMapping("/$RESET_PASSWORD")
 class PasswordResetController(
     private val userService: UserService,
     private val emailService: EmailService,

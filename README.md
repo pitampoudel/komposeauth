@@ -1,6 +1,6 @@
 # komposeauth
 
-Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Compose Multiplatform UI.
+Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Client SDK
 
 [![Maven Central (shared)](https://img.shields.io/maven-central/v/io.github.pitampoudel/komposeauth-shared.svg)](https://central.sonatype.com/artifact/io.github.pitampoudel/komposeauth-shared)
 [![Maven Central (client)](https://img.shields.io/maven-central/v/io.github.pitampoudel/komposeauth-client.svg)](https://central.sonatype.com/artifact/io.github.pitampoudel/komposeauth-client)
@@ -17,10 +17,13 @@ Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Compose
 
 ## Features
 
-- Federated authorization with Google, username/password, passkey, email verification, phone OTP,
-  KYC,
-  OpenAPI, Sentry,
-- Swagger/OpenAPI (eg: https://auth.vardansoft.com/swagger-ui.html)
+- Federated authorization with Google
+- username/password
+- passkey
+- email verification
+- Phone OTP,
+- KYC
+- Sentry, Swagger/OpenAPI (eg: https://auth.vardansoft.com/swagger-ui.html)
 
 ## Shared KMP SDK
 
@@ -86,11 +89,7 @@ initializeKomposeAuth(
   authUrl = "https://your-auth-server",
   hosts = listOf("https://your-resource-server")
 )
-initializeKomposeAuthViewModels(
-  httpClient=httpClient
-)
 ```
-
 Ktor client with Bearer auth
 
 ```kotlin
@@ -103,6 +102,12 @@ val httpClient = HttpClient {
     storage = AcceptAllCookiesStorage()
   }
 }
+```
+
+```kotlin
+initializeKomposeAuthViewModels(
+  httpClient=httpClient
+)
 ```
 
 ## Usage snippets (Client)

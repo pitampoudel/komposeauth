@@ -12,12 +12,15 @@ import pitampoudel.core.data.asResource
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.domain.AuthClient
-import pitampoudel.komposeauth.data.ApiEndpoints.CONFIG
+import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN_OPTIONS
 import pitampoudel.komposeauth.data.ApiEndpoints.DEACTIVATE
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC
+import pitampoudel.komposeauth.data.ApiEndpoints.KYC_ADDRESS
+import pitampoudel.komposeauth.data.ApiEndpoints.KYC_DOCUMENTS
+import pitampoudel.komposeauth.data.ApiEndpoints.KYC_PERSONAL_INFO
 import pitampoudel.komposeauth.data.ApiEndpoints.ME
 import pitampoudel.komposeauth.data.ApiEndpoints.TOKEN
-import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE
+import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PROFILE
 import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PHONE_NUMBER
 import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import pitampoudel.komposeauth.data.Country
@@ -39,7 +42,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
 
     override suspend fun fetchLoginConfig(platform: Platform): Result<LoginOptions> {
         return safeApiCall {
-            httpClient.get("$authUrl/$CONFIG/login") {
+            httpClient.get("$authUrl/$LOGIN_OPTIONS") {
                 parameter("platform", platform)
             }.asResource { body<LoginOptions>() }
         }
@@ -97,7 +100,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
 
     override suspend fun submitKycPersonalInfo(body: PersonalInformation): Result<KycResponse> {
         return safeApiCall {
-            httpClient.post("$authUrl/$KYC/personal-info") {
+            httpClient.post("$authUrl/$KYC_PERSONAL_INFO") {
                 setBody(body)
             }.asResource { body<KycResponse>() }
         }
@@ -105,7 +108,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
 
     override suspend fun submitKycDocuments(body: DocumentInformation): Result<KycResponse> {
         return safeApiCall {
-            httpClient.post("$authUrl/$KYC/documents") {
+            httpClient.post("$authUrl/$KYC_DOCUMENTS") {
                 setBody(body)
             }.asResource { body<KycResponse>() }
         }
@@ -113,7 +116,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
 
     override suspend fun submitKycAddressDetails(body: UpdateAddressDetailsRequest): Result<KycResponse> {
         return safeApiCall {
-            httpClient.post("$authUrl/$KYC/address") {
+            httpClient.post("$authUrl/$KYC_ADDRESS") {
                 setBody(body)
             }.asResource { body<KycResponse>() }
         }
@@ -127,7 +130,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
 
     override suspend fun updateProfile(request: UpdateProfileRequest): Result<HttpResponse> {
         return safeApiCall {
-            httpClient.post("$authUrl/$UPDATE") { setBody(request) }.asResource { this }
+            httpClient.post("$authUrl/$UPDATE_PROFILE") { setBody(request) }.asResource { this }
         }
     }
 

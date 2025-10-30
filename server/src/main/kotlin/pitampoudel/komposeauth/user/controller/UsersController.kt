@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestParam
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.data.ApiEndpoints
+import pitampoudel.komposeauth.data.ApiEndpoints.ME
+import pitampoudel.komposeauth.data.ApiEndpoints.USERS
+import pitampoudel.komposeauth.data.ApiEndpoints.USERS_IN_BULK
 import pitampoudel.komposeauth.data.CreateUserRequest
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.UpdateProfileRequest
@@ -34,8 +37,7 @@ class UsersController(
     val kycService: KycService,
     private val userContextService: UserContextService
 ) {
-
-    @PostMapping("/users")
+    @PostMapping("/$USERS")
     @Operation(
         summary = "Create user",
         description = "Creates a new user account",
@@ -45,7 +47,7 @@ class UsersController(
 
     }
 
-    @PatchMapping("/users")
+    @PatchMapping("/$USERS")
     @Operation(
         summary = "Create a user or return existing",
         description = "Creates a new user account or returns existing user",
@@ -54,7 +56,7 @@ class UsersController(
         return ResponseEntity.ok().body(userService.findOrCreateUser(request).mapToResponseDto())
     }
 
-    @GetMapping("/users/{id}")
+    @GetMapping("/$USERS/{id}")
     @Operation(
         summary = "Get user by ID",
         description = "Fetch a single user by their ID"
@@ -66,7 +68,7 @@ class UsersController(
         return ResponseEntity.ok(user.mapToResponseDto())
     }
 
-    @GetMapping("/users/batch")
+    @GetMapping("/$USERS_IN_BULK")
     @Operation(
         summary = "Get multiple users",
         description = "Fetch multiple users by a comma-separated list of IDs"
@@ -85,7 +87,7 @@ class UsersController(
         return ResponseEntity.ok(userResponses)
     }
 
-    @GetMapping("/me")
+    @GetMapping("/$ME")
     @Operation(
         summary = "Get user information",
         description = "Returns user information for the authenticated user following OAuth2/OIDC standard"
@@ -124,7 +126,7 @@ class UsersController(
         return ResponseEntity.ok(MessageResponse("User account deactivated successfully"))
     }
 
-    @PostMapping("/${ApiEndpoints.UPDATE}")
+    @PostMapping("/${ApiEndpoints.UPDATE_PROFILE}")
     @Operation(
         summary = "Update current user information"
     )

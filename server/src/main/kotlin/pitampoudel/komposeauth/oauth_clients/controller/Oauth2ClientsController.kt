@@ -1,10 +1,5 @@
 package pitampoudel.komposeauth.oauth_clients.controller
 
-import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
-import pitampoudel.komposeauth.oauth_clients.dto.OAuth2ClientResponse
-import pitampoudel.komposeauth.oauth_clients.dto.toClientRegistrationResponse
-import pitampoudel.komposeauth.oauth_clients.dto.toEntity
-import pitampoudel.komposeauth.oauth_clients.repository.OAuth2ClientRepository
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -13,9 +8,15 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import pitampoudel.komposeauth.data.ApiEndpoints.OAUTH2_CLIENTS
+import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
+import pitampoudel.komposeauth.oauth_clients.dto.OAuth2ClientResponse
+import pitampoudel.komposeauth.oauth_clients.dto.toClientRegistrationResponse
+import pitampoudel.komposeauth.oauth_clients.dto.toEntity
+import pitampoudel.komposeauth.oauth_clients.repository.OAuth2ClientRepository
 
 @RestController
-@RequestMapping("/oauth2/clients")
+@RequestMapping("/$OAUTH2_CLIENTS")
 @PreAuthorize("hasRole('ADMIN')")
 class Oauth2ClientsController(
     val oauth2ClientRepository: OAuth2ClientRepository

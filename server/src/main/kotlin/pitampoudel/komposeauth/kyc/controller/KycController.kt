@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.data.ApiEndpoints
+import pitampoudel.komposeauth.data.ApiEndpoints.KYC_ADDRESS
+import pitampoudel.komposeauth.data.ApiEndpoints.KYC_DOCUMENTS
+import pitampoudel.komposeauth.data.ApiEndpoints.KYC_PENDING
+import pitampoudel.komposeauth.data.ApiEndpoints.KYC_PERSONAL_INFO
 import pitampoudel.komposeauth.data.DocumentInformation
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.PersonalInformation
@@ -22,18 +26,17 @@ import pitampoudel.komposeauth.user.service.UserService
 import javax.security.auth.login.AccountNotFoundException
 
 @RestController
-@RequestMapping("/${ApiEndpoints.KYC}")
 class KycController(
     val userService: UserService,
     private val userContextService: UserContextService,
     private val kycService: KycService,
 ) {
-
     @Operation(
         summary = "Get KYC information for current user",
         description = "Retrieves the Know Your Customer (KYC) information for the currently authenticated user."
     )
     @GetMapping
+    @RequestMapping("/${ApiEndpoints.KYC}")
     fun getMine(): ResponseEntity<KycResponse> {
         val user = userContextService.getUserFromAuthentication()
         val kyc = kycService.find(user.id)
@@ -44,7 +47,7 @@ class KycController(
         summary = "Get all pending KYC submissions",
         description = "Retrieves all KYC submissions with a 'PENDING' status. Requires ADMIN role."
     )
-    @GetMapping("/pending")
+    @GetMapping("/$KYC_PENDING")
     @PreAuthorize("hasRole('ADMIN')")
     fun getPending(): ResponseEntity<List<KycResponse>> = ResponseEntity.ok(kycService.getPending())
 
@@ -52,7 +55,7 @@ class KycController(
         summary = "Submit Personal Information",
         description = "Submits or updates the Personal information for the currently authenticated user."
     )
-    @PostMapping("/personal-info")
+    @PostMapping("/$KYC_PERSONAL_INFO")
     fun submitPersonalInformation(@Validated @RequestBody data: PersonalInformation): ResponseEntity<KycResponse> {
         val user = userContextService.getUserFromAuthentication()
         return ResponseEntity.ok(kycService.submitPersonalInformation(user.id, data))
@@ -62,7 +65,7 @@ class KycController(
         summary = "Submit Address Details",
         description = "Submits or updates the Address details for the currently authenticated user."
     )
-    @PostMapping("/address")
+    @PostMapping("/$KYC_ADDRESS")
     fun submitAddressDetails(@Validated @RequestBody data: UpdateAddressDetailsRequest): ResponseEntity<KycResponse> {
         val user = userContextService.getUserFromAuthentication()
         return ResponseEntity.ok(kycService.submitAddressDetails(user.id, data))
@@ -72,7 +75,7 @@ class KycController(
         summary = "Submit Document Details",
         description = "Submits or updates the Document details for the currently authenticated user."
     )
-    @PostMapping("/documents")
+    @PostMapping("/$KYC_DOCUMENTS")
     fun submitDocumentDetails(@Validated @RequestBody data: DocumentInformation): ResponseEntity<KycResponse> {
         val user = userContextService.getUserFromAuthentication()
         return ResponseEntity.ok(kycService.submitDocumentDetails(user.id, data))
@@ -82,7 +85,7 @@ class KycController(
         summary = "Approve KYC",
         description = "Approves a KYC record by its ID. Requires ADMIN role."
     )
-    @PostMapping("/{id}/approve")
+    @PostMapping("/kyc/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     fun approve(@PathVariable id: String): ResponseEntity<KycResponse> = ResponseEntity.ok(
         kycService.approve(
@@ -94,7 +97,7 @@ class KycController(
         summary = "Reject KYC",
         description = "Rejects a KYC record by its id, with an optional reason. Requires ADMIN role."
     )
-    @PostMapping("/{id}/reject")
+    @PostMapping("/kyc/{id}/reject")
     @PreAuthorize("hasRole('ADMIN')")
     fun reject(
         @PathVariable id: String,

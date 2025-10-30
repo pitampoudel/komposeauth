@@ -1,9 +1,9 @@
-package pitampoudel.komposeauth.core.utils
+package pitampoudel.komposeauth.webauthn.utils
 
-import pitampoudel.komposeauth.AssetLink
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
+import pitampoudel.komposeauth.AssetLink
 import java.util.Base64
 
 object WebAuthnUtils {
