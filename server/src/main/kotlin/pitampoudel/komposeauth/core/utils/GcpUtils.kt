@@ -18,7 +18,6 @@ object GcpUtils {
      */
     fun assertAuthenticatedProject(expectedProjectId: String?) {
         val resolved = currentProjectId()
-
         if (resolved != expectedProjectId) {
             throw IllegalStateException("GCP project mismatch. Expected '$expectedProjectId' but resolved '$resolved'.")
         }

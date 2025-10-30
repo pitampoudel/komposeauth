@@ -5,7 +5,6 @@ import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 import pitampoudel.komposeauth.AppProperties
 import pitampoudel.komposeauth.core.utils.GcpUtils
-import org.springframework.stereotype.Service
 
 interface StorageService {
     fun upload(blobName: String, contentType: String?, bytes: ByteArray): String
@@ -14,7 +13,6 @@ interface StorageService {
     fun delete(url: String): Boolean
 }
 
-@Service
 class GcpStorageService(
     val appProperties: AppProperties
 ) : StorageService {
