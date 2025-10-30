@@ -6,12 +6,12 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_OAUTH_CLIENT_ID}
-            client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET}
+            client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
+            client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:}
             scope: openid, profile, email
   data:
     mongodb:
-      uri: ${MONGODB_URI}
+      uri: ${MONGODB_URI:mongodb://localhost:27017}
       database: auth
       auto-index-creation: true
   mail:
@@ -63,7 +63,7 @@ app:
   twilio-from-number: ${TWILIO_FROM_NUMBER:}
   twilio-verify-service-sid: ${TWILIO_VERIFY_SERVICE_SID:}
   expected-gcp-project-id: ${EXPECTED_GCP_PROJECT_ID:}
-  google-auth-client-id: ${GOOGLE_OAUTH_CLIENT_ID}
-  google-auth-client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET}
+  google-auth-client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
+  google-auth-client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:}
   google-auth-desktop-client-id: ${GOOGLE_AUTH_DESKTOP_CLIENT_ID:}
   google-auth-desktop-client-secret: ${GOOGLE_AUTH_DESKTOP_CLIENT_SECRET:}
