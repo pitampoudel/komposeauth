@@ -152,7 +152,7 @@ class WebAuthConfig() {
         appProperties: AppProperties
     ): AuthorizationServerSettings {
         return AuthorizationServerSettings.builder()
-            .issuer(appProperties.baseUrl)
+            .issuer(appProperties.selfBaseUrl)
             .build()
     }
 

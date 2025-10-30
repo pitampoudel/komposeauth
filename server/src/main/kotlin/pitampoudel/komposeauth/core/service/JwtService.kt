@@ -41,7 +41,7 @@ class JwtService(
         val jwt = jwtEncoder.encode(
             JwtEncoderParameters.from(
                 JwtClaimsSet.builder()
-                    .issuer(appProperties.baseUrl)
+                    .issuer(appProperties.selfBaseUrl)
                     .issuedAt(now)
                     .claims { it.putAll(claims) }
                     .expiresAt(expiresAt)
@@ -67,12 +67,12 @@ class JwtService(
 
     fun generateEmailVerificationLink(userId: String): String {
         val token = generateToken(
-            audience = appProperties.baseUrl,
+            audience = appProperties.selfBaseUrl,
             userId = userId,
             claims = mapOf("type" to TokenType.VERIFY_EMAIL.name),
             validity = 1.days
         )
-        return "${appProperties.baseUrl}/verify-email?token=${token?.tokenValue}"
+        return "${appProperties.selfBaseUrl}/verify-email?token=${token?.tokenValue}"
     }
 
     fun retrieveClaimsIfValidEmailVerificationToken(token: String): Jwt {
@@ -81,12 +81,12 @@ class JwtService(
 
     fun generateResetPasswordLink(userId: String): String {
         val token = generateToken(
-            audience = appProperties.baseUrl,
+            audience = appProperties.selfBaseUrl,
             userId = userId,
             claims = mapOf("type" to TokenType.RESET_PASSWORD.name),
             validity = 1.days
         )
-        return "${appProperties.baseUrl}/reset-password?token=${token?.tokenValue}"
+        return "${appProperties.selfBaseUrl}/reset-password?token=${token?.tokenValue}"
     }
 
 
@@ -97,7 +97,7 @@ class JwtService(
     fun generateAccessToken(user: User): String {
         val scopes = listOf("openid", "profile", "email")
         val token = generateToken(
-            audience = appProperties.baseUrl,
+            audience = appProperties.selfBaseUrl,
             userId = user.id.toHexString(),
             claims = mapOf(
                 "type" to TokenType.ACCESS_TOKEN.name,
@@ -120,7 +120,7 @@ class JwtService(
 
     fun generateRefreshToken(user: User): String {
         val token = generateToken(
-            audience = appProperties.baseUrl,
+            audience = appProperties.selfBaseUrl,
             userId = user.id.toHexString(),
             claims = mapOf(
                 "type" to TokenType.REFRESH_TOKEN.name

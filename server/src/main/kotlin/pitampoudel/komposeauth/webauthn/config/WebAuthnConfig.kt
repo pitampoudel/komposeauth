@@ -127,7 +127,7 @@ class WebAuthnConfig(
                 .build(),
             webAuthnAllowedOrigins(
                 assetLinks = appProperties.assetLinks()
-            ) + appProperties.baseUrl
+            ) + appProperties.selfBaseUrl
         )
     }
 

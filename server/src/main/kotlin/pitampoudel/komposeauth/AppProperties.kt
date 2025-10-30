@@ -23,7 +23,7 @@ data class AssetLink(
 @Configuration
 @ConfigurationProperties(prefix = "app")
 class AppProperties {
-    var baseUrl: String = ""
+    var selfBaseUrl: String = ""
         get() {
             val raw = field.trim()
             if (raw.isNotEmpty()) return raw
@@ -57,7 +57,7 @@ class AppProperties {
     var twilioVerifyServiceSid: String? = null
         get() = if (!field.isNullOrBlank()) field else null
 
-    fun rpId(): String = URL(baseUrl).host
+    fun rpId(): String = URL(selfBaseUrl).host
 
     fun assetLinks(): List<AssetLink> {
         return Json.decodeFromString<List<AssetLink>>(assetLinksJson)
