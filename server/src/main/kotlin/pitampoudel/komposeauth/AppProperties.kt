@@ -29,49 +29,66 @@ class AppProperties(val envService: EnvService) {
         get() {
             val raw = field.trim()
             if (raw.isNotEmpty()) return raw
-            val cfg = envService.get().selfBaseUrl?.trim()
+            val cfg = envService.getEnv().selfBaseUrl?.trim()
             if (!cfg.isNullOrBlank()) return cfg
             return "http://${getLocalIpAddress()}:8080"
         }
 
     var name: String = ""
-        get() = field.takeIf { it.isNotBlank() } ?: envService.get().name ?: "komposeauth"
+        get() = field.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().name.takeIf { !it.isNullOrBlank() }
+            ?: "komposeauth"
+
     var logoUrl: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().logoUrl
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().logoUrl.takeIf { !it.isNullOrBlank() }
     var expectedGcpProjectId: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().expectedGcpProjectId
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().expectedGcpProjectId.takeIf { !it.isNullOrBlank() }
     var gcpBucketName: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().gcpBucketName
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().gcpBucketName.takeIf { !it.isNullOrBlank() }
     var googleAuthClientId: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().googleAuthClientId
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().googleAuthClientId.takeIf { !it.isNullOrBlank() }
     var googleAuthClientSecret: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().googleAuthClientSecret
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().googleAuthClientSecret.takeIf { !it.isNullOrBlank() }
     var googleAuthDesktopClientId: String? = null
         get() = field?.takeIf { it.isNotBlank() }
-            ?: envService.get().googleAuthDesktopClientId
+            ?: envService.getEnv().googleAuthDesktopClientId.takeIf { !it.isNullOrBlank() }
     var googleAuthDesktopClientSecret: String? = null
         get() = field?.takeIf { it.isNotBlank() }
-            ?: envService.get().googleAuthDesktopClientSecret
+            ?: envService.getEnv().googleAuthDesktopClientSecret.takeIf { !it.isNullOrBlank() }
     var assetLinksJson: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().assetLinksJson
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().assetLinksJson.takeIf { !it.isNullOrBlank() }
     var twilioAccountSid: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().twilioAccountSid
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().twilioAccountSid.takeIf { !it.isNullOrBlank() }
     var twilioAuthToken: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().twilioAuthToken
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().twilioAuthToken.takeIf { !it.isNullOrBlank() }
     var twilioFromNumber: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().twilioFromNumber
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().twilioFromNumber.takeIf { !it.isNullOrBlank() }
     var twilioVerifyServiceSid: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().twilioVerifyServiceSid
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().twilioVerifyServiceSid.takeIf { !it.isNullOrBlank() }
     var smtpHost: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().smtpHost
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().smtpHost.takeIf { !it.isNullOrBlank() }
     var smtpPort: Int? = null
-        get() = field ?: envService.get().smtpPort
+        get() = field ?: envService.getEnv().smtpPort
     var smtpUsername: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().smtpUsername
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().smtpUsername.takeIf { !it.isNullOrBlank() }
     var smtpPassword: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().smtpPassword
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().smtpPassword.takeIf { !it.isNullOrBlank() }
     var smtpFromEmail: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().smtpFromEmail
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().smtpFromEmail.takeIf { !it.isNullOrBlank() }
 
     var samayeApiKey: String? = null
 

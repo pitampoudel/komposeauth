@@ -14,14 +14,14 @@ import pitampoudel.komposeauth.setup.service.EnvService
 class SetupController(private val envService: EnvService) {
     @GetMapping("/setup")
     fun setupForm(model: Model): String {
-        model.addAttribute("config", envService.get())
+        model.addAttribute("config", envService.getEnv())
         return "setup"
     }
 
     @PostMapping("/setup")
     fun submit(@ModelAttribute form: Env, model: Model): String {
         envService.save(form)
-        model.addAttribute("config", envService.get())
+        model.addAttribute("config", envService.getEnv())
         return "setup"
     }
 }

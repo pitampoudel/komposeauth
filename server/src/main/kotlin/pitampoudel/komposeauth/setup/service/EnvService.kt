@@ -11,7 +11,7 @@ class EnvService(
 ) {
     private val cache = AtomicReference<Env?>(null)
 
-    fun get(): Env {
+    fun getEnv(): Env {
         val cached = cache.get()
         if (cached != null) return cached
         val loaded = repo.findById(Env.SINGLETON_ID).orElse(Env())
@@ -26,7 +26,7 @@ class EnvService(
     }
 
     fun update(block: (Env) -> Env): Env {
-        return save(block(get()))
+        return save(block(getEnv()))
     }
 
     fun clearCache() {
