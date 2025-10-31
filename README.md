@@ -47,45 +47,42 @@ docker run -p 8080:8080 -e MONGODB_URI="mongodb://your-mongo-host:27017/auth" pi
 
 ```
 # App metadata
-APP_NAME=                    # Optional. Display name in emails/UI. Default: "komposeauth"
-APP_LOGO_URL=                # Optional. Public URL for logo used in emails/UI
-SELF_BASE_URL=               # Optional. In prod set to https://auth.example.com
-                              # If empty, server derives http://<local-ip>:8080 automatically
+APP_NAME=                    # Display name in emails/UI. Default: "komposeauth"
+APP_LOGO_URL=                # Public URL for logo used in emails/UI
+SELF_BASE_URL=               # Default: http://<local-ip>:8080
 
 # Database
-MONGODB_URI=                 # Required. Default: mongodb://localhost:27017 (db: auth)
-                              # NOTE: In Docker, localhost points to the container; you must
-                              #       set this to a reachable MongoDB URI.
+MONGODB_URI=                 # Required. Mongo DB connection string
 
 # Google OAuth (Sign in with Google)
-GOOGLE_OAUTH_CLIENT_ID=      # Optional. If unset, Google login endpoints stay disabled
-GOOGLE_OAUTH_CLIENT_SECRET=  # Optional. If unset, Google login endpoints stay disabled
-GOOGLE_AUTH_DESKTOP_CLIENT_ID=      # Optional. Needed for desktop login flows
-GOOGLE_AUTH_DESKTOP_CLIENT_SECRET=  # Optional. Needed for desktop login flows
+GOOGLE_OAUTH_CLIENT_ID=
+GOOGLE_OAUTH_CLIENT_SECRET=
+GOOGLE_AUTH_DESKTOP_CLIENT_ID=
+GOOGLE_AUTH_DESKTOP_CLIENT_SECRET=
 
 # Email (SMTP)
-SMTP_HOST=                   # Optional. Default: smtp.gmail.com
-SMTP_PORT=                   # Optional. Default: 587
-SMTP_USERNAME=               # Optional. Required only if you want to send emails
-SMTP_PASSWORD=               # Optional. Required only if you want to send emails
-SMTP_FROM_EMAIL=             # Optional. Recommended when sending emails
+SMTP_HOST=
+SMTP_PORT=                   # Default: 587
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_FROM_EMAIL=
 
 # Phone OTP (Twilio)
-TWILIO_ACCOUNT_SID=          # Optional. Required only if phone OTP is needed
-TWILIO_VERIFY_SERVICE_SID=   # Optional. Required only if phone OTP is needed
-TWILIO_AUTH_TOKEN=           # Optional. Required only if phone OTP is needed
-TWILIO_FROM_NUMBER=          # Optional. Required only if phone OTP is needed
+TWILIO_ACCOUNT_SID=
+TWILIO_VERIFY_SERVICE_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_FROM_NUMBER=
 
 # External services / integrations
-SAMAYE_API_KEY=              # Optional
-SENTRY_DSN=                  # Optional. Enables Sentry reporting
+SAMAYE_API_KEY=              # No Need
+SENTRY_DSN=                  # Enables Sentry reporting
 
 # File uploads / key storage
-GCP_BUCKET_NAME=             # Optional. If set, uses Google Cloud Storage
-EXPECTED_GCP_PROJECT_ID=     # Required if at the gcp environment. Verifies it matches the active GCP project
+GCP_BUCKET_NAME=             # If set, uses Google Cloud Storage
+EXPECTED_GCP_PROJECT_ID=     # Verifies it matches the active GCP project
 
 # Android App Links / Digital Asset Links
-ASSET_LINKS_JSON=            # Optional. JSON array; default: []
+ASSET_LINKS_JSON=
 ```
 
 ### 2) Add the SDKs to your KMP project
