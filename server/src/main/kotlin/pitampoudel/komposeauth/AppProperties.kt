@@ -4,9 +4,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import pitampoudel.komposeauth.domain.Platform
+import pitampoudel.komposeauth.setup.service.AppConfigService
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.net.URL
@@ -23,44 +25,64 @@ data class AssetLink(
 @Configuration
 @ConfigurationProperties(prefix = "app")
 class AppProperties {
+
+    @Autowired
+    lateinit var appConfigService: AppConfigService
+
     var selfBaseUrl: String = ""
         get() {
             val raw = field.trim()
             if (raw.isNotEmpty()) return raw
+            val cfg = appConfigService.get().selfBaseUrl?.trim()
+            if (!cfg.isNullOrBlank()) return cfg
             return "http://${getLocalIpAddress()}:8080"
         }
 
-    var gcpBucketName: String? = null
-        get() = if (!field.isNullOrBlank()) field else null
-    lateinit var name: String
+    var name: String = ""
+        get() = field.takeIf { it.isNotBlank() } ?: appConfigService.get().name ?: "komposeauth"
     var logoUrl: String? = null
-        get() = if (!field.isNullOrBlank()) field else null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().logoUrl
     var expectedGcpProjectId: String? = null
-        get() = if (!field.isNullOrBlank()) field else null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().expectedGcpProjectId
+    var gcpBucketName: String? = null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().gcpBucketName
     var googleAuthClientId: String? = null
-        get() = if (!field.isNullOrBlank()) field else null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().googleAuthClientId
     var googleAuthClientSecret: String? = null
-        get() = if (!field.isNullOrBlank()) field else null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().googleAuthClientSecret
     var googleAuthDesktopClientId: String? = null
-        get() = if (!field.isNullOrBlank()) field else null
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: appConfigService.get().googleAuthDesktopClientId
     var googleAuthDesktopClientSecret: String? = null
-        get() = if (!field.isNullOrBlank()) field else null
-    lateinit var assetLinksJson: String
-    var samayeApiKey: String? = null
-        get() = if (!field.isNullOrBlank()) field else null
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: appConfigService.get().googleAuthDesktopClientSecret
+    var assetLinksJson: String? = null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().assetLinksJson
     var twilioAccountSid: String? = null
-        get() = if (!field.isNullOrBlank()) field else null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().twilioAccountSid
     var twilioAuthToken: String? = null
-        get() = if (!field.isNullOrBlank()) field else null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().twilioAuthToken
     var twilioFromNumber: String? = null
-        get() = if (!field.isNullOrBlank()) field else null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().twilioFromNumber
     var twilioVerifyServiceSid: String? = null
-        get() = if (!field.isNullOrBlank()) field else null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().twilioVerifyServiceSid
+    var smtpHost: String? = null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().smtpHost
+    var smtpPort: Int? = null
+        get() = field ?: appConfigService.get().smtpPort
+    var smtpUsername: String? = null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().smtpUsername
+    var smtpPassword: String? = null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().smtpPassword
+    var smtpFromEmail: String? = null
+        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().smtpFromEmail
+
+    var samayeApiKey: String? = null
 
     fun rpId(): String = URL(selfBaseUrl).host
 
-    fun assetLinks(): List<AssetLink> {
-        return Json.decodeFromString<List<AssetLink>>(assetLinksJson)
+    fun assetLinks(): List<AssetLink>? {
+        return assetLinksJson?.let { Json.decodeFromString<List<AssetLink>>(it) }
     }
 
     fun googleClientId(platform: Platform): String? {

@@ -138,8 +138,7 @@ class WebSecurityConfig(
                         "/reset-password",
                         "/countries.json",
                         "/.well-known/**",
-                        "/setup",
-                        "/setup/**"
+                        "/setup"
                     ).permitAll()
                     .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD)
                     .permitAll()

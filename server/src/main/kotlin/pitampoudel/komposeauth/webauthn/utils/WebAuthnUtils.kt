@@ -26,11 +26,11 @@ object WebAuthnUtils {
         return "android:apk-key-hash:$base64Url"
     }
 
-    fun webAuthnAllowedOrigins(assetLinks: List<AssetLink>): Set<String> {
-        return assetLinks.flatMap { assetLink ->
+    fun webAuthnAllowedOrigins(assetLinks: List<AssetLink>?): Set<String> {
+        return assetLinks?.flatMap { assetLink ->
             assetLink.target["sha256_cert_fingerprints"]?.jsonArray?.mapNotNull {
                 it.jsonPrimitive.contentOrNull
             }?.map { generateAndroidOrigin(it) }.orEmpty()
-        }.toSet()
+        }.orEmpty().toSet()
     }
 }

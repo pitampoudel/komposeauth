@@ -6,18 +6,6 @@ spring:
       uri: ${MONGODB_URI}
       database: auth
       auto-index-creation: true
-  mail:
-    host: ${SMTP_HOST:smtp.gmail.com}
-    port: ${SMTP_PORT:587}
-    username: ${SMTP_USERNAME:}
-    password: ${SMTP_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          from: ${SMTP_FROM:}
-          auth: true
-          starttls:
-            enable: true
   main:
     lazy-initialization: true
     banner-mode: off
@@ -42,14 +30,11 @@ server:
   address: 0.0.0.0
   forward-headers-strategy: framework
 app:
-  name: ${APP_NAME:komposeauth}
+  name: ${APP_NAME:}
   logo-url: ${APP_LOGO_URL:}
   self-base-url: ${SELF_BASE_URL:}
-  assetLinksJson: ${ASSET_LINKS_JSON:[]}
+  assetLinksJson: ${ASSET_LINKS_JSON:}
   gcp-bucket-name: ${GCP_BUCKET_NAME:}
-  # Optional
-  samaye-api-key: ${SAMAYE_API_KEY:}
-  # Twilio configuration (optional)
   twilio-account-sid: ${TWILIO_ACCOUNT_SID:}
   twilio-auth-token: ${TWILIO_AUTH_TOKEN:}
   twilio-from-number: ${TWILIO_FROM_NUMBER:}
@@ -59,3 +44,9 @@ app:
   google-auth-client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:}
   google-auth-desktop-client-id: ${GOOGLE_AUTH_DESKTOP_CLIENT_ID:}
   google-auth-desktop-client-secret: ${GOOGLE_AUTH_DESKTOP_CLIENT_SECRET:}
+  smtp-host: ${SMTP_HOST:}
+  smtp-port: ${SMTP_PORT:}
+  smtp-username: ${SMTP_USERNAME:}
+  smtp-password: ${SMTP_PASSWORD:}
+  smtp-from-email: ${SMTP_FROM_EMAIL:}
+  samaye-api-key: ${SAMAYE_API_KEY:}

@@ -29,6 +29,8 @@ class ConfigController(
 
     @GetMapping("/.well-known/assetlinks.json")
     fun getAssetLinks(): ResponseEntity<List<AssetLink>> {
-        return ResponseEntity.ok(appProperties.assetLinks())
+        val data = appProperties.assetLinks()
+        if (data == null) return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(data)
     }
 }

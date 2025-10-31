@@ -36,9 +36,12 @@ Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Client 
 
 ```bash
 docker pull pitampoudel/komposeauth:latest
-# Example run (configure env vars as needed)
-docker run -p 8080:8080 --env-file .env pitampoudel/komposeauth:latest
+# Quick start: only MONGODB_URI is required to start with
+docker run -p 8080:8080 -e MONGODB_URI="mongodb://your-mongo-host:27017/auth" pitampoudel/komposeauth:latest
 ```
+
+- After the container is running, open: http://localhost:8080/setup to configure the rest of the settings in a guided web UI.
+- You can still pass other env vars up-front if you prefer automation; environment variables always take precedence over values saved via the Setup UI (database).
 
 ### Environment variables
 
@@ -65,7 +68,7 @@ SMTP_HOST=                   # Optional. Default: smtp.gmail.com
 SMTP_PORT=                   # Optional. Default: 587
 SMTP_USERNAME=               # Optional. Required only if you want to send emails
 SMTP_PASSWORD=               # Optional. Required only if you want to send emails
-SMTP_FROM=                   # Optional. Recommended when sending emails
+SMTP_FROM_EMAIL=             # Optional. Recommended when sending emails
 
 # Phone OTP (Twilio)
 TWILIO_ACCOUNT_SID=          # Optional. Required only if phone OTP is needed

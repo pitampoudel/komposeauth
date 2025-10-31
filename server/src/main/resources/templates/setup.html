@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Setup</title>
+    <style>
+        body { font-family: system-ui, Arial, sans-serif; background: #0b1020; color: #e6e6e6; }
+        fieldset { border: 1px solid #24314f; border-radius: 8px; margin-bottom: 18px; }
+        legend { padding: 0 8px; color: #c9d1ff; }
+        label { display: block; font-size: 14px; color: #b9c2e3; margin: 10px 0 6px; }
+        input[type=text], input[type=url], input[type=password], input[type=number], textarea {
+            width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid #24314f; background: #0d1328; color: #e6e6e6; display: block;
+        }
+        textarea { min-height: 96px; resize: vertical; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .actions { margin-top: 18px; display: flex; gap: 10px; }
+        .btn { background: #4f67ff; color: white; border: none; border-radius: 8px; padding: 10px 16px; cursor: pointer; }
+        .note { font-size: 12px; color: #93a1c9; }
+        .warn { color: #ffb86b; }
+    </style>
+</head>
+<body>
+<form method="post" action="/setup">
+    <fieldset>
+        <legend>Branding & Base</legend>
+        <label for="name">App Name</label>
+        <input id="name" name="name" type="text" th:value="${config.name}" placeholder="My App">
+
+        <label for="selfBaseUrl">Self Base URL</label>
+        <input id="selfBaseUrl" name="selfBaseUrl" type="url" th:value="${config.selfBaseUrl}"
+               placeholder="https://auth.example.com">
+
+        <label for="logoUrl">Logo URL</label>
+        <input id="logoUrl" name="logoUrl" type="url" th:value="${config.logoUrl}"
+               placeholder="https://example.com/logo.png">
+    </fieldset>
+
+    <fieldset>
+        <legend>Google OAuth</legend>
+        <div class="row">
+            <div>
+                <label for="googleAuthClientId">Web Client ID</label>
+                <input id="googleAuthClientId" name="googleAuthClientId" type="text"
+                       th:value="${config.googleAuthClientId}">
+            </div>
+            <div>
+                <label for="googleAuthClientSecret">Web Client Secret</label>
+                <input id="googleAuthClientSecret" name="googleAuthClientSecret" type="text"
+                       th:value="${config.googleAuthClientSecret}">
+            </div>
+        </div>
+        <div class="row">
+            <div>
+                <label for="googleAuthDesktopClientId">Desktop Client ID</label>
+                <input id="googleAuthDesktopClientId" name="googleAuthDesktopClientId" type="text"
+                       th:value="${config.googleAuthDesktopClientId}">
+            </div>
+            <div>
+                <label for="googleAuthDesktopClientSecret">Desktop Client Secret</label>
+                <input id="googleAuthDesktopClientSecret" type="text"
+                       name="googleAuthDesktopClientSecret"
+                       th:value="${config.googleAuthDesktopClientSecret}">
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>SMTP</legend>
+        <div class="row">
+            <div>
+                <label for="smtpHost">SMTP Host</label>
+                <input id="smtpHost" name="smtpHost" type="text" th:value="${config.smtpHost}"
+                       placeholder="smtp.gmail.com">
+            </div>
+            <div>
+                <label for="smtpPort">SMTP Port</label>
+                <input id="smtpPort" name="smtpPort" type="number" min="1" max="65535"
+                       th:value="${config.smtpPort}" placeholder="587">
+            </div>
+        </div>
+        <div class="row">
+            <div>
+                <label for="smtpUsername">SMTP Username</label>
+                <input id="smtpUsername" name="smtpUsername" type="text"
+                       th:value="${config.smtpUsername}">
+            </div>
+            <div>
+                <label for="smtpPassword">SMTP Password</label>
+                <input id="smtpPassword" name="smtpPassword" type="text"
+                       th:value="${config.smtpPassword}">
+            </div>
+        </div>
+        <label for="smtpFromEmail">SMTP From Email</label>
+        <input id="smtpFromEmail" name="smtpFromEmail" type="text"
+               th:value="${config.smtpFromEmail}" placeholder="no-reply@example.com">
+    </fieldset>
+
+    <fieldset>
+        <legend>Twilio</legend>
+        <div class="row">
+            <div>
+                <label for="twilioAccountSid">Account SID</label>
+                <input id="twilioAccountSid" name="twilioAccountSid" type="text"
+                       th:value="${config.twilioAccountSid}">
+            </div>
+            <div>
+                <label for="twilioAuthToken">Auth Token</label>
+                <input id="twilioAuthToken" name="twilioAuthToken" type="text"
+                       th:value="${config.twilioAuthToken}">
+            </div>
+        </div>
+        <div class="row">
+            <div>
+                <label for="twilioFromNumber">From Number</label>
+                <input id="twilioFromNumber" name="twilioFromNumber" type="text"
+                       th:value="${config.twilioFromNumber}">
+            </div>
+            <div>
+                <label for="twilioVerifyServiceSid">Verify Service SID</label>
+                <input id="twilioVerifyServiceSid" name="twilioVerifyServiceSid" type="text"
+                       th:value="${config.twilioVerifyServiceSid}">
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Other</legend>
+        <label for="gcpBucketName">GCP Bucket Name</label>
+        <input id="gcpBucketName" name="gcpBucketName" type="text"
+               th:value="${config.gcpBucketName}">
+
+        <label for="expectedGcpProjectId">Expected GCP Project ID</label>
+        <input id="expectedGcpProjectId" name="expectedGcpProjectId" type="text"
+               th:value="${config.expectedGcpProjectId}">
+
+        <label for="sentryDsn">Sentry DSN</label>
+        <input id="sentryDsn" name="sentryDsn" type="url" th:value="${config.sentryDsn}">
+
+        <label for="assetLinksJson">Asset Links JSON</label>
+        <textarea id="assetLinksJson" name="assetLinksJson"
+                  th:text="${config.assetLinksJson}"></textarea>
+    </fieldset>
+
+    <div class="actions">
+        <button class="btn" type="submit">Save and Finish</button>
+    </div>
+</form>
+</body>
+</html>
