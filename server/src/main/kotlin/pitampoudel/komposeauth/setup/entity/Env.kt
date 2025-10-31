@@ -4,9 +4,9 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.TypeAlias
 import org.springframework.data.mongodb.core.mapping.Document
 
-@Document("app_config")
-@TypeAlias("app_config")
-data class AppConfig(
+@Document("env")
+@TypeAlias("env")
+data class Env(
     @Id
     val id: String = SINGLETON_ID,
 

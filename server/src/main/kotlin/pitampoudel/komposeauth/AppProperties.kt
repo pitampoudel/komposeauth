@@ -4,11 +4,10 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import pitampoudel.komposeauth.domain.Platform
-import pitampoudel.komposeauth.setup.service.AppConfigService
+import pitampoudel.komposeauth.setup.service.EnvService
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.net.URL
@@ -24,58 +23,55 @@ data class AssetLink(
 
 @Configuration
 @ConfigurationProperties(prefix = "app")
-class AppProperties {
-
-    @Autowired
-    lateinit var appConfigService: AppConfigService
+class AppProperties(val envService: EnvService) {
 
     var selfBaseUrl: String = ""
         get() {
             val raw = field.trim()
             if (raw.isNotEmpty()) return raw
-            val cfg = appConfigService.get().selfBaseUrl?.trim()
+            val cfg = envService.get().selfBaseUrl?.trim()
             if (!cfg.isNullOrBlank()) return cfg
             return "http://${getLocalIpAddress()}:8080"
         }
 
     var name: String = ""
-        get() = field.takeIf { it.isNotBlank() } ?: appConfigService.get().name ?: "komposeauth"
+        get() = field.takeIf { it.isNotBlank() } ?: envService.get().name ?: "komposeauth"
     var logoUrl: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().logoUrl
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().logoUrl
     var expectedGcpProjectId: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().expectedGcpProjectId
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().expectedGcpProjectId
     var gcpBucketName: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().gcpBucketName
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().gcpBucketName
     var googleAuthClientId: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().googleAuthClientId
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().googleAuthClientId
     var googleAuthClientSecret: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().googleAuthClientSecret
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().googleAuthClientSecret
     var googleAuthDesktopClientId: String? = null
         get() = field?.takeIf { it.isNotBlank() }
-            ?: appConfigService.get().googleAuthDesktopClientId
+            ?: envService.get().googleAuthDesktopClientId
     var googleAuthDesktopClientSecret: String? = null
         get() = field?.takeIf { it.isNotBlank() }
-            ?: appConfigService.get().googleAuthDesktopClientSecret
+            ?: envService.get().googleAuthDesktopClientSecret
     var assetLinksJson: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().assetLinksJson
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().assetLinksJson
     var twilioAccountSid: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().twilioAccountSid
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().twilioAccountSid
     var twilioAuthToken: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().twilioAuthToken
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().twilioAuthToken
     var twilioFromNumber: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().twilioFromNumber
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().twilioFromNumber
     var twilioVerifyServiceSid: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().twilioVerifyServiceSid
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().twilioVerifyServiceSid
     var smtpHost: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().smtpHost
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().smtpHost
     var smtpPort: Int? = null
-        get() = field ?: appConfigService.get().smtpPort
+        get() = field ?: envService.get().smtpPort
     var smtpUsername: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().smtpUsername
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().smtpUsername
     var smtpPassword: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().smtpPassword
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().smtpPassword
     var smtpFromEmail: String? = null
-        get() = field?.takeIf { it.isNotBlank() } ?: appConfigService.get().smtpFromEmail
+        get() = field?.takeIf { it.isNotBlank() } ?: envService.get().smtpFromEmail
 
     var samayeApiKey: String? = null
 
