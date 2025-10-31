@@ -46,13 +46,13 @@ docker run -p 8080:8080 -e MONGODB_URI="mongodb://your-mongo-host:27017/auth" pi
 ### Environment variables
 
 ```
+# Database
+MONGODB_URI=                 # Required. Mongo DB connection string
+
 # App metadata
 APP_NAME=                    # Display name in emails/UI. Default: "komposeauth"
 APP_LOGO_URL=                # Public URL for logo used in emails/UI
 SELF_BASE_URL=               # Default: http://<local-ip>:8080
-
-# Database
-MONGODB_URI=                 # Required. Mongo DB connection string
 
 # Google OAuth (Sign in with Google)
 GOOGLE_OAUTH_CLIENT_ID=
@@ -60,28 +60,28 @@ GOOGLE_OAUTH_CLIENT_SECRET=
 GOOGLE_AUTH_DESKTOP_CLIENT_ID=
 GOOGLE_AUTH_DESKTOP_CLIENT_SECRET=
 
-# Email (SMTP)
+# SMTP
 SMTP_HOST=
 SMTP_PORT=                   # Default: 587
 SMTP_USERNAME=
 SMTP_PASSWORD=
 SMTP_FROM_EMAIL=
 
-# Phone OTP (Twilio)
+# Twilio
 TWILIO_ACCOUNT_SID=
 TWILIO_VERIFY_SERVICE_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_FROM_NUMBER=
 
-# External services / integrations
+# External services
 SAMAYE_API_KEY=              # No Need
 SENTRY_DSN=                  # Enables Sentry reporting
 
-# File uploads / key storage
+# File uploads
 GCP_BUCKET_NAME=             # If set, uses Google Cloud Storage
 EXPECTED_GCP_PROJECT_ID=     # Verifies it matches the active GCP project
 
-# Android App Links / Digital Asset Links
+# Digital Asset Links
 ASSET_LINKS_JSON=
 ```
 
