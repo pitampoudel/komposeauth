@@ -10,7 +10,7 @@ import pitampoudel.komposeauth.setup.entity.Env
 import pitampoudel.komposeauth.setup.service.EnvService
 
 @Controller
-@PreAuthorize("hasRole('ADMIN') or @setupAccess.isOpen()")
+@PreAuthorize("hasRole('SUPER_ADMIN') or @setupAccess.isOpen()")
 class SetupController(private val envService: EnvService) {
     @GetMapping("/setup")
     fun setupForm(model: Model): String {
