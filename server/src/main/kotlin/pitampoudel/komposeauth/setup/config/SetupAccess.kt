@@ -1,15 +1,15 @@
 package pitampoudel.komposeauth.setup.config
 
 import org.springframework.stereotype.Component
-import pitampoudel.komposeauth.user.repository.UserRepository
+import pitampoudel.komposeauth.setup.entity.Env
+import pitampoudel.komposeauth.setup.repository.EnvRepository
 
 
 @Component("setupAccess")
 class SetupAccess(
-    private val userRepository: UserRepository,
+    private val repo: EnvRepository,
 ) {
     fun isOpen(): Boolean {
-        // If no user exists yet, allow anyone access to setup
-        return userRepository.count().toInt() == 0
+        return !repo.existsById(Env.SINGLETON_ID)
     }
 }
