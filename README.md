@@ -79,7 +79,7 @@ SENTRY_DSN=                  # Optional. Enables Sentry reporting
 
 # File uploads / key storage
 GCP_BUCKET_NAME=             # Optional. If set, uses Google Cloud Storage
-EXPECTED_GCP_PROJECT_ID=     # Optional. If set, app verifies it matches the active GCP project
+EXPECTED_GCP_PROJECT_ID=     # Required if at the gcp environment. Verifies it matches the active GCP project
 
 # Android App Links / Digital Asset Links
 ASSET_LINKS_JSON=            # Optional. JSON array; default: []
@@ -172,10 +172,6 @@ Profiles and KYC
 val profileVm = koinViewModel<ProfileViewModel>()
 val kycVm = koinViewModel<KycViewModel>()
 ```
-
-## Development
-
-- Build everything: `./gradlew build` (or `gradlew.bat build` on Windows)
 
 ## Contributing
 
