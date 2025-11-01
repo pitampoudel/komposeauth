@@ -1,9 +1,5 @@
 package pitampoudel.komposeauth.core.config
 
-import pitampoudel.komposeauth.data.ApiEndpoints
-import pitampoudel.komposeauth.data.CreateUserRequest
-import pitampoudel.komposeauth.user.entity.User
-import pitampoudel.komposeauth.user.service.UserService
 import jakarta.servlet.DispatcherType
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -28,6 +24,10 @@ import org.springframework.stereotype.Component
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import pitampoudel.komposeauth.data.ApiEndpoints
+import pitampoudel.komposeauth.data.CreateUserRequest
+import pitampoudel.komposeauth.user.entity.User
+import pitampoudel.komposeauth.user.service.UserService
 
 @Component
 class AuthSuccessHandler(
@@ -81,6 +81,7 @@ class AuthSuccessHandler(
         )
     }
 }
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
@@ -111,6 +112,7 @@ class WebSecurityConfig(
             .cors { }
             .csrf { csrf -> csrf.disable() }
             .oauth2ResourceServer { conf ->
+                conf.bearerTokenResolver(CookieOrHeaderBearerTokenResolver())
                 conf.jwt {
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
