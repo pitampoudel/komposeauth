@@ -130,7 +130,7 @@ class WebSecurityConfig(
                         "/signup",
                         "/api/auth/**",
                         "/users",
-                        "/config/**",
+                        "/login-options",
                         "/swagger-ui.html",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",

@@ -125,7 +125,7 @@ class JwtService(
             claims = mapOf(
                 "type" to TokenType.REFRESH_TOKEN.name
             ),
-            validity = 30.days
+            validity = 7.days
         )
         return token?.tokenValue ?: throw RuntimeException("Failed to generate refresh token")
     }
