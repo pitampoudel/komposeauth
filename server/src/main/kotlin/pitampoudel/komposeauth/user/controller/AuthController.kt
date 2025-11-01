@@ -62,10 +62,11 @@ class AuthController(
             )
 
             is Credential.RefreshToken -> {
-                val cookieToken = httpServletRequest.cookies?.find {
-                    it.name == "refreshToken"
+                val tokenFromBody = request.refreshToken
+                val tokenFromCookie = httpServletRequest.cookies?.firstOrNull {
+                    it.name == "REFRESH_TOKEN"
                 }?.value
-                val refreshToken = cookieToken ?: request.refreshToken ?: throw BadRequestException(
+                val refreshToken = tokenFromBody ?: tokenFromCookie ?: throw BadRequestException(
                     "refresh token not found"
                 )
                 val userId = jwtService.validateRefreshToken(refreshToken)
@@ -99,22 +100,21 @@ class AuthController(
         val accessToken = jwtService.generateAccessToken(user)
         val refreshToken = jwtService.generateRefreshToken(user)
 
-        val accessCookie = ResponseCookie.from("accessToken", accessToken)
+        val accessCookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
             .httpOnly(true)
             .secure(true)
             .path("/")
+            .sameSite("None")
             .maxAge(Duration.ofHours(1))
-            .sameSite("Lax")
             .build()
 
-        val refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
+        val refreshCookie = ResponseCookie.from("REFRESH_TOKEN", refreshToken)
             .httpOnly(true)
             .secure(true)
             .path("/")
+            .sameSite("None")
             .maxAge(Duration.ofDays(7))
-            .sameSite("Lax")
             .build()
-
         httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
         httpServletResponse.addHeader("Set-Cookie", refreshCookie.toString())
 

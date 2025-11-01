@@ -17,6 +17,8 @@ import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler
@@ -92,11 +94,25 @@ class WebSecurityConfig(
 ) {
 
     @Bean
+    fun cookieAwareBearerTokenResolver(): BearerTokenResolver {
+        val delegate = DefaultBearerTokenResolver()
+        return object : BearerTokenResolver {
+            override fun resolve(request: HttpServletRequest): String? {
+                val fromHeader = delegate.resolve(request)
+                if (!fromHeader.isNullOrBlank()) return fromHeader
+                val cookie = request.cookies?.firstOrNull { it.name == "ACCESS_TOKEN" }
+                return cookie?.value
+            }
+        }
+    }
+
+    @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("*")
+        configuration.allowedOriginPatterns = listOf("*")
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         configuration.allowedHeaders = listOf("*")
+        configuration.allowCredentials = true
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", configuration)
         return source
@@ -107,13 +123,13 @@ class WebSecurityConfig(
     fun securityFilterChain(
         http: HttpSecurity,
         jwtAuthenticationConverter: JwtAuthenticationConverter,
+        cookieAwareBearerTokenResolver: BearerTokenResolver,
     ): SecurityFilterChain {
         return http
             .cors { }
             .csrf { csrf -> csrf.disable() }
             .oauth2ResourceServer { conf ->
-                conf.bearerTokenResolver(CookieOrHeaderBearerTokenResolver())
-                conf.jwt {
+                conf.bearerTokenResolver(cookieAwareBearerTokenResolver).jwt {
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
             }
