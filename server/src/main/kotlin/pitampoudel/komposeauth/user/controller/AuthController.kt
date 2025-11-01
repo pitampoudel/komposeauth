@@ -3,10 +3,10 @@ package pitampoudel.komposeauth.user.controller
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
-import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.apache.coyote.BadRequestException
+import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -23,8 +23,8 @@ import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.OAuth2TokenData
 import pitampoudel.komposeauth.user.service.UserService
+import java.time.Duration
 import javax.security.auth.login.AccountLockedException
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 
 @Controller
@@ -99,14 +99,24 @@ class AuthController(
         val accessToken = jwtService.generateAccessToken(user)
         val refreshToken = jwtService.generateRefreshToken(user)
 
-        httpServletResponse.addCookie(
-            Cookie("refreshToken", refreshToken).apply {
-                isHttpOnly = true
-                secure = true
-                path = "/${ApiEndpoints.TOKEN}"
-                maxAge = 7.days.inWholeSeconds.toInt()
-            }
-        )
+        val accessCookie = ResponseCookie.from("accessToken", accessToken)
+            .httpOnly(true)
+            .secure(true)
+            .path("/")
+            .maxAge(Duration.ofHours(1))
+            .sameSite("Lax")
+            .build()
+
+        val refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
+            .httpOnly(true)
+            .secure(true)
+            .path("/")
+            .maxAge(Duration.ofDays(7))
+            .sameSite("Lax")
+            .build()
+
+        httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
+        httpServletResponse.addHeader("Set-Cookie", refreshCookie.toString())
 
         return ResponseEntity.ok(
             OAuth2TokenData(
