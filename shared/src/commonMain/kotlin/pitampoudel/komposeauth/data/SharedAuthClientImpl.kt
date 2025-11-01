@@ -38,7 +38,7 @@ class SharedAuthClientImpl(
 
     override suspend fun fetchUserInfo(userId: String, accessToken: String): Result<UserResponse> {
         return safeApiCall {
-            httpClient.get("$authUrl/users/$userId") {
+            httpClient.get("$authUrl/${ApiEndpoints.USERS}/$userId") {
                 headers {
                     append(HttpHeaders.Authorization, "Bearer $accessToken")
                 }
@@ -51,7 +51,7 @@ class SharedAuthClientImpl(
         accessToken: String
     ): Result<Map<String, UserResponse>> {
         return safeApiCall {
-            httpClient.get("$authUrl/users/batch") {
+            httpClient.get("$authUrl/${ApiEndpoints.USERS_IN_BULK}") {
                 headers {
                     append(HttpHeaders.Authorization, "Bearer $accessToken")
                 }
@@ -65,7 +65,7 @@ class SharedAuthClientImpl(
         req: CreateUserRequest
     ): Result<UserResponse> {
         return safeApiCall {
-            httpClient.patch("$authUrl/users") {
+            httpClient.patch("$authUrl/${ApiEndpoints.USERS}") {
                 setBody(req)
                 headers { append(HttpHeaders.Authorization, "Bearer $accessToken") }
             }.asResource { body() }
