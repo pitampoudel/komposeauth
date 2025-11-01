@@ -540,7 +540,7 @@
 
             try {
                 // 1️⃣ Fetch authentication (assertion) options
-                const response = await fetch('/config/login?platform=WEB', {
+                const response = await fetch('/login-options?platform=WEB', {
                     headers: { 'Content-Type': 'application/json' }
                 });
 
