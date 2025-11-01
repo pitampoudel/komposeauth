@@ -9,6 +9,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.auth.AuthConfig
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.koinInject
+import org.koin.core.KoinApplication
 import org.koin.core.component.KoinComponent
 import org.koin.core.context.loadKoinModules
 import org.koin.core.context.startKoin
@@ -32,6 +33,7 @@ import pitampoudel.komposeauth.profile.ProfileViewModel
  * Should be called *before* creating HttpClient since KtorBearerHandler may be required by it.
  */
 fun initializeKomposeAuth(
+    app: KoinApplication? = null,
     authUrl: String,
     hosts: List<String>
 ) {
@@ -46,18 +48,18 @@ fun initializeKomposeAuth(
             )
         }
     }
-
-    when {
-        KomposeKoinComponent.getKoinSafely() == null -> startKoin { modules(coreModule) }
-        else -> loadKoinModules(coreModule)
+    app?.let {
+        app.modules(coreModule)
+    } ?: run {
+        startKoin { modules(coreModule) }
     }
 }
 
 /**
  * Initialize ViewModel layer dependencies that depend on HttpClient.
  */
-fun initializeKomposeAuthViewModels(httpClient: HttpClient) {
-    loadKoinModules(module {
+fun initializeKomposeAuthViewModels(app: KoinApplication?, httpClient: HttpClient) {
+    val module = module {
         single<AuthClient> {
             AuthClientImpl(
                 httpClient = httpClient,
@@ -68,7 +70,12 @@ fun initializeKomposeAuthViewModels(httpClient: HttpClient) {
         viewModel<LoginViewModel> { LoginViewModel(get(), get()) }
         viewModel<KycViewModel> { KycViewModel(get()) }
         viewModel<ProfileViewModel> { ProfileViewModel(get(), get()) }
-    })
+    }
+    app?.let {
+        app.modules(module)
+    } ?: run {
+        loadKoinModules(module)
+    }
 }
 
 /**
@@ -91,8 +98,4 @@ fun rememberCurrentUser(): LazyState<UserInfoResponse> {
     }.value
 }
 
-private object KomposeKoinComponent : KoinComponent {
-    fun getKoinSafely() = runCatching {
-        getKoin()
-    }.getOrElse { null }
-}
+private object KomposeKoinComponent : KoinComponent
