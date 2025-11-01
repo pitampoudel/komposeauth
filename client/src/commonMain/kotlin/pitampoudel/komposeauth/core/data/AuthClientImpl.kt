@@ -2,7 +2,6 @@ package pitampoudel.komposeauth.core.data
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -12,16 +11,16 @@ import pitampoudel.core.data.asResource
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.domain.AuthClient
-import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN_OPTIONS
 import pitampoudel.komposeauth.data.ApiEndpoints.DEACTIVATE
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC_ADDRESS
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC_DOCUMENTS
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC_PERSONAL_INFO
+import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN_OPTIONS
 import pitampoudel.komposeauth.data.ApiEndpoints.ME
 import pitampoudel.komposeauth.data.ApiEndpoints.TOKEN
-import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PROFILE
 import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PHONE_NUMBER
+import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PROFILE
 import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import pitampoudel.komposeauth.data.Country
 import pitampoudel.komposeauth.data.Credential
@@ -57,10 +56,9 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
     }
 
 
-    override suspend fun fetchUserInfo(accessToken: String?): Result<UserInfoResponse> {
+    override suspend fun fetchUserInfo(): Result<UserInfoResponse> {
         return safeApiCall {
             httpClient.get("$authUrl/$ME") {
-                accessToken?.let { bearerAuth(accessToken) }
             }.asResource { body() }
         }
     }

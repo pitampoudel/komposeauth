@@ -69,7 +69,7 @@ class LoginViewModel internal constructor(
             }
 
             is Result.Success -> {
-                val userInfoRes = authClient.fetchUserInfo(res.data.accessToken)
+                val userInfoRes = authClient.fetchUserInfo()
                 when (userInfoRes) {
                     is Result.Error -> _state.update {
                         it.copy(infoMsg = userInfoRes.message)
@@ -77,7 +77,7 @@ class LoginViewModel internal constructor(
 
                     is Result.Success -> {
                         authPreferences.saveLoggedInDetails(
-                            token = res.data,
+                            tokenData = res.data,
                             userInfoResponse = userInfoRes.data
                         )
                     }

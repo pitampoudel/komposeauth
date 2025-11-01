@@ -37,10 +37,10 @@ internal class AuthPreferencesImpl(
 
 
     override suspend fun saveLoggedInDetails(
-        token: OAuth2TokenData,
+        tokenData: OAuth2TokenData,
         userInfoResponse: UserInfoResponse
     ) {
-        settings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(token))
+        settings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(tokenData))
         suspendSettings.putString(KEYS.USER_INFO, Json.encodeToString(userInfoResponse))
     }
 

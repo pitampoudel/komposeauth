@@ -7,7 +7,7 @@ import pitampoudel.komposeauth.data.UserInfoResponse
 internal interface AuthPreferences {
     val userInfoResponse: Flow<UserInfoResponse?>
     suspend fun saveLoggedInDetails(
-        token: OAuth2TokenData,
+        tokenData: OAuth2TokenData,
         userInfoResponse: UserInfoResponse
     )
 
