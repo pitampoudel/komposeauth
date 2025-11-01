@@ -17,9 +17,10 @@ internal class AuthPreferencesImpl(
     private val settings: ObservableSettings
 ) : AuthPreferences {
     private val suspendSettings = settings.toSuspendSettings()
+    private var accessToken: String? = null
 
     private object KEYS {
-        const val OAUTH2_TOKEN_DATA = "oauth2_token_data"
+        const val REFRESH_TOKEN = "refresh_token"
         const val USER_INFO = "user_info"
     }
 
@@ -40,31 +41,26 @@ internal class AuthPreferencesImpl(
         tokenData: OAuth2TokenData,
         userInfoResponse: UserInfoResponse
     ) {
-        settings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(tokenData))
+        suspendSettings.putString(KEYS.REFRESH_TOKEN, tokenData.refreshToken)
         suspendSettings.putString(KEYS.USER_INFO, Json.encodeToString(userInfoResponse))
+        accessToken = tokenData.accessToken
     }
 
-    override suspend fun updateTokenData(token: OAuth2TokenData) {
-        suspendSettings.putString(KEYS.OAUTH2_TOKEN_DATA, Json.encodeToString(token))
+    override suspend fun updateTokenData(tokenData: OAuth2TokenData) {
+        suspendSettings.putString(KEYS.REFRESH_TOKEN, tokenData.refreshToken)
+        accessToken = tokenData.accessToken
     }
 
     override suspend fun updateUserInformation(info: UserInfoResponse) {
         suspendSettings.putString(KEYS.USER_INFO, Json.encodeToString(info))
     }
 
-    override fun oAuth2TokenData(): OAuth2TokenData? {
-        return settings.getStringOrNull(KEYS.OAUTH2_TOKEN_DATA)?.let {
-            try {
-                Json.decodeFromString<OAuth2TokenData>(it)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        }
-    }
+    override fun accessToken() = accessToken
+    override fun refreshToken() = settings.getStringOrNull(KEYS.REFRESH_TOKEN)
 
     override suspend fun clear() {
-        suspendSettings.remove(KEYS.OAUTH2_TOKEN_DATA)
+        accessToken = null
+        suspendSettings.remove(KEYS.REFRESH_TOKEN)
         suspendSettings.remove(KEYS.USER_INFO)
     }
 

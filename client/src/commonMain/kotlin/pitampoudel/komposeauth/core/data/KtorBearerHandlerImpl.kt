@@ -37,12 +37,15 @@ internal class KtorBearerHandlerImpl internal constructor(
     override fun configure(auth: AuthConfig) {
         auth.bearer {
             loadTokens {
-                authPreferences.oAuth2TokenData()?.let {
-                    BearerTokens(
-                        accessToken = it.accessToken,
-                        refreshToken = it.refreshToken
-                    )
+                val accessToken = authPreferences.accessToken()
+                val refreshToken = authPreferences.refreshToken()
+                if (refreshToken.isNullOrEmpty()) {
+                    return@loadTokens null
                 }
+                BearerTokens(
+                    accessToken = accessToken ?: "",
+                    refreshToken = refreshToken
+                )
             }
 
             refreshTokens {

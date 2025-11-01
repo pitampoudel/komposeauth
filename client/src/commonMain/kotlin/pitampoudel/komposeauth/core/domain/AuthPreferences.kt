@@ -10,10 +10,9 @@ internal interface AuthPreferences {
         tokenData: OAuth2TokenData,
         userInfoResponse: UserInfoResponse
     )
-
-    suspend fun updateTokenData(token: OAuth2TokenData)
+    suspend fun updateTokenData(tokenData: OAuth2TokenData)
     suspend fun updateUserInformation(info: UserInfoResponse)
-    fun oAuth2TokenData(): OAuth2TokenData?
+    fun accessToken(): String?
+    fun refreshToken(): String?
     suspend fun clear()
-
 }
