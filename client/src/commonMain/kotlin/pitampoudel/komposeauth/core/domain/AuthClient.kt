@@ -20,7 +20,7 @@ import pitampoudel.core.domain.Result
 
 internal interface AuthClient {
     suspend fun fetchLoginConfig(platform: Platform = Platform.WEB): Result<LoginOptions>
-    suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2TokenData>
+    suspend fun exchangeCredentialForToken(credential: Credential): Result<UserInfoResponse>
     suspend fun fetchUserInfo(): Result<UserInfoResponse>
     suspend fun deactivate(): Result<HttpResponse>
     suspend fun verifyPhoneOtp(req: VerifyPhoneOtpRequest): Result<HttpResponse>

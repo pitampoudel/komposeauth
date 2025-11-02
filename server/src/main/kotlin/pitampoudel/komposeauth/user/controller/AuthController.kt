@@ -22,6 +22,8 @@ import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.OAuth2TokenData
+import pitampoudel.komposeauth.data.UserResponse
+import pitampoudel.komposeauth.user.dto.mapToResponseDto
 import pitampoudel.komposeauth.user.service.UserService
 import javax.security.auth.login.AccountLockedException
 import kotlin.time.Duration.Companion.days
@@ -39,7 +41,8 @@ class AuthController(
     private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
     val appProperties: AppProperties
 ) {
-    @PostMapping("/${ApiEndpoints.TOKEN}")
+    @Deprecated("Only kept for backward compatibility")
+    @PostMapping("/token")
     @Operation(
         summary = "Login with credentials",
         description = "Validate credentials and returns JWT tokens directly."
@@ -96,6 +99,71 @@ class AuthController(
         val accessToken = jwtService.generateAccessToken(user)
         val refreshToken = jwtService.generateRefreshToken(user)
 
+        return ResponseEntity.ok(
+            OAuth2TokenData(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                tokenType = "Bearer",
+                expiresIn = 1.hours.inWholeSeconds,
+            )
+        )
+    }
+
+    @PostMapping("/${ApiEndpoints.LOGIN}")
+    @Operation(
+        summary = "Login with credentials"
+    )
+    fun login(
+        @RequestBody
+        request: Credential,
+        httpServletRequest: HttpServletRequest,
+        httpServletResponse: HttpServletResponse
+    ): ResponseEntity<UserResponse?> {
+        val user = when (request) {
+            is Credential.UsernamePassword -> userService.findByUserName(request.username)
+                ?.takeIf {
+                    passwordEncoder.matches(request.password, it.passwordHash)
+                }
+
+            is Credential.GoogleId -> userService.findOrCreateUserByGoogleIdToken(request.idToken)
+            is Credential.AuthCode -> userService.findOrCreateUserByAuthCode(
+                code = request.code,
+                codeVerifier = request.codeVerifier,
+                redirectUri = request.redirectUri,
+                platform = request.platform
+            )
+
+            is Credential.RefreshToken -> {
+                val userId = jwtService.validateRefreshToken(request.refreshToken)
+                userService.findUser(userId) ?: throw UsernameNotFoundException("User not found")
+            }
+
+            is Credential.AppleId -> throw UnsupportedOperationException("AppleId authentication is not supported yet.")
+            is Credential.PublicKey -> {
+                val json = objectMapper.readValue(
+                    request.authenticationResponseJson,
+                    object :
+                        TypeReference<PublicKeyCredential<AuthenticatorAssertionResponse>>() {}
+                )
+                val requestOptions = requestOptionsRepository.load(httpServletRequest)
+                requestOptionsRepository.save(httpServletRequest, httpServletResponse, null)
+
+                val publicKeyUser = webAuthnRelyingPartyOperations.authenticate(
+                    RelyingPartyAuthenticationRequest(
+                        requestOptions,
+                        json
+                    )
+                )
+                userService.findByUserName(publicKeyUser.name as String)
+            }
+        } ?: throw UsernameNotFoundException("User not found or invalid credentials")
+
+        if (user.deactivated) {
+            throw AccountLockedException("User account is deactivated")
+        }
+
+        val accessToken = jwtService.generateAccessToken(user)
+
         val accessCookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
             .domain(appProperties.domain)
             .httpOnly(true)
@@ -107,13 +175,6 @@ class AuthController(
 
         httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
 
-        return ResponseEntity.ok(
-            OAuth2TokenData(
-                accessToken = accessToken,
-                refreshToken = refreshToken,
-                tokenType = "Bearer",
-                expiresIn = 1.hours.inWholeSeconds,
-            )
-        )
+        return ResponseEntity.ok(user.mapToResponseDto())
     }
 }

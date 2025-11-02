@@ -48,6 +48,7 @@ fun User.mapToResponseDto(): UserResponse {
         phoneNumber = this.phoneNumber,
         phoneNumberVerified = phoneNumberVerified,
         photoUrl = this.picture,
+        roles = this.roles,
         createdAt = this.createdAt.toKotlinInstant(),
         updatedAt = this.updatedAt.toKotlinInstant()
     )

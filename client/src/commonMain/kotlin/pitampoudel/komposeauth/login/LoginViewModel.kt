@@ -69,19 +69,9 @@ class LoginViewModel internal constructor(
             }
 
             is Result.Success -> {
-                val userInfoRes = authClient.fetchUserInfo()
-                when (userInfoRes) {
-                    is Result.Error -> _state.update {
-                        it.copy(infoMsg = userInfoRes.message)
-                    }
-
-                    is Result.Success -> {
-                        authPreferences.saveUserInformation(
-                            info = userInfoRes.data
-                        )
-                    }
-                }
-
+                authPreferences.saveUserInformation(
+                    info = res.data
+                )
             }
         }
 

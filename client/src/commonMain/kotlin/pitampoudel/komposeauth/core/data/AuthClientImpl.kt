@@ -16,9 +16,9 @@ import pitampoudel.komposeauth.data.ApiEndpoints.KYC
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC_ADDRESS
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC_DOCUMENTS
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC_PERSONAL_INFO
+import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN_OPTIONS
 import pitampoudel.komposeauth.data.ApiEndpoints.ME
-import pitampoudel.komposeauth.data.ApiEndpoints.TOKEN
 import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PHONE_NUMBER
 import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PROFILE
 import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_PHONE_NUMBER
@@ -27,7 +27,6 @@ import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.DocumentInformation
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.LoginOptions
-import pitampoudel.komposeauth.data.OAuth2TokenData
 import pitampoudel.komposeauth.data.PersonalInformation
 import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
 import pitampoudel.komposeauth.data.UpdateAddressDetailsRequest
@@ -47,9 +46,9 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
     }
 
-    override suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2TokenData> {
+    override suspend fun exchangeCredentialForToken(credential: Credential): Result<UserInfoResponse> {
         return safeApiCall {
-            httpClient.post("$authUrl/$TOKEN") {
+            httpClient.post("$authUrl/$LOGIN") {
                 setBody(credential)
             }.asResource { body() }
         }
