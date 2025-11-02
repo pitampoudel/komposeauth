@@ -2,9 +2,6 @@ package pitampoudel.komposeauth.core.di
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.produceState
-import com.russhwolf.settings.ObservableSettings
-import com.russhwolf.settings.Settings
-import com.russhwolf.settings.observable.makeObservable
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.koinInject
@@ -15,6 +12,7 @@ import org.koin.dsl.module
 import pitampoudel.core.presentation.LazyState
 import pitampoudel.komposeauth.core.data.AuthClientImpl
 import pitampoudel.komposeauth.core.data.AuthPreferencesImpl
+import pitampoudel.komposeauth.core.domain.Config
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.data.ProfileResponse
@@ -24,21 +22,22 @@ import pitampoudel.komposeauth.otp.OtpViewModel
 import pitampoudel.komposeauth.profile.ProfileViewModel
 
 /**
- * Initialize the core KomposeAuth dependencies.
+ * Initialize the KomposeAuth dependencies.
+ * @param app The Koin application.
+ * @param httpClient The http client with komposeauth installed
  */
 fun initializeKomposeAuth(
     app: KoinApplication? = null,
-    httpClient: HttpClient,
-    authUrl: String
+    httpClient: HttpClient
 ) {
     val module = module {
-        single<ObservableSettings> { Settings().makeObservable() }
-        single<AuthPreferences> { AuthPreferencesImpl(get()) }
+        single<AuthPreferences> { AuthPreferencesImpl.instance }
         single<AuthClient> {
-            AuthClientImpl(
-                httpClient = httpClient,
-                authUrl = authUrl
-            )
+            val authServerUrl = Config.authServerUrl
+            if (authServerUrl == null) {
+                throw Exception("The provided http client must have komposeauth installed")
+            }
+            AuthClientImpl(httpClient = httpClient, authUrl = authServerUrl)
         }
         viewModel<OtpViewModel> { OtpViewModel(get(), get()) }
         viewModel<LoginViewModel> { LoginViewModel(get(), get()) }

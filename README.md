@@ -101,20 +101,22 @@ Client module
 implementation("io.github.pitampoudel:komposeauth-client:x.x.x")
 ```
 
-HttpClient example with cookies installed
+HttpClient example
 ```kotlin
 val httpClient = HttpClient {
-    install(HttpCookies) {
-        storage = AcceptAllCookiesStorage()
-    }
+    installKomposeAuth(
+        authUrl = "https://your-auth-server",
+        resourceServerUrls = listOf(
+            "https://your-resource-server"
+        )
+    )
 }
 ```
 
 Initialize SDK
 ```kotlin
 initializeKomposeAuth(
-  authUrl = "https://your-auth-server", 
-  httpClient = httpClient
+    httpClient = httpClient
 )
 ```
 

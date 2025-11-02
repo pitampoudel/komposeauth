@@ -2,8 +2,10 @@ package pitampoudel.komposeauth.core.data
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ObservableSettings
+import com.russhwolf.settings.Settings
 import com.russhwolf.settings.coroutines.getStringOrNullFlow
 import com.russhwolf.settings.coroutines.toSuspendSettings
+import com.russhwolf.settings.observable.makeObservable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -13,8 +15,8 @@ import pitampoudel.komposeauth.data.OAuth2TokenData
 import pitampoudel.komposeauth.data.ProfileResponse
 
 @OptIn(ExperimentalSettingsApi::class)
-internal class AuthPreferencesImpl(
-    private val settings: ObservableSettings
+internal class AuthPreferencesImpl private constructor(
+    private val settings: ObservableSettings = Settings().makeObservable()
 ) : AuthPreferences {
     private val suspendSettings = settings.toSuspendSettings()
     private var accessToken: String? = null
@@ -76,4 +78,7 @@ internal class AuthPreferencesImpl(
         suspendSettings.remove(KEYS.USER_PROFILE)
     }
 
+    companion object {
+        val instance = AuthPreferencesImpl()
+    }
 }
