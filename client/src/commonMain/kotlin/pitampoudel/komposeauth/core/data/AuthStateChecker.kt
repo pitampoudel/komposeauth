@@ -29,13 +29,10 @@ internal class AuthStateChecker(val httpClient: HttpClient, val authUrl: String)
         // No cookies at all → definitely logged out
         if (access == null && refresh == null) return false
 
-        // Check if access token is expired
-        return if (access != null) {
-            !isJwtExpired(access.value)
-        } else if (refresh != null) {
-            // Try to refresh automatically
-            refreshSession(httpClient, authUrl)
-        } else false
+        if (access == null || isJwtExpired(access.value))
+            return refreshSession(httpClient, authUrl)
+
+        return true
     }
 
     suspend fun refreshSession(
