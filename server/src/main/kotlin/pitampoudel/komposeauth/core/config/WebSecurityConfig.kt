@@ -143,7 +143,6 @@ class WebSecurityConfig(
                         "/favicon.ico",
                         "/assets/**",
                         "/oauth2/jwks",
-                        "/login",
                         "/${ApiEndpoints.LOGIN}",
                         "/token",
                         "/signup",
@@ -163,9 +162,7 @@ class WebSecurityConfig(
                     .permitAll()
                     .anyRequest().authenticated()
             }
-            .formLogin { form ->
-                form.loginPage("/login").successHandler(authSuccessHandler)
-            }
+            .formLogin { it.disable() }
             .oauth2Login { oauth2 ->
                 oauth2.loginPage("/login").successHandler(authSuccessHandler)
             }
