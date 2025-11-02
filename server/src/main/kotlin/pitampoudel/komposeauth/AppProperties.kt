@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth
 
+import com.google.common.net.InternetDomainName
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -24,6 +25,17 @@ data class AssetLink(
 @Configuration
 @ConfigurationProperties(prefix = "app")
 class AppProperties(val envService: EnvService) {
+
+    val domain: String
+        get() {
+            val host = runCatching { URL(selfBaseUrl).host }.getOrNull() ?: return selfBaseUrl
+            if (!InternetDomainName.isValid(host)) return host
+            val domainName = InternetDomainName.from(host)
+            return if (domainName.isUnderPublicSuffix) {
+                domainName.topPrivateDomain().toString()
+            } else host
+        }
+
 
     var selfBaseUrl: String = ""
         get() {
@@ -95,8 +107,6 @@ class AppProperties(val envService: EnvService) {
             ?: envService.getEnv().sentryDsn.takeIf { !it.isNullOrBlank() }
 
     var samayeApiKey: String? = null
-
-    fun rpId(): String = URL(selfBaseUrl).host
 
     fun assetLinks(): List<AssetLink>? {
         return assetLinksJson?.let { Json.decodeFromString<List<AssetLink>>(it) }

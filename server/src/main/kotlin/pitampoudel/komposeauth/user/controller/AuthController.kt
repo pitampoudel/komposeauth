@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.apache.coyote.BadRequestException
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.userdetails.UsernameNotFoundException
@@ -18,12 +17,12 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import pitampoudel.komposeauth.AppProperties
 import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.OAuth2TokenData
 import pitampoudel.komposeauth.user.service.UserService
-import java.time.Duration
 import javax.security.auth.login.AccountLockedException
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -37,7 +36,8 @@ class AuthController(
     private val passwordEncoder: PasswordEncoder,
     private val objectMapper: ObjectMapper,
     private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
-    private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository
+    private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
+    val appProperties: AppProperties
 ) {
     @PostMapping("/${ApiEndpoints.TOKEN}")
     @Operation(
@@ -97,6 +97,7 @@ class AuthController(
         val refreshToken = jwtService.generateRefreshToken(user)
 
         val accessCookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
+            .domain(appProperties.domain)
             .httpOnly(true)
             .secure(true)
             .path("/")

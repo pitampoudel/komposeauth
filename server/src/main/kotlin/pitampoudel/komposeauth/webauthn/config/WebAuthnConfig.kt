@@ -118,12 +118,11 @@ class WebAuthnConfig(
         userCredentialRepository: UserCredentialRepository,
         userEntityRepository: PublicKeyCredentialUserEntityRepository
     ): WebAuthnRelyingPartyOperations {
-        val rpId = appProperties.rpId()
         return Webauthn4JRelyingPartyOperations(
             userEntityRepository,
             userCredentialRepository,
             PublicKeyCredentialRpEntity.builder()
-                .id(rpId)
+                .id(appProperties.domain)
                 .name(appProperties.name)
                 .build(),
             webAuthnAllowedOrigins(
