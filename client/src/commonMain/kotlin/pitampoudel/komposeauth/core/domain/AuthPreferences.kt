@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import pitampoudel.komposeauth.data.UserInfoResponse
 
 internal interface AuthPreferences {
-    val userInfoResponse: Flow<UserInfoResponse?>
-    suspend fun saveUserInformation(info: UserInfoResponse)
+    val authenticatedUserInfo: Flow<UserInfoResponse?>
+    suspend fun saveAuthenticatedUserInfo(info: UserInfoResponse)
     suspend fun clear()
 }

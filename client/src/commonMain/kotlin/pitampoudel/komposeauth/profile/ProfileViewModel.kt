@@ -44,7 +44,7 @@ class ProfileViewModel internal constructor(
                 it.copy(webAuthnRegistrationOptions = options)
             }
         }
-        authPreferences.userInfoResponse.onEach { info ->
+        authPreferences.authenticatedUserInfo.onEach { info ->
             _state.update {
                 it.copy(
                     userInfo = info,

@@ -13,7 +13,8 @@ import pitampoudel.komposeauth.data.UserInfoResponse
 
 @OptIn(ExperimentalSettingsApi::class)
 internal class AuthPreferencesImpl(
-    private val settings: ObservableSettings
+    settings: ObservableSettings,
+    val authStateChecker: AuthStateChecker
 ) : AuthPreferences {
     private val suspendSettings = settings.toSuspendSettings()
 
@@ -21,20 +22,20 @@ internal class AuthPreferencesImpl(
         const val USER_INFO = "user_info"
     }
 
-    override val userInfoResponse: Flow<UserInfoResponse?> =
+    override val authenticatedUserInfo: Flow<UserInfoResponse?> =
         settings.getStringOrNullFlow(KEYS.USER_INFO).map { stringValue ->
-            stringValue?.let {
+            if (authStateChecker.isLoggedIn() && stringValue != null)
                 try {
-                    Json.decodeFromString<UserInfoResponse>(it)
+                    Json.decodeFromString<UserInfoResponse>(stringValue)
                 } catch (e: Exception) {
                     e.printStackTrace()
                     null
                 }
-            }
+            else null
         }.distinctUntilChanged()
 
 
-    override suspend fun saveUserInformation(info: UserInfoResponse) {
+    override suspend fun saveAuthenticatedUserInfo(info: UserInfoResponse) {
         suspendSettings.putString(KEYS.USER_INFO, Json.encodeToString(info))
     }
 

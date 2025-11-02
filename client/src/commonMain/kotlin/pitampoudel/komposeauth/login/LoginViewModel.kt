@@ -69,7 +69,7 @@ class LoginViewModel internal constructor(
             }
 
             is Result.Success -> {
-                authPreferences.saveUserInformation(
+                authPreferences.saveAuthenticatedUserInfo(
                     info = res.data
                 )
             }

@@ -10,13 +10,13 @@ import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.koinInject
 import org.koin.core.KoinApplication
 import org.koin.core.component.KoinComponent
-import org.koin.core.context.loadKoinModules
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import pitampoudel.core.presentation.LazyState
 import pitampoudel.komposeauth.core.data.AuthClientImpl
 import pitampoudel.komposeauth.core.data.AuthPreferencesImpl
+import pitampoudel.komposeauth.core.data.AuthStateChecker
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.data.UserInfoResponse
@@ -33,12 +33,11 @@ fun initializeKomposeAuth(
     httpClient: HttpClient,
     authUrl: String
 ) {
-    val coreModule = module {
-        single<ObservableSettings> { Settings().makeObservable() }
-        single<AuthPreferences> { AuthPreferencesImpl(get()) }
-    }
 
     val module = module {
+        single<ObservableSettings> { Settings().makeObservable() }
+        single<AuthStateChecker> { AuthStateChecker(httpClient = httpClient, authUrl = authUrl) }
+        single<AuthPreferences> { AuthPreferencesImpl(get(), get()) }
         single<AuthClient> {
             AuthClientImpl(
                 httpClient = httpClient,
@@ -52,9 +51,9 @@ fun initializeKomposeAuth(
     }
 
     app?.let {
-        app.modules(coreModule, module)
+        app.modules(module)
     } ?: run {
-        startKoin { modules(coreModule, module) }
+        startKoin { modules(module) }
     }
 }
 
@@ -65,7 +64,7 @@ fun initializeKomposeAuth(
 fun rememberCurrentUser(): LazyState<UserInfoResponse> {
     val authPreferences = koinInject<AuthPreferences>()
     return produceState<LazyState<UserInfoResponse>>(LazyState.Loading) {
-        authPreferences.userInfoResponse.collectLatest { user ->
+        authPreferences.authenticatedUserInfo.collectLatest { user ->
             value = LazyState.Loaded(user)
         }
     }.value
