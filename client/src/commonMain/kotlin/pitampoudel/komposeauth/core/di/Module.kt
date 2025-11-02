@@ -15,7 +15,6 @@ import org.koin.dsl.module
 import pitampoudel.core.presentation.LazyState
 import pitampoudel.komposeauth.core.data.AuthClientImpl
 import pitampoudel.komposeauth.core.data.AuthPreferencesImpl
-import pitampoudel.komposeauth.core.data.AuthStateChecker
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.data.ProfileResponse
@@ -32,11 +31,9 @@ fun initializeKomposeAuth(
     httpClient: HttpClient,
     authUrl: String
 ) {
-
     val module = module {
         single<ObservableSettings> { Settings().makeObservable() }
-        single<AuthStateChecker> { AuthStateChecker(httpClient = httpClient, authUrl = authUrl) }
-        single<AuthPreferences> { AuthPreferencesImpl(get(), get()) }
+        single<AuthPreferences> { AuthPreferencesImpl(get()) }
         single<AuthClient> {
             AuthClientImpl(
                 httpClient = httpClient,
