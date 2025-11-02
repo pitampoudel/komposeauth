@@ -3,6 +3,7 @@ package pitampoudel.komposeauth.data
 
 object ApiEndpoints {
     const val JWKS = "oauth2/jwks"
+    const val TOKEN = "token"
     const val LOGIN = "login"
     const val USERS = "users"
     const val USERS_IN_BULK = "users/bulk"

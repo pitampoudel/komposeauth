@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import pitampoudel.komposeauth.AppProperties
 import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints
+import pitampoudel.komposeauth.data.ApiEndpoints.TOKEN
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.OAuth2TokenData
@@ -45,7 +46,7 @@ class AuthController(
     private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
     val appProperties: AppProperties
 ) {
-    @PostMapping("/token")
+    @PostMapping("/$TOKEN")
     @Operation(
         summary = "Login with credentials",
         description = "Validate credentials and returns JWT tokens."
