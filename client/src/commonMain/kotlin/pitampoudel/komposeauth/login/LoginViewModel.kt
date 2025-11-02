@@ -76,9 +76,8 @@ class LoginViewModel internal constructor(
                     }
 
                     is Result.Success -> {
-                        authPreferences.saveLoggedInDetails(
-                            tokenData = res.data,
-                            userInfoResponse = userInfoRes.data
+                        authPreferences.saveUserInformation(
+                            info = userInfoRes.data
                         )
                     }
                 }
