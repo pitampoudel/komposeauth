@@ -49,7 +49,7 @@ class AuthController(
     @PostMapping("/${ApiEndpoints.LOGIN}")
     @Operation(
         summary = "Login with credentials",
-        description = "Validate credentials and returns user profile."
+        description = "Validate credentials and returns user profile or tokens."
     )
     fun login(
         @RequestBody
