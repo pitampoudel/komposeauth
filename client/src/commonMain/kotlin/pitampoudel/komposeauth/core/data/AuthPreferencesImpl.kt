@@ -41,13 +41,21 @@ internal class AuthPreferencesImpl(
         tokenData: OAuth2TokenData,
         userInfoResponse: UserInfoResponse
     ) {
-        suspendSettings.putString(KEYS.REFRESH_TOKEN, tokenData.refreshToken)
+        tokenData.refreshToken?.let {
+            suspendSettings.putString(KEYS.REFRESH_TOKEN, it)
+        } ?: run {
+            suspendSettings.remove(KEYS.REFRESH_TOKEN)
+        }
         suspendSettings.putString(KEYS.USER_INFO, Json.encodeToString(userInfoResponse))
         accessToken = tokenData.accessToken
     }
 
     override suspend fun updateTokenData(tokenData: OAuth2TokenData) {
-        suspendSettings.putString(KEYS.REFRESH_TOKEN, tokenData.refreshToken)
+        tokenData.refreshToken?.let {
+            suspendSettings.putString(KEYS.REFRESH_TOKEN, it)
+        } ?: run {
+            suspendSettings.remove(KEYS.REFRESH_TOKEN)
+        }
         accessToken = tokenData.accessToken
     }
 
