@@ -90,6 +90,10 @@ class AppProperties(val envService: EnvService) {
         get() = field?.takeIf { it.isNotBlank() }
             ?: envService.getEnv().smtpFromEmail.takeIf { !it.isNullOrBlank() }
 
+    var sentryDsn: String? = null
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().sentryDsn.takeIf { !it.isNullOrBlank() }
+
     var samayeApiKey: String? = null
 
     fun rpId(): String = URL(selfBaseUrl).host

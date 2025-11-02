@@ -9,11 +9,14 @@ import org.springframework.context.annotation.Bean
 import javax.annotation.PostConstruct
 
 @SpringBootApplication
-class AuthApplication {
+class AuthApplication(private val appProperties: AppProperties) {
 
     @PostConstruct
     fun initSentry() {
         // Ensure Sentry is initialized and ready to capture exceptions
+        Sentry.init {
+            it.dsn = appProperties.sentryDsn
+        }
         Sentry.configureScope { scope ->
             scope.setTag("component", "Auth-Server")
             scope.setTag("environment", System.getenv("SPRING_PROFILES_ACTIVE") ?: "default")
@@ -21,7 +24,7 @@ class AuthApplication {
     }
 
     @Bean
-    fun startupChecks(appProperties: AppProperties): ApplicationRunner = ApplicationRunner {
+    fun startupChecks(): ApplicationRunner = ApplicationRunner {
         GcpUtils.assertAuthenticatedProject(appProperties.expectedGcpProjectId)
     }
 }

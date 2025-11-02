@@ -15,17 +15,6 @@ logging:
   level:
     root: ERROR
 
-sentry:
-  logs.enabled: true
-  dsn: ${SENTRY_DSN:}
-  traces-sample-rate: 1.0
-  logging:
-    minimum-event-level: debug
-    minimum-breadcrumb-level: debug
-  send-default-pii: true
-  enable-tracing: true
-
-
 server:
   address: 0.0.0.0
   forward-headers-strategy: framework
