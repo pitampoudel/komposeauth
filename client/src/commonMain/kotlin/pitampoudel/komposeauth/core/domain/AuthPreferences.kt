@@ -10,6 +10,7 @@ internal interface AuthPreferences {
         tokenData: OAuth2TokenData,
         userInfoResponse: ProfileResponse
     )
+    suspend fun saveUserProfile(data: ProfileResponse)
     suspend fun updateTokenData(tokenData: OAuth2TokenData)
     suspend fun updateUserProfile(info: ProfileResponse)
     fun accessToken(): String?

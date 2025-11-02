@@ -2,14 +2,15 @@ package pitampoudel.komposeauth.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.core.domain.AuthClient
-import pitampoudel.komposeauth.core.domain.AuthPreferences
-import pitampoudel.komposeauth.domain.currentPlatform
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import pitampoudel.core.domain.Result
+import pitampoudel.komposeauth.core.domain.AuthClient
+import pitampoudel.komposeauth.core.domain.AuthPreferences
+import pitampoudel.komposeauth.data.ProfileResponse
+import pitampoudel.komposeauth.domain.currentPlatform
 
 class LoginViewModel internal constructor(
     private val authClient: AuthClient,
@@ -69,9 +70,18 @@ class LoginViewModel internal constructor(
             }
 
             is Result.Success -> {
-                authPreferences.saveAuthenticatedUser(
-                    profile = res.data
-                )
+                val profileRes = authClient.fetchUserInfo()
+                when (profileRes) {
+                    is Result.Error -> _state.update {
+                        it.copy(infoMsg = profileRes.message)
+                    }
+                    is Result.Success<ProfileResponse> -> {
+                        authPreferences.saveAuthenticatedUser(
+                            tokenData = res.data,
+                            userInfoResponse = profileRes.data
+                        )
+                    }
+                }
             }
         }
 

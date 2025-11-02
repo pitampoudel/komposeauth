@@ -61,7 +61,7 @@ class OtpViewModel internal constructor(
                                     }
 
                                     is Result.Success -> {
-                                        authPreferences.saveAuthenticatedUser(res.data)
+                                        authPreferences.saveUserProfile(res.data)
                                         uiEventChannel.send(ResultUiEvent.Completed)
                                     }
                                 }

@@ -50,6 +50,10 @@ internal class AuthPreferencesImpl(
         suspendSettings.putString(KEYS.USER_PROFILE, Json.encodeToString(userInfoResponse))
     }
 
+    override suspend fun saveUserProfile(data: ProfileResponse) {
+        suspendSettings.putString(KEYS.USER_PROFILE, Json.encodeToString(data))
+    }
+
     override suspend fun updateTokenData(tokenData: OAuth2TokenData) {
         tokenData.refreshToken?.let {
             suspendSettings.putString(KEYS.REFRESH_TOKEN, it)
