@@ -3,12 +3,12 @@ package pitampoudel.komposeauth.profile
 import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.komposeauth.data.UpdateProfileRequest
-import pitampoudel.komposeauth.data.UserInfoResponse
+import pitampoudel.komposeauth.data.ProfileResponse
 
 data class ProfileState(
     val progress: Float? = null,
     val infoMsg: InfoMessage? = null,
-    val userInfo: UserInfoResponse? = null,
+    val profile: ProfileResponse? = null,
     val askingDeactivateConfirmation: Boolean = false,
     val editingState: EditingState = EditingState(),
     val webAuthnRegistrationOptions: String? = null

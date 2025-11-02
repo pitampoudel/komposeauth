@@ -3,11 +3,10 @@ package pitampoudel.komposeauth.data
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 @Serializable
-data class UserInfoResponse @OptIn(ExperimentalTime::class) constructor(
+data class ProfileResponse(
     @SerialName("givenName")
     val givenName: String,
     @SerialName("familyName")
@@ -31,7 +30,9 @@ data class UserInfoResponse @OptIn(ExperimentalTime::class) constructor(
     @SerialName("updatedAt")
     @Contextual val updatedAt: Instant,
     @SerialName("socialLinks")
-    val socialLinks: List<String>
+    val socialLinks: List<String>,
+    @SerialName("roles")
+    val roles: List<String>
 ) {
     fun fullName() = "$givenName $familyName"
 }

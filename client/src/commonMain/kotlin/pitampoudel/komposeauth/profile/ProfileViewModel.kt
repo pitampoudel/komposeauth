@@ -44,13 +44,13 @@ class ProfileViewModel internal constructor(
                 it.copy(webAuthnRegistrationOptions = options)
             }
         }
-        authPreferences.authenticatedUserInfo.onEach { info ->
+        authPreferences.authenticatedUser.onEach { profile ->
             _state.update {
                 it.copy(
-                    userInfo = info,
+                    profile = profile,
                     editingState = it.editingState.copy(
-                        givenName = info?.givenName ?: it.editingState.givenName,
-                        familyName = info?.familyName ?: it.editingState.familyName
+                        givenName = profile?.givenName ?: it.editingState.givenName,
+                        familyName = profile?.familyName ?: it.editingState.familyName
                     ),
                 )
             }

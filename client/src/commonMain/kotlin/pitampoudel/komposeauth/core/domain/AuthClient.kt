@@ -6,13 +6,12 @@ import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.DocumentInformation
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.LoginOptions
-import pitampoudel.komposeauth.data.OAuth2TokenData
 import pitampoudel.komposeauth.data.PersonalInformation
 import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
 import pitampoudel.komposeauth.data.UpdateAddressDetailsRequest
 import pitampoudel.komposeauth.data.UpdatePhoneNumberRequest
 import pitampoudel.komposeauth.data.UpdateProfileRequest
-import pitampoudel.komposeauth.data.UserInfoResponse
+import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.domain.Platform
 import pitampoudel.core.domain.Result
@@ -20,8 +19,8 @@ import pitampoudel.core.domain.Result
 
 internal interface AuthClient {
     suspend fun fetchLoginConfig(platform: Platform = Platform.WEB): Result<LoginOptions>
-    suspend fun exchangeCredentialForToken(credential: Credential): Result<UserInfoResponse>
-    suspend fun fetchUserInfo(): Result<UserInfoResponse>
+    suspend fun exchangeCredentialForToken(credential: Credential): Result<ProfileResponse>
+    suspend fun fetchUserInfo(): Result<ProfileResponse>
     suspend fun deactivate(): Result<HttpResponse>
     suspend fun verifyPhoneOtp(req: VerifyPhoneOtpRequest): Result<HttpResponse>
     suspend fun sendPhoneOtp(request: UpdatePhoneNumberRequest): Result<HttpResponse>

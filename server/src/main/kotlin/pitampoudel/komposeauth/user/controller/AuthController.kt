@@ -22,9 +22,11 @@ import pitampoudel.komposeauth.AppProperties
 import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential
+import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.OAuth2TokenData
-import pitampoudel.komposeauth.data.UserResponse
-import pitampoudel.komposeauth.user.dto.mapToResponseDto
+import pitampoudel.komposeauth.data.ProfileResponse
+import pitampoudel.komposeauth.kyc.service.KycService
+import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.service.UserService
 import javax.security.auth.login.AccountLockedException
@@ -36,6 +38,7 @@ import kotlin.time.toJavaDuration
 class AuthController(
     val userService: UserService,
     val jwtService: JwtService,
+    val kycService: KycService,
     private val passwordEncoder: PasswordEncoder,
     private val objectMapper: ObjectMapper,
     private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
@@ -69,14 +72,14 @@ class AuthController(
     @PostMapping("/${ApiEndpoints.LOGIN}")
     @Operation(
         summary = "Login with credentials",
-        description = "Validate credentials and returns User Info."
+        description = "Validate credentials and returns user profile."
     )
     fun login(
         @RequestBody
         request: Credential,
         httpServletRequest: HttpServletRequest,
         httpServletResponse: HttpServletResponse
-    ): ResponseEntity<UserResponse?> {
+    ): ResponseEntity<ProfileResponse?> {
 
         val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
         val accessToken = jwtService.generateAccessToken(user)
@@ -103,7 +106,7 @@ class AuthController(
         httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
         httpServletResponse.addHeader("Set-Cookie", refreshCookie.toString())
 
-        return ResponseEntity.ok(user.mapToResponseDto())
+        return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.find(user.id)?.status == KycResponse.Status.APPROVED))
     }
 
     fun resolveUserFromCredential(

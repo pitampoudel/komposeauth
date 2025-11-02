@@ -32,7 +32,7 @@ import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
 import pitampoudel.komposeauth.data.UpdateAddressDetailsRequest
 import pitampoudel.komposeauth.data.UpdatePhoneNumberRequest
 import pitampoudel.komposeauth.data.UpdateProfileRequest
-import pitampoudel.komposeauth.data.UserInfoResponse
+import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.domain.Platform
 
@@ -46,7 +46,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
     }
 
-    override suspend fun exchangeCredentialForToken(credential: Credential): Result<UserInfoResponse> {
+    override suspend fun exchangeCredentialForToken(credential: Credential): Result<ProfileResponse> {
         return safeApiCall {
             httpClient.post("$authUrl/$LOGIN") {
                 setBody(credential)
@@ -55,7 +55,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
     }
 
 
-    override suspend fun fetchUserInfo(): Result<UserInfoResponse> {
+    override suspend fun fetchUserInfo(): Result<ProfileResponse> {
         return safeApiCall {
             httpClient.get("$authUrl/$ME") {
             }.asResource { body() }

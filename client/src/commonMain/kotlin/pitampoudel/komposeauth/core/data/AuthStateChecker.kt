@@ -15,7 +15,7 @@ import pitampoudel.core.domain.Result
 import pitampoudel.core.domain.now
 import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.UserInfoResponse
+import pitampoudel.komposeauth.data.ProfileResponse
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.time.ExperimentalTime
@@ -42,7 +42,7 @@ internal class AuthStateChecker(val httpClient: HttpClient, val authUrl: String)
         client: HttpClient,
         url: String
     ): Boolean {
-        val result = safeApiCall<UserInfoResponse> {
+        val result = safeApiCall<ProfileResponse> {
             client.post(
                 "$url/$LOGIN",
                 block = {

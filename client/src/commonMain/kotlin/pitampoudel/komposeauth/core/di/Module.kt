@@ -9,7 +9,6 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.koinInject
 import org.koin.core.KoinApplication
-import org.koin.core.component.KoinComponent
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -19,7 +18,7 @@ import pitampoudel.komposeauth.core.data.AuthPreferencesImpl
 import pitampoudel.komposeauth.core.data.AuthStateChecker
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
-import pitampoudel.komposeauth.data.UserInfoResponse
+import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.kyc.KycViewModel
 import pitampoudel.komposeauth.login.LoginViewModel
 import pitampoudel.komposeauth.otp.OtpViewModel
@@ -61,13 +60,11 @@ fun initializeKomposeAuth(
  * Observe current authenticated user reactively in Compose.
  */
 @Composable
-fun rememberCurrentUser(): LazyState<UserInfoResponse> {
+fun rememberCurrentUser(): LazyState<ProfileResponse> {
     val authPreferences = koinInject<AuthPreferences>()
-    return produceState<LazyState<UserInfoResponse>>(LazyState.Loading) {
-        authPreferences.authenticatedUserInfo.collectLatest { user ->
+    return produceState<LazyState<ProfileResponse>>(LazyState.Loading) {
+        authPreferences.authenticatedUser.collectLatest { user ->
             value = LazyState.Loaded(user)
         }
     }.value
 }
-
-private object KomposeKoinComponent : KoinComponent

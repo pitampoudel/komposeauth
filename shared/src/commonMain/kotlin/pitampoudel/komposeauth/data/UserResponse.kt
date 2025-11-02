@@ -12,7 +12,6 @@ data class UserResponse(
     val email: String?,
     val emailVerified: Boolean,
     val photoUrl: String?,
-    val roles: List<String>,
     @Contextual
     val createdAt: Instant,
     @Contextual

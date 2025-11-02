@@ -21,14 +21,14 @@ import pitampoudel.komposeauth.data.ApiEndpoints.USERS_IN_BULK
 import pitampoudel.komposeauth.data.CreateUserRequest
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.UpdateProfileRequest
-import pitampoudel.komposeauth.data.UserInfoResponse
+import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.data.UserResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client.Companion.SCOPE_READ_ANY_USER
+import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
 import pitampoudel.komposeauth.user.dto.mapToResponseDto
 import pitampoudel.komposeauth.user.service.UserService
 import kotlin.time.ExperimentalTime
-import kotlin.time.toKotlinInstant
 
 
 @Controller
@@ -89,29 +89,15 @@ class UsersController(
 
     @GetMapping("/$ME")
     @Operation(
-        summary = "Get user information",
-        description = "Returns user information for the authenticated user following OAuth2/OIDC standard"
+        summary = "Get user profile",
+        description = "Returns user information for the authenticated user"
     )
     @OptIn(ExperimentalTime::class)
-    fun getUserInfo(authentication: Authentication): ResponseEntity<UserInfoResponse> {
+    fun getUserProfile(authentication: Authentication): ResponseEntity<ProfileResponse> {
         val userId = authentication.name
         val user = userService.findUser(userId) ?: return ResponseEntity.notFound().build()
-
-        val userInfo = UserInfoResponse(
-            id = user.id.toHexString(),
-            email = user.email ?: "",
-            givenName = user.firstName,
-            familyName = user.lastName,
-            phoneNumber = user.phoneNumber,
-            emailVerified = user.emailVerified,
-            phoneNumberVerified = user.phoneNumberVerified,
-            kycVerified = (kycService.find(user.id)?.status == KycResponse.Status.APPROVED),
-            picture = user.picture,
-            createdAt = user.createdAt.toKotlinInstant(),
-            updatedAt = user.updatedAt.toKotlinInstant(),
-            socialLinks = user.socialLinks
-        )
-
+        val userInfo =
+            user.mapToProfileResponseDto(kycService.find(user.id)?.status == KycResponse.Status.APPROVED)
         return ResponseEntity.ok(userInfo)
     }
 
