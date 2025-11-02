@@ -101,31 +101,21 @@ Client module
 implementation("io.github.pitampoudel:komposeauth-client:x.x.x")
 ```
 
-Initialize client
-
-```kotlin
-initializeKomposeAuth(
-  authUrl = "https://your-auth-server",
-  hosts = listOf("https://your-resource-server")
-)
-```
-Ktor client with Bearer auth
+Ktor client
 
 ```kotlin
 val httpClient = HttpClient {
-  install(Auth) {
-    setupBearerAuth(this)
-  }
-  // required to to make public key authentication work
   install(HttpCookies) {
     storage = AcceptAllCookiesStorage()
   }
 }
 ```
 
+Initialize client
 ```kotlin
-initializeKomposeAuthViewModels(
-  httpClient=httpClient
+initializeKomposeAuth(
+  authUrl = "https://your-auth-server",
+    httpClient = get()
 )
 ```
 
