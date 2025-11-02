@@ -108,7 +108,7 @@ class JwtService(
                 "scope" to scopes.joinToString(" "),
                 "scp" to scopes
             ),
-            validity = 1.hours
+            validity = 1.days
         )
         return token?.tokenValue ?: throw RuntimeException("Failed to generate access token")
     }

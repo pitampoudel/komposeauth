@@ -25,7 +25,10 @@ import pitampoudel.komposeauth.data.OAuth2TokenData
 import pitampoudel.komposeauth.user.service.UserService
 import java.time.Duration
 import javax.security.auth.login.AccountLockedException
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.toJavaDuration
 
 @Controller
 class AuthController(
@@ -62,14 +65,7 @@ class AuthController(
             )
 
             is Credential.RefreshToken -> {
-                val tokenFromBody = request.refreshToken
-                val tokenFromCookie = httpServletRequest.cookies?.firstOrNull {
-                    it.name == "REFRESH_TOKEN"
-                }?.value
-                val refreshToken = tokenFromBody ?: tokenFromCookie ?: throw BadRequestException(
-                    "refresh token not found"
-                )
-                val userId = jwtService.validateRefreshToken(refreshToken)
+                val userId = jwtService.validateRefreshToken(request.refreshToken)
                 userService.findUser(userId) ?: throw UsernameNotFoundException("User not found")
             }
 
@@ -105,18 +101,10 @@ class AuthController(
             .secure(true)
             .path("/")
             .sameSite("None")
-            .maxAge(Duration.ofHours(1))
+            .maxAge((1.days - 1.minutes).toJavaDuration())
             .build()
 
-        val refreshCookie = ResponseCookie.from("REFRESH_TOKEN", refreshToken)
-            .httpOnly(true)
-            .secure(true)
-            .path("/")
-            .sameSite("None")
-            .maxAge(Duration.ofDays(7))
-            .build()
         httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
-        httpServletResponse.addHeader("Set-Cookie", refreshCookie.toString())
 
         return ResponseEntity.ok(
             OAuth2TokenData(
