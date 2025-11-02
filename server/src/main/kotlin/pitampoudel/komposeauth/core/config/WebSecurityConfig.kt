@@ -144,7 +144,6 @@ class WebSecurityConfig(
                         "/assets/**",
                         "/oauth2/jwks",
                         "/${ApiEndpoints.LOGIN}",
-                        "/token",
                         "/signup",
                         "/api/auth/**",
                         "/users",

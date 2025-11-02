@@ -16,9 +16,9 @@ import pitampoudel.komposeauth.data.ApiEndpoints.KYC
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC_ADDRESS
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC_DOCUMENTS
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC_PERSONAL_INFO
+import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN_OPTIONS
 import pitampoudel.komposeauth.data.ApiEndpoints.ME
-import pitampoudel.komposeauth.data.ApiEndpoints.TOKEN
 import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PHONE_NUMBER
 import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PROFILE
 import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_PHONE_NUMBER
@@ -49,7 +49,8 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
 
     override suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2TokenData> {
         return safeApiCall {
-            httpClient.post("$authUrl/$TOKEN") {
+            httpClient.post("$authUrl/$LOGIN") {
+                parameter("wantToken", true)
                 setBody(credential)
             }.asResource { body() }
         }

@@ -7,6 +7,7 @@ import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpStatusCode
@@ -16,7 +17,7 @@ import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.data.JwtUtils.isJwtTokenExpired
 import pitampoudel.komposeauth.core.domain.Config
-import pitampoudel.komposeauth.data.ApiEndpoints.TOKEN
+import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.OAuth2TokenData
 
@@ -62,8 +63,9 @@ fun HttpClientConfig<*>.installKomposeAuth(
 
                 val result = safeApiCall<OAuth2TokenData> {
                     client.post(
-                        "$authServerUrl/$TOKEN",
+                        "$authServerUrl/$LOGIN",
                         block = {
+                            parameter("wantToken", true)
                             setBody(Credential.RefreshToken(refreshToken) as Credential)
                         }
                     ).asResource { body() }
@@ -90,7 +92,7 @@ fun HttpClientConfig<*>.installKomposeAuth(
                 val authorizedHosts = (resourceServerUrls + authServerUrl).map { Url(it).host }
                 val host = builder.url.host
                 val urlString = builder.url.toString()
-                val isAuthEndpoint = urlString.endsWith("/$TOKEN")
+                val isAuthEndpoint = urlString.endsWith("/$LOGIN")
                 (authorizedHosts.contains(host) || isIPv4(host)) && !isAuthEndpoint
             }
         }

@@ -18,14 +18,13 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import pitampoudel.komposeauth.AppProperties
 import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints
-import pitampoudel.komposeauth.data.ApiEndpoints.TOKEN
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.OAuth2TokenData
-import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
 import pitampoudel.komposeauth.user.entity.User
@@ -46,29 +45,6 @@ class AuthController(
     private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
     val appProperties: AppProperties
 ) {
-    @PostMapping("/$TOKEN")
-    @Operation(
-        summary = "Login with credentials",
-        description = "Validate credentials and returns JWT tokens."
-    )
-    fun token(
-        @RequestBody
-        request: Credential,
-        httpServletRequest: HttpServletRequest,
-        httpServletResponse: HttpServletResponse
-    ): ResponseEntity<OAuth2TokenData> {
-        val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
-        val accessToken = jwtService.generateAccessToken(user)
-        val refreshToken = jwtService.generateRefreshToken(user)
-        return ResponseEntity.ok(
-            OAuth2TokenData(
-                accessToken = accessToken,
-                refreshToken = refreshToken,
-                tokenType = "Bearer",
-                expiresIn = 1.days.inWholeSeconds,
-            )
-        )
-    }
 
     @PostMapping("/${ApiEndpoints.LOGIN}")
     @Operation(
@@ -78,14 +54,26 @@ class AuthController(
     fun login(
         @RequestBody
         request: Credential,
+        @RequestParam(required = false, defaultValue = false.toString())
+        wantToken: Boolean,
         httpServletRequest: HttpServletRequest,
         httpServletResponse: HttpServletResponse
-    ): ResponseEntity<ProfileResponse?> {
+    ): ResponseEntity<*> {
 
         val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
         val accessToken = jwtService.generateAccessToken(user)
         val refreshToken = jwtService.generateRefreshToken(user)
 
+        if (wantToken) {
+            return ResponseEntity.ok(
+                OAuth2TokenData(
+                    accessToken = accessToken,
+                    refreshToken = refreshToken,
+                    tokenType = "Bearer",
+                    expiresIn = 1.days.inWholeSeconds,
+                )
+            )
+        }
         val accessCookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
             .domain(appProperties.domain)
             .httpOnly(true)
@@ -103,7 +91,6 @@ class AuthController(
             .sameSite("None")
             .maxAge((7.days - 1.minutes).toJavaDuration())
             .build()
-
         httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
         httpServletResponse.addHeader("Set-Cookie", refreshCookie.toString())
 
