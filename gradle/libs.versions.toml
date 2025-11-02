@@ -5,6 +5,7 @@ credentialsPlayServicesAuth = "1.6.0-beta02"
 cryptography = "0.5.0"
 jjwtApi = "0.13.0"
 junitJupiter = "1.21.3"
+kermit = "2.0.8"
 kotlin = "2.2.20"
 android-minSdk = "24"
 android-compileSdk = "36"
@@ -40,6 +41,7 @@ jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwtApi" }
 jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwtApi" }
 junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "junitJupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
 coil3-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.3.0" }
 coil3-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version = "3.3.0" }

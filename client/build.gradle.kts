@@ -45,6 +45,7 @@ kotlin {
                 implementation(libs.ktor.client.logging)
                 implementation(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.auth)
+
                 // settings
                 implementation(libs.multiplatformSettings.noArg)
                 implementation(libs.multiplatformSettings.coroutines)
