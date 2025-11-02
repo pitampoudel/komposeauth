@@ -3,12 +3,12 @@ package pitampoudel.komposeauth
 import com.google.common.net.InternetDomainName
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import pitampoudel.komposeauth.domain.Platform
 import pitampoudel.komposeauth.setup.service.EnvService
+import pitampoudel.komposeauth.webauthn.utils.WebAuthnUtils.androidOrigin
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.net.URL
@@ -72,9 +72,9 @@ class AppProperties(val envService: EnvService) {
     var googleAuthDesktopClientSecret: String? = null
         get() = field?.takeIf { it.isNotBlank() }
             ?: envService.getEnv().googleAuthDesktopClientSecret.takeIf { !it.isNullOrBlank() }
-    var assetLinksJson: String? = null
+    var androidSha256List: String? = null
         get() = field?.takeIf { it.isNotBlank() }
-            ?: envService.getEnv().assetLinksJson.takeIf { !it.isNullOrBlank() }
+            ?: envService.getEnv().androidSha256List.takeIf { !it.isNullOrBlank() }
     var twilioAccountSid: String? = null
         get() = field?.takeIf { it.isNotBlank() }
             ?: envService.getEnv().twilioAccountSid.takeIf { !it.isNullOrBlank() }
@@ -107,11 +107,6 @@ class AppProperties(val envService: EnvService) {
             ?: envService.getEnv().sentryDsn.takeIf { !it.isNullOrBlank() }
 
     var samayeApiKey: String? = null
-
-    fun assetLinks(): List<AssetLink>? {
-        return assetLinksJson?.let { Json.decodeFromString<List<AssetLink>>(it) }
-    }
-
     fun googleClientId(platform: Platform): String? {
         val value = when (platform) {
             Platform.DESKTOP -> googleAuthDesktopClientId
@@ -132,6 +127,11 @@ class AppProperties(val envService: EnvService) {
         return value?.takeIf { it.isNotBlank() }
     }
 
+    fun androidOrigins(): Set<String> {
+        return androidSha256List?.split(",")?.map {
+            androidOrigin(it)
+        }.orEmpty().toSet()
+    }
 
     fun getLocalIpAddress(): String? {
         val excludePrefixes = listOf(

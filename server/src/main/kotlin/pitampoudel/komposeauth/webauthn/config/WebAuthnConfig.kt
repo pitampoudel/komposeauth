@@ -19,11 +19,10 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations
 import org.springframework.stereotype.Repository
 import pitampoudel.komposeauth.AppProperties
-import pitampoudel.komposeauth.webauthn.utils.WebAuthnUtils.webAuthnAllowedOrigins
 import pitampoudel.komposeauth.user.repository.UserRepository
 import pitampoudel.komposeauth.webauthn.entity.PublicKeyCredential
-import pitampoudel.komposeauth.webauthn.repository.PublicKeyCredentialRepository
 import pitampoudel.komposeauth.webauthn.entity.PublicKeyUser
+import pitampoudel.komposeauth.webauthn.repository.PublicKeyCredentialRepository
 import pitampoudel.komposeauth.webauthn.repository.PublicKeyUserRepository
 import kotlin.jvm.optionals.getOrNull
 
@@ -125,9 +124,7 @@ class WebAuthnConfig(
                 .id(appProperties.domain)
                 .name(appProperties.name)
                 .build(),
-            webAuthnAllowedOrigins(
-                assetLinks = appProperties.assetLinks()
-            ) + appProperties.selfBaseUrl
+            appProperties.androidOrigins() + appProperties.selfBaseUrl
         )
     }
 

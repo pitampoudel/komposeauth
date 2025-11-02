@@ -81,8 +81,8 @@ SENTRY_DSN=                  # Enables Sentry reporting
 GCP_BUCKET_NAME=             # If set, uses Google Cloud Storage
 EXPECTED_GCP_PROJECT_ID=     # Verifies it matches the active GCP project
 
-# Digital Asset Links
-ASSET_LINKS_JSON=
+# for webauthn
+ANDROID_SHA_256_LIST=
 ```
 
 ### 2) Add the SDKs to your KMP project

@@ -1,9 +1,5 @@
 package pitampoudel.komposeauth.webauthn.utils
 
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonPrimitive
-import pitampoudel.komposeauth.AssetLink
 import java.util.Base64
 
 object WebAuthnUtils {
@@ -16,7 +12,7 @@ object WebAuthnUtils {
      * Output:
      *  "android:apk-key-hash:qvuLMyLL__vtfHay6y_KGGHYL5Qkkf5aufucFCAtWVE"
      */
-    fun generateAndroidOrigin(sha256: String): String {
+    fun androidOrigin(sha256: String): String {
         val bytes = sha256
             .split(":")
             .map { it.trim().toInt(16).toByte() }
@@ -24,13 +20,5 @@ object WebAuthnUtils {
 
         val base64Url = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
         return "android:apk-key-hash:$base64Url"
-    }
-
-    fun webAuthnAllowedOrigins(assetLinks: List<AssetLink>?): Set<String> {
-        return assetLinks?.flatMap { assetLink ->
-            assetLink.target["sha256_cert_fingerprints"]?.jsonArray?.mapNotNull {
-                it.jsonPrimitive.contentOrNull
-            }?.map { generateAndroidOrigin(it) }.orEmpty()
-        }.orEmpty().toSet()
     }
 }

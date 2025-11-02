@@ -21,7 +21,7 @@ data class Env(
     var googleAuthDesktopClientId: String? = null,
     var googleAuthDesktopClientSecret: String? = null,
 
-    var assetLinksJson: String? = null,
+    var androidSha256List: String? = null,
 
     var twilioAccountSid: String? = null,
     var twilioAuthToken: String? = null,

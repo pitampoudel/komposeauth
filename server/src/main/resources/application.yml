@@ -22,7 +22,7 @@ app:
   name: ${APP_NAME:}
   logo-url: ${APP_LOGO_URL:}
   self-base-url: ${SELF_BASE_URL:}
-  assetLinksJson: ${ASSET_LINKS_JSON:}
+  androidSha256List: ${ANDROID_SHA_256_LIST:}
   gcp-bucket-name: ${GCP_BUCKET_NAME:}
   twilio-account-sid: ${TWILIO_ACCOUNT_SID:}
   twilio-auth-token: ${TWILIO_AUTH_TOKEN:}
