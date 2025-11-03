@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import kotlinx.serialization.json.Json
-import org.apache.coyote.BadRequestException
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.userdetails.UsernameNotFoundException
@@ -87,16 +86,7 @@ class AuthController(
             .maxAge((1.days - 1.minutes).toJavaDuration())
             .build()
 
-        val refreshCookie = ResponseCookie.from("REFRESH_TOKEN", refreshToken)
-            .domain(appProperties.domain)
-            .httpOnly(true)
-            .secure(true)
-            .path("/")
-            .sameSite("None")
-            .maxAge((7.days - 1.minutes).toJavaDuration())
-            .build()
         httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
-        httpServletResponse.addHeader("Set-Cookie", refreshCookie.toString())
 
         return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.find(user.id)?.status == KycResponse.Status.APPROVED))
     }
@@ -121,12 +111,7 @@ class AuthController(
             )
 
             is Credential.RefreshToken -> {
-                val token = request.refreshToken ?: httpServletRequest.cookies?.find {
-                    it.name == "REFRESH_TOKEN"
-                }?.value ?: throw BadRequestException(
-                    "refresh token not found"
-                )
-                val userId = jwtService.validateRefreshToken(token)
+                val userId = jwtService.validateRefreshToken(request.refreshToken)
                 userService.findUser(userId) ?: throw UsernameNotFoundException("User not found")
             }
 

@@ -53,7 +53,7 @@ sealed class Credential {
     @SerialName("REFRESH_TOKEN")
     data class RefreshToken(
         @SerialName("refreshToken")
-        val refreshToken: String?
+        val refreshToken: String
     ) : Credential()
 
 }
