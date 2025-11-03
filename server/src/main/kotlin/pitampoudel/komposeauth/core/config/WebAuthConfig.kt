@@ -1,17 +1,12 @@
 package pitampoudel.komposeauth.core.config
 
-import pitampoudel.komposeauth.AppProperties
-import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
-import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
-import pitampoudel.komposeauth.data.KycResponse
-import pitampoudel.komposeauth.kyc.service.KycService
-import pitampoudel.komposeauth.user.service.UserService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.User
@@ -41,12 +36,19 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
 import org.springframework.web.client.RestTemplate
+import pitampoudel.komposeauth.AppProperties
+import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
+import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
+import pitampoudel.komposeauth.data.KycResponse
+import pitampoudel.komposeauth.kyc.service.KycService
+import pitampoudel.komposeauth.user.service.UserService
 import java.time.Instant
 import java.util.Base64
 import javax.security.auth.login.AccountLockedException
 import javax.security.auth.login.AccountNotFoundException
 
 @Configuration
+@EnableWebSecurity
 class WebAuthConfig() {
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
