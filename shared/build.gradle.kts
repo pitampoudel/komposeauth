@@ -48,7 +48,7 @@ kotlin {
 }
 
 android {
-    namespace = "komposeauth"
+    namespace = "komposeauth.shared"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()

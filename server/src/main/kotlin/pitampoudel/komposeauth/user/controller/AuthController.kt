@@ -68,7 +68,7 @@ class AuthController(
 
         if (wantToken) {
             return ResponseEntity.ok(
-                Json.encodeToJsonElement(
+                Json.encodeToString(
                     OAuth2TokenData(
                         accessToken = accessToken,
                         refreshToken = refreshToken,
