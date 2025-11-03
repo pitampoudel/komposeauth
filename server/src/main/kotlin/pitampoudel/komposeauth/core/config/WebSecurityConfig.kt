@@ -96,10 +96,24 @@ class WebSecurityConfig(
     @Bean
     fun cookieAwareBearerTokenResolver(): BearerTokenResolver {
         val delegate = DefaultBearerTokenResolver()
+        val publicPaths = setOf(
+            "/${ApiEndpoints.LOGIN}"
+        )
+
         return object : BearerTokenResolver {
             override fun resolve(request: HttpServletRequest): String? {
+                val path = request.servletPath ?: request.requestURI
+
+                // Skip any public endpoint (starts with or exact match)
+                if (publicPaths.any { path.startsWith(it) }) {
+                    return null
+                }
+
+                // 1. Try Authorization header first
                 val fromHeader = delegate.resolve(request)
                 if (!fromHeader.isNullOrBlank()) return fromHeader
+
+                // 2. Then try cookie (ACCESS_TOKEN)
                 val cookie = request.cookies?.firstOrNull { it.name == "ACCESS_TOKEN" }
                 return cookie?.value
             }
