@@ -79,6 +79,13 @@ internal class AuthPreferencesImpl private constructor(
     }
 
     companion object {
-        val instance = AuthPreferencesImpl()
+        var INSTANCE: AuthPreferences? = null
+        fun getInstance(): AuthPreferences {
+            return INSTANCE ?: run {
+                val obj = AuthPreferencesImpl()
+                INSTANCE = obj
+                obj
+            }
+        }
     }
 }

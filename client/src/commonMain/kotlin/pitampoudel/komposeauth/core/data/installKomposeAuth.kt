@@ -33,7 +33,7 @@ fun HttpClientConfig<*>.installKomposeAuth(
         return ipv4Regex.matches(host)
     }
 
-    val authPreferences = AuthPreferencesImpl.instance
+    val authPreferences = AuthPreferencesImpl.getInstance()
 
     install(HttpCookies) {
         storage = AcceptAllCookiesStorage()

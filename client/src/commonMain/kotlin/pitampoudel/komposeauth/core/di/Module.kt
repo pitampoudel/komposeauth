@@ -31,7 +31,7 @@ fun initializeKomposeAuth(
     httpClient: HttpClient
 ) {
     val module = module {
-        single<AuthPreferences> { AuthPreferencesImpl.instance }
+        single<AuthPreferences> { AuthPreferencesImpl.getInstance() }
         single<AuthClient> {
             val authServerUrl = Config.authServerUrl
             if (authServerUrl == null) {
