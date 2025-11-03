@@ -97,7 +97,8 @@ class WebSecurityConfig(
     fun cookieAwareBearerTokenResolver(): BearerTokenResolver {
         val delegate = DefaultBearerTokenResolver()
         val publicPaths = setOf(
-            "/${ApiEndpoints.LOGIN}"
+            "/${ApiEndpoints.LOGIN}",
+            "/${ApiEndpoints.LOGIN_OPTIONS}",
         )
 
         return object : BearerTokenResolver {
