@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.core.data
 
+import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.auth.Auth
@@ -16,6 +17,7 @@ import pitampoudel.core.data.asResource
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.data.JwtUtils.isJwtTokenExpired
+import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.core.domain.Config
 import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.data.Credential
@@ -42,13 +44,13 @@ fun HttpClientConfig<*>.installKomposeAuth(
     install(Auth) {
         bearer {
             loadTokens {
-                val accessToken = authPreferences.accessToken()
-                val refreshToken = authPreferences.refreshToken()
-                if (refreshToken.isNullOrEmpty()) {
+                val accessToken = authPreferences.tokenData()?.accessToken
+                val refreshToken = authPreferences.tokenData()?.refreshToken
+                if (accessToken.isNullOrEmpty()) {
                     return@loadTokens null
                 }
                 BearerTokens(
-                    accessToken = accessToken ?: "",
+                    accessToken = accessToken,
                     refreshToken = refreshToken
                 )
             }
@@ -60,33 +62,8 @@ fun HttpClientConfig<*>.installKomposeAuth(
                     authPreferences.clear()
                     return@refreshTokens null
                 }
+                refresh(client, authServerUrl, refreshToken, authPreferences)
 
-                val result = safeApiCall<OAuth2TokenData> {
-                    client.post(
-                        "$authServerUrl/$LOGIN",
-                        block = {
-                            parameter("wantToken", true)
-                            setBody(Credential.RefreshToken(refreshToken) as Credential)
-                        }
-                    ).asResource { body() }
-                }
-
-                when (result) {
-                    is Result.Success -> {
-                        authPreferences.updateTokenData(result.data)
-                        BearerTokens(
-                            accessToken = result.data.accessToken,
-                            refreshToken = result.data.refreshToken
-                        )
-                    }
-
-                    is Result.Error -> {
-                        if (result is Result.Error.Http && result.httpStatusCode == HttpStatusCode.Unauthorized) {
-                            authPreferences.clear()
-                        }
-                        null
-                    }
-                }
             }
             sendWithoutRequest { builder ->
                 val authorizedHosts = (resourceServerUrls + authServerUrl).map { Url(it).host }
@@ -95,6 +72,40 @@ fun HttpClientConfig<*>.installKomposeAuth(
                 val isAuthEndpoint = urlString.endsWith("/$LOGIN")
                 (authorizedHosts.contains(host) || isIPv4(host)) && !isAuthEndpoint
             }
+        }
+    }
+}
+
+private suspend fun refresh(
+    client: HttpClient,
+    authServerUrl: String,
+    refreshToken: String,
+    authPreferences: AuthPreferences
+): BearerTokens? {
+    val result = safeApiCall<OAuth2TokenData> {
+        client.post(
+            "$authServerUrl/$LOGIN",
+            block = {
+                parameter("wantToken", true)
+                setBody(Credential.RefreshToken(refreshToken) as Credential)
+            }
+        ).asResource { body() }
+    }
+
+    return when (result) {
+        is Result.Success -> {
+            authPreferences.updateTokenData(result.data)
+            BearerTokens(
+                accessToken = result.data.accessToken,
+                refreshToken = result.data.refreshToken
+            )
+        }
+
+        is Result.Error -> {
+            if (result is Result.Error.Http && result.httpStatusCode == HttpStatusCode.Unauthorized) {
+                authPreferences.clear()
+            }
+            null
         }
     }
 }

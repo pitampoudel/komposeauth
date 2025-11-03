@@ -18,10 +18,9 @@ import pitampoudel.komposeauth.data.ProfileResponse
 internal class AuthPreferencesImpl private constructor() : AuthPreferences {
     private val settings: ObservableSettings by lazy { Settings().makeObservable() }
     private val suspendSettings by lazy { settings.toSuspendSettings() }
-    private var accessToken: String? = null
 
     private object KEYS {
-        const val REFRESH_TOKEN = "refresh_token"
+        const val TOKEN_DATA = "token_data"
         const val USER_PROFILE = "user_profile"
     }
 
@@ -43,12 +42,7 @@ internal class AuthPreferencesImpl private constructor() : AuthPreferences {
         tokenData: OAuth2TokenData,
         userInfoResponse: ProfileResponse
     ) {
-        tokenData.refreshToken?.let {
-            suspendSettings.putString(KEYS.REFRESH_TOKEN, it)
-        } ?: run {
-            suspendSettings.remove(KEYS.REFRESH_TOKEN)
-        }
-        accessToken = tokenData.accessToken
+        suspendSettings.putString(KEYS.TOKEN_DATA, Json.encodeToString(tokenData))
         suspendSettings.putString(KEYS.USER_PROFILE, Json.encodeToString(userInfoResponse))
     }
 
@@ -57,24 +51,23 @@ internal class AuthPreferencesImpl private constructor() : AuthPreferences {
     }
 
     override suspend fun updateTokenData(tokenData: OAuth2TokenData) {
-        tokenData.refreshToken?.let {
-            suspendSettings.putString(KEYS.REFRESH_TOKEN, it)
-        } ?: run {
-            suspendSettings.remove(KEYS.REFRESH_TOKEN)
+        suspendSettings.putString(KEYS.TOKEN_DATA, Json.encodeToString(tokenData))
+    }
+
+    override fun tokenData(): OAuth2TokenData? {
+        return settings.getStringOrNull(KEYS.TOKEN_DATA)?.let {
+            return try {
+                Json.decodeFromString<OAuth2TokenData>(it)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+
+            }
         }
-        accessToken = tokenData.accessToken
     }
-
-    override suspend fun updateUserProfile(info: ProfileResponse) {
-        suspendSettings.putString(KEYS.USER_PROFILE, Json.encodeToString(info))
-    }
-
-    override fun accessToken() = accessToken
-    override fun refreshToken() = settings.getStringOrNull(KEYS.REFRESH_TOKEN)
 
     override suspend fun clear() {
-        accessToken = null
-        suspendSettings.remove(KEYS.REFRESH_TOKEN)
+        suspendSettings.remove(KEYS.TOKEN_DATA)
         suspendSettings.remove(KEYS.USER_PROFILE)
     }
 
