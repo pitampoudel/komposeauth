@@ -13,7 +13,7 @@ spring:
     enabled: false
 logging:
   level:
-    root: ERROR
+    root: DEBUG
 
 server:
   address: 0.0.0.0

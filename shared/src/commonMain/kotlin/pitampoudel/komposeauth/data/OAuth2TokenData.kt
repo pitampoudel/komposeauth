@@ -8,7 +8,7 @@ data class OAuth2TokenData(
     @SerialName("access_token")
     val accessToken: String,
     @SerialName("token_ype")
-    val tokenType: String,
+    val tokenType: String? = null,
     @SerialName("expires_in")
     val expiresIn: Long,
     @SerialName("refresh_token")

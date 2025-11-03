@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.encodeToJsonElement
 import org.apache.coyote.BadRequestException
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
@@ -38,6 +37,7 @@ import kotlin.time.toJavaDuration
 
 @Controller
 class AuthController(
+    val json: Json,
     val userService: UserService,
     val jwtService: JwtService,
     val kycService: KycService,
@@ -68,7 +68,7 @@ class AuthController(
 
         if (wantToken) {
             return ResponseEntity.ok(
-                Json.encodeToString(
+                json.encodeToString(
                     OAuth2TokenData(
                         accessToken = accessToken,
                         refreshToken = refreshToken,
