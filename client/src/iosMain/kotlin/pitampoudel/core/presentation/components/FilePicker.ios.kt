@@ -2,7 +2,6 @@ package pitampoudel.core.presentation.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
@@ -11,6 +10,7 @@ import platform.Foundation.*
 import platform.UIKit.*
 import platform.UniformTypeIdentifiers.*
 import platform.darwin.NSObject
+import platform.posix.memcpy
 
 @Composable
 actual fun rememberFilePicker(
@@ -37,9 +37,10 @@ private class IosFilePicker(
 
     override fun launch() {
         val types = input.ifEmpty { listOf(UTTypeData.identifier) }
+
         val picker = UIDocumentPickerViewController(
             documentTypes = types,
-            inMode = UIDocumentPickerModeImport
+            inMode = UIDocumentPickerMode.UIDocumentPickerModeImport
         ).apply {
             allowsMultipleSelection = (selectionMode == SelectionMode.MULTIPLE)
             this.delegate = delegate
@@ -65,23 +66,22 @@ private class FilePickerDelegate(
     }
 
     override fun documentPickerWasCancelled(controller: UIDocumentPickerViewController) {
-        // User cancelled; no-op
+        // No-op
     }
 
-    @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+    @OptIn(ExperimentalForeignApi::class)
     private fun toKmpFile(url: NSURL): KmpFile {
         val fileName = url.lastPathComponent ?: "unknown"
         val data = NSData.create(contentsOfURL = url)
         val byteArray = data?.let { nsData ->
             ByteArray(nsData.length.toInt()).apply {
                 usePinned {
-                    platform.posix.memcpy(it.addressOf(0), nsData.bytes, nsData.length)
+                    memcpy(it.addressOf(0), nsData.bytes, nsData.length)
                 }
             }
         } ?: ByteArray(0)
 
-        val mimeType = detectMimeType(url)
-
+        val mimeType = detectMimeType(url, fileName)
         return KmpFile(
             name = fileName,
             byteArray = byteArray,
@@ -89,33 +89,9 @@ private class FilePickerDelegate(
         )
     }
 
-    private fun detectMimeType(url: NSURL): String {
-        // Try UTType first (iOS 14+)
-        val type = url.pathExtension?.let { ext ->
-            UTTypeCreatePreferredIdentifierForTag(
-                kUTTagClassFilenameExtension,
-                ext as NSString,
-                null
-            )?.takeIf { it != null }?.let { uti ->
-                UTTypeCopyPreferredTagWithClass(uti.takeRetainedValue(), kUTTagClassMIMEType)
-                    ?.takeRetainedValue()?.toString()
-            }
-        }
-
-        if (type != null) return type
-
-        // Simple fallback
-        val ext = url.pathExtension?.lowercase()
-        return when (ext) {
-            "jpg", "jpeg" -> "image/jpeg"
-            "png" -> "image/png"
-            "pdf" -> "application/pdf"
-            "txt" -> "text/plain"
-            "csv" -> "text/csv"
-            "json" -> "application/json"
-            "mp3" -> "audio/mpeg"
-            "mp4" -> "video/mp4"
-            else -> "application/octet-stream"
-        }
+    private fun detectMimeType(url: NSURL, fileName: String): String {
+        val ext = (url.pathExtension ?: fileName.substringAfterLast('.', "")).lowercase()
+        val type = UTType.typeWithFilenameExtension(ext)
+        return type?.preferredMIMEType ?: "application/octet-stream"
     }
 }
