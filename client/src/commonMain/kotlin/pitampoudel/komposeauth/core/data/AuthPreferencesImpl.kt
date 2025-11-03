@@ -15,10 +15,9 @@ import pitampoudel.komposeauth.data.OAuth2TokenData
 import pitampoudel.komposeauth.data.ProfileResponse
 
 @OptIn(ExperimentalSettingsApi::class)
-internal class AuthPreferencesImpl private constructor(
-    private val settings: ObservableSettings = Settings().makeObservable()
-) : AuthPreferences {
-    private val suspendSettings = settings.toSuspendSettings()
+internal class AuthPreferencesImpl private constructor() : AuthPreferences {
+    private val settings: ObservableSettings by lazy { Settings().makeObservable() }
+    private val suspendSettings by lazy { settings.toSuspendSettings() }
     private var accessToken: String? = null
 
     private object KEYS {
@@ -26,7 +25,7 @@ internal class AuthPreferencesImpl private constructor(
         const val USER_PROFILE = "user_profile"
     }
 
-    override val authenticatedUser: Flow<ProfileResponse?> =
+    override val authenticatedUser: Flow<ProfileResponse?> by lazy {
         settings.getStringOrNullFlow(KEYS.USER_PROFILE).map { stringValue ->
             stringValue?.let {
                 try {
@@ -37,6 +36,7 @@ internal class AuthPreferencesImpl private constructor(
                 }
             }
         }.distinctUntilChanged()
+    }
 
 
     override suspend fun saveAuthenticatedUser(
@@ -79,12 +79,10 @@ internal class AuthPreferencesImpl private constructor(
     }
 
     companion object {
-        var INSTANCE: AuthPreferences? = null
+        private var INSTANCE: AuthPreferences? = null
         fun getInstance(): AuthPreferences {
-            return INSTANCE ?: run {
-                val obj = AuthPreferencesImpl()
-                INSTANCE = obj
-                obj
+            return INSTANCE ?: AuthPreferencesImpl().also {
+                INSTANCE = it
             }
         }
     }
