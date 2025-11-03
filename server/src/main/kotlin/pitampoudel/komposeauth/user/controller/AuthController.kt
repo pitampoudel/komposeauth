@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 import org.apache.coyote.BadRequestException
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
@@ -66,11 +68,13 @@ class AuthController(
 
         if (wantToken) {
             return ResponseEntity.ok(
-                OAuth2TokenData(
-                    accessToken = accessToken,
-                    refreshToken = refreshToken,
-                    tokenType = "Bearer",
-                    expiresIn = 1.days.inWholeSeconds,
+                Json.encodeToJsonElement(
+                    OAuth2TokenData(
+                        accessToken = accessToken,
+                        refreshToken = refreshToken,
+                        tokenType = "Bearer",
+                        expiresIn = 1.days.inWholeSeconds,
+                    )
                 )
             )
         }

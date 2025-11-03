@@ -5,14 +5,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class OAuth2TokenData(
-    @SerialName("accessToken")
+    @SerialName("access_token")
     val accessToken: String,
-    @SerialName("tokenType")
+    @SerialName("token_ype")
     val tokenType: String,
-    @SerialName("expiresIn")
+    @SerialName("expires_in")
     val expiresIn: Long,
-    @SerialName("refreshToken")
+    @SerialName("refresh_token")
     val refreshToken: String? = null,
-    @SerialName("idToken")
+    @SerialName("id_token")
     val idToken: String? = null
 )
