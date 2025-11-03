@@ -78,7 +78,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
         }
 
         override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
-            TODO("Not yet implemented")
+            return Result.Error("Passkeys are not implemented on iOS yet")
         }
     }
 }
