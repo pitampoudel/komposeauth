@@ -3,23 +3,30 @@ package pitampoudel.komposeauth.login
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.russhwolf.settings.ObservableSettings
-import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.LoginOptions
-import pitampoudel.komposeauth.domain.Platform
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.algorithms.SHA256
 import dev.whyoleg.cryptography.providers.webcrypto.WebCrypto
 import io.ktor.http.encodeURLParameter
 import io.ktor.util.encodeBase64
 import kotlinx.browser.window
+import kotlinx.coroutines.await
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import org.koin.mp.KoinPlatform.getKoin
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.events.Event
+import pitampoudel.core.domain.Result
+import pitampoudel.komposeauth.data.Credential
+import pitampoudel.komposeauth.data.LoginOptions
+import pitampoudel.komposeauth.domain.Platform
 import kotlin.coroutines.resume
+import kotlin.js.Promise
 import kotlin.random.Random
+
+@OptIn(ExperimentalWasmJsInterop::class)
+external fun createPasskey(optionsJson: String): Promise<JsAny>
 
 private fun generateCodeVerifier(length: Int = 64): String {
     val allowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
@@ -91,7 +98,13 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
             }
 
             override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
-                TODO("Not yet implemented")
+                return try {
+                    val credentialJs: Any = createPasskey(options).await()
+                    val jsonObject = Json.parseToJsonElement(credentialJs.toString()).jsonObject
+                    Result.Success(jsonObject)
+                } catch (e: Throwable) {
+                    Result.Error(e.message.orEmpty())
+                }
             }
 
             private suspend fun openAuthPopupAndWait(authUrl: String): Result<Credential> {
