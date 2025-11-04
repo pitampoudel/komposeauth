@@ -28,35 +28,44 @@ import kotlin.random.Random
 @OptIn(ExperimentalWasmJsInterop::class)
 @JsFun(
     """
-    function base64urlToArrayBuffer(base64url) {
-      const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-      const pad = '='.repeat((4 - (base64.length % 4)) % 4);
-      const str = atob(base64 + pad);
-      const bytes = new Uint8Array(str.length);
-      for (let i = 0; i < str.length; i++) bytes[i] = str.charCodeAt(i);
-      return bytes.buffer;
-    }
-    function arrayBufferToBase64url(buffer) {
-      const bytes = new Uint8Array(buffer);
-      let binary = '';
-      for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-      return btoa(binary)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+${'$'}/g, '');
-    }
-
     async (optionsJson) => {
       'use strict';
+        function base64urlToArrayBuffer(base64url) {
+          const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+          const pad = base64.length % 4 ? 4 - (base64.length % 4) : 0;
+          const base64Padded = base64 + '='.repeat(pad);
+          const binary = atob(base64Padded);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          return bytes.buffer;
+        }
+        function arrayBufferToBase64url(buffer) {
+          const bytes = new Uint8Array(buffer);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+          const base64 = btoa(binary);
+          return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
         const options = JSON.parse(optionsJson);
         // Convert binary fields from Base64URL to ArrayBuffers for WebAuthn API
         options.challenge = base64urlToArrayBuffer(options.challenge);
-        options.user.id = base64urlToArrayBuffer(options.user.id);
+        if (options.user && options.user.id) {
+          options.user.id = base64urlToArrayBuffer(options.user.id);
+        }
+        
+        // Convert excludeCredentials IDs to ArrayBuffers
+        if (options.excludeCredentials && Array.isArray(options.excludeCredentials)) {
+          options.excludeCredentials = options.excludeCredentials.map(cred => ({
+            ...cred,
+            id: base64urlToArrayBuffer(cred.id)
+          }));
+        }
 
         const credential = await navigator.credentials.create({ publicKey: options });
 
-        // Convert back from ArrayBuffers → Base64URL strings for server
-        return {
+        // Convert back from ArrayBuffers → Base64URL strings for server, and return JSON string
+        const result = {
           publicKey: {
             credential: {
               id: credential.id,
@@ -70,6 +79,7 @@ import kotlin.random.Random
             label: "1password"
           }
         };
+        return JSON.stringify(result);
        }
     """
 )
