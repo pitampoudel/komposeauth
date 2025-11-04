@@ -24,17 +24,19 @@ googleid = "1.1.1"
 playServicesAuth = "21.4.0"
 playServicesAuthApiPhone = "18.3.0"
 ccp = "2.7.3"
-sentryBom = "8.24.0"
-sentrySpringBootStarterJakarta = "8.24.0"
+sentryBom = "8.25.0"
+sentrySpringBootStarterJakarta = "8.25.0"
 springCloudGcpStorage = "7.4.1"
-springdocOpenapiStarterWebmvcUi = "2.8.13"
+springdocOpenapiStarterWebmvcUi = "2.8.14"
 springDotenv = "4.0.0"
 testcontainers = "2.0.1"
 webauthn4jCore = "0.29.7.RELEASE"
+androidx-security-crypto = "1.1.0"
 
 [libraries]
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentialsPlayServicesAuth" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
+androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto" }
 cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptography" }
 cryptography-provider-webcrypto = { module = "dev.whyoleg.cryptography:cryptography-provider-webcrypto", version.ref = "cryptography" }
 jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwtApi" }
@@ -54,6 +56,7 @@ libphonenumber-kotlin = { module = "io.github.luca992.libphonenumber-kotlin:libp
 lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "jetbrains-lifecycle" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }
 mongodb = { module = "org.testcontainers:mongodb" }
+multiplatformSettings-core = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatformSettings" }
 multiplatformSettings-serialization = { module = "com.russhwolf:multiplatform-settings-serialization", version.ref = "multiplatformSettings" }
 multiplatformSettings-noArg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings" }
 multiplatformSettings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version.ref = "multiplatformSettings" }

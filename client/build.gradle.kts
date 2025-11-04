@@ -47,6 +47,7 @@ kotlin {
                 implementation(libs.ktor.client.auth)
 
                 // settings
+                implementation(libs.multiplatformSettings.core)
                 implementation(libs.multiplatformSettings.noArg)
                 implementation(libs.multiplatformSettings.coroutines)
                 implementation(libs.multiplatformSettings.serialization)
@@ -88,6 +89,9 @@ kotlin {
 
                 // Country Code Picker
                 implementation(libs.ccp)
+
+                // Android secure storage
+                implementation(libs.androidx.security.crypto)
             }
         }
 
