@@ -25,6 +25,7 @@ data class AssetLink(
 @Configuration
 @ConfigurationProperties(prefix = "app")
 class AppProperties(val envService: EnvService) {
+    lateinit var base64EncryptionKey: String
 
     val domain: String
         get() {

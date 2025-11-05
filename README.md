@@ -37,7 +37,7 @@ Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Client 
 ```bash
 docker pull pitampoudel/komposeauth:latest
 # Quick start: only MONGODB_URI is required to start with
-docker run -p 8080:8080 -e MONGODB_URI="mongodb://your-mongo-host:27017/auth" pitampoudel/komposeauth:latest
+docker run -p 8080:8080 -e MONGODB_URI="mongodb://your-mongo-host:27017/auth" -e BASE64_ENCRYPTION_KEY="" pitampoudel/komposeauth:latest
 ```
 
 - After the container is running, open: http://localhost:8080/setup to configure the rest of the settings in a guided web UI.
@@ -48,6 +48,9 @@ docker run -p 8080:8080 -e MONGODB_URI="mongodb://your-mongo-host:27017/auth" pi
 ```
 # Database
 MONGODB_URI=                 # Required. Mongo DB connection string
+
+# Security
+BASE64_ENCRYPTION_KEY=       # Required
 
 # App metadata
 APP_NAME=                    # Display name in emails/UI. Default: "komposeauth"
@@ -85,6 +88,16 @@ EXPECTED_GCP_PROJECT_ID=     # Verifies it matches the active GCP project
 ANDROID_SHA_256_LIST=
 ```
 
+```kotlin
+// BASE64_ENCRYPTION_KEY generator
+fun main() {
+    val keyGen = KeyGenerator.getInstance("AES")
+    keyGen.init(256) // or 128/192
+    val key = keyGen.generateKey()
+    val base64Key = Base64.getEncoder().encodeToString(key.encoded)
+    println(base64Key)
+}
+```
 ### 2) Add the SDKs to your KMP project
 
 Shared module
