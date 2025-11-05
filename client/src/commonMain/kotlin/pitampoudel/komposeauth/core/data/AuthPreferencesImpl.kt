@@ -2,10 +2,8 @@ package pitampoudel.komposeauth.core.data
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ObservableSettings
-import com.russhwolf.settings.Settings
 import com.russhwolf.settings.coroutines.getStringOrNullFlow
 import com.russhwolf.settings.coroutines.toSuspendSettings
-import com.russhwolf.settings.observable.makeObservable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -16,7 +14,7 @@ import pitampoudel.komposeauth.data.ProfileResponse
 
 @OptIn(ExperimentalSettingsApi::class)
 internal class AuthPreferencesImpl private constructor() : AuthPreferences {
-    private val settings: ObservableSettings by lazy { Settings().makeObservable() }
+    private val settings: ObservableSettings by lazy { SecureSettingsFactory().create() }
     private val suspendSettings by lazy { settings.toSuspendSettings() }
 
     private object KEYS {

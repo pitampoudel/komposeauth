@@ -8,7 +8,7 @@ import com.russhwolf.settings.ObservableSettings
  *
  * Platforms without a secure option will fall back to the default [com.russhwolf.settings.Settings] backend.
  */
-internal expect class SecureSettingsFactory {
+internal expect class SecureSettingsFactory() {
     /**
      * Returns an [com.russhwolf.settings.ObservableSettings] instance. Implementation should use a secure
      * storage mechanism where available.
