@@ -1,7 +1,7 @@
 package pitampoudel.komposeauth.core.security
 
 import org.springframework.stereotype.Service
-import pitampoudel.komposeauth.AppProperties
+import pitampoudel.komposeauth.StaticAppProperties
 import java.security.SecureRandom
 import java.util.Base64
 import javax.crypto.Cipher
@@ -14,7 +14,16 @@ import javax.crypto.spec.SecretKeySpec
  * The ciphertext format is: "enc:" + Base64( IV(12) || CIPHERTEXT+TAG )
  */
 @Service
-class CryptoService(val appProperties: AppProperties) {
+class CryptoService(private val props: StaticAppProperties) {
+
+    init {
+        val key = props.base64EncryptionKey
+        if (key.isBlank()) {
+            throw IllegalStateException("encryption key must be provided and non-blank")
+        }
+        // Validate Base64 and size early to fail fast
+        resolveKey()
+    }
 
     companion object {
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
@@ -28,9 +37,9 @@ class CryptoService(val appProperties: AppProperties) {
 
     private fun resolveKey(): SecretKey {
         val raw = try {
-            Base64.getDecoder().decode(appProperties.base64EncryptionKey)
+            Base64.getDecoder().decode(props.base64EncryptionKey)
         } catch (e: IllegalArgumentException) {
-            throw IllegalStateException("encryption key key must be Base64-encoded", e)
+            throw IllegalStateException("encryption key must be Base64-encoded", e)
         }
         if (raw.size != 16 && raw.size != 24 && raw.size != 32) {
             throw IllegalStateException("encryption key must be 128, 192, or 256 bits (Base64-encoded)")

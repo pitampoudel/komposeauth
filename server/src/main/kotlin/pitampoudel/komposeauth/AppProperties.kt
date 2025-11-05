@@ -1,9 +1,6 @@
 package pitampoudel.komposeauth
 
 import com.google.common.net.InternetDomainName
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonObject
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import pitampoudel.komposeauth.domain.Platform
@@ -14,18 +11,9 @@ import java.net.NetworkInterface
 import java.net.URL
 import java.util.Collections
 
-@Serializable
-data class AssetLink(
-    @SerialName("relation")
-    val relation: List<String>,
-    @SerialName("target")
-    val target: JsonObject
-)
-
 @Configuration
 @ConfigurationProperties(prefix = "app")
 class AppProperties(val envService: EnvService) {
-    lateinit var base64EncryptionKey: String
 
     val domain: String
         get() {
