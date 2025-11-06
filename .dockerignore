@@ -1,31 +1,33 @@
-# Git
-.git
-.gitignore
+# Gradle
+.gradle/
+**/build/
+**/out/
+**/.gradle/
 
-# Environment files
-.env*
-!.env.example
-
-# IDE files
+# IDE
 .idea/
-.vscode/
-*.swp
-*.swo
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node/Yarn
+node_modules/
+
+# Kotlin JS store
+kotlin-js-store/
+
+# Local config
+local.properties
+*.keystore
+*.jks
 
 # Logs
 *.log
-logs/
 
-# Documentation
-docs/
-
-# Local development files
-*.db
-*.sqlite3
-
-
-.gradle
-build
-out
-*.iml
-.DS_Store
+# Git
+.git/
+.gitignore
