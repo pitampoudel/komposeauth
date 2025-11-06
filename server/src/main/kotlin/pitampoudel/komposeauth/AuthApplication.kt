@@ -13,9 +13,12 @@ class AuthApplication(private val appProperties: AppProperties) {
 
     @PostConstruct
     fun initSentry() {
-        // Ensure Sentry is initialized and ready to capture exceptions
+        // initialize Sentry when DSN is provided
+        val dsn = appProperties.sentryDsn
+        if (dsn.isNullOrBlank()) return
+
         Sentry.init {
-            it.dsn = appProperties.sentryDsn
+            it.dsn = dsn
         }
         Sentry.configureScope { scope ->
             scope.setTag("component", "Auth-Server")
