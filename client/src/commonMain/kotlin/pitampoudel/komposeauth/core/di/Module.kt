@@ -34,9 +34,7 @@ fun initializeKomposeAuth(
         single<AuthPreferences> { AuthPreferencesImpl.getInstance() }
         single<AuthClient> {
             val authServerUrl = Config.authServerUrl
-            if (authServerUrl == null) {
-                throw Exception("The provided http client must have komposeauth installed")
-            }
+                ?: throw Exception("The provided http client must have komposeauth installed")
             AuthClientImpl(httpClient = httpClient, authUrl = authServerUrl)
         }
         viewModel<OtpViewModel> { OtpViewModel(get(), get()) }

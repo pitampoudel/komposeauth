@@ -11,7 +11,7 @@ android-minSdk = "24"
 android-compileSdk = "36"
 android-targetSdk = "36"
 koin-bom = "4.1.1"
-ktor = "3.3.1"
+ktor = "3.3.2"
 libphonenumberKotlin = "0.1.8"
 mockitoKotlin = "6.1.0"
 multiplatformSettings = "1.3.0"
@@ -37,6 +37,7 @@ composeHotReload = "1.0.0-rc02"
 androidx-activity = "1.11.0"
 androidx-lifecycle = "2.9.5"
 kotlinx-coroutines = "1.10.2"
+buildkonfigGradlePlugin = "0.17.1"
 
 [libraries]
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentialsPlayServicesAuth" }
@@ -73,6 +74,7 @@ ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref =
 ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth", version.ref = "ktor" }
 ktor-client-contentNegotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 jetbrains-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "jetbrains-lifecycle" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
@@ -117,3 +119,4 @@ jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"
 jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "compose" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }
+buildkonfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildkonfigGradlePlugin" }

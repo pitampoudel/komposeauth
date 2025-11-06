@@ -118,7 +118,7 @@ HttpClient example
 ```kotlin
 val httpClient = HttpClient {
     installKomposeAuth(
-        authUrl = "https://your-auth-server",
+        authServerUrl = "https://your-auth-server",
         resourceServerUrls = listOf(
             "https://your-resource-server"
         )
@@ -154,10 +154,15 @@ Login with Credential Manager
 
 ```kotlin
 val vm = koinViewModel<LoginViewModel>()
-val credentialManager = rememberCredentialManager()
-LaunchedEffect(Unit) {
-    val cred = credentialManager.getCredential(state.options)
-    vm.onEvent(LoginEvent.Login(cred))
+val state = vm.state.collectAsStateWithLifecycle().value
+val credentialManager = rememberKmpCredentialManager()
+LaunchedEffect(state.loginConfig) {
+    state.loginConfig?.let {
+        when (val result = credentialManager.getCredential(it)) {
+            is Result.Error -> vm.onEvent(LoginEvent.ShowInfoMsg(result.message))
+            is Result.Success<Credential> -> vm.onEvent(LoginEvent.Login(result.data))
+        }
+    }
 }
 ```
 

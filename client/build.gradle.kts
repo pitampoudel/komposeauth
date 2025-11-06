@@ -41,13 +41,13 @@ kotlin {
                 // koin
                 implementation(project.dependencies.platform(libs.koin.bom))
                 implementation(libs.koin.core)
-                implementation(libs.koin.compose.viewmodel)
+                api(libs.koin.compose.viewmodel)
 
                 // ktor client
-                implementation(libs.ktor.client.core)
-                implementation(libs.ktor.client.contentNegotiation)
-                implementation(libs.ktor.client.logging)
-                implementation(libs.ktor.serialization.kotlinx.json)
+                api(libs.ktor.client.core)
+                api(libs.ktor.client.contentNegotiation)
+                api(libs.ktor.client.logging)
+                api(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.auth)
 
                 // settings
@@ -96,6 +96,9 @@ kotlin {
 
                 // Android secure storage
                 implementation(libs.androidx.security.crypto)
+
+                // Ktor engine for Android
+                implementation(libs.ktor.client.okhttp)
             }
         }
 
@@ -137,7 +140,7 @@ mavenPublishing {
         version = project.version.toString()
     )
     pom {
-        name.set("komposeauth Client")
+        name.set("komposeauth client")
         description.set("Client library for komposeauth")
     }
 }
