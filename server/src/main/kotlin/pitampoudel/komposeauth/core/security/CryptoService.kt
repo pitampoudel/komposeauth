@@ -18,7 +18,7 @@ class CryptoService(private val props: StaticAppProperties) {
 
     init {
         val key = props.base64EncryptionKey
-        if (key.isBlank()) {
+        if (key.isNullOrBlank()) {
             throw IllegalStateException("encryption key must be provided and non-blank")
         }
         // Validate Base64 and size early to fail fast
