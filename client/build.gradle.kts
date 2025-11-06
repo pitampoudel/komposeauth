@@ -35,7 +35,7 @@ kotlin {
             dependencies {
                 implementation(project(":shared"))
                 // koin
-                implementation(project.dependencies.platform(libs.koin.bom))
+                api(project.dependencies.platform(libs.koin.bom))
                 implementation(libs.koin.core)
                 api(libs.koin.compose.viewmodel)
 
