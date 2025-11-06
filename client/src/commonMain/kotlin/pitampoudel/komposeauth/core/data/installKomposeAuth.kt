@@ -29,7 +29,8 @@ import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.OAuth2TokenData
 
-fun HttpClientConfig<*>.installKomposeAuth(
+internal fun HttpClientConfig<*>.installKomposeAuth(
+    authPreferences: AuthPreferences,
     authServerUrl: String,
     resourceServerUrls: List<String>
 ) {
@@ -40,8 +41,6 @@ fun HttpClientConfig<*>.installKomposeAuth(
         )
         return ipv4Regex.matches(host)
     }
-
-    val authPreferences = AuthPreferencesImpl.getInstance()
 
     install(HttpCookies) {
         storage = AcceptAllCookiesStorage()

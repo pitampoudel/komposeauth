@@ -4,8 +4,8 @@ import com.russhwolf.settings.KeychainSettings
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.observable.makeObservable
 
-internal actual class SecureSettingsFactory actual constructor() {
-    actual fun create(): ObservableSettings {
+internal class SecureSettingsFactory constructor() {
+    fun create(): ObservableSettings {
         return KeychainSettings(service = "secure_settings").makeObservable()
     }
 }

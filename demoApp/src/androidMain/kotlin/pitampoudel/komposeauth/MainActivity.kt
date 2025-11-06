@@ -19,6 +19,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val httpClient = HttpClient {
             installKomposeAuth(
+                this@MainActivity,
                 authServerUrl = BuildKonfig.LOCAL_SERVER_URL,
                 resourceServerUrls = listOf(
                     "https://your-resource-server"
