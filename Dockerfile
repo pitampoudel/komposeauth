@@ -12,6 +12,13 @@ FROM gcr.io/distroless/java17:nonroot
 # Distroless already uses a nonroot user
 WORKDIR /app
 
+# OCI labels for better metadata
+LABEL org.opencontainers.image.title="komposeauth" \
+      org.opencontainers.image.description="Spring Boot auth server for komposeauth (Kotlin Multiplatform full-stack auth)" \
+      org.opencontainers.image.url="https://github.com/pitampoudel/komposeauth" \
+      org.opencontainers.image.source="https://github.com/pitampoudel/komposeauth" \
+      org.opencontainers.image.licenses="Apache-2.0"
+
 # Copy fat JAR from builder
 COPY --from=build /home/gradle/src/server/build/libs/app.jar /app/app.jar
 
