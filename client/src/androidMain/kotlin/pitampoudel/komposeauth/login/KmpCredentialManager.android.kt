@@ -26,7 +26,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.LoginOptions
+import pitampoudel.komposeauth.data.LoginOptionsResponse
 
 @Composable
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
@@ -36,7 +36,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
     }
     return remember {
         object : KmpCredentialManager {
-            override suspend fun getCredential(options: LoginOptions): Result<Credential> {
+            override suspend fun getCredential(options: LoginOptionsResponse): Result<Credential> {
 
                 val googleAuthClientId = options.googleClientId
                 val publicKeyVerificationOptionsJson = options.publicKeyAuthOptionsJson

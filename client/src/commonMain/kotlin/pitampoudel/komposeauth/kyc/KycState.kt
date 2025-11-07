@@ -1,6 +1,6 @@
 package pitampoudel.komposeauth.kyc
 
-import pitampoudel.komposeauth.data.Country
+import pitampoudel.komposeauth.data.CountryResponse
 import pitampoudel.komposeauth.data.DocumentInformation
 import pitampoudel.komposeauth.domain.DocumentType
 import pitampoudel.komposeauth.data.KycResponse
@@ -185,7 +185,7 @@ data class KycState(
     val progress: Float? = null,
     val infoMsg: InfoMessage? = null,
     val status: KycResponse.Status? = null,
-    val countries: List<Country> = emptyList(),
+    val countries: List<CountryResponse> = emptyList(),
     val occupations: List<String> = emptyList()
 ) {
     fun isSubmitted(): Boolean {

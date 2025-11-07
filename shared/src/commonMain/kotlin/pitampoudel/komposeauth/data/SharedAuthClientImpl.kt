@@ -22,7 +22,7 @@ class SharedAuthClientImpl(
     val authClientId: String,
     val authClientSecret: String
 ) : SharedAuthClient {
-    override suspend fun fetchNewToken(scope: String): Result<OAuth2TokenData> {
+    override suspend fun fetchNewToken(scope: String): Result<OAuth2Response> {
         return safeApiCall {
             httpClient.submitForm(
                 url = "$authUrl/oauth2/token",

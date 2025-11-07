@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import pitampoudel.komposeauth.core.domain.AuthPreferences
-import pitampoudel.komposeauth.data.OAuth2TokenData
+import pitampoudel.komposeauth.data.OAuth2Response
 import pitampoudel.komposeauth.data.ProfileResponse
 
 @OptIn(ExperimentalSettingsApi::class)
@@ -40,7 +40,7 @@ internal class AuthPreferencesImpl internal constructor(
 
 
     override suspend fun saveAuthenticatedUser(
-        tokenData: OAuth2TokenData,
+        tokenData: OAuth2Response,
         userInfoResponse: ProfileResponse
     ) {
         suspendSettings.putString(KEYS.TOKEN_DATA, Json.encodeToString(tokenData))
@@ -51,14 +51,14 @@ internal class AuthPreferencesImpl internal constructor(
         suspendSettings.putString(KEYS.USER_PROFILE, Json.encodeToString(data))
     }
 
-    override suspend fun updateTokenData(tokenData: OAuth2TokenData) {
+    override suspend fun updateTokenData(tokenData: OAuth2Response) {
         suspendSettings.putString(KEYS.TOKEN_DATA, Json.encodeToString(tokenData))
     }
 
-    override fun tokenData(): OAuth2TokenData? {
+    override fun tokenData(): OAuth2Response? {
         return settings.getStringOrNull(KEYS.TOKEN_DATA)?.let {
             return try {
-                Json.decodeFromString<OAuth2TokenData>(it)
+                Json.decodeFromString<OAuth2Response>(it)
             } catch (e: Exception) {
                 e.printStackTrace()
                 null

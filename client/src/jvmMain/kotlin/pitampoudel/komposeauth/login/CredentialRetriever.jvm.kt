@@ -5,7 +5,7 @@ import androidx.compose.runtime.remember
 import kotlinx.serialization.json.JsonObject
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.LoginOptions
+import pitampoudel.komposeauth.data.LoginOptionsResponse
 import pitampoudel.komposeauth.domain.Platform
 import pitampoudel.komposeauth.login.OAuthUtils.buildAuthUrl
 import pitampoudel.komposeauth.login.OAuthUtils.generateCodeChallenge
@@ -19,7 +19,7 @@ import java.net.URI
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
     return remember {
         object : KmpCredentialManager {
-            override suspend fun getCredential(options: LoginOptions): Result<Credential> {
+            override suspend fun getCredential(options: LoginOptionsResponse): Result<Credential> {
                 val googleAuthClientId = options.googleClientId ?: return Result.Error(
                     "Google client id not found"
                 )

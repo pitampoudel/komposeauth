@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class LoginOptions(
+data class LoginOptionsResponse(
     @SerialName("googleClientId")
     val googleClientId: String?,
     @SerialName("publicKeyAuthOptionsJson")

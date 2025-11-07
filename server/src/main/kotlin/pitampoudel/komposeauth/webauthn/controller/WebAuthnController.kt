@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pitampoudel.komposeauth.AppProperties
 import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN_OPTIONS
-import pitampoudel.komposeauth.data.LoginOptions
+import pitampoudel.komposeauth.data.LoginOptionsResponse
 import pitampoudel.komposeauth.domain.Platform
 
 @RestController
@@ -33,7 +33,7 @@ class WebAuthnController(
         platform: Platform,
         request: HttpServletRequest,
         response: HttpServletResponse
-    ): ResponseEntity<LoginOptions> {
+    ): ResponseEntity<LoginOptionsResponse> {
         val credentialRequestOptions = rpOperations.createCredentialRequestOptions(
             ImmutablePublicKeyCredentialRequestOptionsRequest(null)
         )
@@ -41,7 +41,7 @@ class WebAuthnController(
         val json = objectConverter.jsonConverter.writeValueAsString(credentialRequestOptions)
 
         return ResponseEntity.ok(
-            LoginOptions(
+            LoginOptionsResponse(
                 googleClientId = appProperties.googleClientId(platform),
                 publicKeyAuthOptionsJson = json
             )

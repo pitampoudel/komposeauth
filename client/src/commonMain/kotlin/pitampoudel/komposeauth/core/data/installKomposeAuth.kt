@@ -27,7 +27,7 @@ import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.core.domain.Config
 import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.OAuth2TokenData
+import pitampoudel.komposeauth.data.OAuth2Response
 
 internal fun HttpClientConfig<*>.installKomposeAuth(
     authPreferences: AuthPreferences,
@@ -99,7 +99,7 @@ private suspend fun refresh(
     refreshToken: String,
     authPreferences: AuthPreferences
 ): BearerTokens? {
-    val result = safeApiCall<OAuth2TokenData> {
+    val result = safeApiCall<OAuth2Response> {
         client.post(
             "$authServerUrl/$LOGIN",
             block = {

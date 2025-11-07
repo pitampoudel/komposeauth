@@ -19,7 +19,7 @@ import org.w3c.dom.MessageEvent
 import org.w3c.dom.events.Event
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.LoginOptions
+import pitampoudel.komposeauth.data.LoginOptionsResponse
 import pitampoudel.komposeauth.domain.Platform
 import kotlin.coroutines.resume
 import kotlin.js.Promise
@@ -134,7 +134,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
         val koin = getKoin()
         val settings = koin.get<ObservableSettings>()
         object : KmpCredentialManager {
-            override suspend fun getCredential(options: LoginOptions): Result<Credential> {
+            override suspend fun getCredential(options: LoginOptionsResponse): Result<Credential> {
                 val verifier = generateCodeVerifier()
                 val challenge = sha256Base64Url(verifier)
                 val state = "state-${Random.nextInt()}"

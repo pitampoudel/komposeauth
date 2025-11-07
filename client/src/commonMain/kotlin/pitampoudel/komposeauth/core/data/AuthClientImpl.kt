@@ -23,12 +23,12 @@ import pitampoudel.komposeauth.data.ApiEndpoints.ME
 import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PHONE_NUMBER
 import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PROFILE
 import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_PHONE_NUMBER
-import pitampoudel.komposeauth.data.Country
+import pitampoudel.komposeauth.data.CountryResponse
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.DocumentInformation
 import pitampoudel.komposeauth.data.KycResponse
-import pitampoudel.komposeauth.data.LoginOptions
-import pitampoudel.komposeauth.data.OAuth2TokenData
+import pitampoudel.komposeauth.data.LoginOptionsResponse
+import pitampoudel.komposeauth.data.OAuth2Response
 import pitampoudel.komposeauth.data.PersonalInformation
 import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
@@ -40,15 +40,15 @@ import pitampoudel.komposeauth.domain.Platform
 
 internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClient {
 
-    override suspend fun fetchLoginConfig(platform: Platform): Result<LoginOptions> {
+    override suspend fun fetchLoginConfig(platform: Platform): Result<LoginOptionsResponse> {
         return safeApiCall {
             httpClient.get("$authUrl/$LOGIN_OPTIONS") {
                 parameter("platform", platform)
-            }.asResource { body<LoginOptions>() }
+            }.asResource { body<LoginOptionsResponse>() }
         }
     }
 
-    override suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2TokenData> {
+    override suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2Response> {
         return safeApiCall {
             httpClient.post("$authUrl/$LOGIN") {
                 parameter("wantToken", true)
@@ -125,7 +125,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
     }
 
-    override suspend fun fetchCountries(): Result<List<Country>> {
+    override suspend fun fetchCountries(): Result<List<CountryResponse>> {
         return safeApiCall {
             httpClient.get("$authUrl/countries.json").asResource { body() }
         }

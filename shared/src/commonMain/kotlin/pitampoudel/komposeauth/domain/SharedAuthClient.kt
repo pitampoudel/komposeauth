@@ -2,7 +2,7 @@ package pitampoudel.komposeauth.domain
 
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.data.CreateUserRequest
-import pitampoudel.komposeauth.data.OAuth2TokenData
+import pitampoudel.komposeauth.data.OAuth2Response
 import pitampoudel.komposeauth.data.UserResponse
 
 interface SharedAuthClient {
@@ -14,5 +14,5 @@ interface SharedAuthClient {
     ): Result<Map<String, UserResponse>>
 
     suspend fun fetchUserInfo(userId: String, accessToken: String): Result<UserResponse>
-    suspend fun fetchNewToken(scope: String): Result<OAuth2TokenData>
+    suspend fun fetchNewToken(scope: String): Result<OAuth2Response>
 }

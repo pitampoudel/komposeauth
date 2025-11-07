@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class OAuth2TokenData(
+data class OAuth2Response(
     @SerialName("access_token")
     val accessToken: String,
     @SerialName("token_ype")

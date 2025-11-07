@@ -24,7 +24,7 @@ import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.KycResponse
-import pitampoudel.komposeauth.data.OAuth2TokenData
+import pitampoudel.komposeauth.data.OAuth2Response
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
 import pitampoudel.komposeauth.user.entity.User
@@ -68,7 +68,7 @@ class AuthController(
         if (wantToken) {
             return ResponseEntity.ok(
                 json.encodeToString(
-                    OAuth2TokenData(
+                    OAuth2Response(
                         accessToken = accessToken,
                         refreshToken = refreshToken,
                         tokenType = "Bearer",

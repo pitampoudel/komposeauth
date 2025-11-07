@@ -3,7 +3,7 @@ package pitampoudel.komposeauth.data
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Country(
+data class CountryResponse(
     val name: String,
     val demonym: String
 )

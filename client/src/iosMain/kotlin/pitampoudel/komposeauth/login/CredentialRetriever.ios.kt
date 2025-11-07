@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.LoginOptions
+import pitampoudel.komposeauth.data.LoginOptionsResponse
 import kotlinx.serialization.json.JsonObject
 import platform.AuthenticationServices.ASAuthorization
 import platform.AuthenticationServices.ASAuthorizationAppleIDCredential
@@ -73,7 +73,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
         }
     }
     return object : KmpCredentialManager {
-        override suspend fun getCredential(options: LoginOptions): Result<Credential> {
+        override suspend fun getCredential(options: LoginOptionsResponse): Result<Credential> {
             return retriever.getCredential()
         }
 
