@@ -54,6 +54,7 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.chucker)
         }
         commonMain.dependencies {
             implementation(compose.runtime)

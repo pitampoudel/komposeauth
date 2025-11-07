@@ -94,7 +94,7 @@ kotlin {
                 implementation(libs.androidx.security.crypto)
 
                 // Ktor engine for Android
-                implementation(libs.ktor.client.okhttp)
+                api(libs.ktor.client.okhttp)
             }
         }
 
