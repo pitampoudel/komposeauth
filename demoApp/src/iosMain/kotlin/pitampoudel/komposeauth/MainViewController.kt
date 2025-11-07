@@ -12,7 +12,7 @@ import platform.UIKit.UIViewController
 fun MainViewController(): UIViewController {
     val httpClient = HttpClient {
         installKomposeAuth(
-            authServerUrl = BuildKonfig.LOCAL_SERVER_URL,
+            authServerUrl = BuildKonfig.AUTH_SERVER_URL,
             resourceServerUrls = listOf(
                 "https://your-resource-server"
             )
