@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-push:
     name: Build and Push Docker Image
@@ -67,6 +71,8 @@ jobs:
         with:
           context: .
           push: true
+          provenance: mode=max
+          sbom: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/komposeauth:latest
             ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.determine_tags.outputs.VERSION }}
@@ -83,6 +89,8 @@ jobs:
         with:
           context: .
           push: true
+          provenance: mode=max
+          sbom: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.determine_tags.outputs.SNAPSHOT_TAG }}
             ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.determine_tags.outputs.BRANCH_TAG }}
