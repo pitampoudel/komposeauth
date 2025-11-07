@@ -116,7 +116,7 @@ Client module
 implementation("io.github.pitampoudel:komposeauth-client:x.x.x")
 ```
 
-HttpClient example
+HttpClient example (at each platform)
 ```kotlin
 val httpClient = HttpClient {
     installKomposeAuth(
