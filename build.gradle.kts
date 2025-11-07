@@ -1,4 +1,5 @@
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import org.gradle.plugins.signing.Sign
 
 plugins {
     alias(libs.plugins.androidLibrary) apply false
@@ -55,8 +56,9 @@ subprojects {
         }
 
         // Skip signing for snapshots
+        val isSnapshot = project.version.toString().endsWith("SNAPSHOT")
         tasks.withType<Sign>().configureEach {
-            onlyIf { !project.version.toString().endsWith("SNAPSHOT") }
+            onlyIf { !isSnapshot }
         }
     }
 }
