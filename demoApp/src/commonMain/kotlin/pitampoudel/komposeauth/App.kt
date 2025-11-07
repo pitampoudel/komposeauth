@@ -42,7 +42,10 @@ fun App() {
     MaterialTheme {
         val userState = rememberCurrentUser()
         if (userState is LazyState.Loading) {
-            return@MaterialTheme Box(contentAlignment = Alignment.Center) {
+            return@MaterialTheme Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
                 CircularProgressIndicator()
             }
         }

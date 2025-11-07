@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
             }
             installKomposeAuth(
                 this@MainActivity,
-                authServerUrl = BuildKonfig.LOCAL_SERVER_URL,
+                authServerUrl = BuildKonfig.AUTH_SERVER_URL,
                 resourceServerUrls = listOf(
                     "https://your-resource-server"
                 )

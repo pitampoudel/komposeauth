@@ -1,5 +1,6 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.compose.internal.utils.getLocalProperty
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.net.Inet4Address
@@ -20,8 +21,9 @@ buildkonfig {
     defaultConfigs {
         buildConfigField(
             type = FieldSpec.Type.STRING,
-            name = "LOCAL_SERVER_URL",
-            value = "http://" + getLocalIpAddress() + ":8080"
+            name = "AUTH_SERVER_URL",
+            value = getLocalProperty("auth_server_url")
+                ?: ("http://" + getLocalIpAddress() + ":8080")
         )
     }
 }
