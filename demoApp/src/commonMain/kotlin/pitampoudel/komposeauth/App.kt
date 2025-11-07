@@ -26,6 +26,7 @@ import pitampoudel.core.presentation.LazyState
 import pitampoudel.core.presentation.wrapper.screenstate.ScreenStateWrapper
 import pitampoudel.komposeauth.core.di.rememberCurrentUser
 import pitampoudel.komposeauth.data.Credential
+import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
 import pitampoudel.komposeauth.login.LoginEvent
 import pitampoudel.komposeauth.login.LoginState
 import pitampoudel.komposeauth.login.LoginViewModel
@@ -117,6 +118,9 @@ private fun ProfileScreen(
     state: ProfileState,
     onEvent: (ProfileEvent) -> Unit,
 ) {
+    val credentialManager = rememberKmpCredentialManager()
+    val scope = rememberCoroutineScope()
+
     ScreenStateWrapper(
         progress = state.progress,
         infoMessage = state.infoMsg,
@@ -131,6 +135,30 @@ private fun ProfileScreen(
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 Text("You're signed in")
                 Spacer(Modifier.height(8.dp))
+                Button(onClick = {
+                    scope.launch {
+                        val webAuthnRegistrationOptions = state.webAuthnRegistrationOptions
+                        if (webAuthnRegistrationOptions != null) {
+                            val keyResult = credentialManager.createPassKeyAndRetrieveJson(
+                                webAuthnRegistrationOptions
+                            )
+                            when (keyResult) {
+                                is Result.Success -> onEvent(
+                                    ProfileEvent.RegisterPublicKey(
+                                        RegisterPublicKeyRequest.PublicKeyCredential(
+                                            keyResult.data,
+                                            "1password"
+                                        )
+                                    )
+                                )
+
+                                is Result.Error -> onEvent(ProfileEvent.InfoMsgChanged(keyResult.message))
+                            }
+                        }
+                    }
+                }) { Text("Register Passkey") }
+                Spacer(Modifier.height(8.dp))
+
                 Button(onClick = {
                     onEvent(ProfileEvent.LogOut)
                 }) { Text("Log out") }
