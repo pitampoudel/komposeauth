@@ -116,10 +116,10 @@ class AppProperties(val envService: EnvService) {
         return value?.takeIf { it.isNotBlank() }
     }
 
-    fun androidOrigins(): Set<String> {
+    fun allowedOrigins(): Set<String> {
         return androidSha256List?.split(",")?.map {
             androidOrigin(it)
-        }.orEmpty().toSet()
+        }.orEmpty().toSet() + selfBaseUrl
     }
 
     fun getLocalIpAddress(): String? {

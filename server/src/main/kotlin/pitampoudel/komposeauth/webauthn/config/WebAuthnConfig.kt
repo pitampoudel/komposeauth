@@ -124,7 +124,7 @@ class WebAuthnConfig(
                 .id(appProperties.domain)
                 .name(appProperties.name)
                 .build(),
-            appProperties.androidOrigins() + appProperties.selfBaseUrl
+            appProperties.allowedOrigins()
         )
     }
 
