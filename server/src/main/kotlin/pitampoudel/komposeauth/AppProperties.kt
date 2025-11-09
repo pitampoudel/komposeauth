@@ -61,9 +61,12 @@ class AppProperties(val envService: EnvService) {
     var googleAuthDesktopClientSecret: String? = null
         get() = field?.takeIf { it.isNotBlank() }
             ?: envService.getEnv().googleAuthDesktopClientSecret.takeIf { !it.isNullOrBlank() }
-    var androidSha256List: String? = null
+    var allowedAndroidSha256List: String? = null
         get() = field?.takeIf { it.isNotBlank() }
-            ?: envService.getEnv().androidSha256List.takeIf { !it.isNullOrBlank() }
+            ?: envService.getEnv().allowedAndroidSha256List.takeIf { !it.isNullOrBlank() }
+    var allowedOriginList: String? = null
+        get() = field?.takeIf { it.isNotBlank() }
+            ?: envService.getEnv().allowedOriginList.takeIf { !it.isNullOrBlank() }
     var twilioAccountSid: String? = null
         get() = field?.takeIf { it.isNotBlank() }
             ?: envService.getEnv().twilioAccountSid.takeIf { !it.isNullOrBlank() }
@@ -117,9 +120,9 @@ class AppProperties(val envService: EnvService) {
     }
 
     fun allowedOrigins(): Set<String> {
-        return androidSha256List?.split(",")?.map {
+        return allowedAndroidSha256List?.split(",")?.map {
             androidOrigin(it)
-        }.orEmpty().toSet() + selfBaseUrl
+        }.orEmpty().toSet() + selfBaseUrl + allowedOriginList?.split(",").orEmpty()
     }
 
     fun getLocalIpAddress(): String? {

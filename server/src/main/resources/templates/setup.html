@@ -125,6 +125,18 @@
     </fieldset>
 
     <fieldset>
+        <legend>Access Control</legend>
+
+        <label for="allowedAndroidSha256List">Allowed Android SHA 256 List</label>
+        <textarea id="allowedAndroidSha256List" name="allowedAndroidSha256List"
+                  th:text="${config.allowedAndroidSha256List}"></textarea>
+
+        <label for="allowedOriginList">Allowed Origin List</label>
+        <textarea id="allowedOriginList" name="allowedOriginList"
+                  th:text="${config.allowedOriginList}"></textarea>
+    </fieldset>
+
+    <fieldset>
         <legend>Other</legend>
         <label for="gcpBucketName">GCP Bucket Name</label>
         <input id="gcpBucketName" name="gcpBucketName" type="text"
@@ -137,9 +149,6 @@
         <label for="sentryDsn">Sentry DSN</label>
         <input id="sentryDsn" name="sentryDsn" type="url" th:value="${config.sentryDsn}">
 
-        <label for="androidSha256List">Android SHA 256 List</label>
-        <textarea id="androidSha256List" name="androidSha256List"
-                  th:text="${config.androidSha256List}"></textarea>
     </fieldset>
 
     <div class="actions">

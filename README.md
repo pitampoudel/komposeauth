@@ -86,8 +86,9 @@ SENTRY_DSN=                  # Enables Sentry reporting
 GCP_BUCKET_NAME=             # If set, uses Google Cloud Storage
 EXPECTED_GCP_PROJECT_ID=     # Verifies it matches the active GCP project
 
-# for webauthn
-ANDROID_SHA_256_LIST=
+# sccess control
+ALLOWED_ANDROID_SHA_256_LIST=
+ALLOWED_ORIGIN_LIST
 ```
 
 ```kotlin
