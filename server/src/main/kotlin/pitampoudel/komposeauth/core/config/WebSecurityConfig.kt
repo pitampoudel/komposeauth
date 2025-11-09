@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import pitampoudel.komposeauth.AppProperties
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.CreateUserRequest
 import pitampoudel.komposeauth.user.entity.User
@@ -122,9 +123,9 @@ class WebSecurityConfig(
     }
 
     @Bean
-    fun corsConfigurationSource(): CorsConfigurationSource {
+    fun corsConfigurationSource(appProperties: AppProperties): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOriginPatterns = listOf("*")
+        configuration.allowedOrigins = appProperties.allowedOrigins().toList()
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         configuration.allowedHeaders = listOf("*")
         configuration.allowCredentials = true
