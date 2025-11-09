@@ -3,6 +3,7 @@ package pitampoudel.komposeauth
 import com.google.common.net.InternetDomainName
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import pitampoudel.komposeauth.domain.Platform
 import pitampoudel.komposeauth.setup.service.EnvService
 import pitampoudel.komposeauth.webauthn.utils.WebAuthnUtils.androidOrigin
@@ -15,6 +16,18 @@ import java.util.Collections
 @ConfigurationProperties(prefix = "app")
 class AppProperties(val envService: EnvService) {
 
+    var selfBaseUrl: String = ""
+        get() {
+            val raw = field.trim()
+            if (raw.isNotEmpty()) return raw
+            val cfg = envService.getEnv().selfBaseUrl?.trim()
+            if (!cfg.isNullOrBlank()) return cfg
+            return runCatching {
+                ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString().trim()
+            }.getOrNull() ?: "http://${getLocalIpAddress()}:8080"
+
+        }
+
     val domain: String
         get() {
             val host = runCatching { URL(selfBaseUrl).host }.getOrNull() ?: return selfBaseUrl
@@ -23,16 +36,6 @@ class AppProperties(val envService: EnvService) {
             return if (domainName.isUnderPublicSuffix) {
                 domainName.topPrivateDomain().toString()
             } else host
-        }
-
-
-    var selfBaseUrl: String = ""
-        get() {
-            val raw = field.trim()
-            if (raw.isNotEmpty()) return raw
-            val cfg = envService.getEnv().selfBaseUrl?.trim()
-            if (!cfg.isNullOrBlank()) return cfg
-            return "http://${getLocalIpAddress()}:8080"
         }
 
     var name: String = ""
@@ -150,5 +153,4 @@ class AppProperties(val envService: EnvService) {
         }
         return null
     }
-
 }

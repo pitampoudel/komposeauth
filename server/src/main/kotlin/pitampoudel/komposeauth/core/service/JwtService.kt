@@ -1,7 +1,5 @@
 package pitampoudel.komposeauth.core.service
 
-import pitampoudel.komposeauth.AppProperties
-import pitampoudel.komposeauth.user.entity.User
 import org.apache.coyote.BadRequestException
 import org.springframework.http.HttpStatusCode
 import org.springframework.security.oauth2.jwt.Jwt
@@ -11,10 +9,11 @@ import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
+import pitampoudel.komposeauth.AppProperties
+import pitampoudel.komposeauth.user.entity.User
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
 
 @Service
 class JwtService(
