@@ -9,29 +9,58 @@ import pitampoudel.core.presentation.InfoMessage
 
 
 interface ScreenStateConfig {
-    val loadingLogo: Painter?
+    val logo: Painter?
 
     @Composable
-    fun ProgressDialog(progress: Float, onDismissProgress: (() -> Unit)?) {
-        ProgressDialog(
-            progress = progress,
-            logo = loadingLogo,
-            onDismissProgress = onDismissProgress
-        )
-    }
+    fun ProgressDialog(progress: Float, onDismissProgress: (() -> Unit)?)
 
     @Composable
     fun InfoDialog(
         infoMessage: InfoMessage,
         onDismiss: () -> Unit,
-    ) {
-        InfoDialog(infoMessage, onDismiss = onDismiss)
+    )
+}
+
+fun screenStateConfig(
+    logo: Painter? = null,
+    infoDialog: @Composable (
+        infoMessage: InfoMessage,
+        onDismiss: () -> Unit
+    ) -> Unit = { infoMessage, onDismiss ->
+        InfoDialog(
+            message = infoMessage,
+            onDismiss = onDismiss
+        )
+    },
+    progressDialog: @Composable (
+        progress: Float,
+        onDismissProgress: (() -> Unit)?
+    ) -> Unit = { progress, onDismissProgress ->
+        ProgressDialog(
+            progress = progress,
+            logo = logo,
+            onDismissProgress = onDismissProgress
+        )
     }
+) = object : ScreenStateConfig {
+    override val logo: Painter? = logo
+
+    @Composable
+    override fun ProgressDialog(
+        progress: Float,
+        onDismissProgress: (() -> Unit)?
+    ) = progressDialog()
+
+    @Composable
+    override fun InfoDialog(
+        infoMessage: InfoMessage,
+        onDismiss: () -> Unit
+    ) = infoDialog()
 }
 
 @Composable
 fun ScreenStateWrapper(
-    config: ScreenStateConfig,
+    config: ScreenStateConfig = screenStateConfig(),
     progress: Float? = null,
     onDismissProgress: (() -> Unit)? = null,
     infoMessage: InfoMessage?,
