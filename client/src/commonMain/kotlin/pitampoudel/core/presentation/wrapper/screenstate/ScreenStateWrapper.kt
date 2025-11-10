@@ -49,13 +49,13 @@ fun screenStateConfig(
     override fun ProgressDialog(
         progress: Float,
         onDismissProgress: (() -> Unit)?
-    ) = progressDialog()
+    ) = progressDialog(progress, onDismissProgress)
 
     @Composable
     override fun InfoDialog(
         infoMessage: InfoMessage,
         onDismiss: () -> Unit
-    ) = infoDialog()
+    ) = infoDialog(infoMessage, onDismiss)
 }
 
 @Composable
