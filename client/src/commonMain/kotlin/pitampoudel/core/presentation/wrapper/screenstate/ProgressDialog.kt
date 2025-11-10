@@ -8,9 +8,9 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.window.Dialog
 
 @Composable
-fun ProgressDialog(progress: Float, logo: Painter?) {
+fun ProgressDialog(progress: Float, logo: Painter?, onDismissProgress: (() -> Unit)?) {
     if (progress != 0F) {
-        Dialog(onDismissRequest = { }) {
+        Dialog(onDismissRequest = { onDismissProgress?.invoke() }) {
         }
         LinearProgressIndicator(
             progress = {
@@ -19,7 +19,7 @@ fun ProgressDialog(progress: Float, logo: Painter?) {
             modifier = Modifier.fillMaxWidth()
         )
     } else {
-        Dialog(onDismissRequest = { }) {
+        Dialog(onDismissRequest = { onDismissProgress?.invoke() }) {
             logo?.let {
                 LogoLoadingAnimation(logo = logo)
             } ?: run {
