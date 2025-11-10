@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.painter.Painter
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -21,6 +22,11 @@ interface ScreenStateConfig {
         infoMessage: InfoMessage,
         onDismiss: () -> Unit,
     )
+}
+
+
+val LocalScreenStateConfig = compositionLocalOf {
+    screenStateConfig()
 }
 
 fun screenStateConfig(
@@ -62,7 +68,7 @@ fun screenStateConfig(
 
 @Composable
 fun ScreenStateWrapper(
-    config: ScreenStateConfig = screenStateConfig(),
+    config: ScreenStateConfig = LocalScreenStateConfig.current,
     progress: Float? = null,
     onDismissProgress: (() -> Unit)? = null,
     infoMessage: InfoMessage?,
