@@ -5,11 +5,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import pitampoudel.core.presentation.InfoMessage
 
 
 interface ScreenStateConfig {
-    val logo: Painter?
+    val logo: DrawableResource?
 
     @Composable
     fun ProgressDialog(progress: Float, onDismissProgress: (() -> Unit)?)
@@ -22,7 +24,7 @@ interface ScreenStateConfig {
 }
 
 fun screenStateConfig(
-    logo: Painter? = null,
+    logo: DrawableResource? = null,
     infoDialog: @Composable (
         infoMessage: InfoMessage,
         onDismiss: () -> Unit
@@ -38,12 +40,12 @@ fun screenStateConfig(
     ) -> Unit = { progress, onDismissProgress ->
         ProgressDialog(
             progress = progress,
-            logo = logo,
+            logo = logo?.let { painterResource(it) },
             onDismissProgress = onDismissProgress
         )
     }
 ) = object : ScreenStateConfig {
-    override val logo: Painter? = logo
+    override val logo: DrawableResource? = logo
 
     @Composable
     override fun ProgressDialog(
