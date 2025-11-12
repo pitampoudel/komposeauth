@@ -6,6 +6,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.apache.coyote.BadRequestException
 import org.bson.types.ObjectId
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import pitampoudel.core.data.parsePhoneNumber
@@ -85,6 +87,32 @@ class UserService(
             }
         }
         return userRepository.findByIdIn(objectIds)
+    }
+
+    fun findUsersFlexible(ids: List<String>?, q: String?, page: Int, size: Int): List<User> {
+        if (!ids.isNullOrEmpty()) {
+            return findUsersBulk(ids)
+        }
+
+        val pageSafe = if (page < 0) 0 else page
+        val sizeCapped = when {
+            size <= 0 -> 50
+            size > 200 -> 200
+            else -> size
+        }
+        val pageable: Pageable = PageRequest.of(pageSafe, sizeCapped)
+
+        if (!q.isNullOrBlank()) {
+            return userRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPhoneNumberContainingIgnoreCase(
+                q,
+                q,
+                q,
+                q,
+                pageable
+            ).content
+        }
+
+        return userRepository.findAll(pageable).content
     }
 
     fun findByUserName(value: String): User? {

@@ -70,19 +70,18 @@ class UsersController(
 
     @GetMapping("/$USERS_IN_BULK")
     @Operation(
-        summary = "Get multiple users",
-        description = "Fetch multiple users by a comma-separated list of IDs"
+        summary = "Get users",
+        description = "Fetch users by optional filters: comma-separated IDs (ids), search query (q). If no filters provided, returns all users with pagination."
     )
-    @Parameter(name = "ids", description = "Comma-separated list of user IDs", required = true)
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_READ_ANY_USER')")
-    fun getUsersBatch(@RequestParam ids: String): ResponseEntity<List<UserResponse>> {
-        val userIds = ids.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-
-        if (userIds.isEmpty()) {
-            return ResponseEntity.badRequest().build()
-        }
-
-        val users = userService.findUsersBulk(userIds)
+    fun getUsers(
+        @RequestParam(required = false) ids: String?,
+        @RequestParam(required = false, name = "q") query: String?,
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "50") size: Int
+    ): ResponseEntity<List<UserResponse>> {
+        val idList = ids?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
+        val users = userService.findUsersFlexible(idList, query, page, size)
         val userResponses = users.map { it.mapToResponseDto() }
         return ResponseEntity.ok(userResponses)
     }
