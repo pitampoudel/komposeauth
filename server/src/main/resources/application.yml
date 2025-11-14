@@ -18,6 +18,8 @@ logging:
 server:
   address: 0.0.0.0
   forward-headers-strategy: framework
+  servlet:
+    context-path: /auth
 app:
   base64-encryption-key: ${BASE64_ENCRYPTION_KEY:}
   name: ${APP_NAME:}
