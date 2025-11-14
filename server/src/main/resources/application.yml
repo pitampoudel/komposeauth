@@ -4,7 +4,7 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI}
-      database: auth
+      database: ${DB_NAME:komposeauth}
       auto-index-creation: true
   main:
     lazy-initialization: true

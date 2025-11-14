@@ -50,6 +50,7 @@ docker run -p 8080:8080 -e MONGODB_URI="mongodb://your-mongo-host:27017/auth" -e
 ```
 # Database
 MONGODB_URI=                 # Required. Mongo DB connection string
+DB_NAME=                     # default komposeauth
 
 # Security
 BASE64_ENCRYPTION_KEY=       # Required
