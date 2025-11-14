@@ -104,7 +104,8 @@ class WebSecurityConfig(
 
         return object : BearerTokenResolver {
             override fun resolve(request: HttpServletRequest): String? {
-                val path = request.servletPath ?: request.requestURI
+                val rawPath = request.servletPath ?: request.requestURI
+                val path = if (rawPath.startsWith("/auth/")) rawPath.removePrefix("/auth") else rawPath
 
                 // Skip any public endpoint (starts with or exact match)
                 if (publicPaths.any { path.startsWith(it) }) {
@@ -150,29 +151,31 @@ class WebSecurityConfig(
                 }
             }
             .authorizeHttpRequests { auth ->
+                val public = arrayOf(
+                    "/css/**",
+                    "/js/**",
+                    "/img/**",
+                    "/lib/**",
+                    "/favicon.ico",
+                    "/assets/**",
+                    "/oauth2/jwks",
+                    "/${ApiEndpoints.LOGIN}",
+                    "/signup",
+                    "/api/auth/**",
+                    "/users",
+                    "/${ApiEndpoints.LOGIN_OPTIONS}",
+                    "/swagger-ui.html",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/${ApiEndpoints.VERIFY_EMAIL}",
+                    "/reset-password",
+                    "/countries.json",
+                    "/.well-known/**",
+                    "/setup"
+                )
+                val publicWithAuth = public.map { "/auth$it" }.toTypedArray()
                 auth
-                    .requestMatchers(
-                        "/css/**",
-                        "/js/**",
-                        "/img/**",
-                        "/lib/**",
-                        "/favicon.ico",
-                        "/assets/**",
-                        "/oauth2/jwks",
-                        "/${ApiEndpoints.LOGIN}",
-                        "/signup",
-                        "/api/auth/**",
-                        "/users",
-                        "/${ApiEndpoints.LOGIN_OPTIONS}",
-                        "/swagger-ui.html",
-                        "/swagger-ui/**",
-                        "/v3/api-docs/**",
-                        "/${ApiEndpoints.VERIFY_EMAIL}",
-                        "/reset-password",
-                        "/countries.json",
-                        "/.well-known/**",
-                        "/setup"
-                    ).permitAll()
+                    .requestMatchers(*(public + publicWithAuth)).permitAll()
                     .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD)
                     .permitAll()
                     .anyRequest().authenticated()
