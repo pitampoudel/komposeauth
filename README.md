@@ -89,7 +89,7 @@ EXPECTED_GCP_PROJECT_ID=     # Verifies it matches the active GCP project
 
 # sccess control
 ALLOWED_ANDROID_SHA_256_LIST=
-ALLOWED_ORIGIN_LIST
+ALLOWED_CORS_ORIGIN_LIST
 ```
 
 ```kotlin

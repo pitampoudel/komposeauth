@@ -22,7 +22,7 @@ data class Env(
     var googleAuthDesktopClientSecret: String? = null,
 
     var allowedAndroidSha256List: String? = null,
-    var allowedOriginList: String? = null,
+    var corsAllowedOriginList: String? = null,
 
     var twilioAccountSid: String? = null,
     var twilioAuthToken: String? = null,

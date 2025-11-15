@@ -125,7 +125,7 @@ class WebSecurityConfig(
     @Bean
     fun corsConfigurationSource(appProperties: AppProperties): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = appProperties.allowedBrowserOrigins()
+        configuration.allowedOrigins = appProperties.corsAllowedOrigins()
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         configuration.allowedHeaders = listOf("*")
         configuration.allowCredentials = true

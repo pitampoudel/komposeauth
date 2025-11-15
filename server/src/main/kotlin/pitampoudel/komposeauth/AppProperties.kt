@@ -67,9 +67,9 @@ class AppProperties(val envService: EnvService) {
     var allowedAndroidSha256List: String? = null
         get() = field?.takeIf { it.isNotBlank() }
             ?: envService.getEnv().allowedAndroidSha256List.takeIf { !it.isNullOrBlank() }
-    var allowedOriginList: String? = null
+    var corsAllowedOriginList: String? = null
         get() = field?.takeIf { it.isNotBlank() }
-            ?: envService.getEnv().allowedOriginList.takeIf { !it.isNullOrBlank() }
+            ?: envService.getEnv().corsAllowedOriginList.takeIf { !it.isNullOrBlank() }
     var twilioAccountSid: String? = null
         get() = field?.takeIf { it.isNotBlank() }
             ?: envService.getEnv().twilioAccountSid.takeIf { !it.isNullOrBlank() }
@@ -122,14 +122,14 @@ class AppProperties(val envService: EnvService) {
         return value?.takeIf { it.isNotBlank() }
     }
 
-    fun allowedBrowserOrigins(): List<String> {
-        return allowedOriginList?.split(",").orEmpty() + selfBaseUrl
+    fun corsAllowedOrigins(): List<String> {
+        return corsAllowedOriginList?.split(",").orEmpty()
     }
 
-    fun allowedOrigins(): Set<String> {
+    fun webauthnAllowedOrigins(): Set<String> {
         return allowedAndroidSha256List?.split(",")?.map {
             androidOrigin(it)
-        }.orEmpty().toSet() + allowedBrowserOrigins()
+        }.orEmpty().toSet() + corsAllowedOrigins() + selfBaseUrl
     }
 
     fun getLocalIpAddress(): String? {
