@@ -21,6 +21,7 @@ class SetupController(private val envService: EnvService) {
     @PostMapping("/setup")
     fun submit(@ModelAttribute form: Env, model: Model): String {
         envService.save(form)
+        envService.clearCache()
         model.addAttribute("config", envService.getEnv())
         return "setup"
     }
