@@ -5,7 +5,6 @@ object ApiEndpoints {
     const val JWKS = "oauth2/jwks"
     const val LOGIN = "login"
     const val USERS = "users"
-    const val USERS_IN_BULK = "users/bulk"
     const val ME = "me"
     const val DEACTIVATE = "deactivate"
     const val UPDATE_PROFILE = "update-profile"

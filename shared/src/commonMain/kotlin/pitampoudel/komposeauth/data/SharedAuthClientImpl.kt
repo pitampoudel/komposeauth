@@ -51,7 +51,7 @@ class SharedAuthClientImpl(
         accessToken: String
     ): Result<Map<String, UserResponse>> {
         return safeApiCall {
-            httpClient.get("$authUrl/${ApiEndpoints.USERS_IN_BULK}") {
+            httpClient.get("$authUrl/${ApiEndpoints.USERS}") {
                 headers {
                     append(HttpHeaders.Authorization, "Bearer $accessToken")
                 }

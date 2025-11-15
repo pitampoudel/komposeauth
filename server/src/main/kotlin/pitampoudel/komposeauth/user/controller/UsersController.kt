@@ -17,11 +17,10 @@ import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.ApiEndpoints.ME
 import pitampoudel.komposeauth.data.ApiEndpoints.USERS
-import pitampoudel.komposeauth.data.ApiEndpoints.USERS_IN_BULK
 import pitampoudel.komposeauth.data.CreateUserRequest
 import pitampoudel.komposeauth.data.KycResponse
-import pitampoudel.komposeauth.data.UpdateProfileRequest
 import pitampoudel.komposeauth.data.ProfileResponse
+import pitampoudel.komposeauth.data.UpdateProfileRequest
 import pitampoudel.komposeauth.data.UserResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client.Companion.SCOPE_READ_ANY_USER
@@ -68,7 +67,7 @@ class UsersController(
         return ResponseEntity.ok(user.mapToResponseDto())
     }
 
-    @GetMapping("/$USERS_IN_BULK")
+    @GetMapping("/$USERS")
     @Operation(
         summary = "Get users",
         description = "Fetch users by optional filters: comma-separated IDs (ids), search query (q). If no filters provided, returns all users with pagination."
