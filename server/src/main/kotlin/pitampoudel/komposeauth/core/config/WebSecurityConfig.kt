@@ -177,10 +177,6 @@ class WebSecurityConfig(
                     .permitAll()
                     .anyRequest().authenticated()
             }
-            .formLogin { it.disable() }
-            .oauth2Login { oauth2 ->
-                oauth2.loginPage("/login").successHandler(authSuccessHandler)
-            }
             .authenticationProvider(
                 object : DaoAuthenticationProvider(userDetailsService) {
                     init {
