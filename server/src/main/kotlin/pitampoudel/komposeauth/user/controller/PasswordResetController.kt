@@ -1,10 +1,5 @@
 package pitampoudel.komposeauth.user.controller
 
-import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.JwtService
-import pitampoudel.komposeauth.data.UpdateProfileRequest
-import pitampoudel.komposeauth.user.service.UserService
-import pitampoudel.core.data.MessageResponse
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
@@ -14,8 +9,12 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.ResponseBody
+import pitampoudel.core.data.MessageResponse
+import pitampoudel.komposeauth.core.service.EmailService
+import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints.RESET_PASSWORD
+import pitampoudel.komposeauth.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.service.UserService
 
 @Controller
 @RequestMapping("/$RESET_PASSWORD")
@@ -30,6 +29,7 @@ class PasswordResetController(
     )
     @GetMapping
     fun resetPasswordForm(@RequestParam token: String, model: Model): String {
+        jwtService.retrieveClaimsIfValidResetPasswordToken(token)
         model.addAttribute("token", token)
         return "reset-password-form"
     }
@@ -39,7 +39,6 @@ class PasswordResetController(
         description = "Sends a password reset link to the user's email address."
     )
     @PutMapping
-    @ResponseBody
     fun sendResetLink(@RequestParam email: String): ResponseEntity<MessageResponse> {
         val user = userService.findByUserName(email)
             ?: return ResponseEntity.badRequest().body(MessageResponse("No user with that email"))
@@ -61,7 +60,6 @@ class PasswordResetController(
         description = "Resets the user's password using a token received via email."
     )
     @PostMapping
-    @ResponseBody
     fun resetPassword(
         @RequestParam token: String,
         @RequestParam newPassword: String,
