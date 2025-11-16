@@ -453,8 +453,9 @@
         const submitText = document.getElementById('submit-text');
         const submitStatus = document.getElementById('submit-status');
 
-        // Form submission handling
-        form.addEventListener('submit', function (e) {
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
             // Show loading state
             submitBtn.disabled = true;
             submitBtn.classList.add('btn-loading');
@@ -466,7 +467,6 @@
             const password = document.getElementById('password');
 
             if (!email.validity.valid) {
-                e.preventDefault();
                 resetSubmitButton();
                 showFieldError('email-error', 'Please enter a valid email address');
                 email.focus();
@@ -474,11 +474,43 @@
             }
 
             if (password.value.length < 6) {
-                e.preventDefault();
                 resetSubmitButton();
                 showFieldError('password-error', 'Password must be at least 6 characters long');
                 password.focus();
+                return;
+            }
 
+            const payload = {
+                type: 'USERNAME_PASSWORD',
+                username: email.value,
+                password: password.value
+            };
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include', // so ACCESS_TOKEN cookie can be set
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    // Try to extract error message if any
+                    let message = 'Invalid email or password. Please try again.';
+                    try {
+                        const text = await response.text();
+                        if (text) message = text;
+                    } catch (_) { /* ignore */ }
+                    showInlineError(message);
+                    resetSubmitButton();
+                    return;
+                }
+                const params = new URLSearchParams(window.location.search);
+                const redirectUrl = params.get('redirect') || '/';
+                window.location.replace(redirectUrl);
+            } catch (err) {
+                showInlineError('Network error. Please check your connection and try again.');
+                resetSubmitButton();
             }
         });
 
@@ -497,6 +529,14 @@
             errorElement.classList.remove('sr-only');
             setTimeout(() => {
                 errorElement.classList.add('sr-only');
+            }, 5000);
+        }
+
+        function showInlineError(message) {
+            submitStatus.textContent = message;
+            submitStatus.classList.remove('sr-only');
+            setTimeout(() => {
+                submitStatus.classList.add('sr-only');
             }, 5000);
         }
 
