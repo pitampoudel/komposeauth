@@ -19,7 +19,7 @@ class StaticAppProperties(private val env: Environment) {
                 field = generated
                 return generated
             }
-            return null
+            throw IllegalStateException("No encryption key found")
         }
 
     fun generateKey(): String {
