@@ -35,8 +35,7 @@ class KycController(
         summary = "Get KYC information for current user",
         description = "Retrieves the Know Your Customer (KYC) information for the currently authenticated user."
     )
-    @GetMapping
-    @RequestMapping("/${ApiEndpoints.KYC}")
+    @GetMapping("/${ApiEndpoints.KYC}")
     fun getMine(): ResponseEntity<KycResponse> {
         val user = userContextService.getUserFromAuthentication()
         val kyc = kycService.find(user.id)
