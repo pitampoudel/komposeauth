@@ -1,5 +1,10 @@
 package pitampoudel.komposeauth.kyc.service
 
+import org.apache.coyote.BadRequestException
+import org.bson.types.ObjectId
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import pitampoudel.core.data.EncodedData
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.data.DocumentInformation
@@ -10,17 +15,12 @@ import pitampoudel.komposeauth.kyc.dto.toResponse
 import pitampoudel.komposeauth.kyc.entity.KycVerification
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.user.entity.User
-import pitampoudel.core.data.EncodedData
-import org.apache.coyote.BadRequestException
-import org.bson.types.ObjectId
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 
 @Service
 class KycService(
     private val kycRepo: KycVerificationRepository,
-    private val storage: StorageService,
+    private val mediaStorageService: StorageService,
     val emailService: EmailService
 ) {
 
@@ -115,7 +115,7 @@ class KycService(
         fun upload(label: String, encoded: EncodedData): String {
             val file = encoded.toKmpFile()
             val blobName = "kyc/${userId.toHexString()}/$label"
-            return storage.upload(blobName, file.mimeType, file.byteArray)
+            return mediaStorageService.upload(blobName, file.mimeType, file.byteArray)
         }
 
         val newFrontUrl = upload("front", data.documentFront)
