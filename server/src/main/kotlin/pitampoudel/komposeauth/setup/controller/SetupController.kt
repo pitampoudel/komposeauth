@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam
 import pitampoudel.komposeauth.StaticAppProperties
 import pitampoudel.komposeauth.setup.entity.Env
 import pitampoudel.komposeauth.setup.service.EnvService
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 @Controller
 class SetupController(
@@ -17,8 +19,9 @@ class SetupController(
     private val appProps: StaticAppProperties,
 ) {
     @GetMapping("/setup")
-    fun setupForm(model: Model, @RequestParam("key") key: String?): String {
-        if (key != appProps.base64EncryptionKey) {
+    fun setupForm(model: Model, @RequestParam("key") key: String): String {
+        val decodedKey = URLDecoder.decode(key, StandardCharsets.UTF_8.toString())
+        if (decodedKey != appProps.base64EncryptionKey) {
             throw AccessDeniedException("You are not authorized")
         }
         model.addAttribute("config", envService.getEnv())
@@ -26,8 +29,9 @@ class SetupController(
     }
 
     @PostMapping("/setup")
-    fun submit(@RequestParam("key") key: String?, @ModelAttribute form: Env, model: Model): String {
-        if (key != appProps.base64EncryptionKey) {
+    fun submit(@RequestParam("key") key: String, @ModelAttribute form: Env, model: Model): String {
+        val decodedKey = URLDecoder.decode(key, StandardCharsets.UTF_8.toString())
+        if (decodedKey != appProps.base64EncryptionKey) {
             throw AccessDeniedException("You are not authorized")
         }
         envService.save(form)

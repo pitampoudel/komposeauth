@@ -152,6 +152,7 @@ class WebSecurityConfig(
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(
+                        "/",
                         "/css/**",
                         "/js/**",
                         "/img/**",

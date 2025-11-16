@@ -9,6 +9,6 @@ import pitampoudel.core.data.MessageResponse
 class HomeController() {
     @GetMapping("/")
     fun index(): ResponseEntity<MessageResponse> {
-        return ResponseEntity.ok(MessageResponse("Server is up"))
+        return ResponseEntity.ok(MessageResponse("Auth server is up"))
     }
 }
