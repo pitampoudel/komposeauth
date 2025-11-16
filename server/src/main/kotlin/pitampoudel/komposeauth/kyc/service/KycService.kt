@@ -26,6 +26,10 @@ class KycService(
 
     fun find(userId: ObjectId): KycResponse? = kycRepo.findByUserId(userId)?.toResponse()
 
+    fun isVerified(userId: ObjectId): Boolean {
+        return find(userId)?.status == KycResponse.Status.APPROVED
+    }
+
     fun getPending(): List<KycResponse> =
         kycRepo.findAllByStatus(KycResponse.Status.PENDING).map { it.toResponse() }
 

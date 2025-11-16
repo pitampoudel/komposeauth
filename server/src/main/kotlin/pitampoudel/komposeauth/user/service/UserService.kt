@@ -22,6 +22,7 @@ import pitampoudel.komposeauth.data.UpdateProfileRequest
 import pitampoudel.komposeauth.data.UserResponse
 import pitampoudel.komposeauth.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.domain.Platform
+import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.dto.mapToEntity
 import pitampoudel.komposeauth.user.dto.mapToResponseDto
 import pitampoudel.komposeauth.user.dto.update
@@ -42,7 +43,8 @@ class UserService(
     private val phoneNumberVerificationService: PhoneNumberVerificationService,
     val appProperties: AppProperties,
     val emailService: EmailService,
-    val jwtService: JwtService
+    val jwtService: JwtService,
+    val kycService: KycService
 ) {
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
@@ -142,7 +144,7 @@ class UserService(
         val existingUser = userRepository.findById(userId).orElse(null)
             ?: throw IllegalStateException("User not found")
         val result = userRepository.save(existingUser.update(req, passwordEncoder))
-        return result.mapToResponseDto()
+        return result.mapToResponseDto(kycService.isVerified(result.id))
     }
 
     fun emailVerified(userId: ObjectId) {
@@ -195,7 +197,7 @@ class UserService(
         )
 
         val result = userRepository.save(updatedUser)
-        return result.mapToResponseDto()
+        return result.mapToResponseDto(kycService.isVerified(result.id))
     }
 
     fun findOrCreateUserByGoogleIdToken(idToken: String): User {

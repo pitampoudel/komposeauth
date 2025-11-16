@@ -42,7 +42,12 @@ class UsersController(
         description = "Creates a new user account",
     )
     fun create(@RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
-        return ResponseEntity.ok().body(userService.createUser(request).mapToResponseDto())
+        return ResponseEntity.ok()
+            .body(
+                userService.createUser(request).let {
+                    it.mapToResponseDto(kycService.isVerified(it.id))
+                }
+            )
 
     }
 
@@ -52,7 +57,11 @@ class UsersController(
         description = "Creates a new user account or returns existing user",
     )
     fun findOrCreateUser(@RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
-        return ResponseEntity.ok().body(userService.findOrCreateUser(request).mapToResponseDto())
+        return ResponseEntity.ok().body(
+            userService.findOrCreateUser(request).let {
+                it.mapToResponseDto(kycService.isVerified(it.id))
+            }
+        )
     }
 
     @GetMapping("/$USERS/{id}")
@@ -64,7 +73,7 @@ class UsersController(
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_READ_ANY_USER')")
     fun getUserById(@PathVariable id: String): ResponseEntity<UserResponse> {
         val user = userService.findUser(id) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(user.mapToResponseDto())
+        return ResponseEntity.ok(user.mapToResponseDto(kycService.isVerified(user.id)))
     }
 
     @GetMapping("/$USERS")
@@ -81,7 +90,7 @@ class UsersController(
     ): ResponseEntity<List<UserResponse>> {
         val idList = ids?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
         val users = userService.findUsersFlexible(idList, query, page, size)
-        val userResponses = users.map { it.mapToResponseDto() }
+        val userResponses = users.map { it.mapToResponseDto(kycService.isVerified(it.id)) }
         return ResponseEntity.ok(userResponses)
     }
 
@@ -95,7 +104,7 @@ class UsersController(
         val userId = authentication.name
         val user = userService.findUser(userId) ?: return ResponseEntity.notFound().build()
         val userInfo =
-            user.mapToProfileResponseDto(kycService.find(user.id)?.status == KycResponse.Status.APPROVED)
+            user.mapToProfileResponseDto(kycService.isVerified(user.id))
         return ResponseEntity.ok(userInfo)
     }
 

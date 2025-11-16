@@ -17,7 +17,8 @@ data class UserResponse(
     @Contextual
     val updatedAt: Instant,
     val phoneNumber: String?,
-    val phoneNumberVerified: Boolean
+    val phoneNumberVerified: Boolean,
+    val kycVerified: Boolean,
 ) {
     init {
         require(email != null || phoneNumber != null)

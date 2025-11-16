@@ -39,7 +39,7 @@ fun User.update(req: UpdateProfileRequest, passwordEncoder: PasswordEncoder): @V
 }
 
 @OptIn(ExperimentalTime::class)
-fun User.mapToResponseDto(): UserResponse {
+fun User.mapToResponseDto(kycVerified: Boolean): UserResponse {
     return UserResponse(
         id = this.id.toHexString(),
         firstName = this.firstName,
@@ -50,7 +50,8 @@ fun User.mapToResponseDto(): UserResponse {
         phoneNumberVerified = phoneNumberVerified,
         photoUrl = this.picture,
         createdAt = this.createdAt.toKotlinInstant(),
-        updatedAt = this.updatedAt.toKotlinInstant()
+        updatedAt = this.updatedAt.toKotlinInstant(),
+        kycVerified = kycVerified
     )
 }
 
