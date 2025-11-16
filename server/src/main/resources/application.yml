@@ -23,14 +23,14 @@ app:
   name: ${APP_NAME:}
   logo-url: ${APP_LOGO_URL:}
   self-base-url: ${SELF_BASE_URL:}
-  allowedAndroidSha256List: ${ALLOWED_ANDROID_SHA_256_LIST:}
-  corsAllowedOriginList: ${ALLOWED_CORS_ORIGIN_LIST:}
+  allowed-android-sha256-list: ${ALLOWED_ANDROID_SHA_256_LIST:}
+  cors-allowed-origin-list: ${ALLOWED_CORS_ORIGIN_LIST:}
   gcp-bucket-name: ${GCP_BUCKET_NAME:}
   twilio-account-sid: ${TWILIO_ACCOUNT_SID:}
   twilio-auth-token: ${TWILIO_AUTH_TOKEN:}
   twilio-from-number: ${TWILIO_FROM_NUMBER:}
   twilio-verify-service-sid: ${TWILIO_VERIFY_SERVICE_SID:}
-  expected-gcp-project-id: ${EXPECTED_GCP_PROJECT_ID:}
+  gcp-project-id: ${GCP_PROJECT_ID:}
   google-auth-client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
   google-auth-client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:}
   google-auth-desktop-client-id: ${GOOGLE_AUTH_DESKTOP_CLIENT_ID:}

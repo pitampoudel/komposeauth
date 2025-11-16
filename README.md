@@ -84,7 +84,7 @@ SENTRY_DSN=                  # Enables Sentry reporting
 
 # File uploads
 GCP_BUCKET_NAME=             # If set, uses Google Cloud Storage
-EXPECTED_GCP_PROJECT_ID=     # Verifies it matches the active GCP project
+GCP_PROJECT_ID=
 
 # sccess control
 ALLOWED_ANDROID_SHA_256_LIST=

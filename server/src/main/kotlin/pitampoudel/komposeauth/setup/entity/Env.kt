@@ -13,7 +13,7 @@ data class Env(
     var name: String? = null,
     var logoUrl: String? = null,
     var selfBaseUrl: String? = null,
-    var expectedGcpProjectId: String? = null,
+    var gcpProjectId: String? = null,
     var gcpBucketName: String? = null,
 
     var googleAuthClientId: String? = null,

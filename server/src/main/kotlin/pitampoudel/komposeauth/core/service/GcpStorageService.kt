@@ -4,7 +4,6 @@ import com.google.cloud.storage.Bucket
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 import pitampoudel.komposeauth.AppProperties
-import pitampoudel.komposeauth.core.utils.GcpUtils
 
 interface StorageService {
     fun upload(blobName: String, contentType: String?, bytes: ByteArray): String
@@ -17,7 +16,7 @@ class GcpStorageService(
     val appProperties: AppProperties
 ) : StorageService {
     private val storage: Storage by lazy {
-        StorageOptions.newBuilder().setProjectId(GcpUtils.currentProjectId()).build().service
+        StorageOptions.newBuilder().setProjectId(appProperties.gcpProjectId).build().service
     }
 
     private val bucket by lazy {

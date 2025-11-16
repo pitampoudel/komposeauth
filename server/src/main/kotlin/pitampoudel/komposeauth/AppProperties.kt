@@ -46,9 +46,9 @@ class AppProperties(val envService: EnvService) {
     var logoUrl: String? = null
         get() = field?.takeIf { it.isNotBlank() }
             ?: envService.getEnv().logoUrl.takeIf { !it.isNullOrBlank() }
-    var expectedGcpProjectId: String? = null
+    var gcpProjectId: String? = null
         get() = field?.takeIf { it.isNotBlank() }
-            ?: envService.getEnv().expectedGcpProjectId.takeIf { !it.isNullOrBlank() }
+            ?: envService.getEnv().gcpProjectId.takeIf { !it.isNullOrBlank() }
     var gcpBucketName: String? = null
         get() = field?.takeIf { it.isNotBlank() }
             ?: envService.getEnv().gcpBucketName.takeIf { !it.isNullOrBlank() }
