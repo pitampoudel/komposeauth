@@ -20,9 +20,9 @@ class SetupController(
 ) {
     @GetMapping("/setup")
     fun setupForm(model: Model, @RequestParam("key") key: String): String {
-        val decodedKey = URLDecoder.decode(key, StandardCharsets.UTF_8.toString())
+        val decodedKey = key.replace(" ","+")
         if (decodedKey != appProps.base64EncryptionKey) {
-            throw AccessDeniedException("You are not authorized")
+            throw AccessDeniedException("You are not authorized. $decodedKey <> ${appProps.base64EncryptionKey}")
         }
         model.addAttribute("config", envService.getEnv())
         return "setup"
@@ -30,7 +30,7 @@ class SetupController(
 
     @PostMapping("/setup")
     fun submit(@RequestParam("key") key: String, @ModelAttribute form: Env, model: Model): String {
-        val decodedKey = URLDecoder.decode(key, StandardCharsets.UTF_8.toString())
+        val decodedKey = key.replace(" ","+")
         if (decodedKey != appProps.base64EncryptionKey) {
             throw AccessDeniedException("You are not authorized")
         }
