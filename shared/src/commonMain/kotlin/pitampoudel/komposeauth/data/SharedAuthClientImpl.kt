@@ -11,6 +11,7 @@ import io.ktor.client.request.patch
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
 import io.ktor.http.parameters
+import pitampoudel.core.data.PageResponse
 import pitampoudel.core.data.asResource
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.Result
@@ -56,7 +57,7 @@ class SharedAuthClientImpl(
                     append(HttpHeaders.Authorization, "Bearer $accessToken")
                 }
                 parameter("ids", userIds.joinToString(","))
-            }.asResource { body<List<UserResponse>>().associateBy { it.id } }
+            }.asResource { body<PageResponse<UserResponse>>().items.associateBy { it.id } }
         }
     }
 
