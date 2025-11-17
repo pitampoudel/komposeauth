@@ -39,3 +39,17 @@ data class GoogleErrorResponse(
         val status: String
     )
 }
+
+@Serializable
+data class PageResponse<T>(
+    @SerialName("items")
+    val items: List<T>,
+    @SerialName("page")
+    val page: Int,
+    @SerialName("pageSize")
+    val pageSize: Int,
+    @SerialName("totalItems")
+    val totalItems: Long,
+    @SerialName("hasNext")
+    val hasNext: Boolean
+)
