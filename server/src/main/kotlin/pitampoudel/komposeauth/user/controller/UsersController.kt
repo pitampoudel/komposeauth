@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import pitampoudel.core.data.MessageResponse
+import pitampoudel.core.data.PageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.ApiEndpoints.ME
@@ -87,11 +88,18 @@ class UsersController(
         @RequestParam(required = false, name = "q") query: String?,
         @RequestParam(required = false, defaultValue = "0") page: Int,
         @RequestParam(required = false, defaultValue = "50") size: Int
-    ): ResponseEntity<List<UserResponse>> {
+    ): ResponseEntity<PageResponse<UserResponse>> {
         val idList = ids?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
-        val users = userService.findUsersFlexible(idList, query, page, size)
-        val userResponses = users.map { it.mapToResponseDto(kycService.isVerified(it.id)) }
-        return ResponseEntity.ok(userResponses)
+        val usersPage = userService.findUsersFlexible(idList, query, page, size)
+        val userResponses = usersPage.content.map { it.mapToResponseDto(kycService.isVerified(it.id)) }
+        val body = PageResponse(
+            items = userResponses,
+            page = usersPage.number,
+            pageSize = usersPage.size,
+            totalItems = usersPage.totalElements,
+            hasNext = usersPage.hasNext()
+        )
+        return ResponseEntity.ok(body)
     }
 
     @GetMapping("/$ME")

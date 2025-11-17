@@ -6,6 +6,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.apache.coyote.BadRequestException
 import org.bson.types.ObjectId
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -91,11 +93,7 @@ class UserService(
         return userRepository.findByIdIn(objectIds)
     }
 
-    fun findUsersFlexible(ids: List<String>?, q: String?, page: Int, size: Int): List<User> {
-        if (!ids.isNullOrEmpty()) {
-            return findUsersBulk(ids)
-        }
-
+    fun findUsersFlexible(ids: List<String>?, q: String?, page: Int, size: Int): Page<User> {
         val pageSafe = if (page < 0) 0 else page
         val sizeCapped = when {
             size <= 0 -> 50
@@ -104,6 +102,14 @@ class UserService(
         }
         val pageable: Pageable = PageRequest.of(pageSafe, sizeCapped)
 
+        if (!ids.isNullOrEmpty()) {
+            val all = findUsersBulk(ids)
+            val start = (pageSafe * sizeCapped).coerceAtMost(all.size)
+            val end = (start + sizeCapped).coerceAtMost(all.size)
+            val slice = if (start < end) all.subList(start, end) else emptyList()
+            return PageImpl(slice, pageable, all.size.toLong())
+        }
+
         if (!q.isNullOrBlank()) {
             return userRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPhoneNumberContainingIgnoreCase(
                 q,
@@ -111,10 +117,10 @@ class UserService(
                 q,
                 q,
                 pageable
-            ).content
+            )
         }
 
-        return userRepository.findAll(pageable).content
+        return userRepository.findAll(pageable)
     }
 
     fun findByUserName(value: String): User? {
