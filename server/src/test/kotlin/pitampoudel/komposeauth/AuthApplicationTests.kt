@@ -32,6 +32,7 @@ class AuthApplicationTests {
         @JvmStatic
         fun setProperties(registry: DynamicPropertyRegistry) {
             registry.add("spring.data.mongodb.uri") { mongo.connectionString }
+            registry.add("spring.data.mongodb.database") { "test" }
         }
     }
 
