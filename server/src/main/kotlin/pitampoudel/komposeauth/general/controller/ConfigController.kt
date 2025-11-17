@@ -12,8 +12,7 @@ import pitampoudel.komposeauth.data.ApiEndpoints.JWKS
 @RestController
 @RequestMapping
 class ConfigController(
-    private val jwkSet: JWKSet,
-    private val appProperties: AppProperties
+    private val jwkSet: JWKSet
 ) {
     @Operation(
         summary = "Get JWKS",
