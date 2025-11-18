@@ -7,6 +7,8 @@ import org.springframework.data.annotation.TypeAlias
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.toJavaDuration
 
 @Document(collection = "phone_otps")
 @TypeAlias("phone_otp")
@@ -18,7 +20,7 @@ data class PhoneOtp(
     @CreatedDate
     @Indexed(expireAfter = "5m") // 5 minutes TTL
     val createdAt: Instant = Instant.now(),
-    val expiresAt: Instant = Instant.now().plusSeconds(300) // 5 minutes from now
+    val expiresAt: Instant = Instant.now().plus(5.minutes.toJavaDuration())
 ) {
     fun isExpired(): Boolean = Instant.now().isAfter(expiresAt)
 }
