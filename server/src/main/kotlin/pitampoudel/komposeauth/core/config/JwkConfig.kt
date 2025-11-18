@@ -5,68 +5,38 @@ import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
-import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Lazy
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtEncoder
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration
-import pitampoudel.komposeauth.AppProperties
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.StandardOpenOption
-import java.security.KeyFactory
+import pitampoudel.komposeauth.jwk.service.PersistentKeyService
 import java.security.KeyPair
-import java.security.KeyPairGenerator
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
-import java.security.spec.PKCS8EncodedKeySpec
-import java.security.spec.X509EncodedKeySpec
 
 @Configuration(proxyBeanMethods = false)
-class JwkConfig(appProperties: AppProperties) {
-    private val logger = LoggerFactory.getLogger(JwkConfig::class.java)
-    private val publicKeyBlobName = "jwk/public.key"
-    private val privateKeyBlobName = "jwk/private.key"
-
-    private val localDir: Path = Path.of(System.getProperty("user.home"), appProperties.name, "jwk")
-    private val localPublicKey: Path = localDir.resolve("public.key")
-    private val localPrivateKey: Path = localDir.resolve("private.key")
+class JwkConfig(
+    private val persistentKeyService: PersistentKeyService
+) {
 
     @Bean
     @Lazy
-    fun serverKeyPair(): KeyPair {
-        try {
-            val local = tryLoadKeyPairFromLocal()
-            if (local != null) {
-                logger.info("Loaded RSA key pair from local cache at {}", localDir)
-                return local
-            }
-        } catch (e: Exception) {
-            logger.warn("Failed to load RSA key pair from local cache: {}", e.toString())
-        }
-
-        logger.info("Generating new RSA key pair and saving to Google Cloud Storage and local cache")
-        val generated = generateKeyPair()
-        try {
-            saveKeyPairToLocal(generated)
-        } catch (e: Exception) {
-            logger.warn("Failed to save generated RSA key pair to local cache: {}", e.toString())
-        }
-        return generated
-    }
+    fun serverKeyPair(): KeyPair = persistentKeyService.loadOrCreateKeyPair()
 
     @Bean
     @Lazy
     fun jwkSet(serverKeyPair: KeyPair): JWKSet {
         val publicKey = serverKeyPair.public as RSAPublicKey
         val privateKey = serverKeyPair.private as RSAPrivateKey
+
         val rsaKey = RSAKey.Builder(publicKey)
             .privateKey(privateKey)
-            .keyID("spring-boot-jwk") // static kid is fine unless rotating
+            .keyID(persistentKeyService.currentKid())
             .build()
+
         return JWKSet(rsaKey)
     }
 
@@ -79,47 +49,15 @@ class JwkConfig(appProperties: AppProperties) {
     @Bean
     @Lazy
     fun jwtEncoder(jwkSource: JWKSource<SecurityContext>): JwtEncoder {
+        // Use the asymmetric JWK source (RS256)
         return NimbusJwtEncoder(jwkSource)
     }
 
     @Bean
     @Lazy
-    fun jwtDecoder(jwkSource: JWKSource<SecurityContext>): JwtDecoder {
-        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource)
-    }
-
-    private fun generateKeyPair(): KeyPair {
-        val generator = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }
-        val keyPair = generator.generateKeyPair()
-        return keyPair
-    }
-
-    private fun saveKeyPairToLocal(keyPair: KeyPair) {
-        if (!Files.exists(localDir)) {
-            Files.createDirectories(localDir)
-        }
-        Files.write(
-            localPublicKey,
-            keyPair.public.encoded,
-            StandardOpenOption.CREATE,
-            StandardOpenOption.TRUNCATE_EXISTING,
-            StandardOpenOption.WRITE
-        )
-        Files.write(
-            localPrivateKey,
-            keyPair.private.encoded,
-            StandardOpenOption.CREATE,
-            StandardOpenOption.TRUNCATE_EXISTING,
-            StandardOpenOption.WRITE
-        )
-    }
-    private fun tryLoadKeyPairFromLocal(): KeyPair? {
-        if (!Files.exists(localPublicKey) || !Files.exists(localPrivateKey)) return null
-        val keyFactory = KeyFactory.getInstance("RSA")
-        val publicBytes = Files.readAllBytes(localPublicKey)
-        val privateBytes = Files.readAllBytes(localPrivateKey)
-        val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicBytes))
-        val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateBytes))
-        return KeyPair(publicKey, privateKey)
+    fun jwtDecoder(serverKeyPair: KeyPair): JwtDecoder {
+        val publicKey = serverKeyPair.public as RSAPublicKey
+        // NimbusJwtDecoder supports RS256 by default when given a public key
+        return NimbusJwtDecoder.withPublicKey(publicKey).build()
     }
 }
