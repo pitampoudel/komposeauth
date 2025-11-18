@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.config
+package pitampoudel.komposeauth.jwk.config
 
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
