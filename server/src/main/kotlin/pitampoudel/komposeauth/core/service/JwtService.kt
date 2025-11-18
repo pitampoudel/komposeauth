@@ -7,13 +7,15 @@ import org.springframework.stereotype.Service
 import pitampoudel.komposeauth.AppProperties
 import pitampoudel.komposeauth.user.entity.User
 import java.time.Instant
+import kotlin.time.Duration
+import kotlin.time.toJavaDuration
 
 @Service
 class JwtService(
     val appProperties: AppProperties,
     private val jwtEncoder: JwtEncoder
 ) {
-    fun generateAccessToken(user: User): String {
+    fun generateAccessToken(user: User, validity: Duration): String {
         val now = Instant.now()
         val scopes = listOf("openid", "profile", "email")
         val claims = JwtClaimsSet.builder()
@@ -21,7 +23,7 @@ class JwtService(
             .subject(user.id.toHexString())
             .audience(listOf(appProperties.selfBaseUrl))
             .issuedAt(now)
-            .expiresAt(now.plusSeconds(86400)) // 1 day
+            .expiresAt(now + validity.toJavaDuration())
             .notBefore(now)
             .claim("email", user.email)
             .claim("givenName", user.firstName)

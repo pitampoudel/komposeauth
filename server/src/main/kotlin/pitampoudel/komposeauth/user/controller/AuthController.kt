@@ -65,7 +65,7 @@ class AuthController(
     ): ResponseEntity<*> {
 
         val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
-        val accessToken = jwtService.generateAccessToken(user)
+        val accessToken = jwtService.generateAccessToken(user, validity = 1.days)
         val refreshToken = oneTimeTokenService.generateRefreshToken(user.id)
 
         if (wantToken) {
