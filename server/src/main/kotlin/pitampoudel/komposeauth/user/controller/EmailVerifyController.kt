@@ -10,14 +10,15 @@ import org.springframework.web.bind.annotation.RestController
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_EMAIL
+import pitampoudel.komposeauth.user.entity.OneTimeToken
+import pitampoudel.komposeauth.user.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.service.UserService
 
 @RestController
 @RequestMapping("/$VERIFY_EMAIL")
 class EmailVerifyController(
-    private val jwtService: JwtService,
+    private val oneTimeTokenService: OneTimeTokenService,
     private val emailService: EmailService,
     private val userService: UserService,
     val userContextService: UserContextService,
@@ -36,7 +37,7 @@ class EmailVerifyController(
             return ResponseEntity.badRequest().body(MessageResponse("User email is not set."))
         }
 
-        val link = jwtService.generateEmailVerificationLink(userId = user.id.toHexString())
+        val link = oneTimeTokenService.generateEmailVerificationLink(userId = user.id)
 
         val sent = emailService.sendSimpleMail(
             to = user.email,
@@ -54,10 +55,9 @@ class EmailVerifyController(
     )
     @GetMapping
     fun verifyEmail(@RequestParam("token") token: String): ResponseEntity<MessageResponse> {
-        val claims = jwtService.retrieveClaimsIfValidEmailVerificationToken(token)
-
-        val user =
-            userService.findUser(claims.subject) ?: return ResponseEntity.notFound().build()
+        val stored = oneTimeTokenService.consume(token, OneTimeToken.Purpose.VERIFY_EMAIL)
+        val user = userService.findUser(stored.userId.toHexString())
+            ?: return ResponseEntity.notFound().build()
 
         if (user.emailVerified) {
             return ResponseEntity.ok(MessageResponse("Email already verified"))

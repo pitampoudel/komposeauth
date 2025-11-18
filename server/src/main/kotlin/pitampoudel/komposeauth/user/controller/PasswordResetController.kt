@@ -11,9 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints.RESET_PASSWORD
 import pitampoudel.komposeauth.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.entity.OneTimeToken
+import pitampoudel.komposeauth.user.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.service.UserService
 
 @Controller
@@ -21,7 +22,7 @@ import pitampoudel.komposeauth.user.service.UserService
 class PasswordResetController(
     private val userService: UserService,
     private val emailService: EmailService,
-    private val jwtService: JwtService
+    private val oneTimeTokenService: OneTimeTokenService
 ) {
     @Operation(
         summary = "Show password reset form",
@@ -29,7 +30,8 @@ class PasswordResetController(
     )
     @GetMapping
     fun resetPasswordForm(@RequestParam token: String, model: Model): String {
-        jwtService.retrieveClaimsIfValidResetPasswordToken(token)
+        // Verify token without consuming
+        oneTimeTokenService.verify(token, OneTimeToken.Purpose.RESET_PASSWORD)
         model.addAttribute("token", token)
         return "reset-password-form"
     }
@@ -43,7 +45,7 @@ class PasswordResetController(
         val user = userService.findByUserName(email)
             ?: return ResponseEntity.badRequest().body(MessageResponse("No user with that email"))
 
-        val link = jwtService.generateResetPasswordLink(userId = user.id.toHexString())
+        val link = oneTimeTokenService.generateResetPasswordLink(userId = user.id)
 
         val sent = emailService.sendSimpleMail(
             to = email,
@@ -65,10 +67,8 @@ class PasswordResetController(
         @RequestParam newPassword: String,
         @RequestParam confirmPassword: String,
     ): ResponseEntity<MessageResponse> {
-
-        val userId = jwtService.retrieveClaimsIfValidResetPasswordToken(token).subject
-
-        val user = userService.findUser(userId)
+        val stored = oneTimeTokenService.consume(token, OneTimeToken.Purpose.RESET_PASSWORD)
+        val user = userService.findUser(stored.userId.toHexString())
             ?: return ResponseEntity.notFound().build()
 
         userService.updateUser(

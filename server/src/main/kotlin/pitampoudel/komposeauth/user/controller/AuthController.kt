@@ -27,7 +27,9 @@ import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.OAuth2Response
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
+import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.entity.User
+import pitampoudel.komposeauth.user.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.service.UserService
 import javax.security.auth.login.AccountLockedException
 import kotlin.time.Duration.Companion.days
@@ -39,6 +41,7 @@ class AuthController(
     val json: Json,
     val userService: UserService,
     val jwtService: JwtService,
+    val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
     private val passwordEncoder: PasswordEncoder,
     private val objectMapper: ObjectMapper,
@@ -63,7 +66,7 @@ class AuthController(
 
         val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
         val accessToken = jwtService.generateAccessToken(user)
-        val refreshToken = jwtService.generateRefreshToken(user)
+        val refreshToken = oneTimeTokenService.generateRefreshToken(user.id)
 
         if (wantToken) {
             return ResponseEntity.ok(
@@ -111,8 +114,13 @@ class AuthController(
             )
 
             is Credential.RefreshToken -> {
-                val userId = jwtService.validateRefreshToken(request.refreshToken)
-                userService.findUser(userId) ?: throw UsernameNotFoundException("User not found")
+                val token = oneTimeTokenService.consume(
+                    request.refreshToken,
+                    purpose = OneTimeToken.Purpose.REFRESH_TOKEN
+                )
+                userService.findUser(token.userId.toHexString()) ?: throw UsernameNotFoundException(
+                    "User not found"
+                )
             }
 
             is Credential.AppleId -> throw UnsupportedOperationException("AppleId authentication is not supported yet.")

@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.AppProperties
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.data.CreateUserRequest
@@ -45,7 +44,7 @@ class UserService(
     private val phoneNumberVerificationService: PhoneNumberVerificationService,
     val appProperties: AppProperties,
     val emailService: EmailService,
-    val jwtService: JwtService,
+    val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService
 ) {
     fun findUser(id: String): User? {
@@ -134,8 +133,8 @@ class UserService(
                 to = newUser.email,
                 subject = "Email Verification",
                 text = "Please click the link to verify your email address: ${
-                    jwtService.generateEmailVerificationLink(
-                        userId = newUser.id.toHexString()
+                    oneTimeTokenService.generateEmailVerificationLink(
+                        userId = newUser.id
                     )
                 }"
             )
