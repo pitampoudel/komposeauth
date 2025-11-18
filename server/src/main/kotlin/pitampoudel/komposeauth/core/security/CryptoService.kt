@@ -45,8 +45,7 @@ class CryptoService(private val props: StaticAppProperties) {
 
     fun isEncrypted(value: String?): Boolean = value?.startsWith(PREFIX) == true
 
-    fun encrypt(plain: String?): String? {
-        if (plain == null) return null
+    fun encrypt(plain: String): String {
         if (plain.isEmpty()) return plain
         if (isEncrypted(plain)) return plain // idempotent
 
@@ -63,8 +62,7 @@ class CryptoService(private val props: StaticAppProperties) {
         return PREFIX + encoded
     }
 
-    fun decrypt(value: String?): String? {
-        if (value == null) return null
+    fun decrypt(value: String): String {
         if (value.isEmpty()) return value
         if (!isEncrypted(value)) return value // backward compatibility
 

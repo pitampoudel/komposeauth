@@ -41,19 +41,23 @@ class EnvService(
 
     private fun encryptEnv(src: Env): Env {
         return src.copy(
-            googleAuthClientSecret = crypto.encrypt(src.googleAuthClientSecret),
-            googleAuthDesktopClientSecret = crypto.encrypt(src.googleAuthDesktopClientSecret),
-            twilioAuthToken = crypto.encrypt(src.twilioAuthToken),
-            smtpPassword = crypto.encrypt(src.smtpPassword),
+            googleAuthClientSecret = src.googleAuthClientSecret?.let { crypto.encrypt(it) },
+            googleAuthDesktopClientSecret = src.googleAuthDesktopClientSecret?.let {
+                crypto.encrypt(it)
+            },
+            twilioAuthToken = src.twilioAuthToken?.let { crypto.encrypt(it) },
+            smtpPassword = src.smtpPassword?.let { crypto.encrypt(it) },
         )
     }
 
     private fun decryptEnv(src: Env): Env {
         return src.copy(
-            googleAuthClientSecret = crypto.decrypt(src.googleAuthClientSecret),
-            googleAuthDesktopClientSecret = crypto.decrypt(src.googleAuthDesktopClientSecret),
-            twilioAuthToken = crypto.decrypt(src.twilioAuthToken),
-            smtpPassword = crypto.decrypt(src.smtpPassword)
+            googleAuthClientSecret = src.googleAuthClientSecret?.let { crypto.decrypt(it) },
+            googleAuthDesktopClientSecret = src.googleAuthDesktopClientSecret?.let {
+                crypto.decrypt(it)
+            },
+            twilioAuthToken = src.twilioAuthToken?.let { crypto.decrypt(it) },
+            smtpPassword = src.smtpPassword?.let { crypto.decrypt(it) }
         )
     }
 }
