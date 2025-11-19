@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.setup.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Scope
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import pitampoudel.komposeauth.AppProperties
@@ -9,6 +10,7 @@ import pitampoudel.komposeauth.AppProperties
 @Configuration
 class MailConfig(private val appProperties: AppProperties) {
     @Bean
+    @Scope("prototype")
     fun javaMailSender(): JavaMailSender? {
         val impl = JavaMailSenderImpl()
         impl.host = appProperties.smtpHost

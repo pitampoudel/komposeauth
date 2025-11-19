@@ -18,10 +18,13 @@ class AppProperties(val envService: EnvService) {
 
     var selfBaseUrl: String = ""
         get() {
+            // Prefer environment/application.yml bound value first
             val raw = field.trim()
             if (raw.isNotEmpty()) return raw
+            // Then fall back to dynamic value from DB-managed Env
             val cfg = envService.getEnv().selfBaseUrl?.trim()
             if (!cfg.isNullOrBlank()) return cfg
+            // Finally, attempt to derive from current request context or local IP
             return runCatching {
                 ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString().trim()
             }.getOrNull() ?: "http://${getLocalIpAddress()}:8080"

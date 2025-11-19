@@ -12,7 +12,9 @@ class EmailService(private val mailSenderProvider: ObjectProvider<JavaMailSender
         subject: String? = null,
         text: String? = null
     ): Boolean {
-        val javaMailSender = mailSenderProvider.getIfAvailable() ?: return false
+        // Request a fresh JavaMailSender each time to pick up latest SMTP settings
+        val javaMailSender = runCatching { mailSenderProvider.getObject() }.getOrNull()
+            ?: mailSenderProvider.getIfAvailable() ?: return false
         return try {
             val mailMessage = SimpleMailMessage()
             mailMessage.setTo(to)
