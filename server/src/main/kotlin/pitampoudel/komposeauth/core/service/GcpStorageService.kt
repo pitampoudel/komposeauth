@@ -1,17 +1,14 @@
 package pitampoudel.komposeauth.core.service
 
 import com.google.cloud.storage.Bucket
+import com.google.cloud.storage.BucketInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
+import org.springframework.stereotype.Service
 import pitampoudel.komposeauth.AppProperties
 
-interface StorageService {
-    fun upload(blobName: String, contentType: String?, bytes: ByteArray): String
-    fun download(blobName: String): ByteArray?
-    fun exists(blobName: String): Boolean
-    fun delete(url: String): Boolean
-}
 
+@Service
 class GcpStorageService(
     val appProperties: AppProperties
 ) : StorageService {
@@ -20,8 +17,8 @@ class GcpStorageService(
     }
 
     private val bucket by lazy {
-        storage.get(appProperties.gcpBucketName) ?: error(
-            "Bucket ${appProperties.gcpBucketName} does not exist."
+        storage.get(appProperties.gcpBucketName) ?: storage.create(
+            BucketInfo.newBuilder(appProperties.gcpBucketName).build()
         )
     }
 

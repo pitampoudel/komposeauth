@@ -20,7 +20,7 @@ import pitampoudel.komposeauth.user.entity.User
 @Service
 class KycService(
     private val kycRepo: KycVerificationRepository,
-    private val mediaStorageService: StorageService,
+    private val storageService: StorageService,
     val emailService: EmailService
 ) {
 
@@ -119,7 +119,7 @@ class KycService(
         fun upload(label: String, encoded: EncodedData): String {
             val file = encoded.toKmpFile()
             val blobName = "kyc/${userId.toHexString()}/$label"
-            return mediaStorageService.upload(blobName, file.mimeType, file.byteArray)
+            return storageService.upload(blobName, file.mimeType, file.byteArray)
         }
 
         val newFrontUrl = upload("front", data.documentFront)
