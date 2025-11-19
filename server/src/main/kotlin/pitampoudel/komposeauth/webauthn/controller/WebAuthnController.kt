@@ -25,7 +25,8 @@ class WebAuthnController(
 ) {
     @Operation(
         summary = "Get configuration for login",
-        description = "Returns client configuration, such as the Google Client ID and public key registration options JSON"
+        description = "Returns client configuration, such as the Google Client ID and public key registration options JSON",
+        tags = ["webauthn"]
     )
     @GetMapping("/$LOGIN_OPTIONS")
     fun getLoginOptions(

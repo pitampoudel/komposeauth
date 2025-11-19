@@ -72,6 +72,7 @@ class OpenApiConfig {
             "/countries.json", PathItem().get(
                 Operation()
                     .summary("Get countries")
+                    .tags(listOf("static"))
                     .description("Returns a list of countries")
             )
         )
@@ -79,6 +80,7 @@ class OpenApiConfig {
             "/webauthn/register/options", PathItem().get(
                 Operation()
                     .summary("Get WebAuthn register options")
+                    .tags(listOf("webauthn"))
                     .description("Returns PublicKeyCredentialCreationOptions for WebAuthn registration")
             )
         )
