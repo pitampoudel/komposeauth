@@ -87,5 +87,26 @@ class OpenApiConfig {
                     .tags(listOf("docs"))
             )
         )
+        openApi.path(
+            "/v3/api-docs.yaml", PathItem().get(
+                Operation()
+                    .summary("Get OpenAPI YAML")
+                    .tags(listOf("docs"))
+            )
+        )
+        openApi.path(
+            "/swagger-ui/index.html", PathItem().get(
+                Operation()
+                    .summary("Swagger UI")
+                    .tags(listOf("docs"))
+            )
+        )
+        openApi.path(
+            "/swagger-ui.html", PathItem().get(
+                Operation()
+                    .summary("Swagger UI (legacy path)")
+                    .tags(listOf("docs"))
+            )
+        )
     }
 }
