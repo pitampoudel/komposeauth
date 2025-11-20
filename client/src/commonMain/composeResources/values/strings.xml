@@ -19,6 +19,7 @@
     <!--  Marital Status  -->
     <string name="kyc_marital_status_married">Married</string>
     <string name="kyc_marital_status_unmarried">Unmarried</string>
+    <string name="kyc_marital_status_divorced">Divorced</string>
 
      <!-- General-->
     <string name="ok">OK</string>

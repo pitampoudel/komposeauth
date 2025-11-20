@@ -8,6 +8,7 @@ import io.github.pitampoudel.client.generated.resources.kyc_document_type_passpo
 import io.github.pitampoudel.client.generated.resources.kyc_gender_female
 import io.github.pitampoudel.client.generated.resources.kyc_gender_male
 import io.github.pitampoudel.client.generated.resources.kyc_gender_other
+import io.github.pitampoudel.client.generated.resources.kyc_marital_status_divorced
 import io.github.pitampoudel.client.generated.resources.kyc_marital_status_married
 import io.github.pitampoudel.client.generated.resources.kyc_marital_status_unmarried
 import io.github.pitampoudel.client.generated.resources.kyc_status_approved
@@ -36,6 +37,7 @@ fun KycResponse.Gender.toStringRes(): StringResource = when (this) {
 fun KycResponse.MaritalStatus.toStringRes(): StringResource = when (this) {
     KycResponse.MaritalStatus.MARRIED -> Res.string.kyc_marital_status_married
     KycResponse.MaritalStatus.UNMARRIED -> Res.string.kyc_marital_status_unmarried
+    KycResponse.MaritalStatus.DIVORCED -> Res.string.kyc_marital_status_divorced
 }
 
 
