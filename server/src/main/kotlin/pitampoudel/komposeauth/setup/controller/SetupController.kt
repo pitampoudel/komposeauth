@@ -6,14 +6,14 @@ import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import pitampoudel.komposeauth.StaticAppProperties
 import pitampoudel.komposeauth.setup.entity.Env
 import pitampoudel.komposeauth.setup.service.EnvService
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 @Controller
+@RequestMapping("/auth")
 class SetupController(
     private val envService: EnvService,
     private val appProps: StaticAppProperties,

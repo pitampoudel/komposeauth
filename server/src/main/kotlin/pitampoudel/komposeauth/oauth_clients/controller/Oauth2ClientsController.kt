@@ -16,7 +16,7 @@ import pitampoudel.komposeauth.oauth_clients.dto.toEntity
 import pitampoudel.komposeauth.oauth_clients.repository.OAuth2ClientRepository
 
 @RestController
-@RequestMapping("/$OAUTH2_CLIENTS")
+@RequestMapping("/auth/$OAUTH2_CLIENTS")
 @PreAuthorize("hasRole('ADMIN')")
 class Oauth2ClientsController(
     val oauth2ClientRepository: OAuth2ClientRepository
