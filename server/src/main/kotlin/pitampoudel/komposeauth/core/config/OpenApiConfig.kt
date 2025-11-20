@@ -2,15 +2,10 @@ package pitampoudel.komposeauth.core.config
 
 import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.OpenAPI
-import io.swagger.v3.oas.models.info.Info
-import io.swagger.v3.oas.models.media.Content
-import io.swagger.v3.oas.models.media.MediaType
-import io.swagger.v3.oas.models.media.ObjectSchema
-import io.swagger.v3.oas.models.media.StringSchema
-import io.swagger.v3.oas.models.responses.ApiResponse
-import io.swagger.v3.oas.models.responses.ApiResponses
-import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.Operation
+import io.swagger.v3.oas.models.PathItem
+import io.swagger.v3.oas.models.info.Info
+import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
 import kotlinx.datetime.LocalDate
@@ -82,6 +77,14 @@ class OpenApiConfig {
                     .summary("Get WebAuthn register options")
                     .tags(listOf("webauthn"))
                     .description("Returns PublicKeyCredentialCreationOptions for WebAuthn registration")
+            )
+        )
+
+        openApi.path(
+            "/v3/api-docs", PathItem().get(
+                Operation()
+                    .summary("Get OpenAPI JSON")
+                    .tags(listOf("docs"))
             )
         )
     }
