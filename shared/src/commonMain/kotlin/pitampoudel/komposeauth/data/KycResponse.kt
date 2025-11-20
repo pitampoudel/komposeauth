@@ -45,6 +45,6 @@ data class KycResponse(
     }
 
     enum class Gender { MALE, FEMALE, OTHER }
-    enum class MaritalStatus { MARRIED, UNMARRIED }
+    enum class MaritalStatus { MARRIED, UNMARRIED, DIVORCED }
 
 }
