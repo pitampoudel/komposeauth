@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.setup.controller
 
+import io.swagger.v3.oas.annotations.Operation
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -19,8 +20,11 @@ class SetupController(
     private val appProps: StaticAppProperties,
 ) {
     @GetMapping("/setup")
+    @Operation(
+        summary = "web page to configure this app"
+    )
     fun setupForm(model: Model, @RequestParam("key") key: String): String {
-        val decodedKey = key.replace(" ","+")
+        val decodedKey = key.replace(" ", "+")
         if (decodedKey != appProps.base64EncryptionKey) {
             throw AccessDeniedException("You are not authorized. $decodedKey <> ${appProps.base64EncryptionKey}")
         }
@@ -30,7 +34,7 @@ class SetupController(
 
     @PostMapping("/setup")
     fun submit(@RequestParam("key") key: String, @ModelAttribute form: Env, model: Model): String {
-        val decodedKey = key.replace(" ","+")
+        val decodedKey = key.replace(" ", "+")
         if (decodedKey != appProps.base64EncryptionKey) {
             throw AccessDeniedException("You are not authorized")
         }
