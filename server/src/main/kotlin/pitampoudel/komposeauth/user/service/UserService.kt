@@ -218,7 +218,7 @@ class UserService(
                 email = payload["email"] as String,
                 firstName = payload["given_name"] as String,
                 lastName = payload["family_name"] as String?,
-                picture = payload["picture"] as? String
+                photoUrl = payload["picture"] as? String
             )
         )
 

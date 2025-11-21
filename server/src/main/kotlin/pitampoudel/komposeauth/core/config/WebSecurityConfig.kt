@@ -56,7 +56,7 @@ class AuthSuccessHandler(
                         firstName = firstName,
                         lastName = lastName,
                         email = email,
-                        picture = picture
+                        photoUrl = picture
                     )
                 )
                 if (emailVerified) userService.emailVerified(user.id)

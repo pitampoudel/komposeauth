@@ -18,8 +18,8 @@ data class CreateUserRequest(
     val password: String? = null,
     @SerialName("confirmPassword")
     val confirmPassword: String? = null,
-    @SerialName("picture")
-    val picture: String? = null
+    @SerialName("photoUrl")
+    val photoUrl: String? = null
 ) {
     init {
         require(firstName.isNotBlank()) {
