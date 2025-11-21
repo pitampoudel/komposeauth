@@ -1,9 +1,10 @@
 package pitampoudel.komposeauth.profile
 
+import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.presentation.InfoMessage
-import pitampoudel.komposeauth.data.UpdateProfileRequest
 import pitampoudel.komposeauth.data.ProfileResponse
+import pitampoudel.komposeauth.data.UpdateProfileRequest
 
 data class ProfileState(
     val progress: Float? = null,
@@ -17,15 +18,18 @@ data class ProfileState(
         val givenName: String = "",
         val givenNameError: GeneralValidationError? = null,
         val familyName: String = "",
-        val familyNameError: GeneralValidationError? = null
+        val familyNameError: GeneralValidationError? = null,
+        val picture: KmpFile? = null,
+        val pictureError: GeneralValidationError? = null
     ) {
         fun hasError(): Boolean {
-            return givenNameError != null || familyNameError != null
+            return givenNameError != null || familyNameError != null || pictureError != null
         }
 
         fun toRequest() = if (!hasError()) UpdateProfileRequest(
             givenName = givenName,
-            familyName = familyName
+            familyName = familyName,
+            picture = picture?.toEncodedData()
         ) else null
 
     }

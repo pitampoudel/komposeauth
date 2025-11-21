@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import pitampoudel.core.data.EncodedData
 import pitampoudel.core.domain.isValidEmail
 
 @Serializable
@@ -16,6 +17,8 @@ data class UpdateProfileRequest(
     val password: String? = null,
     @SerialName("confirmPassword")
     val confirmPassword: String? = null,
+    @SerialName("picture")
+    val picture: EncodedData? = null
 ) {
     init {
         require(password == confirmPassword) {

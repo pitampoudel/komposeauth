@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.profile
 
+import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
 
@@ -12,6 +13,7 @@ sealed interface ProfileEvent {
     sealed interface EditEvent : ProfileEvent {
         data class GivenNameChanged(val value: String) : EditEvent
         data class FamilyNameChanged(val value: String) : EditEvent
+        data class PhotoChanged(val value: KmpFile?) : EditEvent
         object Submit : EditEvent
     }
 }

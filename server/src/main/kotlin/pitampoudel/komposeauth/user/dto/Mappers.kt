@@ -5,8 +5,8 @@ import org.bson.types.ObjectId
 import org.springframework.security.crypto.password.PasswordEncoder
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.data.CreateUserRequest
-import pitampoudel.komposeauth.data.UpdateProfileRequest
 import pitampoudel.komposeauth.data.ProfileResponse
+import pitampoudel.komposeauth.data.UpdateProfileRequest
 import pitampoudel.komposeauth.data.UserResponse
 import pitampoudel.komposeauth.user.entity.User
 import kotlin.time.ExperimentalTime
@@ -26,7 +26,11 @@ fun CreateUserRequest.mapToEntity(passwordEncoder: PasswordEncoder): @Valid User
     )
 }
 
-fun User.update(req: UpdateProfileRequest, passwordEncoder: PasswordEncoder): @Valid User {
+fun User.update(
+    req: UpdateProfileRequest,
+    passwordEncoder: PasswordEncoder,
+    picture: String?
+): @Valid User {
     return copy(
         firstName = req.givenName ?: firstName,
         lastName = req.familyName ?: lastName,
@@ -34,7 +38,8 @@ fun User.update(req: UpdateProfileRequest, passwordEncoder: PasswordEncoder): @V
         emailVerified = if (req.email == null || req.email == email) emailVerified else false,
         passwordHash = req.password?.let {
             passwordEncoder.encode(req.password)
-        } ?: passwordHash
+        } ?: passwordHash,
+        picture = picture
     )
 }
 

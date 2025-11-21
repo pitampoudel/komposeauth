@@ -116,15 +116,15 @@ class KycService(
             throw BadRequestException("KYC already submitted; cannot resubmit")
         }
 
-        fun upload(label: String, encoded: EncodedData): String {
+        fun uploadKycDoc(label: String, encoded: EncodedData): String {
             val file = encoded.toKmpFile()
             val blobName = "kyc/${userId.toHexString()}/$label"
             return storageService.upload(blobName, file.mimeType, file.byteArray)
         }
 
-        val newFrontUrl = upload("front", data.documentFront)
-        val newBackUrl = upload("back", data.documentBack)
-        val newSelfieUrl = upload("selfie", data.selfie)
+        val newFrontUrl = uploadKycDoc("front", data.documentFront)
+        val newBackUrl = uploadKycDoc("back", data.documentBack)
+        val newSelfieUrl = uploadKycDoc("selfie", data.selfie)
 
         val entity = existing.copy(
             documentType = data.documentType,

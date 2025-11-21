@@ -144,6 +144,14 @@ class ProfileViewModel internal constructor(
                     )
                 }
 
+                is ProfileEvent.EditEvent.PhotoChanged -> _state.update {
+                    it.copy(
+                        editingState = it.editingState.copy(
+                            picture = event.value,
+                            pictureError = null
+                        ),
+                    )
+                }
 
                 is ProfileEvent.EditEvent.Submit -> {
                     _state.update { it.copy(progress = 0.0f) }

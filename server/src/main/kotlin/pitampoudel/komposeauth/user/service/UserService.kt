@@ -24,6 +24,7 @@ import pitampoudel.komposeauth.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.domain.Platform
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.config.service.AppConfigProvider
+import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.user.dto.mapToEntity
 import pitampoudel.komposeauth.user.dto.mapToResponseDto
 import pitampoudel.komposeauth.user.dto.update
@@ -45,7 +46,8 @@ class UserService(
     val appProperties: AppConfigProvider,
     val emailService: EmailService,
     val oneTimeTokenService: OneTimeTokenService,
-    val kycService: KycService
+    val kycService: KycService,
+    val storageService: StorageService
 ) {
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
@@ -148,7 +150,21 @@ class UserService(
     fun updateUser(userId: ObjectId, req: UpdateProfileRequest): UserResponse {
         val existingUser = userRepository.findById(userId).orElse(null)
             ?: throw IllegalStateException("User not found")
-        val result = userRepository.save(existingUser.update(req, passwordEncoder))
+        val result = userRepository.save(
+            existingUser.update(
+                req = req,
+                passwordEncoder = passwordEncoder,
+                picture = req.picture?.let {
+                    val file = it.toKmpFile()
+                    val blobName = "users/${existingUser.id.toHexString()}/photo"
+                    storageService.upload(
+                        blobName = blobName,
+                        contentType = file.mimeType,
+                        bytes = file.byteArray
+                    )
+                } ?: existingUser.picture
+            )
+        )
         return result.mapToResponseDto(kycService.isVerified(result.id))
     }
 
