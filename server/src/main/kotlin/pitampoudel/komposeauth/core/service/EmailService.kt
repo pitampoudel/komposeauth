@@ -4,21 +4,21 @@ import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.stereotype.Service
-import pitampoudel.komposeauth.AppProperties
+import pitampoudel.komposeauth.config.service.AppConfigProvider
 
 @Service
-class EmailService(private val appProperties: AppProperties) {
+class EmailService(private val appConfigProvider: AppConfigProvider) {
 
     fun javaMailSender(): JavaMailSender {
         val impl = JavaMailSenderImpl()
-        impl.host = appProperties.smtpHost
-        impl.port = appProperties.smtpPort ?: 587
-        impl.username = appProperties.smtpUsername
-        impl.password = appProperties.smtpPassword
+        impl.host = appConfigProvider.smtpHost
+        impl.port = appConfigProvider.smtpPort ?: 587
+        impl.username = appConfigProvider.smtpUsername
+        impl.password = appConfigProvider.smtpPassword
 
         val props = impl.javaMailProperties
-        props["mail.smtp.from"] = appProperties.smtpFromEmail
-        props["mail.smtp.auth"] = !appProperties.smtpUsername.isNullOrBlank()
+        props["mail.smtp.from"] = appConfigProvider.smtpFromEmail
+        props["mail.smtp.auth"] = !appConfigProvider.smtpUsername.isNullOrBlank()
         props["mail.smtp.starttls.enable"] = "true"
         return impl
     }

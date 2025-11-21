@@ -15,17 +15,17 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredential
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
 import org.springframework.security.web.webauthn.management.RelyingPartyAuthenticationRequest
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
-import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
-import pitampoudel.komposeauth.AppProperties
+import org.springframework.web.bind.annotation.RestController
 import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.OAuth2Response
 import pitampoudel.komposeauth.kyc.service.KycService
+import pitampoudel.komposeauth.config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
 import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.entity.User
@@ -47,7 +47,7 @@ class AuthController(
     private val objectMapper: ObjectMapper,
     private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
     private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
-    val appProperties: AppProperties
+    val appConfigProvider: AppConfigProvider
 ) {
 
     @PostMapping("/${ApiEndpoints.LOGIN}")
@@ -81,7 +81,7 @@ class AuthController(
             )
         }
         val accessCookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
-            .domain(appProperties.domain)
+            .domain(appConfigProvider.domain())
             .httpOnly(true)
             .secure(true)
             .path("/")

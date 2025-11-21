@@ -4,7 +4,7 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
 import org.springframework.stereotype.Service
-import pitampoudel.komposeauth.AppProperties
+import pitampoudel.komposeauth.config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.entity.User
 import java.time.Instant
 import kotlin.time.Duration
@@ -12,16 +12,16 @@ import kotlin.time.toJavaDuration
 
 @Service
 class JwtService(
-    val appProperties: AppProperties,
+    val appConfigProvider: AppConfigProvider,
     private val jwtEncoder: JwtEncoder
 ) {
     fun generateAccessToken(user: User, validity: Duration): String {
         val now = Instant.now()
         val scopes = listOf("openid", "profile", "email")
         val claims = JwtClaimsSet.builder()
-            .issuer(appProperties.selfBaseUrl)
+            .issuer(appConfigProvider.selfBaseUrl)
             .subject(user.id.toHexString())
-            .audience(listOf(appProperties.selfBaseUrl))
+            .audience(listOf(appConfigProvider.selfBaseUrl))
             .issuedAt(now)
             .expiresAt(now + validity.toJavaDuration())
             .notBefore(now)

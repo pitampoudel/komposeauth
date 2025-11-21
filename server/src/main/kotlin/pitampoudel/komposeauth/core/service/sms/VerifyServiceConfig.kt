@@ -1,24 +1,24 @@
 package pitampoudel.komposeauth.core.service.sms
 
-import pitampoudel.komposeauth.AppProperties
-import pitampoudel.komposeauth.user.repository.PhoneOtpRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
+import pitampoudel.komposeauth.config.service.AppConfigProvider
+import pitampoudel.komposeauth.user.repository.PhoneOtpRepository
 
 @Configuration
 class VerifyServiceConfig {
     @Bean
     fun verifyService(
-        appProperties: AppProperties,
+        appConfigProvider: AppConfigProvider,
         restTemplate: RestTemplate,
         phoneOtpRepository: PhoneOtpRepository,
         smsService: SmsService
     ): PhoneNumberVerificationService {
-        return if (!appProperties.twilioVerifyServiceSid.isNullOrBlank()) {
-            TwilioPhoneNumberVerificationService(appProperties, restTemplate)
-        } else if (!appProperties.samayeApiKey.isNullOrBlank()) {
-            SamayePhoneNumberVerificationService(phoneOtpRepository, smsService, appProperties)
+        return if (!appConfigProvider.twilioVerifyServiceSid.isNullOrBlank()) {
+            TwilioPhoneNumberVerificationService(appConfigProvider, restTemplate)
+        } else if (!appConfigProvider.samayeApiKey.isNullOrBlank()) {
+            SamayePhoneNumberVerificationService(phoneOtpRepository, smsService, appConfigProvider)
         } else {
             NoOpPhoneNumberVerificationService()
         }

@@ -1,23 +1,23 @@
 package pitampoudel.komposeauth.core.service.sms
 
-import pitampoudel.komposeauth.AppProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
+import pitampoudel.komposeauth.config.service.AppConfigProvider
 
 @Configuration
 class SmsServiceConfig {
 
     @Bean
-    fun smsService(appProperties: AppProperties, restTemplate: RestTemplate): SmsService {
+    fun smsService(appConfigProvider: AppConfigProvider, restTemplate: RestTemplate): SmsService {
 
         return when {
-            !appProperties.twilioAccountSid.isNullOrBlank() -> {
-                TwilioSmsService(appProperties, restTemplate)
+            !appConfigProvider.twilioAccountSid.isNullOrBlank() -> {
+                TwilioSmsService(appConfigProvider, restTemplate)
             }
 
-            !appProperties.samayeApiKey.isNullOrBlank() -> {
-                SamayaSmsService(appProperties, restTemplate)
+            !appConfigProvider.samayeApiKey.isNullOrBlank() -> {
+                SamayaSmsService(appConfigProvider, restTemplate)
             }
 
             else -> NoOpSmsService()

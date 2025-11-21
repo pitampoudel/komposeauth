@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.setup.controller
+package pitampoudel.komposeauth.config.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.security.access.AccessDeniedException
@@ -7,15 +7,14 @@ import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import pitampoudel.komposeauth.StaticAppProperties
-import pitampoudel.komposeauth.setup.entity.Env
-import pitampoudel.komposeauth.setup.service.EnvService
+import pitampoudel.komposeauth.config.entity.AppConfig
+import pitampoudel.komposeauth.config.service.AppConfigService
 
 @Controller
-class SetupController(
-    private val envService: EnvService,
+class AppConfigController(
+    private val appConfigService: AppConfigService,
     private val appProps: StaticAppProperties,
 ) {
     @GetMapping("/setup")
@@ -27,19 +26,19 @@ class SetupController(
         if (decodedKey != appProps.base64EncryptionKey) {
             throw AccessDeniedException("You are not authorized. $decodedKey <> ${appProps.base64EncryptionKey}")
         }
-        model.addAttribute("config", envService.getEnv())
+        model.addAttribute("config", appConfigService.getEnv())
         return "setup"
     }
 
     @PostMapping("/setup")
-    fun submit(@RequestParam("key") key: String, @ModelAttribute form: Env, model: Model): String {
+    fun submit(@RequestParam("key") key: String, @ModelAttribute form: AppConfig, model: Model): String {
         val decodedKey = key.replace(" ", "+")
         if (decodedKey != appProps.base64EncryptionKey) {
             throw AccessDeniedException("You are not authorized")
         }
-        envService.save(form)
-        envService.clearCache()
-        model.addAttribute("config", envService.getEnv())
+        appConfigService.save(form)
+        appConfigService.clearCache()
+        model.addAttribute("config", appConfigService.getEnv())
         return "setup"
     }
 }

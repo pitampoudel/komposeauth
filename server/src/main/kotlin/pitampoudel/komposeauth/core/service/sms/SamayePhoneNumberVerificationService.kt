@@ -1,6 +1,6 @@
 package pitampoudel.komposeauth.core.service.sms
 
-import pitampoudel.komposeauth.AppProperties
+import pitampoudel.komposeauth.config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.entity.PhoneOtp
 import pitampoudel.komposeauth.user.repository.PhoneOtpRepository
 import kotlin.random.Random
@@ -8,7 +8,7 @@ import kotlin.random.Random
 class SamayePhoneNumberVerificationService(
     private val phoneOtpRepository: PhoneOtpRepository,
     private val smsService: SmsService,
-    private val appProperties: AppProperties
+    private val appConfigProvider: AppConfigProvider
 ) : PhoneNumberVerificationService {
 
     override fun initiate(phoneNumber: String): Boolean {
@@ -19,7 +19,7 @@ class SamayePhoneNumberVerificationService(
                 otp = otp
             )
         )
-        return smsService.sendSms(phoneNumber, "Your OTP for ${appProperties.name} is $otp")
+        return smsService.sendSms(phoneNumber, "Your OTP for ${appConfigProvider.name} is $otp")
     }
 
     override fun verify(phoneNumber: String, code: String): Boolean {

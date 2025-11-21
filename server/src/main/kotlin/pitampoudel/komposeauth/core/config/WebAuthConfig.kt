@@ -33,11 +33,11 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.client.RestTemplate
-import pitampoudel.komposeauth.AppProperties
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.kyc.service.KycService
+import pitampoudel.komposeauth.config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.service.UserService
 import java.time.Instant
 import java.util.Base64
@@ -148,10 +148,10 @@ class WebAuthConfig() {
 
     @Bean
     fun authorizationServerSettings(
-        appProperties: AppProperties
+        appConfigProvider: AppConfigProvider
     ): AuthorizationServerSettings {
         return AuthorizationServerSettings.builder()
-            .issuer(appProperties.selfBaseUrl)
+            .issuer(appConfigProvider.selfBaseUrl)
             .build()
     }
 

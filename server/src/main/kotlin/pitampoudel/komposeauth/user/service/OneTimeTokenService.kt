@@ -2,8 +2,8 @@ package pitampoudel.komposeauth.user.service
 
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
-import pitampoudel.komposeauth.AppProperties
 import pitampoudel.komposeauth.data.ApiEndpoints
+import pitampoudel.komposeauth.config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.repository.OneTimeTokenRepository
 import java.security.MessageDigest
@@ -17,7 +17,7 @@ import kotlin.time.Duration.Companion.hours
 @Service
 class OneTimeTokenService(
     private val repo: OneTimeTokenRepository,
-    private val appProperties: AppProperties,
+    private val appConfigProvider: AppConfigProvider,
 ) {
     private val encoder = Base64.getUrlEncoder().withoutPadding()
 
@@ -28,12 +28,12 @@ class OneTimeTokenService(
 
     fun generateEmailVerificationLink(userId: ObjectId, ttl: Duration = 24.hours): String {
         val token = createToken(userId, OneTimeToken.Purpose.VERIFY_EMAIL, ttl)
-        return "${appProperties.selfBaseUrl}/${ApiEndpoints.VERIFY_EMAIL}?token=$token"
+        return "${appConfigProvider.selfBaseUrl}/${ApiEndpoints.VERIFY_EMAIL}?token=$token"
     }
 
     fun generateResetPasswordLink(userId: ObjectId, ttl: Duration = 24.hours): String {
         val token = createToken(userId, OneTimeToken.Purpose.RESET_PASSWORD, ttl)
-        return "${appProperties.selfBaseUrl}/${ApiEndpoints.RESET_PASSWORD}?token=$token"
+        return "${appConfigProvider.selfBaseUrl}/${ApiEndpoints.RESET_PASSWORD}?token=$token"
     }
 
     fun createToken(userId: ObjectId, purpose: OneTimeToken.Purpose, ttl: Duration): String {

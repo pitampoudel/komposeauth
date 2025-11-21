@@ -13,7 +13,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import pitampoudel.core.data.parsePhoneNumber
-import pitampoudel.komposeauth.AppProperties
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
@@ -24,6 +23,7 @@ import pitampoudel.komposeauth.data.UserResponse
 import pitampoudel.komposeauth.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.domain.Platform
 import pitampoudel.komposeauth.kyc.service.KycService
+import pitampoudel.komposeauth.config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.dto.mapToEntity
 import pitampoudel.komposeauth.user.dto.mapToResponseDto
 import pitampoudel.komposeauth.user.dto.update
@@ -42,7 +42,7 @@ class UserService(
     private val userRepository: UserRepository,
     val passwordEncoder: PasswordEncoder,
     private val phoneNumberVerificationService: PhoneNumberVerificationService,
-    val appProperties: AppProperties,
+    val appProperties: AppConfigProvider,
     val emailService: EmailService,
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService

@@ -38,58 +38,25 @@ Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Client 
 
 ```bash
 docker pull pitampoudel/komposeauth:latest
-# Quick start: only MONGODB_URI is required to start with
-docker run -p 8080:8080 -e MONGODB_URI="mongodb://your-mongo-host:27017/auth" -e BASE64_ENCRYPTION_KEY="" pitampoudel/komposeauth:latest
+# Quick start: only these two variables are required
+docker run -p 8080:8080 \
+  -e MONGODB_URI="mongodb://your-mongo-host:27017/auth" \
+  -e BASE64_ENCRYPTION_KEY="<paste-your-base64-key>" \
+  pitampoudel/komposeauth:latest
 ```
 
-- After the container is running, open: http://localhost:8080/setup to configure the rest of the settings in a guided web UI.
-- You can still pass other env vars up-front if you prefer automation; environment variables always take precedence over values saved via the Setup UI (database).
+- After the container is running, open the Setup page to configure everything else (stored in DB):
+  - http://localhost:8080/setup?key=<BASE64_ENCRYPTION_KEY>
 
 ### Environment variables
 
 ```
-# Database
-MONGODB_URI=                 # Required. Mongo DB connection string
-
-# Security
-BASE64_ENCRYPTION_KEY=       # Required
-
-# App metadata
-APP_NAME=                    # Display name in emails/UI. Default: "komposeauth"
-APP_LOGO_URL=                # Public URL for logo used in emails/UI
-SELF_BASE_URL=               # Default: http://<local-ip>:8080
-
-# Google OAuth (Sign in with Google)
-GOOGLE_OAUTH_CLIENT_ID=
-GOOGLE_OAUTH_CLIENT_SECRET=
-GOOGLE_AUTH_DESKTOP_CLIENT_ID=
-GOOGLE_AUTH_DESKTOP_CLIENT_SECRET=
-
-# SMTP
-SMTP_HOST=
-SMTP_PORT=                   # Default: 587
-SMTP_USERNAME=
-SMTP_PASSWORD=
-SMTP_FROM_EMAIL=
-
-# Twilio
-TWILIO_ACCOUNT_SID=
-TWILIO_VERIFY_SERVICE_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_FROM_NUMBER=
-
-# External services
-SAMAYE_API_KEY=              # No Need
-SENTRY_DSN=                  # Enables Sentry reporting
-
-# File uploads
-GCP_BUCKET_NAME=             # If set, uses Google Cloud Storage
-GCP_PROJECT_ID=
-
-# sccess control
-ALLOWED_ANDROID_SHA_256_LIST=
-ALLOWED_CORS_ORIGIN_LIST
+# Required only
+MONGODB_URI=                 # MongoDB connection string
+BASE64_ENCRYPTION_KEY=       # Base64-encoded AES key used to encrypt sensitive config at rest
 ```
+
+All other application settings are configured via the Setup UI and persisted in the database (encrypted where sensitive).
 
 ```kotlin
 // BASE64_ENCRYPTION_KEY generator
@@ -101,6 +68,9 @@ fun main() {
     println(base64Key)
 }
 ```
+Notes:
+- The encryption key is not stored in the database. Provide it via `BASE64_ENCRYPTION_KEY` on startup. In tests, a key is generated automatically.
+- You can revisit the Setup UI anytime to change settings; sensitive values are encrypted at rest.
 ### 2) Add the SDKs to your KMP project
 
 Shared module

@@ -6,17 +6,17 @@ import org.springframework.security.config.oauth2.client.CommonOAuth2Provider
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository
-import pitampoudel.komposeauth.AppProperties
+import pitampoudel.komposeauth.config.service.AppConfigProvider
 
 @Configuration
 class OAuthClientConfig {
 
     @Bean
-    fun clientRegistrationRepository(appProperties: AppProperties): ClientRegistrationRepository {
+    fun clientRegistrationRepository(appConfigProvider: AppConfigProvider): ClientRegistrationRepository {
         val registrations = mutableListOf<ClientRegistration>()
 
-        val webClientId = appProperties.googleAuthClientId
-        val webClientSecret = appProperties.googleAuthClientSecret
+        val webClientId = appConfigProvider.googleAuthClientId
+        val webClientSecret = appConfigProvider.googleAuthClientSecret
 
         if (!webClientId.isNullOrBlank() && !webClientSecret.isNullOrBlank()) {
             registrations += CommonOAuth2Provider.GOOGLE

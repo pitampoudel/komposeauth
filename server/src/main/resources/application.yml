@@ -20,24 +20,3 @@ server:
 
 app:
   base64-encryption-key: ${BASE64_ENCRYPTION_KEY:}
-  name: ${APP_NAME:}
-  logo-url: ${APP_LOGO_URL:}
-  self-base-url: ${SELF_BASE_URL:}
-  allowed-android-sha256-list: ${ALLOWED_ANDROID_SHA_256_LIST:}
-  cors-allowed-origin-list: ${ALLOWED_CORS_ORIGIN_LIST:}
-  gcp-bucket-name: ${GCP_BUCKET_NAME:}
-  twilio-account-sid: ${TWILIO_ACCOUNT_SID:}
-  twilio-auth-token: ${TWILIO_AUTH_TOKEN:}
-  twilio-from-number: ${TWILIO_FROM_NUMBER:}
-  twilio-verify-service-sid: ${TWILIO_VERIFY_SERVICE_SID:}
-  gcp-project-id: ${GCP_PROJECT_ID:}
-  google-auth-client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
-  google-auth-client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:}
-  google-auth-desktop-client-id: ${GOOGLE_AUTH_DESKTOP_CLIENT_ID:}
-  google-auth-desktop-client-secret: ${GOOGLE_AUTH_DESKTOP_CLIENT_SECRET:}
-  smtp-host: ${SMTP_HOST:}
-  smtp-port: ${SMTP_PORT:}
-  smtp-username: ${SMTP_USERNAME:}
-  smtp-password: ${SMTP_PASSWORD:}
-  smtp-from-email: ${SMTP_FROM_EMAIL:}
-  samaye-api-key: ${SAMAYE_API_KEY:}
