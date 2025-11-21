@@ -14,7 +14,6 @@ import pitampoudel.komposeauth.setup.entity.Env
 import pitampoudel.komposeauth.setup.service.EnvService
 
 @Controller
-@RequestMapping("/auth")
 class SetupController(
     private val envService: EnvService,
     private val appProps: StaticAppProperties,
