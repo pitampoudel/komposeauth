@@ -131,9 +131,9 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
     }
 
-    override suspend fun updateProfile(request: UpdateProfileRequest): Result<HttpResponse> {
+    override suspend fun updateProfile(request: UpdateProfileRequest): Result<ProfileResponse> {
         return safeApiCall {
-            httpClient.post("$authUrl/$UPDATE_PROFILE") { setBody(request) }.asResource { this }
+            httpClient.post("$authUrl/$UPDATE_PROFILE") { setBody(request) }.asResource { body() }
         }
     }
 

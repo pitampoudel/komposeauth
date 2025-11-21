@@ -30,7 +30,7 @@ internal interface AuthClient {
     suspend fun submitKycDocuments(body: DocumentInformation): Result<KycResponse>
     suspend fun submitKycAddressDetails(body: UpdateAddressDetailsRequest): Result<KycResponse>
     suspend fun fetchCountries(): Result<List<CountryResponse>>
-    suspend fun updateProfile(request: UpdateProfileRequest): Result<HttpResponse>
+    suspend fun updateProfile(request: UpdateProfileRequest): Result<ProfileResponse>
     suspend fun fetchWebAuthnRegistrationOptions(): Result<String>
     suspend fun registerPublicKey(request: RegisterPublicKeyRequest): Result<HttpResponse>
 }

@@ -19,13 +19,12 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import pitampoudel.komposeauth.config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.OAuth2Response
 import pitampoudel.komposeauth.kyc.service.KycService
-import pitampoudel.komposeauth.config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
 import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.entity.User
@@ -91,7 +90,7 @@ class AuthController(
 
         httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
 
-        return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.find(user.id)?.status == KycResponse.Status.APPROVED))
+        return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.isVerified(user.id)))
     }
 
     fun resolveUserFromCredential(

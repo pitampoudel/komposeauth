@@ -13,19 +13,21 @@ import org.springframework.data.domain.Pageable
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import pitampoudel.core.data.parsePhoneNumber
+import pitampoudel.komposeauth.config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.EmailService
+import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.data.CreateUserRequest
+import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.data.UpdatePhoneNumberRequest
 import pitampoudel.komposeauth.data.UpdateProfileRequest
 import pitampoudel.komposeauth.data.UserResponse
 import pitampoudel.komposeauth.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.domain.Platform
 import pitampoudel.komposeauth.kyc.service.KycService
-import pitampoudel.komposeauth.config.service.AppConfigProvider
-import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.user.dto.mapToEntity
+import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
 import pitampoudel.komposeauth.user.dto.mapToResponseDto
 import pitampoudel.komposeauth.user.dto.update
 import pitampoudel.komposeauth.user.entity.User
@@ -147,7 +149,7 @@ class UserService(
         return userRepository.insert(newUser)
     }
 
-    fun updateUser(userId: ObjectId, req: UpdateProfileRequest): UserResponse {
+    fun updateUser(userId: ObjectId, req: UpdateProfileRequest): ProfileResponse {
         val existingUser = userRepository.findById(userId).orElse(null)
             ?: throw IllegalStateException("User not found")
         val result = userRepository.save(
@@ -165,7 +167,7 @@ class UserService(
                 } ?: existingUser.picture
             )
         )
-        return result.mapToResponseDto(kycService.isVerified(result.id))
+        return result.mapToProfileResponseDto(kycService.isVerified(result.id))
     }
 
     fun emailVerified(userId: ObjectId) {

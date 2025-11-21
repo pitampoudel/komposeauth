@@ -2,12 +2,6 @@ package pitampoudel.komposeauth.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import pitampoudel.core.domain.Result
-import pitampoudel.core.domain.validators.ValidateNotBlank
-import pitampoudel.core.presentation.ResultUiEvent
-import pitampoudel.komposeauth.core.domain.AuthClient
-import pitampoudel.komposeauth.core.domain.AuthPreferences
-import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +10,12 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import pitampoudel.core.domain.Result
+import pitampoudel.core.domain.validators.ValidateNotBlank
+import pitampoudel.core.presentation.ResultUiEvent
+import pitampoudel.komposeauth.core.domain.AuthClient
+import pitampoudel.komposeauth.core.domain.AuthPreferences
+import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
 
 class ProfileViewModel internal constructor(
     private val authPreferences: AuthPreferences,
@@ -177,7 +177,8 @@ class ProfileViewModel internal constructor(
                                 it.copy(infoMsg = res.message)
                             }
 
-                            is Result.Success<*> -> {
+                            is Result.Success -> {
+                                authPreferences.saveUserProfile(res.data)
                                 _state.update {
                                     it.copy(editingState = ProfileState.EditingState())
                                 }
