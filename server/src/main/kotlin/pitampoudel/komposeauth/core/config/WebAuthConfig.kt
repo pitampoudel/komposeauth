@@ -163,9 +163,7 @@ class WebAuthConfig() {
         http: HttpSecurity,
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
-        kycService: KycService,
-        jwtAuthenticationConverter: JwtAuthenticationConverter,
-        cookieAwareBearerTokenResolver: BearerTokenResolver
+        kycService: KycService
     ): SecurityFilterChain {
         val authorizationServerConfigurer: OAuth2AuthorizationServerConfigurer by lazy {
             OAuth2AuthorizationServerConfigurer.authorizationServer()
@@ -213,11 +211,6 @@ class WebAuthConfig() {
                                 .build()
                         }
                     }
-                }
-            }
-            .oauth2ResourceServer { conf ->
-                conf.bearerTokenResolver(cookieAwareBearerTokenResolver).jwt {
-                    it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
             }
             // For browser flows: when unauthenticated hits /oauth2/authorize, redirect to a login bridge
