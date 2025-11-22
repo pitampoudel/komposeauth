@@ -135,7 +135,7 @@ class WebSecurityConfig(
     }
 
     @Bean
-    @Order(3)
+    @Order(2)
     fun securityFilterChain(
         http: HttpSecurity,
         jwtAuthenticationConverter: JwtAuthenticationConverter,

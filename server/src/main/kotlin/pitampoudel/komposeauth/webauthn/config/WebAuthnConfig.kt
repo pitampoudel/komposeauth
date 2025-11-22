@@ -12,6 +12,7 @@ import org.springframework.security.web.webauthn.management.PublicKeyCredentialU
 import org.springframework.security.web.webauthn.management.UserCredentialRepository
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations
+import org.springframework.security.web.webauthn.registration.HttpSessionPublicKeyCredentialCreationOptionsRepository
 import org.springframework.stereotype.Repository
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.repository.UserRepository
@@ -105,6 +106,11 @@ class WebAuthnConfig(
     @Bean
     fun requestOptionsRepository(): PublicKeyCredentialRequestOptionsRepository {
         return HttpSessionPublicKeyCredentialRequestOptionsRepository()
+    }
+
+    @Bean
+    fun publicKeyCredentialCreationOptionsRepository(): HttpSessionPublicKeyCredentialCreationOptionsRepository {
+        return HttpSessionPublicKeyCredentialCreationOptionsRepository()
     }
 
     @Bean
