@@ -56,41 +56,39 @@ suspend fun download(
     return res
 }
 
+suspend fun HttpResponse.catchError(): Result.Error.Http {
+    return try {
+        val message = body<MessageResponse>().message
+        Result.Error.Http(InfoMessage.Error(message), this.status)
+    } catch (e: JsonConvertException) {
+        val message = body<ErrorResponse>().error
+        Result.Error.Http(InfoMessage.Error(message), this.status)
+    } catch (e: JsonConvertException) {
+        val message = body<DetailResponse>().detail
+        Result.Error.Http(InfoMessage.Error(message), this.status)
+    } catch (e: JsonConvertException) {
+        val message = body<GoogleErrorResponse>().error.message
+        Result.Error.Http(InfoMessage.Error(message), this.status)
+    } catch (e: JsonConvertException) {
+        val message = bodyAsText()
+        Result.Error.Http(InfoMessage.Error(message), this.status)
+    }
+}
 
 suspend inline fun <reified T> HttpResponse.asResource(parse: HttpResponse.() -> T): Result<T> {
     return try {
         when (status.value) {
             in 200..299 -> Result.Success(parse())
-            else -> {
-                try {
-                    val message = body<MessageResponse>().message
-                    Result.Error.Http(InfoMessage.Error(message), this.status)
-                } catch (e: JsonConvertException) {
-                    val message = body<ErrorResponse>().error
-                    Result.Error.Http(InfoMessage.Error(message), this.status)
-                } catch (e: JsonConvertException) {
-                    val message = body<DetailResponse>().detail
-                    Result.Error.Http(InfoMessage.Error(message), this.status)
-                } catch (e: JsonConvertException) {
-                    val message = body<GoogleErrorResponse>().error.message
-                    Result.Error.Http(InfoMessage.Error(message), this.status)
-                } catch (e: JsonConvertException) {
-                    val message = bodyAsText()
-                    Result.Error.Http(InfoMessage.Error(message), this.status)
-                }
-
-            }
+            else -> catchError()
         }
     } catch (ex: CancellationException) {
         throw ex
     } catch (e: JsonConvertException) {
         e.printStackTrace()
-        // TODO don't show technical error message to user
-        Result.Error.Http(InfoMessage.Error(e.message.orEmpty()), this.status)
+        catchError()
     } catch (e: Exception) {
         e.printStackTrace()
-        // TODO don't show technical error message to user
-        Result.Error.Http(InfoMessage.Error(e.message.orEmpty()), this.status)
+        catchError()
     }
 }
 
@@ -103,7 +101,6 @@ suspend inline fun <reified T> safeApiCall(
         throw ex
     } catch (ex: Exception) {
         ex.printStackTrace()
-        // TODO don't show technical error message to user
         Result.Error(InfoMessage.Error(ex.message.orEmpty()))
     }
 }
