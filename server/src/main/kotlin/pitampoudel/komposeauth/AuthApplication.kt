@@ -3,7 +3,7 @@ package pitampoudel.komposeauth
 import io.sentry.Sentry
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
-import pitampoudel.komposeauth.config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import javax.annotation.PostConstruct
 
 @SpringBootApplication

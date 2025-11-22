@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.config.entity
+package pitampoudel.komposeauth.app_config.entity
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.TypeAlias

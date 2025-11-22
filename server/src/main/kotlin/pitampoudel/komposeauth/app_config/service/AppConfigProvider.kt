@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.config.service
+package pitampoudel.komposeauth.app_config.service
 
 import com.google.common.net.InternetDomainName
 import org.springframework.stereotype.Service

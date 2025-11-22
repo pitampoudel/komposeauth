@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.config.controller
+package pitampoudel.komposeauth.app_config.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.security.access.AccessDeniedException
@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import pitampoudel.komposeauth.StaticAppProperties
-import pitampoudel.komposeauth.config.entity.AppConfig
-import pitampoudel.komposeauth.config.service.AppConfigService
+import pitampoudel.komposeauth.app_config.entity.AppConfig
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 
 @Controller
 class AppConfigController(

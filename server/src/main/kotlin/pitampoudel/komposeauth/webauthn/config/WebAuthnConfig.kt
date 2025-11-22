@@ -18,7 +18,7 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations
 import org.springframework.stereotype.Repository
-import pitampoudel.komposeauth.config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.repository.UserRepository
 import pitampoudel.komposeauth.webauthn.entity.PublicKeyCredential
 import pitampoudel.komposeauth.webauthn.entity.PublicKeyUser

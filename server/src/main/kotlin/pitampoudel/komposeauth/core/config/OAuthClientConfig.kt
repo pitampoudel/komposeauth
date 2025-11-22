@@ -6,7 +6,7 @@ import org.springframework.security.config.oauth2.client.CommonOAuth2Provider
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository
-import pitampoudel.komposeauth.config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 
 @Configuration
 class OAuthClientConfig {

@@ -5,7 +5,7 @@ import com.google.cloud.storage.BucketInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 import org.springframework.stereotype.Service
-import pitampoudel.komposeauth.config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 
 
 @Service

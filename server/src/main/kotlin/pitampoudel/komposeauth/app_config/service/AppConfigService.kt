@@ -1,9 +1,9 @@
-package pitampoudel.komposeauth.config.service
+package pitampoudel.komposeauth.app_config.service
 
 import org.springframework.stereotype.Service
 import pitampoudel.komposeauth.core.security.CryptoService
-import pitampoudel.komposeauth.config.entity.AppConfig
-import pitampoudel.komposeauth.config.repository.AppConfigRepository
+import pitampoudel.komposeauth.app_config.entity.AppConfig
+import pitampoudel.komposeauth.app_config.repository.AppConfigRepository
 import java.util.concurrent.atomic.AtomicReference
 
 @Service

@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import pitampoudel.komposeauth.config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential

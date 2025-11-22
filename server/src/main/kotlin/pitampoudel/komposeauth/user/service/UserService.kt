@@ -13,7 +13,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import pitampoudel.core.data.parsePhoneNumber
-import pitampoudel.komposeauth.config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService

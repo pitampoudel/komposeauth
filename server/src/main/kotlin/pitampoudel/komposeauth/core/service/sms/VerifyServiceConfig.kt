@@ -3,7 +3,7 @@ package pitampoudel.komposeauth.core.service.sms
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
-import pitampoudel.komposeauth.config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.repository.PhoneOtpRepository
 
 @Configuration

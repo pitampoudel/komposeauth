@@ -37,7 +37,7 @@ import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.kyc.service.KycService
-import pitampoudel.komposeauth.config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.service.UserService
 import java.time.Instant
 import java.util.Base64
