@@ -2,9 +2,9 @@ package pitampoudel.komposeauth.data
 
 
 object ApiEndpoints {
-    const val JWKS = "oauth2/jwks"
     const val LOGIN = "login"
     const val USERS = "users"
+    const val STATS = "stats"
     const val ME = "me"
     const val DEACTIVATE = "deactivate"
     const val UPDATE_PROFILE = "update-profile"

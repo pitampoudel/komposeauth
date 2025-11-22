@@ -17,9 +17,11 @@ import pitampoudel.core.data.PageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.ApiEndpoints.ME
+import pitampoudel.komposeauth.data.ApiEndpoints.STATS
 import pitampoudel.komposeauth.data.ApiEndpoints.USERS
 import pitampoudel.komposeauth.data.CreateUserRequest
 import pitampoudel.komposeauth.data.ProfileResponse
+import pitampoudel.komposeauth.data.StatsResponse
 import pitampoudel.komposeauth.data.UpdateProfileRequest
 import pitampoudel.komposeauth.data.UserResponse
 import pitampoudel.komposeauth.kyc.service.KycService
@@ -90,7 +92,9 @@ class UsersController(
     ): ResponseEntity<PageResponse<UserResponse>> {
         val idList = ids?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
         val usersPage = userService.findUsersFlexible(idList, query, page, size)
-        val userResponses = usersPage.content.map { it.mapToResponseDto(kycService.isVerified(it.id)) }
+        val userResponses = usersPage.content.map {
+            it.mapToResponseDto(kycService.isVerified(it.id))
+        }
         val body = PageResponse(
             items = userResponses,
             page = usersPage.number,
@@ -135,5 +139,17 @@ class UsersController(
         return ResponseEntity.ok(userService.updateUser(user.id, request))
     }
 
+    @GetMapping("/$STATS")
+    @Operation(
+        summary = "Get stats"
+    )
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_READ_ANY_USER')")
+    fun getStats(): ResponseEntity<StatsResponse> {
+        return ResponseEntity.ok(
+            StatsResponse(
+                totalUsers = userService.countUsers()
+            )
+        )
+    }
 
 }

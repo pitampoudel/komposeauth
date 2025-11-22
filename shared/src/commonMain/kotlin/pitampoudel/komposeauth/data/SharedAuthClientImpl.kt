@@ -47,6 +47,16 @@ class SharedAuthClientImpl(
         }
     }
 
+    override suspend fun getStats(accessToken: String): Result<StatsResponse> {
+        return safeApiCall {
+            httpClient.get("$authUrl/${ApiEndpoints.STATS}") {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer $accessToken")
+                }
+            }.asResource { body() }
+        }
+    }
+
     override suspend fun fetchUsersInfo(
         userIds: List<String>,
         accessToken: String
