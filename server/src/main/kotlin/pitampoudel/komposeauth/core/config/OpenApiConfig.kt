@@ -79,34 +79,5 @@ class OpenApiConfig {
                     .description("Returns PublicKeyCredentialCreationOptions for WebAuthn registration")
             )
         )
-
-        openApi.path(
-            "/v3/api-docs", PathItem().get(
-                Operation()
-                    .summary("Get OpenAPI JSON")
-                    .tags(listOf("docs"))
-            )
-        )
-        openApi.path(
-            "/v3/api-docs.yaml", PathItem().get(
-                Operation()
-                    .summary("Get OpenAPI YAML")
-                    .tags(listOf("docs"))
-            )
-        )
-        openApi.path(
-            "/swagger-ui/index.html", PathItem().get(
-                Operation()
-                    .summary("Swagger UI")
-                    .tags(listOf("docs"))
-            )
-        )
-        openApi.path(
-            "/swagger-ui.html", PathItem().get(
-                Operation()
-                    .summary("Swagger UI (legacy path)")
-                    .tags(listOf("docs"))
-            )
-        )
     }
 }
