@@ -14,7 +14,7 @@ import java.time.Instant
 data class OAuth2Client(
     @Id
     val clientId: String,
-    val clientSecret: String,
+    val clientSecret: String?,
     val clientName: String,
     val clientAuthenticationMethods: Set<ClientAuthenticationMethod>,
     val authorizationGrantTypes: Set<AuthorizationGrantType>,
