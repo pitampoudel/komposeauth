@@ -32,6 +32,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
@@ -161,7 +162,9 @@ class WebAuthConfig() {
         http: HttpSecurity,
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
-        kycService: KycService
+        kycService: KycService,
+        jwtAuthenticationConverter: JwtAuthenticationConverter,
+        cookieAwareBearerTokenResolver: BearerTokenResolver
     ): SecurityFilterChain {
         val authorizationServerConfigurer: OAuth2AuthorizationServerConfigurer by lazy {
             OAuth2AuthorizationServerConfigurer.authorizationServer()
@@ -209,6 +212,11 @@ class WebAuthConfig() {
                                 .build()
                         }
                     }
+                }
+            }
+            .oauth2ResourceServer { conf ->
+                conf.bearerTokenResolver(cookieAwareBearerTokenResolver).jwt {
+                    it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
             }
             .authorizeHttpRequests { auth ->

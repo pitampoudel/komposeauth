@@ -79,12 +79,14 @@ class AuthController(
                 )
             )
         }
+        val isSecure = httpServletRequest.isSecure
+        val sameSite = if (isSecure) "None" else "Lax"
         val accessCookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
             .domain(appConfigProvider.domain())
             .httpOnly(true)
-            .secure(true)
+            .secure(isSecure)
             .path("/")
-            .sameSite("None")
+            .sameSite(sameSite)
             .maxAge((1.days - 1.minutes).toJavaDuration())
             .build()
 
