@@ -12,6 +12,7 @@ import org.springframework.security.web.webauthn.management.ImmutablePublicKeyCr
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
@@ -58,7 +59,7 @@ class WebAuthnController(
         description = "Returns PublicKeyCredentialCreationOptions for WebAuthn registration",
         tags = ["webauthn"]
     )
-    @GetMapping("/webauthn/register/options")
+    @PostMapping("/webauthn/register/options")
     fun getRegisterOptions(
         authentication: Authentication,
         request: HttpServletRequest,
