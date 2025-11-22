@@ -6,11 +6,11 @@ import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.media.StringSchema
+import io.swagger.v3.oas.models.security.OAuthFlow
+import io.swagger.v3.oas.models.security.OAuthFlows
+import io.swagger.v3.oas.models.security.Scopes
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
-import io.swagger.v3.oas.models.security.OAuthFlows
-import io.swagger.v3.oas.models.security.OAuthFlow
-import io.swagger.v3.oas.models.security.Scopes
 import kotlinx.datetime.LocalDate
 import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springdoc.core.utils.SpringDocUtils
@@ -64,7 +64,10 @@ class OpenApiConfig {
                                             .scopes(
                                                 Scopes()
                                                     .addString("openid", "OpenID scope")
-                                                    .addString("profile", "Basic profile information")
+                                                    .addString(
+                                                        "profile",
+                                                        "Basic profile information"
+                                                    )
                                                     .addString("email", "Email address")
                                             )
                                     )
@@ -78,21 +81,12 @@ class OpenApiConfig {
      * SpringDoc scans only controller/functional endpoints, so we add those paths here.
      */
     @Bean
-    fun webauthnOpenApiCustomizer(): OpenApiCustomizer = OpenApiCustomizer { openApi: OpenAPI ->
+    fun openApiCustomizer(): OpenApiCustomizer = OpenApiCustomizer { openApi: OpenAPI ->
         openApi.path(
             "/countries.json", PathItem().get(
                 Operation()
                     .summary("Get countries")
                     .tags(listOf("static"))
-                    .description("Returns a list of countries")
-            )
-        )
-        openApi.path(
-            "/webauthn/register/options", PathItem().get(
-                Operation()
-                    .summary("Get WebAuthn register options")
-                    .tags(listOf("webauthn"))
-                    .description("Returns PublicKeyCredentialCreationOptions for WebAuthn registration")
             )
         )
     }

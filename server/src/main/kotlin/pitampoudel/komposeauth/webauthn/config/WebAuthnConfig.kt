@@ -2,11 +2,6 @@ package pitampoudel.komposeauth.webauthn.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.annotation.Order
-import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
-import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
-import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.webauthn.api.Bytes
 import org.springframework.security.web.webauthn.api.CredentialRecord
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialRpEntity
@@ -126,28 +121,6 @@ class WebAuthnConfig(
                 .build(),
             appConfigProvider.webauthnAllowedOrigins()
         )
-    }
-
-    @Bean
-    @Order(2)
-    fun authNFilterChain(
-        http: HttpSecurity,
-        jwtAuthenticationConverter: JwtAuthenticationConverter,
-        cookieAwareBearerTokenResolver: BearerTokenResolver
-    ): SecurityFilterChain {
-        http.securityMatcher("/webauthn/**")
-            .cors { }
-            .csrf { it.disable() }
-            .oauth2ResourceServer { conf ->
-                conf.bearerTokenResolver(cookieAwareBearerTokenResolver).jwt {
-                    it.jwtAuthenticationConverter(jwtAuthenticationConverter)
-                }
-            }
-            .webAuthn {}
-            .authorizeHttpRequests {
-                it.anyRequest().authenticated()
-            }
-        return http.build()
     }
 
 }
