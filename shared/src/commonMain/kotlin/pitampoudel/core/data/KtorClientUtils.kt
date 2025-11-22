@@ -56,7 +56,7 @@ suspend fun download(
     return res
 }
 
-suspend fun HttpResponse.catchError(): Result.Error.Http {
+suspend fun HttpResponse.catchErrorResponse(): Result.Error.Http {
     return try {
         val message = body<MessageResponse>().message
         Result.Error.Http(InfoMessage.Error(message), this.status)
@@ -76,20 +76,16 @@ suspend fun HttpResponse.catchError(): Result.Error.Http {
 }
 
 suspend inline fun <reified T> HttpResponse.asResource(parse: HttpResponse.() -> T): Result<T> {
-    return try {
-        when (status.value) {
-            in 200..299 -> Result.Success(parse())
-            else -> catchError()
+    return when (status.value) {
+        in 200..299 -> try {
+            Result.Success(parse())
+        } catch (e: JsonConvertException) {
+            e.printStackTrace()
+            catchErrorResponse()
         }
-    } catch (ex: CancellationException) {
-        throw ex
-    } catch (e: JsonConvertException) {
-        e.printStackTrace()
-        catchError()
-    } catch (e: Exception) {
-        e.printStackTrace()
-        catchError()
+        else -> catchErrorResponse()
     }
+
 }
 
 suspend inline fun <reified T> safeApiCall(
