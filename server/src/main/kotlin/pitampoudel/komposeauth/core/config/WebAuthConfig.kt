@@ -33,6 +33,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
+import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
@@ -217,6 +218,18 @@ class WebAuthConfig() {
             .oauth2ResourceServer { conf ->
                 conf.bearerTokenResolver(cookieAwareBearerTokenResolver).jwt {
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
+                }
+            }
+            // For browser flows: when unauthenticated hits /oauth2/authorize, redirect to a login bridge
+            .exceptionHandling { ex ->
+                ex.authenticationEntryPoint { request, response, _ ->
+                    val currentUrl = buildString {
+                        append(UrlUtils.buildFullRequestUrl(request))
+                    }
+                    val encoded = java.net.URLEncoder.encode(currentUrl, Charsets.UTF_8)
+                    val redirectTo = "/login-bridge.html?continue=$encoded"
+                    response.status = 302
+                    response.setHeader("Location", redirectTo)
                 }
             }
             .authorizeHttpRequests { auth ->

@@ -159,6 +159,7 @@ class WebSecurityConfig(
                         "/lib/**",
                         "/favicon.ico",
                         "/assets/**",
+                        "/login-bridge.html",
                         "/oauth2/jwks",
                         "/${ApiEndpoints.LOGIN}",
                         "/signup",

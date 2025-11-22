@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Sign in</title>
+    <style>
+        :root {
+          color-scheme: light dark;
+          --bg: #f8f9fa;
+          --card-bg: #ffffff;
+          --border: rgba(0,0,0,0.1);
+          --text: #1f2937;
+          --primary: #2563eb;
+          --primary-hover: #1e4fc9;
+        }
+
+        @media(prefers-color-scheme: dark) {
+          :root {
+            --bg: #0f1115;
+            --card-bg: #1a1c20;
+            --border: rgba(255,255,255,0.12);
+            --text: #e5e7eb;
+          }
+        }
+
+        body {
+          font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+          background: var(--bg);
+          color: var(--text);
+          margin: 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+        }
+
+        .container {
+          width: 100%;
+          max-width: 440px;
+          background: var(--card-bg);
+          padding: 32px;
+          border-radius: 16px;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+          border: 1px solid var(--border);
+        }
+
+        h1 {
+          font-size: 1.5rem;
+          margin: 0 0 12px;
+          font-weight: 600;
+        }
+
+        p {
+          margin: 0 0 24px;
+          opacity: 0.8;
+          line-height: 1.5;
+        }
+
+        label {
+          display: block;
+          margin: 12px 0 6px;
+          font-weight: 600;
+          font-size: .95rem;
+        }
+
+        input {
+          width: 100%;
+          padding: 12px;
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          font-size: 1rem;
+          background: var(--bg);
+          color: var(--text);
+        }
+
+        input:focus {
+          outline: 2px solid var(--primary);
+          border-color: var(--primary);
+        }
+
+        button {
+          margin-top: 22px;
+          width: 100%;
+          padding: 12px;
+          font-size: 1rem;
+          border-radius: 10px;
+          border: 0;
+          cursor: pointer;
+          background: var(--primary);
+          color: white;
+          font-weight: 600;
+          transition: background .15s;
+        }
+
+        button:hover:not([disabled]) {
+          background: var(--primary-hover);
+        }
+
+        button[disabled] {
+          opacity: 0.6;
+          cursor: default;
+        }
+
+        .error {
+          color: #dc2626;
+          margin-top: 14px;
+          min-height: 1.2em;
+          font-size: .95rem;
+        }
+
+        .hint {
+          font-size: .9rem;
+          opacity: .7;
+          margin-top: 20px;
+          text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Sign in</h1>
+    <p>Access your account to continue with the authorization process.</p>
+
+    <form id="login-form">
+        <label for="username">Email or username</label>
+        <input id="username" name="username" type="text" autocomplete="username" required/>
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password"
+               required/>
+
+        <button id="login-btn" type="submit">Sign in</button>
+        <div id="error" class="error"></div>
+    </form>
+
+    <div class="hint" id="app-hint"></div>
+</div>
+
+<script>
+    (function() {
+      const params = new URLSearchParams(location.search);
+      const cont = params.get('continue') || '';
+
+      function nextUrl() {
+         return decodeURIComponent(cont);
+      }
+
+      const form = document.getElementById('login-form');
+      const errorEl = document.getElementById('error');
+      const button = document.getElementById('login-btn');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorEl.textContent = '';
+        button.disabled = true;
+
+        try {
+          const body = {
+            type: 'USERNAME_PASSWORD',
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value
+          };
+
+          const resp = await fetch(`${location.origin}/login?wantToken=false`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(body)
+          });
+
+          if (!resp.ok) {
+            const text = await resp.text();
+            throw new Error(text || `Login failed (${resp.status})`);
+          }
+
+          location.href = nextUrl();
+        } catch (err) {
+          errorEl.textContent = err?.message || 'Login failed';
+        } finally {
+          button.disabled = false;
+        }
+      });
+    })();
+</script>
+</body>
+</html>
