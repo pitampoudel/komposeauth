@@ -31,15 +31,15 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
-import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
+import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.client.RestTemplate
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.kyc.service.KycService
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.service.UserService
 import java.time.Instant
 import java.util.Base64
@@ -163,7 +163,9 @@ class WebAuthConfig() {
         http: HttpSecurity,
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
-        kycService: KycService
+        kycService: KycService,
+        jwtAuthenticationConverter: JwtAuthenticationConverter,
+        cookieAwareBearerTokenResolver: BearerTokenResolver
     ): SecurityFilterChain {
         val authorizationServerConfigurer: OAuth2AuthorizationServerConfigurer by lazy {
             OAuth2AuthorizationServerConfigurer.authorizationServer()
@@ -213,12 +215,15 @@ class WebAuthConfig() {
                     }
                 }
             }
+            .cors { }
+            .oauth2ResourceServer { conf ->
+                conf.bearerTokenResolver(cookieAwareBearerTokenResolver)
+                    .jwt { it.jwtAuthenticationConverter(jwtAuthenticationConverter) }
+            }
             // For browser flows: when unauthenticated hits /oauth2/authorize, redirect to a login bridge
             .exceptionHandling { ex ->
                 ex.authenticationEntryPoint { request, response, _ ->
-                    val currentUrl = buildString {
-                        append(UrlUtils.buildFullRequestUrl(request))
-                    }
+                    val currentUrl = UrlUtils.buildFullRequestUrl(request)
                     val encoded = java.net.URLEncoder.encode(currentUrl, Charsets.UTF_8)
                     val redirectTo = "/login-bridge.html?continue=$encoded"
                     response.status = 302
@@ -230,8 +235,6 @@ class WebAuthConfig() {
                 auth.requestMatchers("/oauth2/token").permitAll()
                 // All other OAuth2 endpoints covered by the matcher should be authenticated
                 auth.anyRequest().authenticated()
-            }
-            .build()
+            }.build()
     }
-
 }
