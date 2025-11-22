@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import kotlinx.serialization.json.Json
 import org.springframework.http.ResponseCookie
+import com.google.common.net.InternetDomainName
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -81,14 +82,26 @@ class AuthController(
         }
         val isSecure = httpServletRequest.isSecure
         val sameSite = if (isSecure) "None" else "Lax"
-        val accessCookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
-            .domain(appConfigProvider.domain())
+
+        val cookieDomain: String? = runCatching {
+            val requestHost = httpServletRequest.serverName
+            if (requestHost != null && InternetDomainName.isValid(requestHost)) {
+                val dn = InternetDomainName.from(requestHost)
+                // Use registrable domain only for real domains; for localhost or bare hostnames return null
+                if (dn.isUnderPublicSuffix) dn.topPrivateDomain().toString() else null
+            } else null
+        }.getOrNull()
+
+        val cookieBuilder = ResponseCookie.from("ACCESS_TOKEN", accessToken)
             .httpOnly(true)
             .secure(isSecure)
             .path("/")
             .sameSite(sameSite)
             .maxAge((1.days - 1.minutes).toJavaDuration())
-            .build()
+
+        val accessCookie = if (!cookieDomain.isNullOrBlank()) {
+            cookieBuilder.domain(cookieDomain).build()
+        } else cookieBuilder.build()
 
         httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
 
