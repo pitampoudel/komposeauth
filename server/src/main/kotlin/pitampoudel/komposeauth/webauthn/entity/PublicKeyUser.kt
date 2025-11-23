@@ -14,9 +14,9 @@ data class PublicKeyUser(
     @get:JvmName("nameValue")
     val name: String,
     @get:JvmName("displayNameValue")
-    val displayName: String
+    val displayName: String?
 ) : PublicKeyCredentialUserEntity {
     override fun getId(): Bytes = Bytes.fromBase64(id)
     override fun getName(): String = name
-    override fun getDisplayName(): String = displayName
+    override fun getDisplayName(): String? = displayName
 }

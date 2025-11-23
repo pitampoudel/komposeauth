@@ -3,6 +3,7 @@ package pitampoudel.komposeauth.core.config
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -65,6 +66,9 @@ class WebAuthConfig() {
 
         if (user.deactivated) {
             throw AccountLockedException("User account is deactivated")
+        }
+        if (user.email == null) {
+            throw AccessDeniedException("User email is not verified")
         }
 
         User.withUsername(user.email)

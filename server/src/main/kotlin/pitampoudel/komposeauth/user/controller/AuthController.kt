@@ -146,14 +146,17 @@ class AuthController(
                 )
                 val requestOptions = requestOptionsRepository.load(httpServletRequest)
                 requestOptionsRepository.save(httpServletRequest, httpServletResponse, null)
-
-                val publicKeyUser = webAuthnRelyingPartyOperations.authenticate(
-                    RelyingPartyAuthenticationRequest(
-                        requestOptions,
-                        json
+                val publicKeyUser = requestOptions?.let {
+                    webAuthnRelyingPartyOperations.authenticate(
+                        RelyingPartyAuthenticationRequest(
+                            requestOptions,
+                            json
+                        )
                     )
-                )
-                userService.findByUserName(publicKeyUser.name as String)
+                }
+                publicKeyUser?.let {
+                    userService.findByUserName(publicKeyUser.name)
+                }
             }
         } ?: throw UsernameNotFoundException("User not found or invalid credentials")
 

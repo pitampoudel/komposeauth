@@ -6,11 +6,13 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -74,7 +76,15 @@ class AuthSuccessHandler(
             }
         }
 
-        val auth = user.asAuthToken()
+        val auth = user.email?.let { email ->
+            UsernamePasswordAuthenticationToken(
+                email,
+                null,
+                user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
+            )
+        } ?: throw IllegalStateException(
+            "Authenticated but not supported because user do not have email"
+        )
         SecurityContextHolder.getContext().authentication = auth
 
         SavedRequestAwareAuthenticationSuccessHandler().onAuthenticationSuccess(

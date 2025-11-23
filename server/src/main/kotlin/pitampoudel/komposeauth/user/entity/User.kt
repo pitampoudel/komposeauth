@@ -10,8 +10,6 @@ import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.annotation.TypeAlias
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.authority.SimpleGrantedAuthority
 import java.time.Instant
 
 @Document(collection = "users")
@@ -42,11 +40,6 @@ data class User(
     val updatedAt: Instant = Instant.now()
 ) {
     fun verifiedEmail() = if (emailVerified) email else null
-    fun asAuthToken() = UsernamePasswordAuthenticationToken(
-        email,
-        null,
-        roles.map { SimpleGrantedAuthority("ROLE_$it") }
-    )
 
     val fullName: String
         get() = "$firstName $lastName"
