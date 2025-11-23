@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class UserContextService(val userService: UserService) {
-    fun getUserFromAuthentication(authentication: Authentication = SecurityContextHolder.getContext().authentication): User {
+    fun getUserFromAuthentication(authentication: Authentication? = SecurityContextHolder.getContext().authentication): User {
         return when (authentication) {
             is JwtAuthenticationToken -> {
                 val jwt = authentication.principal as org.springframework.security.oauth2.jwt.Jwt
@@ -23,7 +23,7 @@ class UserContextService(val userService: UserService) {
             }
 
             is UsernamePasswordAuthenticationToken -> {
-                authentication.name?.let {
+                authentication.name.let {
                     userService.findByUserName(it)
                 } ?: throw IllegalStateException(
                     "No user associated with authentication context"
@@ -31,7 +31,7 @@ class UserContextService(val userService: UserService) {
             }
 
 
-            else -> throw IllegalStateException("Unsupported authentication type: ${authentication.javaClass.name}")
+            else -> throw IllegalStateException("Unsupported authentication type: ${authentication?.javaClass?.name}")
         }
     }
 

@@ -10,7 +10,7 @@ class MongoDataMigration(
     private val mongoTemplate: MongoTemplate
 ) : ApplicationRunner {
 
-    override fun run(args: ApplicationArguments?) {
+    override fun run(args: ApplicationArguments) {
     }
 
 

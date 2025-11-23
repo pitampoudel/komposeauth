@@ -69,7 +69,7 @@ class AuthSuccessHandler(
 
             else -> {
                 throw IllegalStateException(
-                    "Authenticated not supported for: ${authentication.principal.javaClass.name}"
+                    "Authenticated not supported for: ${authentication.principal?.javaClass?.name}"
                 )
             }
         }
