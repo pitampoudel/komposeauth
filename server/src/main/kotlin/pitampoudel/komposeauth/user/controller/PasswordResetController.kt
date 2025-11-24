@@ -31,7 +31,7 @@ class PasswordResetController(
     @GetMapping
     fun resetPasswordForm(@RequestParam token: String, model: Model): String {
         // Verify token without consuming
-        oneTimeTokenService.verify(token, OneTimeToken.Purpose.RESET_PASSWORD)
+        oneTimeTokenService.findValidToken(token, OneTimeToken.Purpose.RESET_PASSWORD)
         model.addAttribute("token", token)
         return "reset-password-form"
     }

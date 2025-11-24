@@ -55,7 +55,7 @@ class OneTimeTokenService(
         return raw
     }
 
-    fun verify(rawToken: String, purpose: OneTimeToken.Purpose): OneTimeToken {
+    fun findValidToken(rawToken: String, purpose: OneTimeToken.Purpose): OneTimeToken {
         val token = repo.findByTokenHashAndPurpose(hash(rawToken), purpose)
             ?: throw IllegalArgumentException("Invalid or unknown token")
         if (token.isConsumed()) throw IllegalStateException("Token already used")
@@ -70,7 +70,7 @@ class OneTimeTokenService(
     }
 
     fun consume(rawToken: String, purpose: OneTimeToken.Purpose): OneTimeToken {
-        val token = verify(rawToken, purpose)
+        val token = findValidToken(rawToken, purpose)
         val consumed = token.copy(consumedAt = Instant.now())
         return repo.save(consumed)
     }

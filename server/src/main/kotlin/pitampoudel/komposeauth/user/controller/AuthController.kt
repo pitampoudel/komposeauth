@@ -2,15 +2,18 @@ package pitampoudel.komposeauth.user.controller
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.common.net.InternetDomainName
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import kotlinx.serialization.json.Json
 import org.springframework.http.ResponseCookie
-import com.google.common.net.InternetDomainName
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.oauth2.jwt.JwtClaimsSet
+import org.springframework.security.oauth2.jwt.JwtEncoder
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters
 import org.springframework.security.web.webauthn.api.AuthenticatorAssertionResponse
 import org.springframework.security.web.webauthn.api.PublicKeyCredential
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
@@ -21,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
-import pitampoudel.komposeauth.core.service.JwtService
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.OAuth2Response
@@ -31,6 +33,7 @@ import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.service.UserService
+import java.time.Instant
 import javax.security.auth.login.AccountLockedException
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
@@ -40,14 +43,14 @@ import kotlin.time.toJavaDuration
 class AuthController(
     val json: Json,
     val userService: UserService,
-    val jwtService: JwtService,
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
     private val passwordEncoder: PasswordEncoder,
     private val objectMapper: ObjectMapper,
     private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
     private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
-    val appConfigProvider: AppConfigProvider
+    val appConfigProvider: AppConfigProvider,
+    private val jwtEncoder: JwtEncoder
 ) {
 
     @PostMapping("/${ApiEndpoints.LOGIN}")
@@ -65,7 +68,24 @@ class AuthController(
     ): ResponseEntity<*> {
 
         val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
-        val accessToken = jwtService.generateAccessToken(user, validity = 1.days)
+        val now = Instant.now()
+        val scopes = listOf("openid", "profile", "email")
+        val claims = JwtClaimsSet.builder()
+            .issuer(appConfigProvider.selfBaseUrl)
+            .subject(user.id.toHexString())
+            .audience(listOf(appConfigProvider.selfBaseUrl))
+            .issuedAt(now)
+            .expiresAt(now + 1.days.toJavaDuration())
+            .notBefore(now)
+            .claim("email", user.email)
+            .claim("givenName", user.firstName)
+            .claim("familyName", user.lastName)
+            .claim("authorities", user.roles.map { "ROLE_$it" })
+            .claim("scope", scopes.joinToString(" "))
+            .claim("scp", scopes)
+            .build()
+
+        val accessToken = jwtEncoder.encode(JwtEncoderParameters.from(claims)).tokenValue
         val refreshToken = oneTimeTokenService.generateRefreshToken(user.id)
 
         if (wantToken) {
