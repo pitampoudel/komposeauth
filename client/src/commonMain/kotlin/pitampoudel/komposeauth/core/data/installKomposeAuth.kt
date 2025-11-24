@@ -119,7 +119,7 @@ private suspend fun refresh(
         }
 
         is Result.Error -> {
-            if (result is Result.Error.Http && result.httpStatusCode == HttpStatusCode.Unauthorized) {
+            if (result is Result.Error.Http) {
                 authPreferences.clear()
             }
             null
