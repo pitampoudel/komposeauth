@@ -32,7 +32,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
-import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.client.RestTemplate
@@ -168,9 +167,7 @@ class WebAuthorizationConfig() {
         http: HttpSecurity,
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
-        kycService: KycService,
-        jwtAuthenticationConverter: JwtAuthenticationConverter,
-        cookieAwareBearerTokenResolver: BearerTokenResolver
+        kycService: KycService
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
 
@@ -214,9 +211,6 @@ class WebAuthorizationConfig() {
                         }
                     }
                 }
-            }.oauth2ResourceServer { rs ->
-                rs.bearerTokenResolver(cookieAwareBearerTokenResolver)
-                rs.jwt { it.jwtAuthenticationConverter(jwtAuthenticationConverter) }
             }
             .authorizeHttpRequests {
                 it.anyRequest().authenticated()
