@@ -171,14 +171,10 @@ class WebAuthConfig() {
         jwtAuthenticationConverter: JwtAuthenticationConverter,
         cookieAwareBearerTokenResolver: BearerTokenResolver
     ): SecurityFilterChain {
-        val authorizationServerConfigurer: OAuth2AuthorizationServerConfigurer by lazy {
-            OAuth2AuthorizationServerConfigurer.authorizationServer()
-        }
+        val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
 
         authorizationServerConfigurer.clientAuthentication {
-            it.authenticationConverter(
-                OAuth2PublicClientAuthConverter()
-            )
+            it.authenticationConverter(OAuth2PublicClientAuthConverter())
             it.authenticationProvider(
                 OAuth2PublicClientAuthProvider(
                     registeredClientRepository = registeredClientRepository
@@ -219,7 +215,6 @@ class WebAuthConfig() {
                     }
                 }
             }
-            .cors { }
             .oauth2ResourceServer { conf ->
                 conf.bearerTokenResolver(cookieAwareBearerTokenResolver)
                     .jwt { it.jwtAuthenticationConverter(jwtAuthenticationConverter) }
