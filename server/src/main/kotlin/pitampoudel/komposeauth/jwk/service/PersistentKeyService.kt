@@ -1,7 +1,7 @@
 package pitampoudel.komposeauth.jwk.service
 
 import org.springframework.stereotype.Service
-import pitampoudel.komposeauth.core.security.CryptoService
+import pitampoudel.komposeauth.core.service.security.CryptoService
 import pitampoudel.komposeauth.jwk.entity.Jwk
 import pitampoudel.komposeauth.jwk.repository.JwkRepository
 import pitampoudel.komposeauth.jwk.utils.RsaPemUtils

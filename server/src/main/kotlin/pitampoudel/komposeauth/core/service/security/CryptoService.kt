@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.security
+package pitampoudel.komposeauth.core.service.security
 
 import org.springframework.stereotype.Service
 import pitampoudel.komposeauth.StaticAppProperties
