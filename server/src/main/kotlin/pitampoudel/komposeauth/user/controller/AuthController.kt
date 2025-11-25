@@ -9,11 +9,15 @@ import jakarta.servlet.http.HttpServletResponse
 import kotlinx.serialization.json.Json
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.security.web.webauthn.api.AuthenticatorAssertionResponse
 import org.springframework.security.web.webauthn.api.PublicKeyCredential
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
@@ -64,7 +68,8 @@ class AuthController(
         @RequestParam(required = false, defaultValue = false.toString())
         wantToken: Boolean,
         httpServletRequest: HttpServletRequest,
-        httpServletResponse: HttpServletResponse
+        httpServletResponse: HttpServletResponse,
+        securityContextRepository: HttpSessionSecurityContextRepository
     ): ResponseEntity<*> {
 
         val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
@@ -125,6 +130,15 @@ class AuthController(
 
         httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
 
+        val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
+            user.email,
+            null,
+            authorities
+        )
+        securityContextRepository.saveContext(
+            SecurityContextHolder.getContext(), httpServletRequest, httpServletResponse
+        )
         return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.isVerified(user.id)))
     }
 

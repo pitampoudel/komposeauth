@@ -7,6 +7,7 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.User
@@ -34,6 +35,8 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository
+import org.springframework.security.web.context.SecurityContextRepository
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
@@ -164,11 +167,16 @@ class WebAuthorizationConfig() {
     }
 
     @Bean
+    fun securityContextRepository(): HttpSessionSecurityContextRepository =
+        HttpSessionSecurityContextRepository()
+
+    @Bean
     @Order(1)
     fun authFilterChain(
         http: HttpSecurity,
         jwtAuthenticationConverter: JwtAuthenticationConverter,
         registeredClientRepository: RegisteredClientRepository,
+        securityContextRepository: HttpSessionSecurityContextRepository,
         userService: UserService,
         kycService: KycService
     ): SecurityFilterChain {
@@ -214,6 +222,12 @@ class WebAuthorizationConfig() {
                         }
                     }
                 }
+            }
+            .sessionManagement { sessions ->
+                sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            }
+            .securityContext {
+                it.securityContextRepository(securityContextRepository)
             }
             .addFilterBefore(JwtCookieAuthFilter(), BearerTokenAuthenticationFilter::class.java)
             .oauth2ResourceServer { conf ->
