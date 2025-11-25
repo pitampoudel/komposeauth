@@ -32,7 +32,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
-import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.client.RestTemplate
@@ -49,7 +48,7 @@ import javax.security.auth.login.AccountNotFoundException
 
 @Configuration
 @EnableWebSecurity
-class WebAuthConfig() {
+class WebAuthorizationConfig() {
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
@@ -167,9 +166,7 @@ class WebAuthConfig() {
         http: HttpSecurity,
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
-        kycService: KycService,
-        jwtAuthenticationConverter: JwtAuthenticationConverter,
-        cookieAwareBearerTokenResolver: BearerTokenResolver
+        kycService: KycService
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
 
@@ -183,7 +180,6 @@ class WebAuthConfig() {
         }
 
         return http.securityMatcher(authorizationServerConfigurer.endpointsMatcher)
-            .cors { }
             .with(authorizationServerConfigurer) { authorizationServer ->
                 authorizationServer.oidc {
                     it.userInfoEndpoint { userInfo ->
@@ -215,18 +211,13 @@ class WebAuthConfig() {
                     }
                 }
             }
-            .oauth2ResourceServer { conf ->
-                conf.bearerTokenResolver(cookieAwareBearerTokenResolver)
-                    .jwt { it.jwtAuthenticationConverter(jwtAuthenticationConverter) }
-            }
             // For browser flows: when unauthenticated hits /oauth2/authorize, redirect to a login bridge
             .exceptionHandling { ex ->
                 ex.authenticationEntryPoint { request, response, _ ->
                     val currentUrl = UrlUtils.buildFullRequestUrl(request)
                     val encoded = java.net.URLEncoder.encode(currentUrl, Charsets.UTF_8)
-                    val redirectTo = "/login-bridge.html?continue=$encoded"
                     response.status = 302
-                    response.setHeader("Location", redirectTo)
+                    response.setHeader("Location", "/login-bridge.html?continue=$encoded")
                 }
             }
             .authorizeHttpRequests { auth ->
