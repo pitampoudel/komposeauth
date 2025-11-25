@@ -45,11 +45,8 @@ class WebSecurityConfig {
         return http
             .cors { }
             .csrf { csrf -> csrf.disable() }
-            .securityContext { context ->
-                context.securityContextRepository(HttpSessionSecurityContextRepository())
-            }
             .sessionManagement { sessions ->
-                sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
             .addFilterBefore(JwtCookieAuthFilter(), BearerTokenAuthenticationFilter::class.java)
             .oauth2ResourceServer { conf ->
