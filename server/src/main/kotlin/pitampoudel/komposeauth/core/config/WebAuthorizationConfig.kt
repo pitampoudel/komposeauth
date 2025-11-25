@@ -42,6 +42,7 @@ import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.service.UserService
+import java.net.URLEncoder
 import java.time.Instant
 import java.util.Base64
 import javax.security.auth.login.AccountLockedException
@@ -217,20 +218,22 @@ class WebAuthorizationConfig() {
                 rs.bearerTokenResolver(cookieAwareBearerTokenResolver)
                 rs.jwt { it.jwtAuthenticationConverter(jwtAuthenticationConverter) }
             }
-            // For browser flows: when unauthenticated hits /oauth2/authorize, redirect to a login bridge
+            .authorizeHttpRequests {
+                it.anyRequest().authenticated()
+            }
             .exceptionHandling { ex ->
                 ex.authenticationEntryPoint { request, response, _ ->
-                    val currentUrl = UrlUtils.buildFullRequestUrl(request)
-                    val encoded = java.net.URLEncoder.encode(currentUrl, Charsets.UTF_8)
                     response.status = 302
-                    response.setHeader("Location", "/login-bridge.html?continue=$encoded")
+                    response.setHeader(
+                        "Location",
+                        "/login-bridge.html?continue=${
+                            URLEncoder.encode(
+                                UrlUtils.buildFullRequestUrl(request), Charsets.UTF_8
+                            )
+                        }"
+                    )
                 }
             }
-            .authorizeHttpRequests { auth ->
-                // Specific OAuth2 server endpoint permissions
-                auth.requestMatchers("/oauth2/token").permitAll()
-                // All other OAuth2 endpoints covered by the matcher should be authenticated
-                auth.anyRequest().authenticated()
-            }.build()
+            .build()
     }
 }
