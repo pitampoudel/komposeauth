@@ -32,10 +32,12 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.core.filter.JwtCookieAuthFilter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
 import pitampoudel.komposeauth.data.KycResponse
@@ -165,6 +167,7 @@ class WebAuthorizationConfig() {
     @Order(1)
     fun authFilterChain(
         http: HttpSecurity,
+        jwtAuthenticationConverter: JwtAuthenticationConverter,
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
         kycService: KycService
@@ -210,6 +213,12 @@ class WebAuthorizationConfig() {
                                 .build()
                         }
                     }
+                }
+            }
+            .addFilterBefore(JwtCookieAuthFilter(), BearerTokenAuthenticationFilter::class.java)
+            .oauth2ResourceServer { conf ->
+                conf.jwt {
+                    it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
             }
             .authorizeHttpRequests {

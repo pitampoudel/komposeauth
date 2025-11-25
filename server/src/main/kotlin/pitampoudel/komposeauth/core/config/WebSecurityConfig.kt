@@ -1,7 +1,6 @@
 package pitampoudel.komposeauth.core.config
 
 import jakarta.servlet.DispatcherType
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -10,47 +9,20 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
-import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
-import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.core.filter.JwtCookieAuthFilter
 import pitampoudel.komposeauth.data.ApiEndpoints
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
 class WebSecurityConfig {
-    @Bean
-    fun cookieAwareBearerTokenResolver(): BearerTokenResolver {
-        val delegate = DefaultBearerTokenResolver()
-        val publicPaths = setOf(
-            "/${ApiEndpoints.LOGIN}",
-            "/${ApiEndpoints.LOGIN_OPTIONS}",
-        )
-
-        return object : BearerTokenResolver {
-            override fun resolve(request: HttpServletRequest): String? {
-                val rawPath = request.servletPath ?: request.requestURI
-
-                // Skip any public endpoint (starts with or exact match)
-                if (publicPaths.any { rawPath.startsWith(it) }) {
-                    return null
-                }
-
-                // 1. Try Authorization header first
-                val fromHeader = delegate.resolve(request)
-                if (!fromHeader.isNullOrBlank()) return fromHeader
-
-                // 2. Then try cookie (ACCESS_TOKEN)
-                val cookie = request.cookies?.firstOrNull { it.name == "ACCESS_TOKEN" }
-                return cookie?.value
-            }
-        }
-    }
 
     @Bean
     fun corsConfigurationSource(appConfigProvider: AppConfigProvider): CorsConfigurationSource {
@@ -69,7 +41,6 @@ class WebSecurityConfig {
     fun securityFilterChain(
         http: HttpSecurity,
         jwtAuthenticationConverter: JwtAuthenticationConverter,
-        cookieAwareBearerTokenResolver: BearerTokenResolver,
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -80,8 +51,9 @@ class WebSecurityConfig {
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
+            .addFilterBefore(JwtCookieAuthFilter(), BearerTokenAuthenticationFilter::class.java)
             .oauth2ResourceServer { conf ->
-                conf.bearerTokenResolver(cookieAwareBearerTokenResolver).jwt {
+                conf.jwt {
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
             }
