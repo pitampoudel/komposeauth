@@ -29,7 +29,7 @@ dependencies {
     implementation(libs.spring.boot.starter.security)
     implementation(libs.spring.security.crypto)
     implementation(libs.spring.boot.starter.oauth2.client)
-    implementation(libs.spring.security.oauth2.authorization.server)
+    implementation (libs.spring.boot.starter.oauth2.authorization.server)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.mail)
 

@@ -100,7 +100,7 @@ spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-start
 spring-cloud-gcp-storage = { module = "com.google.cloud:spring-cloud-gcp-storage", version.ref = "springCloudGcpStorage" }
 spring-dotenv = { module = "me.paulschwarz:spring-dotenv", version.ref = "springDotenv" }
 spring-security-crypto = { module = "org.springframework.security:spring-security-crypto" }
-spring-security-oauth2-authorization-server = { module = "org.springframework.security:spring-security-oauth2-authorization-server" }
+spring-boot-starter-oauth2-authorization-server = { module = "org.springframework.boot:spring-boot-starter-oauth2-authorization-server" }
 spring-security-test = { module = "org.springframework.security:spring-security-test" }
 spring-security-web = { module = "org.springframework.security:spring-security-web" }
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdocOpenapiStarterWebmvcUi" }
