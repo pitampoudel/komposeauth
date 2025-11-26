@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.core.config
 
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -33,14 +34,12 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
-import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository
-import org.springframework.security.web.context.SecurityContextRepository
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
-import pitampoudel.komposeauth.core.filter.JwtCookieAuthFilter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
 import pitampoudel.komposeauth.data.KycResponse
@@ -60,6 +59,27 @@ class WebAuthorizationConfig() {
 
     @Bean
     fun restTemplate(): RestTemplate = RestTemplate()
+
+
+    @Bean
+    fun cookieAwareBearerTokenResolver(): BearerTokenResolver {
+        val delegate: BearerTokenResolver = DefaultBearerTokenResolver()
+        return object : BearerTokenResolver {
+            override fun resolve(request: HttpServletRequest): String? {
+                // 1. Try Authorization header first
+                val fromHeader = try {
+                    delegate.resolve(request)
+                } catch (ex: Exception) {
+                    null // swallow it → public endpoints remain unaffected
+                }
+                if (!fromHeader.isNullOrBlank()) return fromHeader
+
+                // 2. Then try cookie (ACCESS_TOKEN)
+                val cookie = request.cookies?.firstOrNull { it.name == "ACCESS_TOKEN" }
+                return cookie?.value
+            }
+        }
+    }
 
 
     @Bean
@@ -167,16 +187,12 @@ class WebAuthorizationConfig() {
     }
 
     @Bean
-    fun securityContextRepository(): HttpSessionSecurityContextRepository =
-        HttpSessionSecurityContextRepository()
-
-    @Bean
     @Order(1)
     fun authFilterChain(
         http: HttpSecurity,
         jwtAuthenticationConverter: JwtAuthenticationConverter,
         registeredClientRepository: RegisteredClientRepository,
-        securityContextRepository: HttpSessionSecurityContextRepository,
+        bearerTokenResolver: BearerTokenResolver,
         userService: UserService,
         kycService: KycService
     ): SecurityFilterChain {
@@ -224,13 +240,10 @@ class WebAuthorizationConfig() {
                 }
             }
             .sessionManagement { sessions ->
-                sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
-            .securityContext {
-                it.securityContextRepository(securityContextRepository)
-            }
-            .addFilterBefore(JwtCookieAuthFilter(), BearerTokenAuthenticationFilter::class.java)
             .oauth2ResourceServer { conf ->
+                conf.bearerTokenResolver(bearerTokenResolver)
                 conf.jwt {
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }

@@ -8,7 +8,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.web.authentication.AuthenticationConverter
 
 class OAuth2PublicClientAuthConverter : AuthenticationConverter {
-    override fun convert(request: HttpServletRequest): Authentication? {
+    override fun convert(request: HttpServletRequest): Authentication {
         val parameters = request.parameterMap.toMutableMap()
 
         // client_id (REQUIRED)

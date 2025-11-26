@@ -9,14 +9,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
-import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
-import pitampoudel.komposeauth.core.filter.JwtCookieAuthFilter
 import pitampoudel.komposeauth.data.ApiEndpoints
 
 @Configuration
@@ -41,6 +39,7 @@ class WebSecurityConfig {
     fun securityFilterChain(
         http: HttpSecurity,
         jwtAuthenticationConverter: JwtAuthenticationConverter,
+        bearerTokenResolver: BearerTokenResolver
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -48,8 +47,8 @@ class WebSecurityConfig {
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
-            .addFilterBefore(JwtCookieAuthFilter(), BearerTokenAuthenticationFilter::class.java)
             .oauth2ResourceServer { conf ->
+                conf.bearerTokenResolver(bearerTokenResolver)
                 conf.jwt {
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
