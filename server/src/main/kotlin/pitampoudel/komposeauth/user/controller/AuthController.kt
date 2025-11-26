@@ -104,41 +104,44 @@ class AuthController(
                     )
                 )
             )
+        } else {
+            val isSecure = httpServletRequest.isSecure
+            val sameSite = if (isSecure) "None" else "Lax"
+
+            val cookieDomain: String? = runCatching {
+                val requestHost = httpServletRequest.serverName
+                if (requestHost != null && InternetDomainName.isValid(requestHost)) {
+                    val dn = InternetDomainName.from(requestHost)
+                    // Use registrable domain only for real domains; for localhost or bare hostnames return null
+                    if (dn.isUnderPublicSuffix) dn.topPrivateDomain().toString() else null
+                } else null
+            }.getOrNull()
+
+            val cookieBuilder = ResponseCookie.from("ACCESS_TOKEN", accessToken)
+                .httpOnly(true)
+                .secure(isSecure)
+                .path("/")
+                .sameSite(sameSite)
+                .maxAge((1.days - 1.minutes).toJavaDuration())
+
+            val accessCookie = if (!cookieDomain.isNullOrBlank()) {
+                cookieBuilder.domain(cookieDomain).build()
+            } else cookieBuilder.build()
+
+            httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
+
+
+            // only used for oauth2 flow
+            val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
+            SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
+                user.email,
+                null,
+                authorities
+            )
+            securityContextRepository.saveContext(
+                SecurityContextHolder.getContext(), httpServletRequest, httpServletResponse
+            )
         }
-        val isSecure = httpServletRequest.isSecure
-        val sameSite = if (isSecure) "None" else "Lax"
-
-        val cookieDomain: String? = runCatching {
-            val requestHost = httpServletRequest.serverName
-            if (requestHost != null && InternetDomainName.isValid(requestHost)) {
-                val dn = InternetDomainName.from(requestHost)
-                // Use registrable domain only for real domains; for localhost or bare hostnames return null
-                if (dn.isUnderPublicSuffix) dn.topPrivateDomain().toString() else null
-            } else null
-        }.getOrNull()
-
-        val cookieBuilder = ResponseCookie.from("ACCESS_TOKEN", accessToken)
-            .httpOnly(true)
-            .secure(isSecure)
-            .path("/")
-            .sameSite(sameSite)
-            .maxAge((1.days - 1.minutes).toJavaDuration())
-
-        val accessCookie = if (!cookieDomain.isNullOrBlank()) {
-            cookieBuilder.domain(cookieDomain).build()
-        } else cookieBuilder.build()
-
-        httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
-
-        val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
-        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
-            user.email,
-            null,
-            authorities
-        )
-        securityContextRepository.saveContext(
-            SecurityContextHolder.getContext(), httpServletRequest, httpServletResponse
-        )
         return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.isVerified(user.id)))
     }
 

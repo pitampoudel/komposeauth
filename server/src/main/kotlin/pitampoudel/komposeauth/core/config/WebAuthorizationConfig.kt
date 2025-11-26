@@ -190,9 +190,7 @@ class WebAuthorizationConfig() {
     @Order(1)
     fun authFilterChain(
         http: HttpSecurity,
-        jwtAuthenticationConverter: JwtAuthenticationConverter,
         registeredClientRepository: RegisteredClientRepository,
-        bearerTokenResolver: BearerTokenResolver,
         userService: UserService,
         kycService: KycService
     ): SecurityFilterChain {
@@ -241,12 +239,6 @@ class WebAuthorizationConfig() {
             }
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-            }
-            .oauth2ResourceServer { conf ->
-                conf.bearerTokenResolver(bearerTokenResolver)
-                conf.jwt {
-                    it.jwtAuthenticationConverter(jwtAuthenticationConverter)
-                }
             }
             .authorizeHttpRequests {
                 it.anyRequest().authenticated()
