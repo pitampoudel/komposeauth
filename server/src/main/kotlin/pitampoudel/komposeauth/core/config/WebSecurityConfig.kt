@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -38,8 +39,7 @@ class WebSecurityConfig {
     @Order(2)
     fun securityFilterChain(
         http: HttpSecurity,
-        jwtAuthenticationConverter: JwtAuthenticationConverter,
-        bearerTokenResolver: BearerTokenResolver
+        jwtAuthenticationConverter: JwtAuthenticationConverter
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -48,7 +48,20 @@ class WebSecurityConfig {
                 sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
             .oauth2ResourceServer { conf ->
-                conf.bearerTokenResolver(bearerTokenResolver)
+                conf.bearerTokenResolver { request ->
+                    val delegate: BearerTokenResolver = DefaultBearerTokenResolver()
+                    // 1. Try Authorization header first
+                    val fromHeader = try {
+                        delegate.resolve(request)
+                    } catch (ex: Exception) {
+                        null // swallow it → public endpoints remain unaffected
+                    }
+                    return@bearerTokenResolver if (!fromHeader.isNullOrBlank()) fromHeader else {
+                        // 2. Then try cookie (ACCESS_TOKEN)
+                        val cookie = request.cookies?.firstOrNull { it.name == "ACCESS_TOKEN" }
+                        cookie?.value
+                    }
+                }
                 conf.jwt {
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
@@ -66,6 +79,7 @@ class WebSecurityConfig {
                         "/login-bridge.html",
                         "/oauth2/jwks",
                         "/${ApiEndpoints.LOGIN}",
+                        "/${ApiEndpoints.LOGIN}/session",
                         "/signup",
                         "/api/auth/**",
                         "/users",

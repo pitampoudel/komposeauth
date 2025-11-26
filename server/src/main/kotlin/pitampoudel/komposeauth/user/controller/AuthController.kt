@@ -57,6 +57,34 @@ class AuthController(
     private val jwtEncoder: JwtEncoder
 ) {
 
+    @PostMapping("/${ApiEndpoints.LOGIN}/session")
+    @Operation(
+        summary = "Login with credentials",
+        description = "Validate credentials and store context at session."
+    )
+    fun sessionLogin(
+        @RequestBody
+        request: Credential,
+        httpServletRequest: HttpServletRequest,
+        httpServletResponse: HttpServletResponse,
+        securityContextRepository: HttpSessionSecurityContextRepository
+    ): ResponseEntity<*> {
+        // only used for oauth2 flow
+        val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
+        val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
+            user.email,
+            null,
+            authorities
+        )
+        securityContextRepository.saveContext(
+            SecurityContextHolder.getContext(), httpServletRequest, httpServletResponse
+        )
+        return ResponseEntity.ok(
+            user.mapToProfileResponseDto(kycService.isVerified(user.id))
+        )
+    }
+
     @PostMapping("/${ApiEndpoints.LOGIN}")
     @Operation(
         summary = "Login with credentials",
@@ -68,10 +96,8 @@ class AuthController(
         @RequestParam(required = false, defaultValue = false.toString())
         wantToken: Boolean,
         httpServletRequest: HttpServletRequest,
-        httpServletResponse: HttpServletResponse,
-        securityContextRepository: HttpSessionSecurityContextRepository
+        httpServletResponse: HttpServletResponse
     ): ResponseEntity<*> {
-
         val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
         val now = Instant.now()
         val scopes = listOf("openid", "profile", "email")
@@ -127,20 +153,7 @@ class AuthController(
             val accessCookie = if (!cookieDomain.isNullOrBlank()) {
                 cookieBuilder.domain(cookieDomain).build()
             } else cookieBuilder.build()
-
             httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
-
-
-            // only used for oauth2 flow
-            val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
-            SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
-                user.email,
-                null,
-                authorities
-            )
-            securityContextRepository.saveContext(
-                SecurityContextHolder.getContext(), httpServletRequest, httpServletResponse
-            )
         }
         return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.isVerified(user.id)))
     }

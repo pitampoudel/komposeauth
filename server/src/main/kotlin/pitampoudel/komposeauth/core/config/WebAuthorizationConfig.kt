@@ -1,19 +1,14 @@
 package pitampoudel.komposeauth.core.config
 
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
-import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.core.userdetails.User
-import org.springframework.security.core.userdetails.UserDetailsService
-import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator
 import org.springframework.security.crypto.keygen.StringKeyGenerator
@@ -34,8 +29,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
-import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
-import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.client.RestTemplate
@@ -48,7 +41,6 @@ import pitampoudel.komposeauth.user.service.UserService
 import java.net.URLEncoder
 import java.time.Instant
 import java.util.Base64
-import javax.security.auth.login.AccountLockedException
 import javax.security.auth.login.AccountNotFoundException
 
 @Configuration
@@ -59,50 +51,6 @@ class WebAuthorizationConfig() {
 
     @Bean
     fun restTemplate(): RestTemplate = RestTemplate()
-
-
-    @Bean
-    fun cookieAwareBearerTokenResolver(): BearerTokenResolver {
-        val delegate: BearerTokenResolver = DefaultBearerTokenResolver()
-        return object : BearerTokenResolver {
-            override fun resolve(request: HttpServletRequest): String? {
-                // 1. Try Authorization header first
-                val fromHeader = try {
-                    delegate.resolve(request)
-                } catch (ex: Exception) {
-                    null // swallow it → public endpoints remain unaffected
-                }
-                if (!fromHeader.isNullOrBlank()) return fromHeader
-
-                // 2. Then try cookie (ACCESS_TOKEN)
-                val cookie = request.cookies?.firstOrNull { it.name == "ACCESS_TOKEN" }
-                return cookie?.value
-            }
-        }
-    }
-
-
-    @Bean
-    fun userDetailsService(
-        userService: UserService
-    ): UserDetailsService = UserDetailsService { username ->
-        val user = userService.findByUserName(username)
-            ?: throw UsernameNotFoundException("User not found with username: $username")
-
-        if (user.deactivated) {
-            throw AccountLockedException("User account is deactivated")
-        }
-        if (user.email == null) {
-            throw AccessDeniedException("User email is not verified")
-        }
-
-        User.withUsername(user.email)
-            .password(user.passwordHash)
-            .authorities(user.roles.map { role ->
-                SimpleGrantedAuthority("ROLE_${role}")
-            })
-            .build()
-    }
 
     class OAuth2RefreshTokenGenerator : OAuth2TokenGenerator<OAuth2RefreshToken> {
         private val refreshTokenGenerator: StringKeyGenerator = Base64StringKeyGenerator(
@@ -118,7 +66,6 @@ class WebAuthorizationConfig() {
                 issuedAt.plus(context.registeredClient.tokenSettings.refreshTokenTimeToLive)
             return OAuth2RefreshToken(this.refreshTokenGenerator.generateKey(), issuedAt, expiresAt)
         }
-
     }
 
     @Bean
