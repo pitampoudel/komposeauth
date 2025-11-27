@@ -100,9 +100,9 @@ class WebAuthorizationConfig() {
                             "authorities",
                             principal.authorities + user.roles.map { "ROLE_$it" }
                         )
-                        context.claims.claim("first_name", user.firstName)
+                        context.claims.claim("givenName", user.firstName)
                         if (user.lastName != null)
-                            context.claims.claim("last_name", user.lastName)
+                            context.claims.claim("familyName", user.lastName)
                     }
                 }
             }
