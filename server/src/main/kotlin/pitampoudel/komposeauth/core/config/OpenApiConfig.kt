@@ -1,16 +1,10 @@
 package pitampoudel.komposeauth.core.config
 
-import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.media.StringSchema
-import io.swagger.v3.oas.models.security.OAuthFlow
-import io.swagger.v3.oas.models.security.OAuthFlows
-import io.swagger.v3.oas.models.security.Scopes
-import io.swagger.v3.oas.models.security.SecurityRequirement
-import io.swagger.v3.oas.models.security.SecurityScheme
 import kotlinx.datetime.LocalDate
 import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springdoc.core.utils.SpringDocUtils
@@ -37,43 +31,9 @@ class OpenApiConfig {
 
     @Bean
     fun openAPI(): OpenAPI {
-        val oauth2SchemeName = "oauth2"
-        return OpenAPI()
-            .info(
-                Info()
-                    .title("komposeauth API")
-                    .description("The REST APIs")
-            )
-            .addSecurityItem(
-                SecurityRequirement().addList(oauth2SchemeName)
-            )
-            .components(
-                Components()
-                    // Enable Swagger UI "Authorize" with OAuth2 authorization code flow (PKCE-compatible)
-                    .addSecuritySchemes(
-                        oauth2SchemeName,
-                        SecurityScheme()
-                            .name(oauth2SchemeName)
-                            .type(SecurityScheme.Type.OAUTH2)
-                            .flows(
-                                OAuthFlows()
-                                    .authorizationCode(
-                                        OAuthFlow()
-                                            .authorizationUrl("/oauth2/authorize")
-                                            .tokenUrl("/oauth2/token")
-                                            .scopes(
-                                                Scopes()
-                                                    .addString("openid", "OpenID scope")
-                                                    .addString(
-                                                        "profile",
-                                                        "Basic profile information"
-                                                    )
-                                                    .addString("email", "Email address")
-                                            )
-                                    )
-                            )
-                    )
-            )
+        return OpenAPI().info(
+            Info().title("komposeauth API").description("The REST APIs")
+        )
     }
 
     /**
