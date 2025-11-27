@@ -2,6 +2,15 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en"
       th:replace="~{email/base :: body}">
 <body>
-<p th:if="${message}" th:text="${message}">Message body</p>
+<!-- Provide a fragment named 'content' that base.html will insert -->
+<div th:fragment="content">
+    <p th:if="${message}" th:text="${message}">Message body</p>
+    <!-- Additional content fragments can be added here if needed -->
+    
+    <!-- Example: a fallback note when no message is supplied -->
+    <p th:if="${message} == null" class="muted">This is a system notification.</p>
+    
+    <!-- Optional action block can be controlled via model variables (actionUrl, actionText) -->
+</div>
 </body>
 </html>
