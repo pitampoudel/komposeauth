@@ -91,6 +91,11 @@ class WebSecurityConfig {
                         "/.well-known/**",
                         "/setup"
                     ).permitAll()
+                    .requestMatchers(
+                        "/v3/api-docs/**",
+                        "/swagger-ui.html",
+                        "/swagger-ui/**"
+                    ).hasAnyRole("DEVELOPER", "ADMIN", "SUPER_ADMIN")
                     .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD)
                     .permitAll()
                     .anyRequest().authenticated()
