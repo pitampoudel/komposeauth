@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${subject} ?: ${appName}">Email</title>
+    <style>
+        .container{max-width:640px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb}
+        .header{padding:20px;color:#fff}
+        .logo{display:flex;align-items:center;gap:10px}
+        .logo img{height:32px}
+        .content{padding:24px;color:#111827;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
+        .btn{display:inline-block;padding:12px 18px;border-radius:6px;color:#fff;text-decoration:none;font-weight:600}
+        .footer{padding:16px 24px;color:#6b7280;font-size:12px;border-top:1px solid #e5e7eb;background:#f9fafb}
+        .muted{color:#6b7280}
+    </style>
+</head>
+<body style="background:#f3f4f6;padding:24px">
+<div class="container">
+    <div class="header" th:style="|background:${brandColor};|">
+        <div class="logo">
+            <img th:if="${logoUrl}" th:src="${logoUrl}" alt="logo"/>
+            <div style="font-size:18px;font-weight:700" th:text="${appName}">App</div>
+        </div>
+    </div>
+    <div class="content">
+        <h2 th:text="${title} ?: ${subject} ?: ${appName}" style="margin-top:0"></h2>
+        <div th:insert="~{::body}"></div>
+        <div th:if="${actionUrl}">
+            <a class="btn" th:style="|background:${brandColor};|" th:href="${actionUrl}" th:text="${actionText} ?: 'Open'">Open</a>
+        </div>
+        <p class="muted" th:if="${supportEmail}" style="margin-top:16px">
+            Need help? Contact us at <a th:href="|mailto:${supportEmail}|" th:text="${supportEmail}"></a>
+        </p>
+    </div>
+    <div class="footer">
+        <div th:text="${footerText}">© App. All rights reserved.</div>
+        <div th:if="${baseUrl}" style="margin-top:4px" class="muted" th:text="${baseUrl}"></div>
+    </div>
+  </div>
+</body>
+</html>

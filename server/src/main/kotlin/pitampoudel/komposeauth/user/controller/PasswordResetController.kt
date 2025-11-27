@@ -47,10 +47,16 @@ class PasswordResetController(
 
         val link = oneTimeTokenService.generateResetPasswordLink(userId = user.id)
 
-        val sent = emailService.sendSimpleMail(
+        val sent = emailService.sendHtmlMail(
             to = email,
             subject = "Reset Your Password",
-            text = "Click the link to reset your password: $link"
+            template = "email/generic",
+            model = mapOf(
+                "title" to "Reset your password",
+                "message" to "Click the button below to reset your password.",
+                "actionUrl" to link,
+                "actionText" to "Reset Password"
+            )
         )
         if (!sent) throw Exception("Unable to send password reset email")
 

@@ -68,6 +68,10 @@ class AppConfigProvider(val appConfigService: AppConfigService) {
     val smtpUsername: String? get() = appConfigService.getEnv().smtpUsername
     val smtpPassword: String? get() = appConfigService.getEnv().smtpPassword
     val smtpFromEmail: String? get() = appConfigService.getEnv().smtpFromEmail
+    val smtpFromName: String get() = appConfigService.getEnv().smtpFromName ?: name
+    val brandColor: String get() = appConfigService.getEnv().brandColor ?: "#4F46E5"
+    val supportEmail: String get() = appConfigService.getEnv().supportEmail ?: (smtpFromEmail ?: "support@${domain()}")
+    val emailFooterText: String get() = appConfigService.getEnv().emailFooterText ?: "© ${name}. All rights reserved."
     val sentryDsn: String? get() = appConfigService.getEnv().sentryDsn
     val samayeApiKey: String? = appConfigService.getEnv().samayeApiKey
     fun googleClientId(platform: Platform): String? {

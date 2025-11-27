@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:replace="~{email/base :: body}">
+<body>
+<p th:if="${message}" th:text="${message}">Message body</p>
+</body>
+</html>

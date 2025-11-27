@@ -34,6 +34,20 @@
         <label for="logoUrl">Logo URL</label>
         <input id="logoUrl" name="logoUrl" type="url" th:value="${config.logoUrl}"
                placeholder="https://example.com/logo.png">
+
+        <label for="brandColor">Brand Color</label>
+        <input id="brandColor" name="brandColor" type="text" th:value="${config.brandColor}"
+               placeholder="#4F46E5">
+        <div class="note">Hex color used in emails and UI accents.</div>
+
+        <label for="supportEmail">Support Email</label>
+        <input id="supportEmail" name="supportEmail" type="text" th:value="${config.supportEmail}"
+               placeholder="support@example.com">
+        <div class="note">Shown in email footer. If empty, falls back to SMTP From or support@your-domain</div>
+
+        <label for="emailFooterText">Email Footer Text</label>
+        <input id="emailFooterText" name="emailFooterText" type="text" th:value="${config.emailFooterText}"
+               placeholder="© My App. All rights reserved.">
     </fieldset>
 
     <fieldset>
@@ -94,6 +108,10 @@
         <label for="smtpFromEmail">SMTP From Email</label>
         <input id="smtpFromEmail" name="smtpFromEmail" type="text"
                th:value="${config.smtpFromEmail}" placeholder="no-reply@example.com">
+
+        <label for="smtpFromName">SMTP From Name</label>
+        <input id="smtpFromName" name="smtpFromName" type="text"
+               th:value="${config.smtpFromName}" placeholder="My App">
     </fieldset>
 
     <fieldset>

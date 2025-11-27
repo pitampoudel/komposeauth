@@ -1,13 +1,20 @@
 package pitampoudel.komposeauth.core.service
 
-import org.springframework.mail.SimpleMailMessage
+import jakarta.mail.internet.InternetAddress
+import jakarta.mail.internet.MimeMessage
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
+import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.stereotype.Service
+import org.thymeleaf.TemplateEngine
+import org.thymeleaf.context.Context
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 
 @Service
-class EmailService(private val appConfigProvider: AppConfigProvider) {
+class EmailService(
+    private val appConfigProvider: AppConfigProvider,
+    private val templateEngine: TemplateEngine,
+) {
 
     fun javaMailSender(): JavaMailSender {
         val impl = JavaMailSenderImpl()
@@ -23,17 +30,40 @@ class EmailService(private val appConfigProvider: AppConfigProvider) {
         return impl
     }
 
-    fun sendSimpleMail(
+    fun render(template: String, variables: Map<String, Any?>): String {
+        val context = Context().apply {
+            // branding defaults
+            setVariable("appName", appConfigProvider.name)
+            setVariable("logoUrl", appConfigProvider.logoUrl)
+            setVariable("brandColor", appConfigProvider.brandColor)
+            setVariable("supportEmail", appConfigProvider.supportEmail)
+            setVariable("footerText", appConfigProvider.emailFooterText)
+            setVariable("baseUrl", appConfigProvider.selfBaseUrl)
+            variables.forEach { (k, v) -> setVariable(k, v) }
+        }
+        return templateEngine.process(template, context)
+    }
+
+    fun sendHtmlMail(
         to: String,
-        subject: String? = null,
-        text: String? = null
+        subject: String,
+        template: String,
+        model: Map<String, Any?> = emptyMap(),
     ): Boolean {
         return try {
-            val mailMessage = SimpleMailMessage()
-            mailMessage.setTo(to)
-            mailMessage.text = text
-            mailMessage.subject = subject
-            javaMailSender().send(mailMessage)
+            val html = render(template, model + mapOf("subject" to subject))
+            val sender = javaMailSender()
+            val message: MimeMessage = sender.createMimeMessage()
+            val helper = MimeMessageHelper(message, true, "UTF-8")
+            val fromEmail = appConfigProvider.smtpFromEmail
+            val fromName = appConfigProvider.smtpFromName
+            if (!fromEmail.isNullOrBlank()) {
+                helper.setFrom(InternetAddress(fromEmail, fromName))
+            }
+            helper.setTo(to)
+            helper.setSubject(subject)
+            helper.setText(html, true)
+            sender.send(message)
             true
         } catch (e: Exception) {
             false

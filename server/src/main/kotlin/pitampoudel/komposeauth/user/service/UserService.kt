@@ -45,7 +45,7 @@ class UserService(
     private val userRepository: UserRepository,
     val passwordEncoder: PasswordEncoder,
     private val phoneNumberVerificationService: PhoneNumberVerificationService,
-    val appProperties: AppConfigProvider,
+    val appConfigProvider: AppConfigProvider,
     val emailService: EmailService,
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
@@ -64,11 +64,11 @@ class UserService(
         val client = HttpClient.newHttpClient()
         val form = String.format(
             "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&code_verifier=%s&client_secret=%s",
-            URLEncoder.encode(appProperties.googleClientId(platform), StandardCharsets.UTF_8),
+            URLEncoder.encode(appConfigProvider.googleClientId(platform), StandardCharsets.UTF_8),
             URLEncoder.encode(code, StandardCharsets.UTF_8),
             URLEncoder.encode(redirectUri, StandardCharsets.UTF_8),
             URLEncoder.encode(codeVerifier, StandardCharsets.UTF_8),
-            URLEncoder.encode(appProperties.googleClientSecret(platform), StandardCharsets.UTF_8)
+            URLEncoder.encode(appConfigProvider.googleClientSecret(platform), StandardCharsets.UTF_8)
         )
         val request = HttpRequest.newBuilder()
             .uri(URI.create("https://oauth2.googleapis.com/token"))
@@ -133,14 +133,18 @@ class UserService(
     fun createUser(req: CreateUserRequest): User {
         val newUser = req.mapToEntity(passwordEncoder)
         if (newUser.email != null && !newUser.emailVerified) {
-            val emailSent = emailService.sendSimpleMail(
+            val emailSent = emailService.sendHtmlMail(
                 to = newUser.email,
-                subject = "Email Verification",
-                text = "Please click the link to verify your email address: ${
-                    oneTimeTokenService.generateEmailVerificationLink(
+                subject = "Welcome to ${appConfigProvider.name}!",
+                template = "email/generic",
+                model = mapOf(
+                    "title" to "Welcome to ${appConfigProvider.name}!",
+                    "message" to "Please click the button below to verify your email address and continue using our service.",
+                    "actionUrl" to oneTimeTokenService.generateEmailVerificationLink(
                         userId = newUser.id
-                    )
-                }"
+                    ),
+                    "actionText" to "Verify Email"
+                )
             )
             if (!emailSent) {
                 throw BadRequestException("Failed to send verification email.")
@@ -226,8 +230,8 @@ class UserService(
     fun findOrCreateUserByGoogleIdToken(idToken: String): User {
         val payload = validateGoogleIdToken(
             clientIds = listOfNotNull(
-                appProperties.googleAuthClientId,
-                appProperties.googleAuthDesktopClientId
+                appConfigProvider.googleAuthClientId,
+                appConfigProvider.googleAuthDesktopClientId
             ),
             idToken = idToken
         )

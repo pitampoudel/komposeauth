@@ -12,6 +12,8 @@ data class AppConfig(
 
     var name: String? = null,
     var logoUrl: String? = null,
+    var brandColor: String? = null,
+    var supportEmail: String? = null,
     var selfBaseUrl: String? = null,
     var gcpProjectId: String? = null,
     var gcpBucketName: String? = null,
@@ -35,6 +37,8 @@ data class AppConfig(
     var smtpUsername: String? = null,
     var smtpPassword: String? = null,
     var smtpFromEmail: String? = null,
+    var smtpFromName: String? = null,
+    var emailFooterText: String? = null,
 
     var sentryDsn: String? = null,
     // Third-party SMS provider (Samaye) API key
@@ -61,6 +65,10 @@ data class AppConfig(
         if (smtpUsername.isNullOrBlank()) smtpUsername = null
         if (smtpPassword.isNullOrBlank()) smtpPassword = null
         if (smtpFromEmail.isNullOrBlank()) smtpFromEmail = null
+        if (smtpFromName.isNullOrBlank()) smtpFromName = null
+        if (brandColor.isNullOrBlank()) brandColor = null
+        if (supportEmail.isNullOrBlank()) supportEmail = null
+        if (emailFooterText.isNullOrBlank()) emailFooterText = null
         if (sentryDsn.isNullOrBlank()) sentryDsn = null
         if (samayeApiKey.isNullOrBlank()) samayeApiKey = null
         return this

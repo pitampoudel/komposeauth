@@ -39,10 +39,16 @@ class EmailVerifyController(
 
         val link = oneTimeTokenService.generateEmailVerificationLink(userId = user.id)
 
-        val sent = emailService.sendSimpleMail(
+        val sent = emailService.sendHtmlMail(
             to = user.email,
             subject = "Verify Your Email",
-            text = "Click the link to verify your email: $link"
+            template = "email/generic",
+            model = mapOf(
+                "title" to "Verify your email",
+                "message" to "Click the button below to verify your email address.",
+                "actionUrl" to link,
+                "actionText" to "Verify Email"
+            )
         )
         if (!sent) throw Exception("Unable to send verification email")
 
