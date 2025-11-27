@@ -12,11 +12,13 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.data.ApiEndpoints
+import java.net.URLEncoder
 
 @Configuration
 @EnableWebSecurity
@@ -69,7 +71,6 @@ class WebSecurityConfig {
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(
-                        "/",
                         "/css/**",
                         "/js/**",
                         "/img/**",
@@ -93,6 +94,20 @@ class WebSecurityConfig {
                     .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD)
                     .permitAll()
                     .anyRequest().authenticated()
+            }
+            .exceptionHandling { ex ->
+                ex.authenticationEntryPoint { request, response, authException ->
+                    val accept = request.getHeader("Accept") ?: ""
+                    val wantsHtml = accept.contains("text/html", ignoreCase = true)
+                    if (wantsHtml) {
+                        val continueUrl = URLEncoder.encode(
+                            UrlUtils.buildFullRequestUrl(request), Charsets.UTF_8
+                        )
+                        response.sendRedirect("/login-bridge.html?continue=$continueUrl")
+                    } else {
+                        response.sendError(401, authException?.message)
+                    }
+                }
             }
             .build()
     }

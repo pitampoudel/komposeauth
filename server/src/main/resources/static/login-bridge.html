@@ -162,7 +162,7 @@
             password: document.getElementById('password').value
           };
 
-          const resp = await fetch(`${location.origin}/login/session`, {
+          const resp = await fetch(`${location.origin}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
