@@ -1,16 +1,49 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en"
       th:replace="~{email/base :: body}">
+
 <body>
-<!-- Provide a fragment named 'content' that base.html will insert -->
 <div th:fragment="content">
-    <p th:if="${message}" th:text="${message}">Message body</p>
-    <!-- Additional content fragments can be added here if needed -->
-    
-    <!-- Example: a fallback note when no message is supplied -->
-    <p th:if="${message} == null" class="muted">This is a system notification.</p>
-    
-    <!-- Optional action block can be controlled via model variables (actionUrl, actionText) -->
+    <!-- Main message -->
+    <div th:if="${message}">
+        <p th:text="${message}">
+            Your message content goes here.
+        </p>
+    </div>
+
+    <!-- Default message when no content provided -->
+    <div th:if="${message == null}">
+        <p class="text-muted">
+            This is an automated notification from our system.
+        </p>
+    </div>
+
+    <!-- Optional additional content -->
+    <div class="info-box" th:if="${infoMessage}">
+        <p th:text="${infoMessage}">
+            Additional information or notes can appear here.
+        </p>
+    </div>
+
+    <!-- Optional list of items -->
+    <div th:if="${items != null && !items.isEmpty()}">
+        <p><strong>Details:</strong></p>
+        <ul style="margin: 12px 0; padding-left: 20px; color: #374151;">
+            <li th:each="item : ${items}"
+                th:text="${item}"
+                style="margin: 8px 0;">
+                Item detail
+            </li>
+        </ul>
+    </div>
+
+    <!-- Optional note or warning -->
+    <div th:if="${note}">
+        <p class="text-small text-muted" style="margin-top: 24px; padding: 16px; background-color: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px;">
+            <strong style="color: #92400e;">Note:</strong>
+            <span th:text="${note}" style="color: #78350f;">Important information here</span>
+        </p>
+    </div>
 </div>
 </body>
 </html>
