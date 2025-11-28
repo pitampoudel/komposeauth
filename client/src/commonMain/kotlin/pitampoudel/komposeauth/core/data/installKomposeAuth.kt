@@ -14,7 +14,6 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
@@ -79,28 +78,34 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
                     authPreferences.clear()
                     return@refreshTokens null
                 }
-                refresh(client, authServerUrl, refreshToken, authPreferences)
+                refresh(authServerUrl, refreshToken, authPreferences)
 
             }
             sendWithoutRequest { builder ->
-                val authorizedHosts = (resourceServerUrls + authServerUrl).map { Url(it).host }
+                val hosts = (resourceServerUrls + authServerUrl).toSet().map {
+                    Url(it).host
+                }.toSet()
                 val host = builder.url.host
-                val urlString = builder.url.toString()
-                val isAuthEndpoint = urlString.endsWith("/$LOGIN")
-                (authorizedHosts.contains(host) || isIPv4(host)) && !isAuthEndpoint
+                hosts.contains(host) || isIPv4(host)
             }
         }
     }
 }
 
 private suspend fun refresh(
-    client: HttpClient,
     authServerUrl: String,
     refreshToken: String,
     authPreferences: AuthPreferences
 ): BearerTokens? {
+    val refreshClient = HttpClient {
+        install(ContentNegotiation) {
+            json(Json {
+                ignoreUnknownKeys = true
+            })
+        }
+    }
     val result = safeApiCall<OAuth2Response> {
-        client.post(
+        refreshClient.post(
             "$authServerUrl/$LOGIN",
             block = {
                 parameter("wantToken", true)
