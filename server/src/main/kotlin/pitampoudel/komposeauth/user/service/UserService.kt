@@ -57,17 +57,15 @@ class UserService(
 
     fun findOrCreateUserByAuthCode(
         code: String,
-        codeVerifier: String,
         redirectUri: String,
         platform: Platform
     ): User {
         val client = HttpClient.newHttpClient()
         val form = String.format(
-            "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&code_verifier=%s&client_secret=%s",
+            "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&client_secret=%s",
             URLEncoder.encode(appConfigProvider.googleClientId(platform), StandardCharsets.UTF_8),
             URLEncoder.encode(code, StandardCharsets.UTF_8),
             URLEncoder.encode(redirectUri, StandardCharsets.UTF_8),
-            URLEncoder.encode(codeVerifier, StandardCharsets.UTF_8),
             URLEncoder.encode(appConfigProvider.googleClientSecret(platform), StandardCharsets.UTF_8)
         )
         val request = HttpRequest.newBuilder()

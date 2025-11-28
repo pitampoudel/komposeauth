@@ -27,8 +27,6 @@ sealed class Credential {
         val platform: Platform,
         @SerialName("code")
         val code: String,
-        @SerialName("codeVerifier")
-        val codeVerifier: String,
         @SerialName("redirectUri")
         val redirectUri: String
     ) : Credential()
