@@ -175,9 +175,7 @@ data class KycState(
     val progress: Float? = null,
     val infoMsg: InfoMessage? = null,
     val status: KycResponse.Status? = null,
-    val countries: List<CountryResponse> = emptyList(),
-    val occupations: List<String> = emptyList()
-) {
+    val countries: List<CountryResponse> = emptyList()) {
     fun isSubmitted(): Boolean {
         return status in KycResponse.Status.submitted()
     }

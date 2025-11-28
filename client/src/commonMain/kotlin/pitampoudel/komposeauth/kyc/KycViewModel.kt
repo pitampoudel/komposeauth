@@ -26,36 +26,6 @@ class KycViewModel internal constructor(
                 is Result.Error -> _state.update { it.copy(infoMsg = countriesRes.message) }
                 is Result.Success -> _state.update { it.copy(countries = countriesRes.data) }
             }
-            _state.update {
-                it.copy(
-                    occupations = listOf(
-                        "Student",
-                        "Government Employee",
-                        "Private Sector Employee",
-                        "Self Employed/Business Owner",
-                        "Farmer",
-                        "Homemaker",
-                        "Retired",
-                        "Unemployed",
-                        "Doctor",
-                        "Engineer",
-                        "Lawyer",
-                        "Teacher/Professor",
-                        "Artist/Musician/Writer",
-                        "Skilled Laborer (e.g., Carpenter, Electrician)",
-                        "Unskilled Laborer",
-                        "Social Worker",
-                        "Religious Professional",
-                        "Military Personnel",
-                        "Police Officer",
-                        "Firefighter",
-                        "Pilot",
-                        "Journalist",
-                        "Athlete",
-                        "Other"
-                    )
-                )
-            }
         }
     }
 
