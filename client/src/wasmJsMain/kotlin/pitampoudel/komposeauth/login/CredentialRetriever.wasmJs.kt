@@ -214,8 +214,6 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
             private fun handleCallback(code: String, state: String): Result<Credential> {
                 val savedState = settings.getStringOrNull("oauth_state")
                 if (savedState != state) return Result.Error("Invalid state.")
-                val verifier = settings.getStringOrNull("pkce_verifier")
-                    ?: return Result.Error("Missing PKCE verifier.")
 
                 settings.remove("pkce_verifier")
                 settings.remove("oauth_state")
@@ -223,7 +221,6 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                 return Result.Success(
                     Credential.AuthCode(
                         code = code,
-                        codeVerifier = verifier,
                         redirectUri = window.location.origin,
                         platform = Platform.WEB
                     )

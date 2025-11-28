@@ -32,7 +32,6 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                 val code = listenForCode(port)
                 val credential = Credential.AuthCode(
                     code = code,
-                    codeVerifier = verifier,
                     redirectUri = redirectUri,
                     platform = Platform.DESKTOP
                 )
