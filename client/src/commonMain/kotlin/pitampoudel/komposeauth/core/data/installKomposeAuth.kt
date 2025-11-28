@@ -78,8 +78,7 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
                     authPreferences.clear()
                     return@refreshTokens null
                 }
-                refresh(authServerUrl, refreshToken, authPreferences)
-
+                refresh(client, authServerUrl, refreshToken, authPreferences)
             }
             sendWithoutRequest { builder ->
                 val hosts = (resourceServerUrls + authServerUrl).toSet().map {
@@ -93,11 +92,15 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
 }
 
 private suspend fun refresh(
+    client: HttpClient,
     authServerUrl: String,
     refreshToken: String,
     authPreferences: AuthPreferences
 ): BearerTokens? {
-    val refreshClient = HttpClient {
+    val refreshClient = HttpClient(client.engine) {
+        install(DefaultRequest) {
+            contentType(ContentType.Application.Json)
+        }
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true
