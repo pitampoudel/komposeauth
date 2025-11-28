@@ -54,10 +54,7 @@ class KycService(
             gender = data.gender,
             fatherName = data.fatherName,
             grandFatherName = data.grandFatherName,
-            motherName = data.motherName,
-            grandMotherName = data.grandMotherName,
             maritalStatus = data.maritalStatus,
-            occupation = data.occupation,
             pan = data.pan,
             email = data.email
         ) ?: KycVerification(
@@ -71,10 +68,7 @@ class KycService(
             gender = data.gender,
             fatherName = data.fatherName,
             grandFatherName = data.grandFatherName,
-            motherName = data.motherName,
-            grandMotherName = data.grandMotherName,
             maritalStatus = data.maritalStatus,
-            occupation = data.occupation,
             pan = data.pan,
             email = data.email
         )

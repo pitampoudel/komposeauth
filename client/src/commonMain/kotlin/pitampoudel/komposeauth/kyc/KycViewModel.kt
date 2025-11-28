@@ -148,38 +148,11 @@ class KycViewModel internal constructor(
                     )
                 }
 
-                is KycEvent.MotherNameChanged -> _state.update {
-                    it.copy(
-                        personalInfo = it.personalInfo.copy(
-                            motherName = event.value,
-                            motherNameError = null
-                        )
-                    )
-                }
-
-                is KycEvent.GrandMotherNameChanged -> _state.update {
-                    it.copy(
-                        personalInfo = it.personalInfo.copy(
-                            grandMotherName = event.value,
-                            grandMotherNameError = null
-                        )
-                    )
-                }
-
                 is KycEvent.MaritalStatusChanged -> _state.update {
                     it.copy(
                         personalInfo = it.personalInfo.copy(
                             maritalStatus = event.value,
                             maritalStatusError = null
-                        )
-                    )
-                }
-
-                is KycEvent.OccupationChanged -> _state.update {
-                    it.copy(
-                        personalInfo = it.personalInfo.copy(
-                            occupation = event.value,
-                            occupationError = null
                         )
                     )
                 }
@@ -461,14 +434,8 @@ class KycViewModel internal constructor(
                         ?: s.personalInfo.fatherName,
                     grandFatherName = latestRecord?.personalInformation?.grandFatherName
                         ?: s.personalInfo.grandFatherName,
-                    motherName = latestRecord?.personalInformation?.motherName
-                        ?: s.personalInfo.motherName,
-                    grandMotherName = latestRecord?.personalInformation?.grandMotherName
-                        ?: s.personalInfo.grandMotherName,
                     maritalStatus = latestRecord?.personalInformation?.maritalStatus
                         ?: s.personalInfo.maritalStatus,
-                    occupation = latestRecord?.personalInformation?.occupation
-                        ?: s.personalInfo.occupation,
                     pan = latestRecord?.personalInformation?.pan ?: s.personalInfo.pan,
                     email = latestRecord?.personalInformation?.email ?: s.personalInfo.email
                 ),
@@ -511,8 +478,6 @@ class KycViewModel internal constructor(
         val genderValidation = ValidateNotNull(_state.value.personalInfo.gender)
         val fatherNameValidation = ValidateNotBlank(_state.value.personalInfo.fatherName)
         val grandFatherNameValidation = ValidateNotBlank(_state.value.personalInfo.grandFatherName)
-        val motherNameValidation = ValidateNotBlank(_state.value.personalInfo.motherName)
-        val grandMotherNameValidation = ValidateNotBlank(_state.value.personalInfo.grandMotherName)
         val maritalStatusValidation = ValidateNotNull(_state.value.personalInfo.maritalStatus)
 
 
@@ -527,8 +492,6 @@ class KycViewModel internal constructor(
                     genderError = genderValidation.error(),
                     fatherNameError = fatherNameValidation.error(),
                     grandFatherNameError = grandFatherNameValidation.error(),
-                    motherNameError = motherNameValidation.error(),
-                    grandMotherNameError = grandMotherNameValidation.error(),
                     maritalStatusError = maritalStatusValidation.error()
                 )
             )

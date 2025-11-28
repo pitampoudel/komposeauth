@@ -15,11 +15,8 @@ fun KycVerification.toResponse() = KycResponse(
         dateOfBirth = dateOfBirth,
         gender = gender,
         fatherName = fatherName,
-        motherName = motherName,
         maritalStatus = maritalStatus,
         grandFatherName = grandFatherName,
-        grandMotherName = grandMotherName,
-        occupation = occupation,
         pan = pan,
         email = email
     ),
