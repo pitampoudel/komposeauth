@@ -15,6 +15,7 @@ data class AppConfig(
     var brandColor: String? = null,
     var supportEmail: String? = null,
     var selfBaseUrl: String? = null,
+    var rpId: String? = null,
     var gcpProjectId: String? = null,
     var gcpBucketName: String? = null,
 

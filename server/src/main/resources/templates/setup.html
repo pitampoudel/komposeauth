@@ -31,6 +31,10 @@
         <input id="selfBaseUrl" name="selfBaseUrl" type="url" th:value="${config.selfBaseUrl}"
                placeholder="https://auth.example.com">
 
+        <label for="rpId">Relying Party ID</label>
+        <input id="rpId" name="rpId" type="url" th:value="${config.rpId}"
+               placeholder="example.com">
+
         <label for="logoUrl">Logo URL</label>
         <input id="logoUrl" name="logoUrl" type="url" th:value="${config.logoUrl}"
                placeholder="https://example.com/logo.png">
@@ -43,10 +47,13 @@
         <label for="supportEmail">Support Email</label>
         <input id="supportEmail" name="supportEmail" type="text" th:value="${config.supportEmail}"
                placeholder="support@example.com">
-        <div class="note">Shown in email footer. If empty, falls back to SMTP From or support@your-domain</div>
+        <div class="note">Shown in email footer. If empty, falls back to SMTP From or
+            support@your-domain
+        </div>
 
         <label for="emailFooterText">Email Footer Text</label>
-        <input id="emailFooterText" name="emailFooterText" type="text" th:value="${config.emailFooterText}"
+        <input id="emailFooterText" name="emailFooterText" type="text"
+               th:value="${config.emailFooterText}"
                placeholder="© My App. All rights reserved.">
     </fieldset>
 

@@ -1,6 +1,5 @@
 package pitampoudel.komposeauth.app_config.service
 
-import com.google.common.net.InternetDomainName
 import org.springframework.stereotype.Service
 import pitampoudel.komposeauth.domain.Platform
 import pitampoudel.komposeauth.webauthn.utils.WebAuthnUtils.androidOrigin
@@ -40,13 +39,10 @@ class AppConfigProvider(val appConfigService: AppConfigService) {
         return null
     }
 
-    fun domain(): String {
-        val host = runCatching { URL(selfBaseUrl).host }.getOrNull() ?: return selfBaseUrl
-        if (!InternetDomainName.isValid(host)) return host
-        val domainName = InternetDomainName.from(host)
-        return if (domainName.isUnderPublicSuffix) {
-            domainName.topPrivateDomain().toString()
-        } else host
+    fun rpId(): String {
+        return appConfigService.getEnv().rpId ?: runCatching {
+            URL(selfBaseUrl).host
+        }.getOrNull() ?: return selfBaseUrl
     }
 
     val name: String get() = appConfigService.getEnv().name ?: "komposeauth"
@@ -70,8 +66,10 @@ class AppConfigProvider(val appConfigService: AppConfigService) {
     val smtpFromEmail: String? get() = appConfigService.getEnv().smtpFromEmail
     val smtpFromName: String get() = appConfigService.getEnv().smtpFromName ?: name
     val brandColor: String get() = appConfigService.getEnv().brandColor ?: "#4F46E5"
-    val supportEmail: String get() = appConfigService.getEnv().supportEmail ?: (smtpFromEmail ?: "support@${domain()}")
-    val emailFooterText: String get() = appConfigService.getEnv().emailFooterText ?: "© ${name}. All rights reserved."
+    val supportEmail: String
+        get() = appConfigService.getEnv().supportEmail ?: (smtpFromEmail ?: "support@${rpId()}")
+    val emailFooterText: String
+        get() = appConfigService.getEnv().emailFooterText ?: "© ${name}. All rights reserved."
     val sentryDsn: String? get() = appConfigService.getEnv().sentryDsn
     val samayeApiKey: String? = appConfigService.getEnv().samayeApiKey
     fun googleClientId(platform: Platform): String? {
