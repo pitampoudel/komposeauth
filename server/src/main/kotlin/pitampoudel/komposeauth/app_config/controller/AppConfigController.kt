@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.app_config.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import org.springframework.security.core.Authentication
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -21,20 +22,36 @@ class AppConfigController(
     @Operation(
         summary = "web page to configure this app"
     )
-    fun setupForm(model: Model, @RequestParam("key") key: String): String {
-        val decodedKey = key.replace(" ", "+")
-        if (decodedKey != appProps.base64EncryptionKey) {
-            throw AccessDeniedException("You are not authorized. $decodedKey <> ${appProps.base64EncryptionKey}")
+    fun setupForm(
+        model: Model,
+        @RequestParam("key", required = false)
+        key: String?,
+        auth: Authentication?
+    ): String {
+        val isSuperAdmin = auth?.authorities?.any { it.authority == "ROLE_SUPER_ADMIN" } == true
+        if (!isSuperAdmin) {
+            val decodedKey = key?.replace(" ", "+")
+            if (decodedKey != appProps.base64EncryptionKey) {
+                throw AccessDeniedException("You are not authorized.")
+            }
         }
         model.addAttribute("config", appConfigService.getEnv())
         return "setup"
     }
 
     @PostMapping("/setup")
-    fun submit(@RequestParam("key") key: String, @ModelAttribute form: AppConfig, model: Model): String {
-        val decodedKey = key.replace(" ", "+")
-        if (decodedKey != appProps.base64EncryptionKey) {
-            throw AccessDeniedException("You are not authorized")
+    fun submit(
+        @RequestParam("key", required = false) key: String?,
+        @ModelAttribute form: AppConfig,
+        model: Model,
+        auth: Authentication?
+    ): String {
+        val isSuperAdmin = auth?.authorities?.any { it.authority == "ROLE_SUPER_ADMIN" } == true
+        if (!isSuperAdmin) {
+            val decodedKey = key?.replace(" ", "+")
+            if (decodedKey != appProps.base64EncryptionKey) {
+                throw AccessDeniedException("You are not authorized")
+            }
         }
         appConfigService.save(form)
         appConfigService.clearCache()
