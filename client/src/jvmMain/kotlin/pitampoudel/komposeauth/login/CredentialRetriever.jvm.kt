@@ -8,8 +8,6 @@ import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.LoginOptionsResponse
 import pitampoudel.komposeauth.domain.Platform
 import pitampoudel.komposeauth.login.OAuthUtils.buildAuthUrl
-import pitampoudel.komposeauth.login.OAuthUtils.generateCodeChallenge
-import pitampoudel.komposeauth.login.OAuthUtils.generateCodeVerifier
 import pitampoudel.komposeauth.login.OAuthUtils.listenForCode
 import java.awt.Desktop
 import java.net.ServerSocket
@@ -25,9 +23,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                 )
                 val port = ServerSocket(0).use { it.localPort }
                 val redirectUri = "http://127.0.0.1:$port/callback"
-                val verifier = generateCodeVerifier()
-                val challenge = generateCodeChallenge(verifier)
-                val authUri = buildAuthUrl(googleAuthClientId, redirectUri, challenge)
+                val authUri = buildAuthUrl(googleAuthClientId, redirectUri)
                 Desktop.getDesktop().browse(URI(authUri))
                 val code = listenForCode(port)
                 val credential = Credential.AuthCode(
