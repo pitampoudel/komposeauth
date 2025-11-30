@@ -1,16 +1,23 @@
 package pitampoudel.komposeauth.webauthn.controller
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.webauthn4j.converter.util.ObjectConverter
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
+import org.springframework.security.web.webauthn.api.AuthenticatorAttestationResponse
+import org.springframework.security.web.webauthn.api.CredentialRecord
+import org.springframework.security.web.webauthn.api.PublicKeyCredential
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
 import org.springframework.security.web.webauthn.management.ImmutablePublicKeyCredentialCreationOptionsRequest
 import org.springframework.security.web.webauthn.management.ImmutablePublicKeyCredentialRequestOptionsRequest
+import org.springframework.security.web.webauthn.management.ImmutableRelyingPartyRegistrationRequest
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository
+import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter.SuccessfulUserRegistrationResponse
+import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter.WebAuthnRegistrationRequest
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -72,4 +79,48 @@ class WebAuthnController(
         val json = objectConverter.jsonConverter.writeValueAsString(options)
         return ResponseEntity.ok(json)
     }
+
+    @Operation(
+        summary = "Complete WebAuthn registration",
+        description = "Validates attestation and registers the credential for the current user",
+        tags = ["webauthn"]
+    )
+    @PostMapping("/webauthn/register")
+    fun finishRegistration(
+        request: HttpServletRequest,
+        response: HttpServletResponse
+    ): ResponseEntity<SuccessfulUserRegistrationResponse> {
+
+        val creationOptions = publicKeyCredentialCreationOptionsRepository.load(request)
+            ?: return ResponseEntity.badRequest().build()
+
+        // Prevent replay
+        publicKeyCredentialCreationOptionsRepository.save(request, response, null)
+
+        // Parse WebAuthn credential from body
+        val credential: PublicKeyCredential<AuthenticatorAttestationResponse>? =
+            objectConverter.jsonConverter.readValue(
+                request,
+                object : TypeReference<PublicKeyCredential<AuthenticatorAttestationResponse>>() {}
+            )
+
+        // Parse registration request from body
+        val registrationRequest: WebAuthnRegistrationRequest =
+            objectConverter.jsonConverter.readValue(
+                request, WebAuthnRegistrationRequest::class.java
+            ) ?: return ResponseEntity.badRequest().build()
+
+        val credentialRecord: CredentialRecord = rpOperations.registerCredential(
+            ImmutableRelyingPartyRegistrationRequest(
+                creationOptions,
+                registrationRequest.publicKey
+            )
+        ) ?: return ResponseEntity.badRequest().build()
+
+        val responseBody = SuccessfulUserRegistrationResponse(credentialRecord)
+
+        return ResponseEntity.ok(responseBody)
+    }
+
+
 }
