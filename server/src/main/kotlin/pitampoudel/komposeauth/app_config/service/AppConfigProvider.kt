@@ -40,9 +40,7 @@ class AppConfigProvider(val appConfigService: AppConfigService) {
     }
 
     fun rpId(): String {
-        return appConfigService.getEnv().rpId ?: runCatching {
-            URL(selfBaseUrl).host
-        }.getOrNull() ?: return selfBaseUrl
+        return appConfigService.getEnv().rpId ?: URL(selfBaseUrl).host
     }
 
     val name: String get() = appConfigService.getEnv().name ?: "komposeauth"

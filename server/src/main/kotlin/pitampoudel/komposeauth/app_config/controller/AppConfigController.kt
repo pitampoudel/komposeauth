@@ -1,58 +1,43 @@
 package pitampoudel.komposeauth.app_config.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
-import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
-import pitampoudel.komposeauth.StaticAppProperties
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 
 @Controller
 class AppConfigController(
-    private val appConfigService: AppConfigService,
-    private val appProps: StaticAppProperties,
+    private val appConfigService: AppConfigService
 ) {
     @GetMapping("/setup")
     @Operation(
         summary = "web page to configure this app"
     )
+    @PreAuthorize("@userService.countUsers() == 0 or hasAuthority('ROLE_SUPER_ADMIN')")
     fun setupForm(
         model: Model,
         @RequestParam("key", required = false)
         key: String?,
         auth: Authentication?
     ): String {
-        val isSuperAdmin = auth?.authorities?.any { it.authority == "ROLE_SUPER_ADMIN" } == true
-        if (!isSuperAdmin) {
-            val decodedKey = key?.replace(" ", "+")
-            if (decodedKey != appProps.base64EncryptionKey) {
-                throw AccessDeniedException("You are not authorized.")
-            }
-        }
         model.addAttribute("config", appConfigService.getEnv())
         return "setup"
     }
 
     @PostMapping("/setup")
+    @PreAuthorize("@userService.countUsers() == 0 or hasAuthority('ROLE_SUPER_ADMIN')")
     fun submit(
         @RequestParam("key", required = false) key: String?,
         @ModelAttribute form: AppConfig,
-        model: Model,
-        auth: Authentication?
+        model: Model
     ): String {
-        val isSuperAdmin = auth?.authorities?.any { it.authority == "ROLE_SUPER_ADMIN" } == true
-        if (!isSuperAdmin) {
-            val decodedKey = key?.replace(" ", "+")
-            if (decodedKey != appProps.base64EncryptionKey) {
-                throw AccessDeniedException("You are not authorized")
-            }
-        }
         appConfigService.save(form)
         appConfigService.clearCache()
         model.addAttribute("config", appConfigService.getEnv())
