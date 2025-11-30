@@ -79,7 +79,7 @@ class WebAuthnController(
 
 
     data class RegistrationRequestDto(
-        val publicKey: RelyingPartyPublicKey
+        var publicKey: RelyingPartyPublicKey? = null
     )
 
     @Operation(
@@ -105,10 +105,12 @@ class WebAuthnController(
             registrationRequestString, RegistrationRequestDto::class.java
         ) ?: return ResponseEntity.badRequest().build()
 
+        val publicKey = registrationRequest.publicKey ?: return ResponseEntity.badRequest().build()
+
         val credentialRecord: CredentialRecord = rpOperations.registerCredential(
             ImmutableRelyingPartyRegistrationRequest(
                 creationOptions,
-                registrationRequest.publicKey
+                publicKey
             )
         ) ?: return ResponseEntity.badRequest().build()
 
