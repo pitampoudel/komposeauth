@@ -92,7 +92,7 @@ class WebAuthnController(
         request: HttpServletRequest,
         response: HttpServletResponse,
         @RequestBody
-        registrationRequest: RegistrationRequestDto
+        registrationRequestString: String
     ): ResponseEntity<CredentialRecord> {
 
         val creationOptions = publicKeyCredentialCreationOptionsRepository.load(request)
@@ -100,6 +100,10 @@ class WebAuthnController(
 
         // Prevent replay
         publicKeyCredentialCreationOptionsRepository.save(request, response, null)
+
+        val registrationRequest: RegistrationRequestDto = objectConverter.jsonConverter.readValue(
+            registrationRequestString, RegistrationRequestDto::class.java
+        ) ?: return ResponseEntity.badRequest().build()
 
         val credentialRecord: CredentialRecord = rpOperations.registerCredential(
             ImmutableRelyingPartyRegistrationRequest(
