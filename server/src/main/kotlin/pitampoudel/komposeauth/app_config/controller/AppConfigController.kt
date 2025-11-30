@@ -20,7 +20,7 @@ class AppConfigController(
     @Operation(
         summary = "web page to configure this app"
     )
-    @PreAuthorize("@userService.countUsers() == 0 or hasAuthority('ROLE_SUPER_ADMIN')")
+    @PreAuthorize("@userService.countUsers() == 0 or hasAuthority('ROLE_SUPER_ADMIN') or @masterKeyValidator.isValid(#key)")
     fun setupForm(
         model: Model,
         @RequestParam("key", required = false)
@@ -32,7 +32,7 @@ class AppConfigController(
     }
 
     @PostMapping("/setup")
-    @PreAuthorize("@userService.countUsers() == 0 or hasAuthority('ROLE_SUPER_ADMIN')")
+    @PreAuthorize("@userService.countUsers() == 0 or hasAuthority('ROLE_SUPER_ADMIN') or @masterKeyValidator.isValid(#key)")
     fun submit(
         @RequestParam("key", required = false) key: String?,
         @ModelAttribute form: AppConfig,
