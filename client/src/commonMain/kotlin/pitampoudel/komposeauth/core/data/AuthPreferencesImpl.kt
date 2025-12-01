@@ -30,7 +30,8 @@ internal class AuthPreferencesImpl internal constructor(
             tokenString?.let {
                 try {
                     val tokenData = Json.decodeFromString<OAuth2Response>(it)
-                    Json.decodeFromString(decodeAndParseJwtPayload(tokenData.accessToken))
+                    val payload = decodeAndParseJwtPayload(tokenData.accessToken)
+                    Json.decodeFromString<AccessTokenClaims>(payload)
                 } catch (e: Exception) {
                     e.printStackTrace()
                     null

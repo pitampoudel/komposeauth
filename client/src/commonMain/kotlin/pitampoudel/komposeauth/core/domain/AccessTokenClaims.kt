@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AccessTokenClaims(
     @SerialName("aud")
-    val aud: List<String>,
+    val aud: String,
     @SerialName("authorities")
     val authorities: List<String>,
     @SerialName("email")
@@ -21,20 +21,20 @@ data class AccessTokenClaims(
     val iat: Long,
     @SerialName("iss")
     val iss: String,
+    @SerialName("kycVerified")
+    val kycVerified: Boolean,
     @SerialName("nbf")
     val nbf: Long,
+    @SerialName("phoneNumberVerified")
+    val phoneNumberVerified: Boolean,
     @SerialName("picture")
-    val picture: String? = null,
+    val picture: String,
     @SerialName("scope")
     val scope: String,
     @SerialName("scp")
     val scp: List<String>,
     @SerialName("sub")
-    val sub: String,
-    @SerialName("kycVerified")
-    val kycVerified: Boolean,
-    @SerialName("phoneNumberVerified")
-    val phoneNumberVerified: Boolean
+    val sub: String
 ) {
     fun fullName(): String {
         return givenName + (familyName?.let { " $it" } ?: "")
