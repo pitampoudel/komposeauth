@@ -5,7 +5,7 @@ import pitampoudel.komposeauth.StaticAppProperties
 
 @Component("masterKeyValidator")
 class MasterKeyValidator(val staticAppProperties: StaticAppProperties) {
-    fun isValid(masterKey: String): Boolean {
-        return masterKey.replace(" ", "+") == staticAppProperties.base64EncryptionKey
+    fun isValid(masterKey: String?): Boolean {
+        return masterKey?.replace(" ", "+") == staticAppProperties.base64EncryptionKey
     }
 }
