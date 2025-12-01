@@ -32,13 +32,11 @@ data class AccessTokenClaims(
     @SerialName("sub")
     val sub: String,
     @SerialName("kycVerified")
-    val kycVerified: Boolean = false,
+    val kycVerified: Boolean,
     @SerialName("phoneNumberVerified")
-    val phoneNumberVerified: Boolean = false
+    val phoneNumberVerified: Boolean
 ) {
     fun fullName(): String {
-        return givenName + (familyName?.let {
-            " $it"
-        } ?: "")
+        return givenName + (familyName?.let { " $it" } ?: "")
     }
 }
