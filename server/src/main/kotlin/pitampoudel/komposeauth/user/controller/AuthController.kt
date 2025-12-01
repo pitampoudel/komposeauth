@@ -84,6 +84,7 @@ class AuthController(
             .claim("email", user.email)
             .claim("givenName", user.firstName)
             .claim("familyName", user.lastName)
+            .claim("picture", user.picture)
             .claim("authorities", user.roles.map { "ROLE_$it" })
             .claim("scope", scopes.joinToString(" "))
             .claim("scp", scopes)
