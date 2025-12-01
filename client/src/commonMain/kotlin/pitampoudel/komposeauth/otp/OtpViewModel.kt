@@ -12,12 +12,10 @@ import kotlinx.coroutines.launch
 import pitampoudel.core.domain.Result
 import pitampoudel.core.presentation.ResultUiEvent
 import pitampoudel.komposeauth.core.domain.AuthClient
-import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.domain.use_cases.ValidateOtpCode
 
 class OtpViewModel internal constructor(
-    private val client: AuthClient,
-    private val authPreferences: AuthPreferences
+    private val client: AuthClient
 ) : ViewModel() {
     private val _state = MutableStateFlow(OtpState())
     val state = _state.asStateFlow()
@@ -53,19 +51,7 @@ class OtpViewModel internal constructor(
                             }
 
                             is Result.Success -> {
-                                when (val res = client.fetchUserInfo()) {
-                                    is Result.Error -> {
-                                        _state.update {
-                                            it.copy(infoMsg = res.message)
-                                        }
-                                    }
-
-                                    is Result.Success -> {
-                                        authPreferences.saveUserProfile(res.data)
-                                        uiEventChannel.send(ResultUiEvent.Completed)
-                                    }
-                                }
-
+                                uiEventChannel.send(ResultUiEvent.Completed)
                             }
                         }
                     }

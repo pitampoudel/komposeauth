@@ -9,7 +9,6 @@ import kotlinx.coroutines.launch
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
-import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.domain.currentPlatform
 
 class LoginViewModel internal constructor(
@@ -63,25 +62,15 @@ class LoginViewModel internal constructor(
     }
 
     suspend fun login(event: LoginEvent.Login) {
-        val res = authClient.exchangeCredentialForToken(event.credential)
-        when (res) {
+        when (val res = authClient.exchangeCredentialForToken(event.credential)) {
             is Result.Error -> _state.update {
                 it.copy(infoMsg = res.message)
             }
 
             is Result.Success -> {
-                val profileRes = authClient.fetchUserInfo(res.data.accessToken)
-                when (profileRes) {
-                    is Result.Error -> _state.update {
-                        it.copy(infoMsg = profileRes.message)
-                    }
-                    is Result.Success<ProfileResponse> -> {
-                        authPreferences.saveAuthenticatedUser(
-                            tokenData = res.data,
-                            userInfoResponse = profileRes.data
-                        )
-                    }
-                }
+                authPreferences.saveTokenData(
+                    tokenData = res.data
+                )
             }
         }
 

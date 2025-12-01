@@ -10,9 +10,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
+import pitampoudel.komposeauth.core.data.JwtUtils.decodeAndParseJwtPayload
+import pitampoudel.komposeauth.core.domain.AccessTokenClaims
 import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.data.OAuth2Response
-import pitampoudel.komposeauth.data.ProfileResponse
 
 @OptIn(ExperimentalSettingsApi::class)
 internal class AuthPreferencesImpl internal constructor(
@@ -22,14 +23,14 @@ internal class AuthPreferencesImpl internal constructor(
 
     private object KEYS {
         const val TOKEN_DATA = "token_data"
-        const val USER_PROFILE = "user_profile"
     }
 
-    override val authenticatedUser: Flow<ProfileResponse?> by lazy {
-        settings.getStringOrNullFlow(KEYS.USER_PROFILE).map { stringValue ->
-            stringValue?.let {
+    override val tokenClaims: Flow<AccessTokenClaims?> by lazy {
+        settings.getStringOrNullFlow(KEYS.TOKEN_DATA).map { tokenString ->
+            tokenString?.let {
                 try {
-                    Json.decodeFromString<ProfileResponse>(it)
+                    val tokenData = Json.decodeFromString<OAuth2Response>(it)
+                    Json.decodeFromString(decodeAndParseJwtPayload(tokenData.accessToken))
                 } catch (e: Exception) {
                     e.printStackTrace()
                     null
@@ -39,19 +40,7 @@ internal class AuthPreferencesImpl internal constructor(
     }
 
 
-    override suspend fun saveAuthenticatedUser(
-        tokenData: OAuth2Response,
-        userInfoResponse: ProfileResponse
-    ) {
-        suspendSettings.putString(KEYS.TOKEN_DATA, Json.encodeToString(tokenData))
-        suspendSettings.putString(KEYS.USER_PROFILE, Json.encodeToString(userInfoResponse))
-    }
-
-    override suspend fun saveUserProfile(data: ProfileResponse) {
-        suspendSettings.putString(KEYS.USER_PROFILE, Json.encodeToString(data))
-    }
-
-    override suspend fun updateTokenData(tokenData: OAuth2Response) {
+    override suspend fun saveTokenData(tokenData: OAuth2Response) {
         suspendSettings.putString(KEYS.TOKEN_DATA, Json.encodeToString(tokenData))
     }
 
@@ -69,7 +58,6 @@ internal class AuthPreferencesImpl internal constructor(
 
     override suspend fun clear() {
         suspendSettings.remove(KEYS.TOKEN_DATA)
-        suspendSettings.remove(KEYS.USER_PROFILE)
     }
 
     companion object {

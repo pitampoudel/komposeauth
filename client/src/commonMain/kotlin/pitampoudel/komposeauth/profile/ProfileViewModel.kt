@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -15,6 +13,7 @@ import pitampoudel.core.domain.validators.ValidateNotBlank
 import pitampoudel.core.presentation.ResultUiEvent
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
+import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
 
 class ProfileViewModel internal constructor(
@@ -29,8 +28,7 @@ class ProfileViewModel internal constructor(
 
     init {
         viewModelScope.launch {
-            val res = client.fetchWebAuthnRegistrationOptions()
-            val options = when (res) {
+            val options = when (val res = client.fetchWebAuthnRegistrationOptions()) {
                 is Result.Error -> {
                     _state.update {
                         it.copy(infoMsg = res.message)
@@ -44,17 +42,29 @@ class ProfileViewModel internal constructor(
                 it.copy(webAuthnRegistrationOptions = options)
             }
         }
-        authPreferences.authenticatedUser.onEach { profile ->
+        viewModelScope.launch {
             _state.update {
-                it.copy(
-                    profile = profile,
-                    editingState = it.editingState.copy(
-                        givenName = profile?.givenName ?: it.editingState.givenName,
-                        familyName = profile?.familyName ?: it.editingState.familyName
-                    ),
-                )
+                it.copy(progress = 0.0F)
             }
-        }.launchIn(viewModelScope)
+            when (val res = client.fetchUserInfo()) {
+                is Result.Error -> {
+                    _state.update {
+                        it.copy(progress = null, infoMsg = res.message)
+                    }
+                }
+
+                is Result.Success<ProfileResponse> -> _state.update {
+                    it.copy(
+                        progress = null,
+                        profile = res.data,
+                        editingState = it.editingState.copy(
+                            givenName = res.data.givenName,
+                            familyName = res.data.familyName ?: it.editingState.familyName
+                        ),
+                    )
+                }
+            }
+        }
     }
 
     fun onEvent(event: ProfileEvent) {
@@ -178,7 +188,6 @@ class ProfileViewModel internal constructor(
                             }
 
                             is Result.Success -> {
-                                authPreferences.saveUserProfile(res.data)
                                 _state.update {
                                     it.copy(editingState = ProfileState.EditingState())
                                 }

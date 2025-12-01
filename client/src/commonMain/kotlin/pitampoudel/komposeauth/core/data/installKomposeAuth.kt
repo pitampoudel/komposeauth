@@ -74,7 +74,7 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
             refreshTokens {
                 val refreshToken = this.oldTokens?.refreshToken
 
-                if (refreshToken.isNullOrEmpty() || isJwtTokenExpired(refreshToken)) {
+                if (refreshToken.isNullOrEmpty()) {
                     authPreferences.clear()
                     return@refreshTokens null
                 }
@@ -119,7 +119,7 @@ private suspend fun refresh(
 
     return when (result) {
         is Result.Success -> {
-            authPreferences.updateTokenData(result.data)
+            authPreferences.saveTokenData(result.data)
             BearerTokens(
                 accessToken = result.data.accessToken,
                 refreshToken = result.data.refreshToken

@@ -88,6 +88,8 @@ class AuthController(
             .claim("authorities", user.roles.map { "ROLE_$it" })
             .claim("scope", scopes.joinToString(" "))
             .claim("scp", scopes)
+            .claim("kycVerified", kycService.isVerified(user.id))
+            .claim("phoneNumberVerified", user.phoneNumberVerified)
             .build()
 
         val accessToken = jwtEncoder.encode(JwtEncoderParameters.from(claims)).tokenValue

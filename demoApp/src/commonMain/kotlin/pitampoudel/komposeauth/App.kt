@@ -24,7 +24,7 @@ import pitampoudel.core.domain.Result
 import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.core.presentation.LazyState
 import pitampoudel.core.presentation.wrapper.screenstate.ScreenStateWrapper
-import pitampoudel.komposeauth.core.di.rememberCurrentUser
+import pitampoudel.komposeauth.core.di.rememberTokenClaims
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
 import pitampoudel.komposeauth.login.LoginEvent
@@ -40,8 +40,8 @@ import pitampoudel.komposeauth.profile.ProfileViewModel
 @Preview
 fun App() {
     MaterialTheme {
-        val userState = rememberCurrentUser()
-        if (userState is LazyState.Loading) {
+        val tokenClaims = rememberTokenClaims()
+        if (tokenClaims is LazyState.Loading) {
             return@MaterialTheme Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -49,7 +49,7 @@ fun App() {
                 CircularProgressIndicator()
             }
         }
-        val isLoggedIn = userState is LazyState.Loaded && userState.value != null
+        val isLoggedIn = tokenClaims is LazyState.Loaded && tokenClaims.value != null
 
         if (!isLoggedIn) {
             val vm = koinViewModel<LoginViewModel>()

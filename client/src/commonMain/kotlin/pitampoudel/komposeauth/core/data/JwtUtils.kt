@@ -1,18 +1,19 @@
 package pitampoudel.komposeauth.core.data
 
+import io.ktor.util.decodeBase64Bytes
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import pitampoudel.core.domain.now
-import kotlin.io.encoding.Base64
 
 object JwtUtils {
     fun isJwtTokenExpired(refreshToken: String): Boolean {
         return try {
             // check if jwt
             if (refreshToken.contains(".")) {
-                val payload = decodeAndParseJwtPayload(refreshToken)
+                val payload =
+                    Json.parseToJsonElement(decodeAndParseJwtPayload(refreshToken)) as JsonObject
                 val expirationTime = payload["exp"]?.jsonPrimitive
                     ?.long?.times(1000) ?: return false
                 val currentTime = now().toEpochMilliseconds()
@@ -28,17 +29,25 @@ object JwtUtils {
         }
     }
 
-    private fun decodeAndParseJwtPayload(token: String): JsonObject {
+    fun decodeAndParseJwtPayload(token: String): String {
         val parts = token.split(".")
         if (parts.size != 3) {
             throw IllegalArgumentException("Invalid JWT token format")
         }
         val payload = parts[1]
-        // Add padding if needed for Base64 decoding
-        val paddedPayload = payload + "=".repeat((4 - payload.length % 4) % 4)
-        val decodedBytes = Base64.UrlSafe.decode(paddedPayload.encodeToByteArray())
-        val jsonString = decodedBytes.decodeToString()
-
-        return Json.parseToJsonElement(jsonString) as JsonObject
+        return payload.base64UrlDecodeToString()
     }
+
+    private fun String.base64UrlDecodeToString(): String {
+        val base64 = this
+            .replace('-', '+')
+            .replace('_', '/')
+            .let { s ->
+                val pad = (4 - s.length % 4) % 4
+                s + "=".repeat(pad)
+            }
+        val bytes = base64.decodeBase64Bytes()
+        return bytes.decodeToString()
+    }
+
 }

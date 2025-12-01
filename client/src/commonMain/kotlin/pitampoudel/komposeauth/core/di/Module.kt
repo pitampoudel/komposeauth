@@ -12,10 +12,10 @@ import org.koin.dsl.module
 import pitampoudel.core.presentation.LazyState
 import pitampoudel.komposeauth.core.data.AuthClientImpl
 import pitampoudel.komposeauth.core.data.AuthPreferencesImpl
-import pitampoudel.komposeauth.core.domain.Config
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
-import pitampoudel.komposeauth.data.ProfileResponse
+import pitampoudel.komposeauth.core.domain.Config
+import pitampoudel.komposeauth.core.domain.AccessTokenClaims
 import pitampoudel.komposeauth.kyc.KycViewModel
 import pitampoudel.komposeauth.login.LoginViewModel
 import pitampoudel.komposeauth.otp.OtpViewModel
@@ -37,7 +37,7 @@ fun initializeKomposeAuth(
                 ?: throw Exception("The provided http client must have komposeauth installed")
             AuthClientImpl(httpClient = httpClient, authUrl = authServerUrl)
         }
-        viewModel<OtpViewModel> { OtpViewModel(get(), get()) }
+        viewModel<OtpViewModel> { OtpViewModel(get()) }
         viewModel<LoginViewModel> { LoginViewModel(get(), get()) }
         viewModel<KycViewModel> { KycViewModel(get()) }
         viewModel<ProfileViewModel> { ProfileViewModel(get(), get()) }
@@ -54,10 +54,10 @@ fun initializeKomposeAuth(
  * Observe current authenticated user reactively in Compose.
  */
 @Composable
-fun rememberCurrentUser(): LazyState<ProfileResponse> {
+fun rememberTokenClaims(): LazyState<AccessTokenClaims> {
     val authPreferences = koinInject<AuthPreferences>()
-    return produceState<LazyState<ProfileResponse>>(LazyState.Loading) {
-        authPreferences.authenticatedUser.collectLatest { user ->
+    return produceState<LazyState<AccessTokenClaims>>(LazyState.Loading) {
+        authPreferences.tokenClaims.collectLatest { user ->
             value = LazyState.Loaded(user)
         }
     }.value
