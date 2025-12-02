@@ -16,11 +16,13 @@ import pitampoudel.komposeauth.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.domain.Platform
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.data.OAuth2Response
+import pitampoudel.komposeauth.data.ResponseType
 
 
 internal interface AuthClient {
     suspend fun fetchLoginConfig(platform: Platform = Platform.WEB): Result<LoginOptionsResponse>
-    suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2Response>
+    suspend fun login(credential: Credential): Result<OAuth2Response>
+    suspend fun login(credential: Credential, responseType: ResponseType): Result<HttpResponse>
     suspend fun fetchUserInfo(accessToken: String? = null): Result<ProfileResponse>
     suspend fun deactivate(): Result<HttpResponse>
     suspend fun verifyPhoneOtp(req: VerifyPhoneOtpRequest): Result<HttpResponse>

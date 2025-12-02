@@ -49,12 +49,27 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
     }
 
-    override suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2Response> {
+    override suspend fun login(
+        credential: Credential
+    ): Result<OAuth2Response> {
         return safeApiCall {
             httpClient.post("$authUrl/$LOGIN") {
-                parameter("responseType", ResponseType.TOKEN.name)
+                parameter("responseType", ResponseType.TOKEN)
                 setBody(credential)
             }.asResource { body() }
+        }
+    }
+
+
+    override suspend fun login(
+        credential: Credential,
+        responseType: ResponseType
+    ): Result<HttpResponse> {
+        return safeApiCall {
+            httpClient.post("$authUrl/$LOGIN") {
+                parameter("responseType", responseType)
+                setBody(credential)
+            }.asResource { this }
         }
     }
 
