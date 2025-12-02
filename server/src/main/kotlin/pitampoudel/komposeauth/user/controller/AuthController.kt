@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.user.controller
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.common.net.InternetDomainName
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -37,6 +38,7 @@ import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.service.UserService
+import java.net.URL
 import java.time.Instant
 import javax.security.auth.login.AccountLockedException
 import kotlin.time.Duration.Companion.days
@@ -108,26 +110,34 @@ class AuthController(
                     )
                 )
             }
+
             ResponseType.SESSION -> {
                 val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
-                SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
-                    user.email,
-                    null,
-                    authorities
-                )
+                SecurityContextHolder.getContext().authentication =
+                    UsernamePasswordAuthenticationToken(
+                        user.email,
+                        null,
+                        authorities
+                    )
                 securityContextRepository.saveContext(
                     SecurityContextHolder.getContext(), httpServletRequest, httpServletResponse
                 )
             }
+
             ResponseType.COOKIE -> {
                 val isSecure = httpServletRequest.isSecure
-                val cookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
+                val cookieDomain = resolveCookieDomain(httpServletRequest)
+                val cookieBuilder = ResponseCookie.from("ACCESS_TOKEN", accessToken)
                     .httpOnly(true)
                     .secure(isSecure)
                     .path("/")
-                    .sameSite("Strict")
+                    .sameSite("None")
                     .maxAge((1.days - 1.minutes).toJavaDuration())
-                    .build()
+                val cookie = if (cookieDomain != null) {
+                    cookieBuilder.domain(cookieDomain).build()
+                } else {
+                    cookieBuilder.build()
+                }
                 httpServletResponse.addHeader("Set-Cookie", cookie.toString())
             }
         }
@@ -190,5 +200,26 @@ class AuthController(
         }
         return user
 
+    }
+
+    private fun resolveCookieDomain(request: HttpServletRequest): String? {
+        val origin = request.getHeader("Origin")?.takeIf { it.isNotBlank() }
+            ?: request.getHeader("Referer")?.takeIf { it.isNotBlank() }
+            ?: return null
+        val url = runCatching { URL(origin) }.getOrNull() ?: return null
+        val host = url.host ?: return null
+
+        // Localhost and IPs must NOT have a Domain attribute.
+        if (host.equals("localhost", ignoreCase = true)) return null
+        if (host.matches(Regex("^\\d{1,3}(\\.\\d{1,3}){3}$"))) return null
+
+        return try {
+            val domain = InternetDomainName.from(host)
+            if (domain.isUnderPublicSuffix) {
+                domain.topPrivateDomain().toString()
+            } else null
+        } catch (e: Exception) {
+            null
+        }
     }
 }
