@@ -26,6 +26,7 @@ import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import pitampoudel.komposeauth.data.CountryResponse
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.DocumentInformation
+import pitampoudel.komposeauth.data.ResponseType
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.LoginOptionsResponse
 import pitampoudel.komposeauth.data.OAuth2Response
@@ -51,7 +52,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
     override suspend fun exchangeCredentialForToken(credential: Credential): Result<OAuth2Response> {
         return safeApiCall {
             httpClient.post("$authUrl/$LOGIN") {
-                parameter("wantToken", true)
+                parameter("responseType", ResponseType.TOKEN.name)
                 setBody(credential)
             }.asResource { body() }
         }

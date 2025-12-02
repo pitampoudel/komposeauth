@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.data.ApiEndpoints
+import pitampoudel.komposeauth.data.ResponseType
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.OAuth2Response
 import pitampoudel.komposeauth.kyc.service.KycService
@@ -64,8 +65,8 @@ class AuthController(
     fun login(
         @RequestBody
         request: Credential,
-        @RequestParam(required = false, defaultValue = false.toString())
-        wantToken: Boolean,
+        @RequestParam(required = false, defaultValue = "COOKIE")
+        responseType: ResponseType,
         httpServletRequest: HttpServletRequest,
         httpServletResponse: HttpServletResponse,
         securityContextRepository: HttpSessionSecurityContextRepository
@@ -94,41 +95,43 @@ class AuthController(
         val accessToken = jwtEncoder.encode(JwtEncoderParameters.from(claims)).tokenValue
         val refreshToken = oneTimeTokenService.generateRefreshToken(user.id)
 
-        if (wantToken) {
-            return ResponseEntity.ok(
-                json.encodeToString(
-                    OAuth2Response(
-                        accessToken = accessToken,
-                        refreshToken = refreshToken,
-                        tokenType = "Bearer",
-                        expiresIn = 1.days.inWholeSeconds,
+        when (responseType) {
+            ResponseType.TOKEN -> {
+                return ResponseEntity.ok(
+                    json.encodeToString(
+                        OAuth2Response(
+                            accessToken = accessToken,
+                            refreshToken = refreshToken,
+                            tokenType = "Bearer",
+                            expiresIn = 1.days.inWholeSeconds,
+                        )
                     )
                 )
-            )
-        } else {
-            // approach 1 | used for web apps
-            val isSecure = httpServletRequest.isSecure
-            val cookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
-                .httpOnly(true)
-                .secure(isSecure)
-                .path("/")
-                .sameSite("Strict")
-                .maxAge((1.days - 1.minutes).toJavaDuration())
-                .build()
-            httpServletResponse.addHeader("Set-Cookie", cookie.toString())
-
-            // approach 2 | only used for oauth2 flow
-            val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
-            val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
-            SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
-                user.email,
-                null,
-                authorities
-            )
-            securityContextRepository.saveContext(
-                SecurityContextHolder.getContext(), httpServletRequest, httpServletResponse
-            )
-
+            }
+            ResponseType.SESSION -> {
+                // approach 2 | only used for oauth2 flow
+                val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
+                SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
+                    user.email,
+                    null,
+                    authorities
+                )
+                securityContextRepository.saveContext(
+                    SecurityContextHolder.getContext(), httpServletRequest, httpServletResponse
+                )
+            }
+            ResponseType.COOKIE -> {
+                // approach 1 | used for web apps
+                val isSecure = httpServletRequest.isSecure
+                val cookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
+                    .httpOnly(true)
+                    .secure(isSecure)
+                    .path("/")
+                    .sameSite("Strict")
+                    .maxAge((1.days - 1.minutes).toJavaDuration())
+                    .build()
+                httpServletResponse.addHeader("Set-Cookie", cookie.toString())
+            }
         }
         return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.isVerified(user.id)))
     }
