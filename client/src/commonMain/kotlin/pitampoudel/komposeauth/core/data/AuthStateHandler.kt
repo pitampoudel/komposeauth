@@ -1,13 +1,14 @@
 package pitampoudel.komposeauth.core.data
 
+import io.ktor.serialization.JsonConvertException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.core.domain.AuthUser
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
-import pitampoudel.komposeauth.data.ProfileResponse
+import pitampoudel.komposeauth.core.domain.AuthUser
 
 internal class AuthStateHandler(
     private val authPreferences: AuthPreferences,
@@ -17,7 +18,12 @@ internal class AuthStateHandler(
 
     val currentUser: Flow<AuthUser?> = authPreferences.accessTokenPayload.map { string ->
         string?.let {
-            json.decodeFromString<AuthUser>(string)
+            try {
+                json.decodeFromString<AuthUser>(string)
+            } catch (ex: SerializationException) {
+                authPreferences.clear()
+                null
+            }
         } ?: when (val res = authClient.fetchUserInfo()) {
             is Result.Success -> AuthUser(
                 authorities = res.data.roles,
