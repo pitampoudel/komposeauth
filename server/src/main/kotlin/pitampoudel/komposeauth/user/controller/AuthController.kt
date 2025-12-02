@@ -2,7 +2,6 @@ package pitampoudel.komposeauth.user.controller
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.common.net.InternetDomainName
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -107,18 +106,9 @@ class AuthController(
                 )
             )
         } else {
+            // approach 1 | used for web apps
             val isSecure = httpServletRequest.isSecure
             val sameSite = if (isSecure) "None" else "Lax"
-
-            val cookieDomain: String? = runCatching {
-                val requestHost = httpServletRequest.serverName
-                if (requestHost != null && InternetDomainName.isValid(requestHost)) {
-                    val dn = InternetDomainName.from(requestHost)
-                    // Use registrable domain only for real domains; for localhost or bare hostnames return null
-                    if (dn.isUnderPublicSuffix) dn.topPrivateDomain().toString() else null
-                } else null
-            }.getOrNull()
-
             val cookieBuilder = ResponseCookie.from("ACCESS_TOKEN", accessToken)
                 .httpOnly(true)
                 .secure(isSecure)
@@ -126,13 +116,11 @@ class AuthController(
                 .sameSite(sameSite)
                 .maxAge((1.days - 1.minutes).toJavaDuration())
 
-            val accessCookie = if (!cookieDomain.isNullOrBlank()) {
-                cookieBuilder.domain(cookieDomain).build()
-            } else cookieBuilder.build()
-            httpServletResponse.addHeader("Set-Cookie", accessCookie.toString())
+            val cookie = cookieBuilder.build()
+            httpServletResponse.addHeader("Set-Cookie", cookie.toString())
 
 
-            // only used for oauth2 flow
+            // approach 2 | only used for oauth2 flow
             val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
             val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
             SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
