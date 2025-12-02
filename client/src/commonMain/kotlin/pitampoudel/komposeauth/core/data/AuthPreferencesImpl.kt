@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import pitampoudel.komposeauth.core.data.JwtUtils.decodeAndParseJwtPayload
-import pitampoudel.komposeauth.core.domain.AccessTokenClaims
 import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.data.OAuth2Response
 
@@ -25,13 +24,12 @@ internal class AuthPreferencesImpl internal constructor(
         const val TOKEN_DATA = "token_data"
     }
 
-    override val tokenClaims: Flow<AccessTokenClaims?> by lazy {
+    override val accessTokenPayload: Flow<String?> by lazy {
         settings.getStringOrNullFlow(KEYS.TOKEN_DATA).map { tokenString ->
             tokenString?.let {
                 try {
                     val tokenData = Json.decodeFromString<OAuth2Response>(it)
-                    val payload = decodeAndParseJwtPayload(tokenData.accessToken)
-                    Json.decodeFromString<AccessTokenClaims>(payload)
+                    decodeAndParseJwtPayload(tokenData.accessToken)
                 } catch (e: Exception) {
                     e.printStackTrace()
                     null

@@ -11,13 +11,13 @@ import kotlinx.coroutines.launch
 import pitampoudel.core.domain.Result
 import pitampoudel.core.domain.validators.ValidateNotBlank
 import pitampoudel.core.presentation.ResultUiEvent
+import pitampoudel.komposeauth.core.data.AuthStateHandler
 import pitampoudel.komposeauth.core.domain.AuthClient
-import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
 
 class ProfileViewModel internal constructor(
-    private val authPreferences: AuthPreferences,
+    private val authStateHandler: AuthStateHandler,
     private val client: AuthClient
 ) : ViewModel() {
 
@@ -115,7 +115,7 @@ class ProfileViewModel internal constructor(
                                 _state.update {
                                     it.copy(progress = null, askingDeactivateConfirmation = false)
                                 }
-                                authPreferences.clear()
+                                authStateHandler.logout()
                             }
                         }
 
@@ -134,7 +134,7 @@ class ProfileViewModel internal constructor(
                     }
                 }
 
-                ProfileEvent.LogOut -> authPreferences.clear()
+                ProfileEvent.LogOut -> authStateHandler.logout()
 
                 is ProfileEvent.EditEvent.GivenNameChanged -> _state.update {
                     it.copy(
