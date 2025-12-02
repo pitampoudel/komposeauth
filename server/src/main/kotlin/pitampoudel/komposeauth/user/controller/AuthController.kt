@@ -112,7 +112,7 @@ class AuthController(
                 .httpOnly(true)
                 .secure(isSecure)
                 .path("/")
-                .sameSite(if (isSecure) "None" else "Strict")
+                .sameSite("Strict")
                 .maxAge((1.days - 1.minutes).toJavaDuration())
                 .build()
             httpServletResponse.addHeader("Set-Cookie", cookie.toString())
