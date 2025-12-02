@@ -109,7 +109,6 @@ class AuthController(
                 )
             }
             ResponseType.SESSION -> {
-                // approach 2 | only used for oauth2 flow
                 val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
                 SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
                     user.email,
@@ -121,7 +120,6 @@ class AuthController(
                 )
             }
             ResponseType.COOKIE -> {
-                // approach 1 | used for web apps
                 val isSecure = httpServletRequest.isSecure
                 val cookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
                     .httpOnly(true)
