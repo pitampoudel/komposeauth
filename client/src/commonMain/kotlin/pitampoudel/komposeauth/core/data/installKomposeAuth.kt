@@ -8,7 +8,6 @@ import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -40,10 +39,7 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
         )
         return ipv4Regex.matches(host)
     }
-
-    install(HttpCookies) {
-        storage = AcceptAllCookiesStorage()
-    }
+    install(HttpCookies)
     install(ContentNegotiation) {
         json(
             Json {
