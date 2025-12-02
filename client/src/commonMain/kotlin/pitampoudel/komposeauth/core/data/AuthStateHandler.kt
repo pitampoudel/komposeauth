@@ -1,8 +1,12 @@
 package pitampoudel.komposeauth.core.data
 
-import io.ktor.serialization.JsonConvertException
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import pitampoudel.core.domain.Result
@@ -15,16 +19,35 @@ internal class AuthStateHandler(
     private val authClient: AuthClient
 ) {
     private val json = Json { ignoreUnknownKeys = true }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    val currentUser: Flow<AuthUser?> = authPreferences.accessTokenPayload.map { string ->
-        string?.let {
-            try {
-                json.decodeFromString<AuthUser>(string)
-            } catch (ex: SerializationException) {
-                authPreferences.clear()
-                null
+    private val _currentUser = MutableStateFlow<AuthUser?>(null)
+    val currentUser: StateFlow<AuthUser?> = _currentUser.asStateFlow()
+
+    init {
+        scope.launch {
+            authPreferences.accessTokenPayload.collect { string ->
+                val user = string?.let {
+                    try {
+                        json.decodeFromString<AuthUser>(string)
+                    } catch (ex: SerializationException) {
+                        authPreferences.clear()
+                        null
+                    }
+                } ?: fetchUserInfo()
+                _currentUser.value = user
             }
-        } ?: when (val res = authClient.fetchUserInfo()) {
+        }
+    }
+
+    fun refreshCurrentUser() {
+        scope.launch {
+            _currentUser.value = fetchUserInfo()
+        }
+    }
+
+    suspend fun fetchUserInfo(): AuthUser? {
+        return when (val res = authClient.fetchUserInfo()) {
             is Result.Success -> AuthUser(
                 authorities = res.data.roles,
                 email = res.data.email,

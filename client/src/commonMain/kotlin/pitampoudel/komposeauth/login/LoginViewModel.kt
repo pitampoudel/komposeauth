@@ -9,13 +9,15 @@ import kotlinx.coroutines.launch
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
+import pitampoudel.komposeauth.core.data.AuthStateHandler
 import pitampoudel.komposeauth.data.ResponseType
 import pitampoudel.komposeauth.domain.Platform
 import pitampoudel.komposeauth.domain.currentPlatform
 
 class LoginViewModel internal constructor(
     private val authClient: AuthClient,
-    private val authPreferences: AuthPreferences
+    private val authPreferences: AuthPreferences,
+    private val authStateHandler: AuthStateHandler
 ) : ViewModel() {
     private val _state = MutableStateFlow(LoginState())
     val state = _state.asStateFlow()
@@ -73,7 +75,7 @@ class LoginViewModel internal constructor(
                 }
 
                 is Result.Success -> {
-
+                    authStateHandler.refreshCurrentUser()
                 }
             }
 
