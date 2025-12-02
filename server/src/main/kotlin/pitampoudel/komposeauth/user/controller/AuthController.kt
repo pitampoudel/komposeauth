@@ -108,17 +108,14 @@ class AuthController(
         } else {
             // approach 1 | used for web apps
             val isSecure = httpServletRequest.isSecure
-            val sameSite = if (isSecure) "None" else "Lax"
-            val cookieBuilder = ResponseCookie.from("ACCESS_TOKEN", accessToken)
+            val cookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
                 .httpOnly(true)
                 .secure(isSecure)
                 .path("/")
-                .sameSite(sameSite)
+                .sameSite(if (isSecure) "None" else "Strict")
                 .maxAge((1.days - 1.minutes).toJavaDuration())
-
-            val cookie = cookieBuilder.build()
+                .build()
             httpServletResponse.addHeader("Set-Cookie", cookie.toString())
-
 
             // approach 2 | only used for oauth2 flow
             val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
