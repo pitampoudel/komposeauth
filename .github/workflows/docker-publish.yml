@@ -80,8 +80,6 @@ jobs:
           provenance: mode=max
           sbom: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/komposeauth:latest
-            ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.determine_tags.outputs.VERSION }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:latest
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.VERSION }}
           labels: |
@@ -98,8 +96,6 @@ jobs:
           provenance: mode=max
           sbom: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.determine_tags.outputs.SNAPSHOT_TAG }}
-            ghcr.io/${{ github.repository_owner }}/komposeauth:${{ steps.determine_tags.outputs.BRANCH_TAG }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.SNAPSHOT_TAG }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.BRANCH_TAG }}
           labels: |
