@@ -47,7 +47,7 @@ class WebSecurityConfig {
             .cors { }
             .csrf { csrf -> csrf.disable() }
             .sessionManagement { sessions ->
-                sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
             .oauth2ResourceServer { conf ->
                 conf.bearerTokenResolver { request ->
