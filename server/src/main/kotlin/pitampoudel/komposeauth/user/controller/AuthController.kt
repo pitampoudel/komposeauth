@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import pitampoudel.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential
@@ -116,7 +117,7 @@ class AuthController(
             }
 
             ResponseType.COOKIE -> {
-                val cookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
+                val cookie = ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, accessToken)
                     .httpOnly(true)
                     .secure(httpServletRequest.isSecure)
                     .path("/")

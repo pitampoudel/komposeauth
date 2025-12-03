@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseCookie
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -19,6 +20,7 @@ import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import pitampoudel.core.data.MessageResponse
+import pitampoudel.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.data.ApiEndpoints
 import java.net.URLEncoder
@@ -53,9 +55,15 @@ class WebSecurityConfig {
             .logout { logout ->
                 logout
                     .logoutUrl("/${ApiEndpoints.LOGOUT}")
-                    .deleteCookies("ACCESS_TOKEN")
-                    .invalidateHttpSession(true)
-                    .logoutSuccessHandler { _, response, _ ->
+                    .logoutSuccessHandler { request, response, _ ->
+                        val clearCookie = ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, "")
+                            .httpOnly(true)
+                            .secure(request.isSecure)
+                            .path("/")
+                            .sameSite("None")
+                            .maxAge(0)
+                            .build()
+                        response.addHeader("Set-Cookie", clearCookie.toString())
                         response.contentType = MediaType.APPLICATION_JSON_VALUE
                         response.writer.write(
                             objectMapper.writeValueAsString(
@@ -78,7 +86,7 @@ class WebSecurityConfig {
                     }
                     return@bearerTokenResolver if (!fromHeader.isNullOrBlank()) fromHeader else {
                         // 2. Then try cookie (ACCESS_TOKEN)
-                        val cookie = request.cookies?.firstOrNull { it.name == "ACCESS_TOKEN" }
+                        val cookie = request.cookies?.firstOrNull { it.name == ACCESS_TOKEN_COOKIE_NAME }
                         cookie?.value
                     }
                 }
