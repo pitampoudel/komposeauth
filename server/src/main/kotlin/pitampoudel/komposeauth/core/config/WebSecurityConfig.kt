@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.core.config
 
 import jakarta.servlet.DispatcherType
+import jakarta.servlet.http.Cookie
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -102,6 +103,12 @@ class WebSecurityConfig {
             }
             .exceptionHandling { ex ->
                 ex.authenticationEntryPoint { request, response, authException ->
+                    if (request.cookies?.any { it.name == "ACCESS_TOKEN" } == true) {
+                        val cookie = Cookie("ACCESS_TOKEN", "")
+                        cookie.path = "/"
+                        cookie.maxAge = 0
+                        response.addCookie(cookie)
+                    }
                     val accept = request.getHeader("Accept") ?: ""
                     val wantsHtml = accept.contains("text/html", ignoreCase = true)
                     if (wantsHtml) {
