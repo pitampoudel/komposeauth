@@ -1,9 +1,8 @@
 package pitampoudel.komposeauth.core.di
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.produceState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.ktor.client.HttpClient
-import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.koinInject
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
@@ -15,8 +14,8 @@ import pitampoudel.komposeauth.core.data.AuthPreferencesImpl
 import pitampoudel.komposeauth.core.data.AuthStateHandler
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
-import pitampoudel.komposeauth.core.domain.Config
 import pitampoudel.komposeauth.core.domain.AuthUser
+import pitampoudel.komposeauth.core.domain.Config
 import pitampoudel.komposeauth.kyc.KycViewModel
 import pitampoudel.komposeauth.login.LoginViewModel
 import pitampoudel.komposeauth.otp.OtpViewModel
@@ -58,9 +57,5 @@ fun initializeKomposeAuth(
 @Composable
 fun rememberAuthenticatedUser(): LazyState<AuthUser> {
     val authPreferences = koinInject<AuthStateHandler>()
-    return produceState<LazyState<AuthUser>>(LazyState.Loading) {
-        authPreferences.currentUser.collectLatest { user ->
-            value = LazyState.Loaded(user)
-        }
-    }.value
+    return authPreferences.currentUser.collectAsStateWithLifecycle().value
 }

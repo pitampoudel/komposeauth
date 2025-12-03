@@ -6,10 +6,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import pitampoudel.core.domain.Result
+import pitampoudel.core.presentation.LazyState
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.core.domain.AuthUser
@@ -21,51 +23,57 @@ internal class AuthStateHandler(
     private val json = Json { ignoreUnknownKeys = true }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val _currentUser = MutableStateFlow<AuthUser?>(null)
-    val currentUser: StateFlow<AuthUser?> = _currentUser.asStateFlow()
+    private val _currentUser = MutableStateFlow<LazyState<AuthUser>>(LazyState.Loading)
+    val currentUser: StateFlow<LazyState<AuthUser>> = _currentUser.asStateFlow()
 
     init {
-        scope.launch {
-            authPreferences.accessTokenPayload.collect { string ->
-                val user = string?.let {
-                    try {
-                        json.decodeFromString<AuthUser>(string)
-                    } catch (ex: SerializationException) {
-                        authPreferences.clear()
-                        null
-                    }
-                } ?: fetchUserInfo()
-                _currentUser.value = user
+        authPreferences.accessTokenPayload.onEach { string ->
+            val user = string?.let {
+                try {
+                    json.decodeFromString<AuthUser>(string)
+                } catch (ex: SerializationException) {
+                    authPreferences.clear()
+                    null
+                }
             }
-        }
+            updateCurrentUser(user)
+        }.launchIn(scope)
     }
 
-    fun refreshCurrentUser() {
-        scope.launch {
-            _currentUser.value = fetchUserInfo()
-        }
+
+    suspend fun updateCurrentUser(fallbackUser: AuthUser? = null) {
+        val fetchResult = fetchUserInfo()
+        _currentUser.value = LazyState.Loaded(
+            when (fetchResult) {
+                is Result.Error -> fallbackUser
+                is Result.Success<AuthUser> -> fetchResult.data
+            }
+        )
     }
 
-    suspend fun fetchUserInfo(): AuthUser? {
+    suspend fun fetchUserInfo(): Result<AuthUser> {
         return when (val res = authClient.fetchUserInfo()) {
-            is Result.Success -> AuthUser(
-                authorities = res.data.roles,
-                email = res.data.email,
-                familyName = res.data.familyName,
-                givenName = res.data.givenName,
-                kycVerified = res.data.kycVerified,
-                phoneNumberVerified = res.data.phoneNumberVerified,
-                picture = res.data.picture ?: "",
-                sub = res.data.id
+            is Result.Success -> Result.Success(
+                AuthUser(
+                    authorities = res.data.roles,
+                    email = res.data.email,
+                    familyName = res.data.familyName,
+                    givenName = res.data.givenName,
+                    kycVerified = res.data.kycVerified,
+                    phoneNumberVerified = res.data.phoneNumberVerified,
+                    picture = res.data.picture ?: "",
+                    sub = res.data.id
+                )
             )
-            is Result.Error -> null
+
+            is Result.Error -> res
         }
     }
 
     suspend fun logout() {
         authPreferences.clear()
         val res = authClient.logout()
-        if (res is Result.Success) refreshCurrentUser()
+        if (res is Result.Success) updateCurrentUser()
     }
 }
 

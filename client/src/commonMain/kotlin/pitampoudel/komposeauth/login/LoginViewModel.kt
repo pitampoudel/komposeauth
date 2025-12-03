@@ -75,7 +75,7 @@ class LoginViewModel internal constructor(
                 }
 
                 is Result.Success -> {
-                    authStateHandler.refreshCurrentUser()
+                    authStateHandler.updateCurrentUser()
                 }
             }
 

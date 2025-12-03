@@ -56,11 +56,9 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
     install(Auth) {
         bearer {
             loadTokens {
-                val accessToken = authPreferences.tokenData()?.accessToken
-                val refreshToken = authPreferences.tokenData()?.refreshToken
-                if (accessToken.isNullOrEmpty()) {
-                    return@loadTokens null
-                }
+                val tokenData = authPreferences.tokenData() ?: return@loadTokens null
+                val accessToken = tokenData.accessToken
+                val refreshToken = tokenData.refreshToken
                 BearerTokens(
                     accessToken = accessToken,
                     refreshToken = refreshToken
