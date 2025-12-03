@@ -42,6 +42,7 @@ internal class AuthStateHandler(
 
 
     suspend fun updateCurrentUser(fallbackUser: AuthUser? = null) {
+        if (fallbackUser != null) _currentUser.value = LazyState.Loaded(fallbackUser)
         val fetchResult = fetchUserInfo()
         _currentUser.value = LazyState.Loaded(
             when (fetchResult) {
