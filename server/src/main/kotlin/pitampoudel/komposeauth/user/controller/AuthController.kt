@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import kotlinx.serialization.json.Json
+import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -19,8 +20,6 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
-import pitampoudel.komposeauth.core.config.login
-import pitampoudel.komposeauth.core.config.logout
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.OAuth2Response
@@ -31,6 +30,7 @@ import pitampoudel.komposeauth.user.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.service.UserService
 import java.time.Instant
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
 @RestController
@@ -117,7 +117,14 @@ class AuthController(
             }
 
             ResponseType.COOKIE -> {
-                httpServletRequest.login(accessToken, httpServletResponse)
+                val cookie = ResponseCookie.from("ACCESS_TOKEN", accessToken)
+                    .httpOnly(true)
+                    .secure(httpServletRequest.isSecure)
+                    .path("/")
+                    .sameSite("None")
+                    .maxAge((1.days - 1.minutes).toJavaDuration())
+                    .build()
+                httpServletResponse.addHeader("Set-Cookie", cookie.toString())
             }
         }
         return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.isVerified(user.id)))
@@ -129,10 +136,9 @@ class AuthController(
         description = "Logout the current user by clearing cookies and sessions."
     )
     fun logout(
-        httpServletRequest: HttpServletRequest,
-        httpServletResponse: HttpServletResponse
+        httpServletRequest: HttpServletRequest
     ): ResponseEntity<MessageResponse> {
-        httpServletRequest.logout(httpServletResponse)
+        httpServletRequest.logout()
         return ResponseEntity.ok(MessageResponse("Logout successful"))
     }
 }

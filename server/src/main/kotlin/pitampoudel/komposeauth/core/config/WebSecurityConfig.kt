@@ -46,6 +46,11 @@ class WebSecurityConfig {
         return http
             .cors { }
             .csrf { csrf -> csrf.disable() }
+            .logout { logout ->
+                logout
+                    .deleteCookies("ACCESS_TOKEN")
+                    .invalidateHttpSession(true)
+            }
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
@@ -103,7 +108,7 @@ class WebSecurityConfig {
             .exceptionHandling { ex ->
                 ex.authenticationEntryPoint { request, response, authException ->
                     if (request.cookies?.any { it.name == "ACCESS_TOKEN" } == true) {
-                        request.logout(response)
+                        request.logout()
                     }
                     val accept = request.getHeader("Accept") ?: ""
                     val wantsHtml = accept.contains("text/html", ignoreCase = true)
