@@ -1,5 +1,7 @@
 package pitampoudel.komposeauth.user.service
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.validation.Valid
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -10,7 +12,13 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.web.webauthn.api.AuthenticatorAssertionResponse
+import org.springframework.security.web.webauthn.api.PublicKeyCredential
+import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions
+import org.springframework.security.web.webauthn.management.RelyingPartyAuthenticationRequest
+import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.stereotype.Service
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
@@ -19,6 +27,7 @@ import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.data.CreateUserRequest
+import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.data.UpdatePhoneNumberRequest
 import pitampoudel.komposeauth.data.UpdateProfileRequest
@@ -30,6 +39,7 @@ import pitampoudel.komposeauth.user.dto.mapToEntity
 import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
 import pitampoudel.komposeauth.user.dto.mapToResponseDto
 import pitampoudel.komposeauth.user.dto.update
+import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import java.net.URI
@@ -39,6 +49,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.time.Instant
+import javax.security.auth.login.AccountLockedException
 
 @Service
 class UserService(
@@ -49,7 +60,9 @@ class UserService(
     val emailService: EmailService,
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
-    val storageService: StorageService
+    val storageService: StorageService,
+    private val objectMapper: ObjectMapper,
+    private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
 ) {
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
@@ -66,7 +79,10 @@ class UserService(
             URLEncoder.encode(appConfigProvider.googleClientId(platform), StandardCharsets.UTF_8),
             URLEncoder.encode(code, StandardCharsets.UTF_8),
             URLEncoder.encode(redirectUri, StandardCharsets.UTF_8),
-            URLEncoder.encode(appConfigProvider.googleClientSecret(platform), StandardCharsets.UTF_8)
+            URLEncoder.encode(
+                appConfigProvider.googleClientSecret(platform),
+                StandardCharsets.UTF_8
+            )
         )
         val request = HttpRequest.newBuilder()
             .uri(URI.create("https://oauth2.googleapis.com/token"))
@@ -247,6 +263,62 @@ class UserService(
             return findUser(user.id.toHexString()) ?: user
         }
         return user
+    }
+
+    fun resolveUserFromCredential(
+        request: Credential,
+        loadPublicKeyCredentialRequestOptions: () -> PublicKeyCredentialRequestOptions?
+    ): User {
+        val user = when (request) {
+            is Credential.UsernamePassword -> findByUserName(request.username)
+                ?.takeIf {
+                    passwordEncoder.matches(request.password, it.passwordHash)
+                }
+
+            is Credential.GoogleId -> findOrCreateUserByGoogleIdToken(request.idToken)
+            is Credential.AuthCode -> findOrCreateUserByAuthCode(
+                code = request.code,
+                redirectUri = request.redirectUri,
+                platform = request.platform
+            )
+
+            is Credential.RefreshToken -> {
+                val token = oneTimeTokenService.consume(
+                    request.refreshToken,
+                    purpose = OneTimeToken.Purpose.REFRESH_TOKEN
+                )
+                findUser(token.userId.toHexString()) ?: throw UsernameNotFoundException(
+                    "User not found"
+                )
+            }
+
+            is Credential.AppleId -> throw UnsupportedOperationException("AppleId authentication is not supported yet.")
+            is Credential.PublicKey -> {
+                val json = objectMapper.readValue(
+                    request.authenticationResponseJson,
+                    object :
+                        TypeReference<PublicKeyCredential<AuthenticatorAssertionResponse>>() {}
+                )
+                val requestOptions = loadPublicKeyCredentialRequestOptions()
+                val publicKeyUser = requestOptions?.let {
+                    webAuthnRelyingPartyOperations.authenticate(
+                        RelyingPartyAuthenticationRequest(
+                            requestOptions,
+                            json
+                        )
+                    )
+                }
+                publicKeyUser?.let {
+                    findByUserName(publicKeyUser.name)
+                }
+            }
+        } ?: throw UsernameNotFoundException("User not found or invalid credentials")
+
+        if (user.deactivated) {
+            throw AccountLockedException("User account is deactivated")
+        }
+        return user
+
     }
 
     fun countUsers(): Long {

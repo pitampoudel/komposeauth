@@ -1,7 +1,5 @@
 package pitampoudel.komposeauth.user.controller
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -10,35 +8,28 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.core.userdetails.UsernameNotFoundException
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
-import org.springframework.security.web.webauthn.api.AuthenticatorAssertionResponse
-import org.springframework.security.web.webauthn.api.PublicKeyCredential
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
-import org.springframework.security.web.webauthn.management.RelyingPartyAuthenticationRequest
-import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.config.login
+import pitampoudel.komposeauth.core.config.logout
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.OAuth2Response
 import pitampoudel.komposeauth.data.ResponseType
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
-import pitampoudel.komposeauth.user.entity.OneTimeToken
-import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.service.UserService
 import java.time.Instant
-import javax.security.auth.login.AccountLockedException
 import kotlin.time.Duration.Companion.days
 import kotlin.time.toJavaDuration
 
@@ -48,9 +39,6 @@ class AuthController(
     val userService: UserService,
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
-    private val passwordEncoder: PasswordEncoder,
-    private val objectMapper: ObjectMapper,
-    private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
     private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
     val appConfigProvider: AppConfigProvider,
     private val jwtEncoder: JwtEncoder
@@ -70,7 +58,14 @@ class AuthController(
         httpServletResponse: HttpServletResponse,
         securityContextRepository: HttpSessionSecurityContextRepository
     ): ResponseEntity<*> {
-        val user = resolveUserFromCredential(request, httpServletRequest, httpServletResponse)
+        val user = userService.resolveUserFromCredential(
+            request = request,
+            loadPublicKeyCredentialRequestOptions = {
+                val options = requestOptionsRepository.load(httpServletRequest)
+                requestOptionsRepository.save(httpServletRequest, httpServletResponse, null)
+                options
+            }
+        )
         val now = Instant.now()
         val scopes = listOf("openid", "profile", "email")
         val claims = JwtClaimsSet.builder()
@@ -128,61 +123,16 @@ class AuthController(
         return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.isVerified(user.id)))
     }
 
-    fun resolveUserFromCredential(
-        request: Credential,
+    @PostMapping("/${ApiEndpoints.LOGOUT}")
+    @Operation(
+        summary = "Logout the current user",
+        description = "Logout the current user by clearing cookies and sessions."
+    )
+    fun logout(
         httpServletRequest: HttpServletRequest,
         httpServletResponse: HttpServletResponse
-    ): User {
-        val user = when (request) {
-            is Credential.UsernamePassword -> userService.findByUserName(request.username)
-                ?.takeIf {
-                    passwordEncoder.matches(request.password, it.passwordHash)
-                }
-
-            is Credential.GoogleId -> userService.findOrCreateUserByGoogleIdToken(request.idToken)
-            is Credential.AuthCode -> userService.findOrCreateUserByAuthCode(
-                code = request.code,
-                redirectUri = request.redirectUri,
-                platform = request.platform
-            )
-
-            is Credential.RefreshToken -> {
-                val token = oneTimeTokenService.consume(
-                    request.refreshToken,
-                    purpose = OneTimeToken.Purpose.REFRESH_TOKEN
-                )
-                userService.findUser(token.userId.toHexString()) ?: throw UsernameNotFoundException(
-                    "User not found"
-                )
-            }
-
-            is Credential.AppleId -> throw UnsupportedOperationException("AppleId authentication is not supported yet.")
-            is Credential.PublicKey -> {
-                val json = objectMapper.readValue(
-                    request.authenticationResponseJson,
-                    object :
-                        TypeReference<PublicKeyCredential<AuthenticatorAssertionResponse>>() {}
-                )
-                val requestOptions = requestOptionsRepository.load(httpServletRequest)
-                requestOptionsRepository.save(httpServletRequest, httpServletResponse, null)
-                val publicKeyUser = requestOptions?.let {
-                    webAuthnRelyingPartyOperations.authenticate(
-                        RelyingPartyAuthenticationRequest(
-                            requestOptions,
-                            json
-                        )
-                    )
-                }
-                publicKeyUser?.let {
-                    userService.findByUserName(publicKeyUser.name)
-                }
-            }
-        } ?: throw UsernameNotFoundException("User not found or invalid credentials")
-
-        if (user.deactivated) {
-            throw AccountLockedException("User account is deactivated")
-        }
-        return user
-
+    ): ResponseEntity<MessageResponse> {
+        httpServletRequest.logout(httpServletResponse)
+        return ResponseEntity.ok(MessageResponse("Logout successful"))
     }
 }
