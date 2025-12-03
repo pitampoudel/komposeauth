@@ -1,9 +1,11 @@
 package pitampoudel.komposeauth.core.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.DispatcherType
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
+import org.springframework.http.MediaType
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -16,6 +18,7 @@ import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.data.ApiEndpoints
 import java.net.URLEncoder
@@ -41,15 +44,25 @@ class WebSecurityConfig {
     @Order(2)
     fun securityFilterChain(
         http: HttpSecurity,
-        jwtAuthenticationConverter: JwtAuthenticationConverter
+        jwtAuthenticationConverter: JwtAuthenticationConverter,
+        objectMapper: ObjectMapper
     ): SecurityFilterChain {
         return http
             .cors { }
             .csrf { csrf -> csrf.disable() }
             .logout { logout ->
                 logout
+                    .logoutUrl("/${ApiEndpoints.LOGOUT}")
                     .deleteCookies("ACCESS_TOKEN")
                     .invalidateHttpSession(true)
+                    .logoutSuccessHandler { _, response, _ ->
+                        response.contentType = MediaType.APPLICATION_JSON_VALUE
+                        response.writer.write(
+                            objectMapper.writeValueAsString(
+                                MessageResponse(message = "Logout successful")
+                            )
+                        )
+                    }
             }
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
@@ -86,6 +99,7 @@ class WebSecurityConfig {
                         "/oauth2/jwks",
                         "/${ApiEndpoints.LOGIN}",
                         "/${ApiEndpoints.LOGIN}/session",
+                        "/${ApiEndpoints.LOGOUT}",
                         "/signup",
                         "/api/auth/**",
                         "/users",
