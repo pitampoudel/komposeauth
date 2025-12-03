@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.Credential
@@ -128,17 +127,5 @@ class AuthController(
             }
         }
         return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.isVerified(user.id)))
-    }
-
-    @PostMapping("/${ApiEndpoints.LOGOUT}")
-    @Operation(
-        summary = "Logout the current user",
-        description = "Logout the current user by clearing cookies and sessions."
-    )
-    fun logout(
-        httpServletRequest: HttpServletRequest
-    ): ResponseEntity<MessageResponse> {
-        httpServletRequest.logout()
-        return ResponseEntity.ok(MessageResponse("Logout successful"))
     }
 }

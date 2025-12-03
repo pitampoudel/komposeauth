@@ -107,9 +107,6 @@ class WebSecurityConfig {
             }
             .exceptionHandling { ex ->
                 ex.authenticationEntryPoint { request, response, authException ->
-                    if (request.cookies?.any { it.name == "ACCESS_TOKEN" } == true) {
-                        request.logout()
-                    }
                     val accept = request.getHeader("Accept") ?: ""
                     val wantsHtml = accept.contains("text/html", ignoreCase = true)
                     if (wantsHtml) {
