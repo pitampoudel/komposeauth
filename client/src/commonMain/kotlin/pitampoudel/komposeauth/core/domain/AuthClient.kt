@@ -35,4 +35,5 @@ internal interface AuthClient {
     suspend fun updateProfile(request: UpdateProfileRequest): Result<ProfileResponse>
     suspend fun fetchWebAuthnRegistrationOptions(): Result<String>
     suspend fun registerPublicKey(request: RegisterPublicKeyRequest): Result<HttpResponse>
+    suspend fun logout(): Result<HttpResponse>
 }

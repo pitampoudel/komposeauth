@@ -19,6 +19,7 @@ import pitampoudel.komposeauth.data.ApiEndpoints.KYC_DOCUMENTS
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC_PERSONAL_INFO
 import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN_OPTIONS
+import pitampoudel.komposeauth.data.ApiEndpoints.LOGOUT
 import pitampoudel.komposeauth.data.ApiEndpoints.ME
 import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PHONE_NUMBER
 import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PROFILE
@@ -26,13 +27,13 @@ import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import pitampoudel.komposeauth.data.CountryResponse
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.DocumentInformation
-import pitampoudel.komposeauth.data.ResponseType
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.data.LoginOptionsResponse
 import pitampoudel.komposeauth.data.OAuth2Response
 import pitampoudel.komposeauth.data.PersonalInformation
 import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
+import pitampoudel.komposeauth.data.ResponseType
 import pitampoudel.komposeauth.data.UpdateAddressDetailsRequest
 import pitampoudel.komposeauth.data.UpdatePhoneNumberRequest
 import pitampoudel.komposeauth.data.UpdateProfileRequest
@@ -163,6 +164,13 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         return safeApiCall {
             httpClient.post("$authUrl/webauthn/register") {
                 setBody(request)
+            }.asResource { this }
+        }
+    }
+
+    override suspend fun logout(): Result<HttpResponse> {
+        return safeApiCall {
+            httpClient.post("$authUrl/$LOGOUT") {
             }.asResource { this }
         }
     }

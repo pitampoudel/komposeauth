@@ -3,6 +3,7 @@ package pitampoudel.komposeauth.data
 
 object ApiEndpoints {
     const val LOGIN = "login"
+    const val LOGOUT = "logout"
     const val USERS = "users"
     const val STATS = "stats"
     const val ME = "me"

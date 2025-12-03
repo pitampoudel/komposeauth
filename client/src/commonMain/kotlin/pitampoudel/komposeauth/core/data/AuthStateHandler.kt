@@ -64,7 +64,8 @@ internal class AuthStateHandler(
 
     suspend fun logout() {
         authPreferences.clear()
-        // todo also call backend logout to clear cookies
+        val res = authClient.logout()
+        if (res is Result.Success) refreshCurrentUser()
     }
 }
 
