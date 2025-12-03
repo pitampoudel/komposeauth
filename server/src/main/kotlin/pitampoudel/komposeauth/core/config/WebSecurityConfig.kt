@@ -1,11 +1,9 @@
 package pitampoudel.komposeauth.core.config
 
 import jakarta.servlet.DispatcherType
-import jakarta.servlet.http.Cookie
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
-import org.springframework.http.ResponseCookie
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -21,9 +19,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.data.ApiEndpoints
 import java.net.URLEncoder
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.toJavaDuration
 
 @Configuration
 @EnableWebSecurity
@@ -108,14 +103,7 @@ class WebSecurityConfig {
             .exceptionHandling { ex ->
                 ex.authenticationEntryPoint { request, response, authException ->
                     if (request.cookies?.any { it.name == "ACCESS_TOKEN" } == true) {
-                        val cookie = ResponseCookie.from("ACCESS_TOKEN", "")
-                            .httpOnly(true)
-                            .secure(request.isSecure)
-                            .path("/")
-                            .sameSite("None")
-                            .maxAge(0)
-                            .build()
-                        response.setHeader("Set-Cookie", cookie.toString())
+                        request.logout(response)
                     }
                     val accept = request.getHeader("Accept") ?: ""
                     val wantsHtml = accept.contains("text/html", ignoreCase = true)
