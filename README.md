@@ -37,6 +37,11 @@ Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Client 
 ### 1) Run the Auth Server (Docker)
 
 ```bash
+// BASE64_ENCRYPTION_KEY generator
+openssl rand -base64 32
+```
+
+```bash
 docker pull pitampoudel/komposeauth:latest
 # Quick start: only these two variables are required
 docker run -p 8080:8080 \
@@ -48,29 +53,6 @@ docker run -p 8080:8080 \
 - After the container is running, open the Setup page to configure everything else:
   - http://localhost:8080/setup
 
-### Environment variables
-
-```
-# Required only
-MONGODB_URI=                 # MongoDB connection string
-BASE64_ENCRYPTION_KEY=       # Base64-encoded AES key used to encrypt sensitive config at rest
-```
-
-All other application settings are configured via the Setup UI and persisted in the database (encrypted where sensitive).
-
-```kotlin
-// BASE64_ENCRYPTION_KEY generator
-fun main() {
-    val keyGen = KeyGenerator.getInstance("AES")
-    keyGen.init(256) // or 128/192
-    val key = keyGen.generateKey()
-    val base64Key = Base64.getEncoder().encodeToString(key.encoded)
-    println(base64Key)
-}
-```
-Notes:
-- The encryption key is not stored in the database. Provide it via `BASE64_ENCRYPTION_KEY` on startup. In tests, a key is generated automatically.
-- You can revisit the Setup UI anytime to change settings; sensitive values are encrypted at rest.
 ### 2) Add the SDKs to your KMP project
 
 Shared module
