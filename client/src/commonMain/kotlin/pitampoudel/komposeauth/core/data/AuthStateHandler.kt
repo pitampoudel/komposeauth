@@ -56,7 +56,7 @@ internal class AuthStateHandler(
         return when (val res = authClient.fetchUserInfo()) {
             is Result.Success -> Result.Success(
                 AuthUser(
-                    authorities = res.data.roles,
+                    authorities = res.data.roles.map { "ROLE_$it" },
                     email = res.data.email,
                     familyName = res.data.familyName,
                     givenName = res.data.givenName,
