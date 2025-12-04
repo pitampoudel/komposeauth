@@ -2,6 +2,8 @@ package pitampoudel.komposeauth.core.data
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.auth.authProvider
+import io.ktor.client.plugins.auth.providers.BearerAuthProvider
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -164,6 +166,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
     }
 
     override suspend fun logout(): Result<HttpResponse> {
+        httpClient.authProvider<BearerAuthProvider>()?.clearToken()
         return safeApiCall {
             httpClient.get("$authUrl/$LOGOUT") {
             }.asResource { this }
