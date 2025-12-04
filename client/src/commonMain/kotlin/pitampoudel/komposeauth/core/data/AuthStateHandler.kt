@@ -72,9 +72,8 @@ internal class AuthStateHandler(
     }
 
     suspend fun logout() {
-        authPreferences.clear()
         val res = authClient.logout()
-        if (res is Result.Success) updateCurrentUser()
+        if (res is Result.Success) authPreferences.clear()
     }
 }
 
