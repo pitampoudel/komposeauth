@@ -23,7 +23,7 @@ internal interface AuthClient {
     suspend fun fetchLoginConfig(platform: Platform = Platform.WEB): Result<LoginOptionsResponse>
     suspend fun login(credential: Credential): Result<OAuth2Response>
     suspend fun login(credential: Credential, responseType: ResponseType): Result<HttpResponse>
-    suspend fun fetchUserInfo(accessToken: String? = null): Result<ProfileResponse>
+    suspend fun fetchUserInfo(): Result<ProfileResponse>
     suspend fun deactivate(): Result<HttpResponse>
     suspend fun verifyPhoneOtp(req: VerifyPhoneOtpRequest): Result<HttpResponse>
     suspend fun sendPhoneOtp(request: UpdatePhoneNumberRequest): Result<HttpResponse>
