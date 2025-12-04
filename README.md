@@ -45,8 +45,8 @@ docker run -p 8080:8080 \
   pitampoudel/komposeauth:latest
 ```
 
-- After the container is running, open the Setup page to configure everything else (stored in DB):
-  - http://localhost:8080/setup?key=<BASE64_ENCRYPTION_KEY>
+- After the container is running, open the Setup page to configure everything else:
+  - http://localhost:8080/setup
 
 ### Environment variables
 
