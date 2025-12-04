@@ -110,6 +110,39 @@ class UserService(
         return userRepository.findByIdIn(objectIds)
     }
 
+    fun listAdmins(page: Int, size: Int): Page<User> {
+        val pageable: Pageable = PageRequest.of(page, size)
+        return userRepository.findByRolesContaining("ADMIN", pageable)
+    }
+
+    fun grantAdmin(userId: String): User {
+        val id = try { ObjectId(userId) } catch (e: Exception) {
+            throw UsernameNotFoundException("Invalid user id: $userId")
+        }
+        val user = userRepository.findById(id).orElseThrow {
+            UsernameNotFoundException("User not found: $userId")
+        }
+        if (user.roles.contains("ADMIN")) return user
+        val updated = user.copy(roles = user.roles + "ADMIN")
+        return userRepository.save(updated)
+    }
+
+    fun revokeAdmin(userId: String): User {
+        val id = try { ObjectId(userId) } catch (e: Exception) {
+            throw UsernameNotFoundException("Invalid user id: $userId")
+        }
+        val user = userRepository.findById(id).orElseThrow {
+            UsernameNotFoundException("User not found: $userId")
+        }
+        if (!user.roles.contains("ADMIN")) return user
+        val totalAdmins = userRepository.countByRolesContaining("ADMIN")
+        if (totalAdmins <= 1) {
+            throw BadRequestException("Cannot remove the last admin")
+        }
+        val updated = user.copy(roles = user.roles.filterNot { it == "ADMIN" })
+        return userRepository.save(updated)
+    }
+
     fun findUsersFlexible(ids: List<String>?, q: String?, page: Int, size: Int): Page<User> {
         val pageSafe = if (page < 0) 0 else page
         val sizeCapped = when {
