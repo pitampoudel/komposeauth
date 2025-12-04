@@ -74,12 +74,15 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
                 }
                 refresh(client, authServerUrl, refreshToken, authPreferences)
             }
+            // Only send the Authorization header preemptively when:
+            // We still have tokens in preferences. This prevents Ktor from using
+            // previously cached in-memory tokens after logout/clear().
             sendWithoutRequest { builder ->
-                val hosts = (resourceServerUrls + authServerUrl).toSet().map {
-                    Url(it).host
-                }.toSet()
+                val hosts = (resourceServerUrls + authServerUrl).toSet().map { Url(it).host }.toSet()
                 val host = builder.url.host
-                hosts.contains(host) || isIPv4(host)
+                val targetMatches = hosts.contains(host) || isIPv4(host)
+                val hasTokens = authPreferences.tokenData() != null
+                targetMatches && hasTokens
             }
         }
     }
