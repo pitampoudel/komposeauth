@@ -46,9 +46,7 @@ class UsersController(
     fun create(@RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
         return ResponseEntity.ok()
             .body(
-                userService.createUser(request).let {
-                    it.mapToResponseDto(kycService.isVerified(it.id))
-                }
+                userService.createUser(request).mapToResponseDto(false)
             )
 
     }

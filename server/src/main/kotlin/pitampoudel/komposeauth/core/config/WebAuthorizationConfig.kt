@@ -84,7 +84,10 @@ class WebAuthorizationConfig() {
 
 
     @Bean
-    fun jwtCustomizer(userService: UserService): OAuth2TokenCustomizer<JwtEncodingContext> {
+    fun jwtCustomizer(
+        userService: UserService,
+        kycService: KycService
+    ): OAuth2TokenCustomizer<JwtEncodingContext> {
         return OAuth2TokenCustomizer { context ->
             when (context.authorizationGrantType) {
                 AuthorizationGrantType.CLIENT_CREDENTIALS -> {
@@ -98,11 +101,14 @@ class WebAuthorizationConfig() {
                             ?: throw AccountNotFoundException("User not found with email: ${principal.name}")
                         context.claims.claim(
                             "authorities",
-                            principal.authorities + user.roles.map { "ROLE_$it" }
+                            principal.authorities.map { it.authority }
                         )
+                        context.claims.claim("email", user.email)
                         context.claims.claim("givenName", user.firstName)
-                        if (user.lastName != null)
-                            context.claims.claim("familyName", user.lastName)
+                        context.claims.claim("familyName", user.lastName)
+                        context.claims.claim("picture", user.picture)
+                        context.claims.claim("kycVerified", kycService.isVerified(user.id))
+                        context.claims.claim("phoneNumberVerified", user.phoneNumberVerified)
                     }
                 }
             }
