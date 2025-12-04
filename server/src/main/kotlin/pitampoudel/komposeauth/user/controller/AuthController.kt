@@ -106,7 +106,7 @@ class AuthController(
                 val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
                 SecurityContextHolder.getContext().authentication =
                     UsernamePasswordAuthenticationToken(
-                        user.email,
+                        user.id,
                         null,
                         authorities
                     )
