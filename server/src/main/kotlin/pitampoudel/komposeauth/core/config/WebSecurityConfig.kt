@@ -86,7 +86,8 @@ class WebSecurityConfig {
                     }
                     return@bearerTokenResolver if (!fromHeader.isNullOrBlank()) fromHeader else {
                         // 2. Then try cookie (ACCESS_TOKEN)
-                        val cookie = request.cookies?.firstOrNull { it.name == ACCESS_TOKEN_COOKIE_NAME }
+                        val cookie =
+                            request.cookies?.firstOrNull { it.name == ACCESS_TOKEN_COOKIE_NAME }
                         cookie?.value
                     }
                 }
@@ -122,7 +123,7 @@ class WebSecurityConfig {
                         "/v3/api-docs/**",
                         "/swagger-ui.html",
                         "/swagger-ui/**"
-                    ).hasAnyRole("DEVELOPER", "ADMIN", "SUPER_ADMIN")
+                    ).hasRole("ADMIN")
                     .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD)
                     .permitAll()
                     .anyRequest().authenticated()
