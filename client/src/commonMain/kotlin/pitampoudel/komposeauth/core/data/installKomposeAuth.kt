@@ -3,6 +3,7 @@ package pitampoudel.komposeauth.core.data
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
+import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
@@ -57,11 +58,9 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
         bearer {
             loadTokens {
                 val tokenData = authPreferences.tokenData() ?: return@loadTokens null
-                val accessToken = tokenData.accessToken
-                val refreshToken = tokenData.refreshToken
                 BearerTokens(
-                    accessToken = accessToken,
-                    refreshToken = refreshToken
+                    accessToken = tokenData.accessToken,
+                    refreshToken = tokenData.refreshToken
                 )
             }
 
@@ -72,29 +71,25 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
                     authPreferences.clear()
                     return@refreshTokens null
                 }
-                refresh(client, authServerUrl, refreshToken, authPreferences)
+                refresh(client.engine, authServerUrl, refreshToken, authPreferences)
             }
-            // Only send the Authorization header preemptively when:
-            // We still have tokens in preferences. This prevents Ktor from using
-            // previously cached in-memory tokens after logout/clear().
             sendWithoutRequest { builder ->
-                val hosts = (resourceServerUrls + authServerUrl).toSet().map { Url(it).host }.toSet()
+                val hosts = (resourceServerUrls + authServerUrl).toSet()
+                    .map { Url(it).host }.toSet()
                 val host = builder.url.host
-                val targetMatches = hosts.contains(host) || isIPv4(host)
-                val hasTokens = authPreferences.tokenData() != null
-                targetMatches && hasTokens
+                hosts.contains(host) || isIPv4(host)
             }
         }
     }
 }
 
 private suspend fun refresh(
-    client: HttpClient,
+    engine: HttpClientEngine,
     authServerUrl: String,
     refreshToken: String,
     authPreferences: AuthPreferences
 ): BearerTokens? {
-    val refreshClient = HttpClient(client.engine) {
+    val refreshClient = HttpClient(engine) {
         install(DefaultRequest) {
             contentType(ContentType.Application.Json)
         }

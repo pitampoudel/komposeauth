@@ -15,7 +15,7 @@ import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.data.OAuth2Response
 
 @OptIn(ExperimentalSettingsApi::class)
-internal class AuthPreferencesImpl internal constructor(
+internal class AuthPreferencesImpl private constructor(
     val settings: ObservableSettings
 ) : AuthPreferences {
     private val suspendSettings by lazy { settings.toSuspendSettings() }
