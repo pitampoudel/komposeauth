@@ -20,13 +20,3 @@ server:
 
 app:
   base64-encryption-key: ${BASE64_ENCRYPTION_KEY:}
-
-springdoc:
-  swagger-ui:
-    oauth:
-      client-id: swagger-ui
-      use-pkce-with-authorization-code-grant: true
-      scopes:
-        - openid
-        - profile
-        - email
