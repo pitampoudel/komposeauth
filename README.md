@@ -25,7 +25,7 @@ Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Client 
 - email verification
 - Phone OTP,
 - KYC
-- Sentry, Swagger/OpenAPI (eg: https://auth.vardansoft.com/swagger-ui.html)
+- Sentry, Swagger/OpenAPI
 
 ## Shared KMP SDK
 
