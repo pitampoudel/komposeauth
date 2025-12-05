@@ -143,6 +143,7 @@ class KycService(
                 subject = "Your KYC has been approved",
                 template = "email/generic",
                 model = mapOf(
+                    "name" to user.firstName,
                     "title" to "KYC Approved",
                     "message" to "Congratulations! Your KYC has been approved."
                 )
@@ -161,6 +162,7 @@ class KycService(
                 subject = "Your KYC has been rejected",
                 template = "email/generic",
                 model = mapOf(
+                    "name" to user.firstName,
                     "title" to "KYC Rejected",
                     "message" to ("We are sorry to inform you that your KYC has been rejected." + (reason?.let { " Reason: $it" } ?: ""))
                 )

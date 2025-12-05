@@ -4,6 +4,12 @@
 
 <body>
 <div th:fragment="content">
+    <div th:if="${name}">
+        <p>
+            <span>Hi </span><span th:text="${name}">there</span>,
+        </p>
+    </div>
+
     <!-- Main message -->
     <div th:if="${message}">
         <p th:text="${message}">

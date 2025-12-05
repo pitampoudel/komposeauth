@@ -185,6 +185,7 @@ class UserService(
                 subject = "Welcome to ${appConfigProvider.name}!",
                 template = "email/generic",
                 model = mapOf(
+                    "name" to newUser.firstName,
                     "title" to "Welcome to ${appConfigProvider.name}!",
                     "message" to "Please click the button below to verify your email address and continue using our service.",
                     "actionUrl" to oneTimeTokenService.generateEmailVerificationLink(

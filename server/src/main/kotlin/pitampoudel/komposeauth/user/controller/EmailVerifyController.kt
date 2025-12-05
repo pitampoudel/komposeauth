@@ -44,6 +44,7 @@ class EmailVerifyController(
             subject = "Verify Your Email",
             template = "email/generic",
             model = mapOf(
+                "name" to user.firstName,
                 "title" to "Verify your email",
                 "message" to "Click the button below to verify your email address.",
                 "actionUrl" to link,
