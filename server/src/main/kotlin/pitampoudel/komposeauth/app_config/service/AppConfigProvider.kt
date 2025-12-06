@@ -45,12 +45,13 @@ class AppConfigProvider(val appConfigService: AppConfigService) {
 
     val name: String get() = appConfigService.get().name ?: "komposeauth"
     val logoUrl: String? get() = appConfigService.get().logoUrl
-    val facebookLink : String? get() = appConfigService.get().facebookLink
-    val instagramLink : String? get() = appConfigService.get().instagramLink
-    val tiktokLink : String? get() = appConfigService.get().tiktokLink
-    val linkedinLink : String? get() = appConfigService.get().linkedinLink
-    val youtubeLink : String? get() = appConfigService.get().youtubeLink
-    val privacyLink : String? get() = appConfigService.get().privacyLink
+    val websiteUrl: String? get() = appConfigService.get().websiteUrl
+    val facebookLink: String? get() = appConfigService.get().facebookLink
+    val instagramLink: String? get() = appConfigService.get().instagramLink
+    val tiktokLink: String? get() = appConfigService.get().tiktokLink
+    val linkedinLink: String? get() = appConfigService.get().linkedinLink
+    val youtubeLink: String? get() = appConfigService.get().youtubeLink
+    val privacyLink: String? get() = appConfigService.get().privacyLink
 
     val gcpProjectId: String? get() = appConfigService.get().gcpProjectId
     val gcpBucketName: String? get() = appConfigService.get().gcpBucketName

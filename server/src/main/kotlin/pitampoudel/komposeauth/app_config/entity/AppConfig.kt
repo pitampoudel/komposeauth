@@ -13,6 +13,7 @@ data class AppConfig(
     var name: String? = null,
     var logoUrl: String? = null,
     var brandColor: String? = null,
+    var websiteUrl:String? = null,
     var facebookLink:String? = null,
     var instagramLink:String? = null,
     var tiktokLink:String? = null,
@@ -54,6 +55,7 @@ data class AppConfig(
 ) {
     fun clean(): AppConfig {
         if (name.isNullOrBlank()) name = null
+        if (websiteUrl.isNullOrBlank()) websiteUrl = null
         if (facebookLink.isNullOrBlank()) facebookLink = null
         if (instagramLink.isNullOrBlank()) instagramLink = null
         if (tiktokLink.isNullOrBlank()) tiktokLink = null
