@@ -8,10 +8,12 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
+import pitampoudel.komposeauth.data.ApiEndpoints
 
 
 @SpringBootTest
@@ -22,6 +24,28 @@ class AuthApplicationTests {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
+
+
+    @Test
+    fun `login options endpoint returns ok`() {
+        mockMvc.get("/${ApiEndpoints.LOGIN_OPTIONS}").andExpect {
+            status { isOk() }
+        }
+    }
+
+    @Test
+    fun `oauth2 clients endpoint returns ok`() {
+        mockMvc.get("/${ApiEndpoints.OAUTH2_CLIENTS}").andExpect {
+            status { isOk() }
+        }
+    }
+
+    @Test
+    fun `stats endpoint returns ok`() {
+        mockMvc.get("/${ApiEndpoints.STATS}").andExpect {
+            status { isOk() }
+        }
+    }
 
     companion object {
         @Container
