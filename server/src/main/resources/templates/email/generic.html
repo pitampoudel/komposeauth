@@ -1,55 +1,174 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en"
-      th:replace="~{email/base :: body}">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${subject ?: 'Notification'}">Notification</title>
+</head>
 
-<body>
-<div th:fragment="content">
-    <div th:if="${name}">
-        <p>
-            <span>Hi </span><span th:text="${name}">there</span>,
-        </p>
-    </div>
+<body style="margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background-color:#f3f4f6;">
+<table width="100%" style="background-color:#f3f4f6; padding:40px 20px; border-collapse:collapse;">
+    <tr>
+        <td align="center">
 
-    <!-- Main message -->
-    <div th:if="${message}">
-        <p th:text="${message}">
-            Your message content goes here.
-        </p>
-    </div>
+            <table width="600" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 6px rgba(0,0,0,0.1); border-collapse:collapse;">
 
-    <!-- Default message when no content provided -->
-    <div th:if="${message == null}">
-        <p class="text-muted">
-            This is an automated notification from our system.
-        </p>
-    </div>
+                <!-- Header -->
+                <tr>
+                    <td th:if="${!#strings.isEmpty(appName) or !#strings.isEmpty(appTagline)}"
+                        style="background: linear-gradient(135deg, #3C6B99 0%, #2d5278 100%); padding:40px 30px; text-align:center;">
+                        <h1 style="margin:0; color:#ffffff; font-size:28px; font-weight:700;"
+                            th:text="${appName ?: ''}"></h1>
 
-    <!-- Optional additional content -->
-    <div class="info-box" th:if="${infoMessage}">
-        <p th:text="${infoMessage}">
-            Additional information or notes can appear here.
-        </p>
-    </div>
+                        <p th:if="${appTagline}"
+                           style="margin:10px 0 0 0; color:#e0e7ff; font-size:14px;"
+                           th:text="${appTagline}">
+                        </p>
+                    </td>
+                </tr>
 
-    <!-- Optional list of items -->
-    <div th:if="${items != null && !items.isEmpty()}">
-        <p><strong>Details:</strong></p>
-        <ul style="margin: 12px 0; padding-left: 20px; color: #374151;">
-            <li th:each="item : ${items}"
-                th:text="${item}"
-                style="margin: 8px 0;">
-                Item detail
-            </li>
-        </ul>
-    </div>
+                <!-- Content -->
+                <tr>
+                    <td style="padding:40px 30px;">
 
-    <!-- Optional note or warning -->
-    <div th:if="${note}">
-        <p class="text-small text-muted" style="margin-top: 24px; padding: 16px; background-color: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px;">
-            <strong style="color: #92400e;">Note:</strong>
-            <span th:text="${note}" style="color: #78350f;">Important information here</span>
-        </p>
-    </div>
-</div>
+                        <!-- Optional Icon -->
+                        <div th:if="${icon ?: true}" style="text-align:center; margin-bottom:30px;">
+                            <div style="display:inline-flex; width:80px; height:80px; background:#f5f5f5; border-radius:50%; align-items:center; justify-content:center;">
+                                <span style="font-size:40px;" th:text="${icon ?: '✉'}"></span>
+                            </div>
+                        </div>
+
+                        <!-- Title -->
+                        <h2 style="margin:0 0 20px 0; color:#111827; font-size:26px; font-weight:600; text-align:center;"
+                            th:text="${title ?: subject ?: 'Notification'}">
+                            Notification
+                        </h2>
+
+                        <!-- Greeting -->
+                        <p th:if="${!#strings.isEmpty(name)}"
+                           style="margin:0 0 20px 0; color:#4b5563; font-size:16px; text-align:center;">
+                            Hello <strong th:text="${name}">there</strong>,
+                        </p>
+
+                        <!-- Message -->
+                        <p style="margin:0 0 30px 0; color:#4b5563; font-size:15px; line-height:1.6; text-align:center;"
+                           th:text="${message ?: 'You have a new notification.'}">
+                            You have a new notification.
+                        </p>
+
+                        <!-- Optional Alert / Warning -->
+                        <div th:if="${!#strings.isEmpty(alertMessage)}"
+                             style="background:#fffbeb; border-left:4px solid #f59e0b; padding:15px 20px; margin:30px 0; border-radius:6px;">
+                            <p style="margin:0; color:#92400e; font-size:14px;" th:text="${alertMessage}"></p>
+                        </div>
+
+                        <!-- Optional List -->
+                        <div th:if="${steps != null and !steps.isEmpty()}">
+                            <h3 style="margin:30px 0 15px 0; color:#111827; font-size:18px; font-weight:600;">Next steps</h3>
+
+                            <ul style="margin:0; padding-left:20px; color:#4b5563; font-size:15px; line-height:1.8;">
+                                <li th:each="step : ${steps}" th:text="${step}"></li>
+                            </ul>
+                        </div>
+
+                        <!-- Action Button -->
+                        <div th:if="${actionUrl}" style="text-align:center; margin:35px 0;">
+                            <a th:href="${actionUrl}"
+                               th:text="${actionText ?: 'Open Link'}"
+                               style="display:inline-block; background-color:#3C6B99; color:#ffffff; text-decoration:none; padding:16px 48px; border-radius:8px; font-size:18px; font-weight:600;">
+                                Open Link
+                            </a>
+                        </div>
+
+                        <!-- Default fallback -->
+                        <div th:if="${#strings.isEmpty(message) and #strings.isEmpty(actionUrl)}" style="text-align:center; margin-top:20px;">
+                            <p style="color:#6b7280; font-size:14px;">This is an automated system message.</p>
+                        </div>
+
+                        <!-- Support Line -->
+                        <p th:if="${supportEmail}"
+                           style="margin:30px 0 0 0; color:#6b7280; font-size:14px; text-align:center;">
+                            Need help? Contact
+                            <a th:href="'mailto:' + ${supportEmail}"
+                               th:text="${supportEmail}"
+                               style="color:#3C6B99; text-decoration:none; font-weight:500;"></a>
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="background-color:#f9fafb; padding:30px; text-align:center; border-top:1px solid #e5e7eb;">
+
+                        <p th:if="${!#strings.isEmpty(appName) or !#strings.isEmpty(footerTagline)}"
+                           style="margin:0 0 20px 0; color:#6b7280; font-size:14px;">
+                            <strong th:text="${appName ?: ''}"></strong>
+                            <span th:if="${footerTagline}"> - <span th:text="${footerTagline}"></span></span>
+                        </p>
+
+                        <!-- Social Icons (Optional) -->
+                        <div th:if="${!#strings.isEmpty(facebookUrl) or !#strings.isEmpty(instagramUrl) or !#strings.isEmpty(tiktokUrl) or !#strings.isEmpty(linkedinUrl) or !#strings.isEmpty(youtubeUrl)}"
+                             style="margin:20px 0;">
+                            <p style="color:#6b7280; font-size:13px;">Follow us:</p>
+
+                            <table style="margin:0 auto; border-collapse:collapse;">
+                                <tr>
+                                    <td th:if="${facebookUrl}" style="padding:0 8px;">
+                                        <a th:href="${facebookUrl}">
+                                            <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" width="20" alt="Facebook">
+                                        </a>
+                                    </td>
+
+                                    <td th:if="${instagramUrl}" style="padding:0 8px;">
+                                        <a th:href="${instagramUrl}">
+                                            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="20" alt="Instagram">
+                                        </a>
+                                    </td>
+
+                                    <td th:if="${tiktokUrl}" style="padding:0 8px;">
+                                        <a th:href="${tiktokUrl}">
+                                            <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" width="20" alt="TikTok">
+                                        </a>
+                                    </td>
+
+                                    <td th:if="${linkedinUrl}" style="padding:0 8px;">
+                                        <a th:href="${linkedinUrl}">
+                                            <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" width="20" alt="LinkedIn">
+                                        </a>
+                                    </td>
+
+                                    <td th:if="${youtubeUrl}" style="padding:0 8px;">
+                                        <a th:href="${youtubeUrl}">
+                                            <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" width="20" alt="YouTube">
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <p th:if="${companyAddress}"
+                           style="margin:20px 0 0 0; color:#9ca3af; font-size:13px;"
+                           th:text="${companyAddress}">
+                        </p>
+
+                        <p style="margin:5px 0 0 0; color:#9ca3af; font-size:12px;">
+                            <span th:text="${#temporals.createNow().year}"></span>
+                            ©
+                            <span th:text="${appName ?: ''}"></span>
+                        </p>
+
+                        <p style="margin:15px 0 0 0; color:#9ca3af; font-size:11px;">
+                            <a th:if="${unsubscribeUrl}" th:href="${unsubscribeUrl}" style="color:#9ca3af;">Unsubscribe</a>
+                            <span th:if="${!#strings.isEmpty(unsubscribeUrl) and !#strings.isEmpty(privacyUrl)}"> | </span>
+                            <a th:if="${privacyUrl}" th:href="${privacyUrl}" style="color:#9ca3af;">Privacy Policy</a>
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+
+        </td>
+    </tr>
+</table>
 </body>
 </html>

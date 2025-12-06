@@ -116,7 +116,9 @@ class UserService(
     }
 
     fun grantAdmin(userId: String): User {
-        val id = try { ObjectId(userId) } catch (e: Exception) {
+        val id = try {
+            ObjectId(userId)
+        } catch (e: Exception) {
             throw UsernameNotFoundException("Invalid user id: $userId")
         }
         val user = userRepository.findById(id).orElseThrow {
@@ -128,7 +130,9 @@ class UserService(
     }
 
     fun revokeAdmin(userId: String): User {
-        val id = try { ObjectId(userId) } catch (e: Exception) {
+        val id = try {
+            ObjectId(userId)
+        } catch (e: Exception) {
             throw UsernameNotFoundException("Invalid user id: $userId")
         }
         val user = userRepository.findById(id).orElseThrow {
