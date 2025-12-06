@@ -8,10 +8,10 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pitampoudel.komposeauth.core.config.UserContextService
+import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC_ADDRESS
 import pitampoudel.komposeauth.data.ApiEndpoints.KYC_DOCUMENTS
@@ -30,6 +30,7 @@ class KycController(
     val userService: UserService,
     private val userContextService: UserContextService,
     private val kycService: KycService,
+    private val emailService: EmailService,
 ) {
     @Operation(
         summary = "Get KYC information for current user",
@@ -77,7 +78,20 @@ class KycController(
     @PostMapping("/$KYC_DOCUMENTS")
     fun submitDocumentDetails(@Validated @RequestBody data: DocumentInformation): ResponseEntity<KycResponse> {
         val user = userContextService.getUserFromAuthentication()
-        return ResponseEntity.ok(kycService.submitDocumentDetails(user.id, data))
+        val result = kycService.submitDocumentDetails(user.id, data)
+        user.email?.let {
+            emailService.sendHtmlMail(
+                to = it,
+                subject = "KYC Documents Received",
+                template = "email/generic.html",
+                model = mapOf(
+                    "title" to "KYC Submission Received",
+                    "name" to user.fullName,
+                    "message" to "Thank you for submitting your KYC documents. We are now reviewing your information and will notify you once the process is complete. This usually takes 1-2 business days."
+                )
+            )
+        }
+        return ResponseEntity.ok(result)
     }
 
     @Operation(
