@@ -10,8 +10,8 @@ class SerializationTest {
     fun contextLoads() {
         // Test GoogleId serialization/deserialization
         val googleId = Credential.GoogleId("test-token")
-        val googleIdJson = Json.Default.encodeToString<Credential>(googleId)
-        val deserializedGoogleId = Json.Default.decodeFromString<Credential>(googleIdJson) as Credential.GoogleId
+        val googleIdJson = Json.encodeToString<Credential>(googleId)
+        val deserializedGoogleId = Json.decodeFromString<Credential>(googleIdJson) as Credential.GoogleId
 
         println("SerializationTest passed - Credential serialization/deserialization works correctly")
     }
