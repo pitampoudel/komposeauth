@@ -13,7 +13,7 @@ class AppConfigProvider(val appConfigService: AppConfigService) {
 
     val selfBaseUrl: String
         get() {
-            val cfg = appConfigService.getEnv().selfBaseUrl?.trim()
+            val cfg = appConfigService.get().selfBaseUrl?.trim()
             return cfg ?: "http://${getLocalIpAddress()}:8080"
         }
 
@@ -40,43 +40,43 @@ class AppConfigProvider(val appConfigService: AppConfigService) {
     }
 
     fun rpId(): String {
-        return appConfigService.getEnv().rpId ?: URL(selfBaseUrl).host
+        return appConfigService.get().rpId ?: URL(selfBaseUrl).host
     }
 
-    val name: String get() = appConfigService.getEnv().name ?: "komposeauth"
-    val logoUrl: String? get() = appConfigService.getEnv().logoUrl
-    val facebookLink : String? get() = appConfigService.getEnv().facebookLink
-    val instagramLink : String? get() = appConfigService.getEnv().instagramLink
-    val tiktokLink : String? get() = appConfigService.getEnv().tiktokLink
-    val linkedinLink : String? get() = appConfigService.getEnv().linkedinLink
-    val youtubeLink : String? get() = appConfigService.getEnv().youtubeLink
-    val privacyLink : String? get() = appConfigService.getEnv().privacyLink
+    val name: String get() = appConfigService.get().name ?: "komposeauth"
+    val logoUrl: String? get() = appConfigService.get().logoUrl
+    val facebookLink : String? get() = appConfigService.get().facebookLink
+    val instagramLink : String? get() = appConfigService.get().instagramLink
+    val tiktokLink : String? get() = appConfigService.get().tiktokLink
+    val linkedinLink : String? get() = appConfigService.get().linkedinLink
+    val youtubeLink : String? get() = appConfigService.get().youtubeLink
+    val privacyLink : String? get() = appConfigService.get().privacyLink
 
-    val gcpProjectId: String? get() = appConfigService.getEnv().gcpProjectId
-    val gcpBucketName: String? get() = appConfigService.getEnv().gcpBucketName
-    val googleAuthClientId: String? get() = appConfigService.getEnv().googleAuthClientId
-    val googleAuthClientSecret: String? get() = appConfigService.getEnv().googleAuthClientSecret
-    val googleAuthDesktopClientId: String? get() = appConfigService.getEnv().googleAuthDesktopClientId
-    val googleAuthDesktopClientSecret: String? get() = appConfigService.getEnv().googleAuthDesktopClientSecret
-    val allowedAndroidSha256List: String? get() = appConfigService.getEnv().allowedAndroidSha256List
-    val corsAllowedOriginList: String? get() = appConfigService.getEnv().corsAllowedOriginList
-    val twilioAccountSid: String? get() = appConfigService.getEnv().twilioAccountSid
-    val twilioAuthToken: String? get() = appConfigService.getEnv().twilioAuthToken
-    val twilioFromNumber: String? get() = appConfigService.getEnv().twilioFromNumber
-    val twilioVerifyServiceSid: String? get() = appConfigService.getEnv().twilioVerifyServiceSid
-    val smtpHost: String? get() = appConfigService.getEnv().smtpHost
-    val smtpPort: Int? get() = appConfigService.getEnv().smtpPort
-    val smtpUsername: String? get() = appConfigService.getEnv().smtpUsername
-    val smtpPassword: String? get() = appConfigService.getEnv().smtpPassword
-    val smtpFromEmail: String? get() = appConfigService.getEnv().smtpFromEmail
-    val smtpFromName: String get() = appConfigService.getEnv().smtpFromName ?: name
-    val brandColor: String get() = appConfigService.getEnv().brandColor ?: "#4F46E5"
+    val gcpProjectId: String? get() = appConfigService.get().gcpProjectId
+    val gcpBucketName: String? get() = appConfigService.get().gcpBucketName
+    val googleAuthClientId: String? get() = appConfigService.get().googleAuthClientId
+    val googleAuthClientSecret: String? get() = appConfigService.get().googleAuthClientSecret
+    val googleAuthDesktopClientId: String? get() = appConfigService.get().googleAuthDesktopClientId
+    val googleAuthDesktopClientSecret: String? get() = appConfigService.get().googleAuthDesktopClientSecret
+    val allowedAndroidSha256List: String? get() = appConfigService.get().allowedAndroidSha256List
+    val corsAllowedOriginList: String? get() = appConfigService.get().corsAllowedOriginList
+    val twilioAccountSid: String? get() = appConfigService.get().twilioAccountSid
+    val twilioAuthToken: String? get() = appConfigService.get().twilioAuthToken
+    val twilioFromNumber: String? get() = appConfigService.get().twilioFromNumber
+    val twilioVerifyServiceSid: String? get() = appConfigService.get().twilioVerifyServiceSid
+    val smtpHost: String? get() = appConfigService.get().smtpHost
+    val smtpPort: Int? get() = appConfigService.get().smtpPort
+    val smtpUsername: String? get() = appConfigService.get().smtpUsername
+    val smtpPassword: String? get() = appConfigService.get().smtpPassword
+    val smtpFromEmail: String? get() = appConfigService.get().smtpFromEmail
+    val smtpFromName: String get() = appConfigService.get().smtpFromName ?: name
+    val brandColor: String get() = appConfigService.get().brandColor ?: "#4F46E5"
     val supportEmail: String
-        get() = appConfigService.getEnv().supportEmail ?: (smtpFromEmail ?: "support@${rpId()}")
+        get() = appConfigService.get().supportEmail ?: (smtpFromEmail ?: "support@${rpId()}")
     val emailFooterText: String
-        get() = appConfigService.getEnv().emailFooterText ?: "© ${name}. All rights reserved."
-    val sentryDsn: String? get() = appConfigService.getEnv().sentryDsn
-    val samayeApiKey: String? = appConfigService.getEnv().samayeApiKey
+        get() = appConfigService.get().emailFooterText ?: "© ${name}. All rights reserved."
+    val sentryDsn: String? get() = appConfigService.get().sentryDsn
+    val samayeApiKey: String? = appConfigService.get().samayeApiKey
     fun googleClientId(platform: Platform): String? {
         val value = when (platform) {
             Platform.DESKTOP -> googleAuthDesktopClientId

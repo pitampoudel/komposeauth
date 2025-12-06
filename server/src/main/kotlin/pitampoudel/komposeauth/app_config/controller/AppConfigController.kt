@@ -25,7 +25,7 @@ class AppConfigController(
         @RequestParam("key", required = false)
         key: String?,
     ): String {
-        model.addAttribute("config", appConfigService.getEnv())
+        model.addAttribute("config", appConfigService.get())
         return "setup"
     }
 
@@ -38,7 +38,7 @@ class AppConfigController(
     ): String {
         appConfigService.save(form)
         appConfigService.clearCache()
-        model.addAttribute("config", appConfigService.getEnv())
+        model.addAttribute("config", appConfigService.get())
         return "setup"
     }
 }

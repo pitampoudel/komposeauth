@@ -13,7 +13,7 @@ class AppConfigService(
 ) {
     private val cache = AtomicReference<AppConfig?>(null)
 
-    fun getEnv(): AppConfig {
+    fun get(): AppConfig {
         val cached = cache.get()
         if (cached != null) return cached
         val loadedEncrypted = repo.findById(AppConfig.SINGLETON_ID).orElse(AppConfig()).clean()

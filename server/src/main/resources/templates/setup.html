@@ -58,6 +58,46 @@
     </fieldset>
 
     <fieldset>
+        <legend>Social Media Links</legend>
+        <div class="row">
+            <div>
+                <label for="facebookLink">Facebook Link</label>
+                <input id="facebookLink" name="facebookLink" type="url" th:value="${config.facebookLink}"
+                       placeholder="https://facebook.com/yourpage">
+            </div>
+            <div>
+                <label for="instagramLink">Instagram Link</label>
+                <input id="instagramLink" name="instagramLink" type="url" th:value="${config.instagramLink}"
+                       placeholder="https://instagram.com/yourprofile">
+            </div>
+        </div>
+        <div class="row">
+            <div>
+                <label for="tiktokLink">TikTok Link</label>
+                <input id="tiktokLink" name="tiktokLink" type="url" th:value="${config.tiktokLink}"
+                       placeholder="https://tiktok.com/@yourprofile">
+            </div>
+            <div>
+                <label for="linkedinLink">LinkedIn Link</label>
+                <input id="linkedinLink" name="linkedinLink" type="url" th:value="${config.linkedinLink}"
+                       placeholder="https://linkedin.com/company/yourcompany">
+            </div>
+        </div>
+        <div class="row">
+            <div>
+                <label for="youtubeLink">YouTube Link</label>
+                <input id="youtubeLink" name="youtubeLink" type="url" th:value="${config.youtubeLink}"
+                       placeholder="https://youtube.com/@yourchannel">
+            </div>
+            <div>
+                <label for="privacyLink">Privacy Policy Link</label>
+                <input id="privacyLink" name="privacyLink" type="url" th:value="${config.privacyLink}"
+                       placeholder="https://example.com/privacy">
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
         <legend>Google OAuth</legend>
         <div class="row">
             <div>
