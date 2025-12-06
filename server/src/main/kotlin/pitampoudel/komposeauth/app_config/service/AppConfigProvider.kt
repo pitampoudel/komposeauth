@@ -45,6 +45,13 @@ class AppConfigProvider(val appConfigService: AppConfigService) {
 
     val name: String get() = appConfigService.getEnv().name ?: "komposeauth"
     val logoUrl: String? get() = appConfigService.getEnv().logoUrl
+    val facebookLink : String? get() = appConfigService.getEnv().facebookLink
+    val instagramLink : String? get() = appConfigService.getEnv().instagramLink
+    val tiktokLink : String? get() = appConfigService.getEnv().tiktokLink
+    val linkedinLink : String? get() = appConfigService.getEnv().linkedinLink
+    val youtubeLink : String? get() = appConfigService.getEnv().youtubeLink
+    val privacyLink : String? get() = appConfigService.getEnv().privacyLink
+
     val gcpProjectId: String? get() = appConfigService.getEnv().gcpProjectId
     val gcpBucketName: String? get() = appConfigService.getEnv().gcpBucketName
     val googleAuthClientId: String? get() = appConfigService.getEnv().googleAuthClientId

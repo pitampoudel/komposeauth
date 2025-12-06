@@ -39,6 +39,12 @@ class EmailService(
             setVariable("supportEmail", appConfigProvider.supportEmail)
             setVariable("footerText", appConfigProvider.emailFooterText)
             setVariable("baseUrl", appConfigProvider.selfBaseUrl)
+            setVariable("facebookUrl", appConfigProvider.facebookLink)
+            setVariable("instagramUrl", appConfigProvider.instagramLink)
+            setVariable("youtubeUrl", appConfigProvider.youtubeLink)
+            setVariable("linkedinUrl", appConfigProvider.linkedinLink)
+            setVariable("tiktokUrl", appConfigProvider.tiktokLink)
+            setVariable("privacyUrl", appConfigProvider.privacyLink)
             variables.forEach { (k, v) -> setVariable(k, v) }
         }
         return templateEngine.process(template, context)

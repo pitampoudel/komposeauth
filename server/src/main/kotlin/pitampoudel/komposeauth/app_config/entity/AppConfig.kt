@@ -13,6 +13,13 @@ data class AppConfig(
     var name: String? = null,
     var logoUrl: String? = null,
     var brandColor: String? = null,
+    var facebookLink:String? = null,
+    var instagramLink:String? = null,
+    var tiktokLink:String? = null,
+    var linkedinLink:String? = null,
+    var youtubeLink:String? = null,
+    var privacyLink:String? = null,
+
     var supportEmail: String? = null,
     var selfBaseUrl: String? = null,
     var rpId: String? = null,
@@ -47,6 +54,13 @@ data class AppConfig(
 ) {
     fun clean(): AppConfig {
         if (name.isNullOrBlank()) name = null
+        if (facebookLink.isNullOrBlank()) facebookLink = null
+        if (instagramLink.isNullOrBlank()) instagramLink = null
+        if (tiktokLink.isNullOrBlank()) tiktokLink = null
+        if (linkedinLink.isNullOrBlank()) linkedinLink = null
+        if (youtubeLink.isNullOrBlank()) youtubeLink = null
+        if (privacyLink.isNullOrBlank()) privacyLink = null
+
         if (logoUrl.isNullOrBlank()) logoUrl = null
         if (selfBaseUrl.isNullOrBlank()) selfBaseUrl = null
         if (gcpProjectId.isNullOrBlank()) gcpProjectId = null
