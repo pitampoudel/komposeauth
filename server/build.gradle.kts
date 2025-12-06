@@ -43,9 +43,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.json.jvm)
     implementation(libs.kotlinx.serialization.core.jvm)
 
-    // Load .env into Spring Environment so application.yml can use ${VAR}
-    implementation(libs.spring.dotenv)
-
     // Sentry for error tracking
     implementation(platform(libs.sentry.bom))
     implementation(libs.sentry.spring.boot.starter.jakarta)
