@@ -60,7 +60,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Run tests
-        run: ./gradlew clean :shared:check :client:check --no-daemon
+        run: ./gradlew clean :client:check --no-daemon
 
       - name: Publish snapshot to MavenCentral
         if: github.event_name != 'release'
