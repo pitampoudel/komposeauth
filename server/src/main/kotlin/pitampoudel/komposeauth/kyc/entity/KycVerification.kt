@@ -6,6 +6,7 @@ import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.annotation.TypeAlias
+import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.domain.DocumentType
@@ -30,9 +31,11 @@ data class KycVerification(
     val maritalStatus: KycResponse.MaritalStatus?,
     // OTHER
     val pan: String?,
+    @field:Indexed(unique = true, partialFilter = $$"{ 'email': { '$type': 'string' } }")
     val email: String?,
     // DOCUMENT
     val documentType: DocumentType? = null,
+    @field:Indexed(unique = true, partialFilter = $$"{ 'documentNumber': { '$type': 'string' } }")
     val documentNumber: String? = null,
     val documentIssuedDate: LocalDate? = null,
     val documentExpiryDate: LocalDate? = null,
