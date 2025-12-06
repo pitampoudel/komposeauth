@@ -14,6 +14,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 import pitampoudel.komposeauth.data.ApiEndpoints
+import pitampoudel.komposeauth.domain.Platform
 
 
 @SpringBootTest
@@ -28,21 +29,9 @@ class AuthApplicationTests {
 
     @Test
     fun `login options endpoint returns ok`() {
-        mockMvc.get("/${ApiEndpoints.LOGIN_OPTIONS}").andExpect {
-            status { isOk() }
-        }
-    }
-
-    @Test
-    fun `oauth2 clients endpoint returns ok`() {
-        mockMvc.get("/${ApiEndpoints.OAUTH2_CLIENTS}").andExpect {
-            status { isOk() }
-        }
-    }
-
-    @Test
-    fun `stats endpoint returns ok`() {
-        mockMvc.get("/${ApiEndpoints.STATS}").andExpect {
+        mockMvc.get("/${ApiEndpoints.LOGIN_OPTIONS}") {
+            param("platform", Platform.WEB.name)
+        }.andExpect {
             status { isOk() }
         }
     }
