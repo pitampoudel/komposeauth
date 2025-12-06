@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.user.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import org.apache.coyote.BadRequestException
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -9,7 +10,9 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.core.data.MessageResponse
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.data.ApiEndpoints.RESET_PASSWORD
 import pitampoudel.komposeauth.data.UpdateProfileRequest
@@ -22,7 +25,8 @@ import pitampoudel.komposeauth.user.service.UserService
 class PasswordResetController(
     private val userService: UserService,
     private val emailService: EmailService,
-    private val oneTimeTokenService: OneTimeTokenService
+    private val oneTimeTokenService: OneTimeTokenService,
+    private val appConfigProvider: AppConfigProvider
 ) {
     @Operation(
         summary = "Show password reset form",
@@ -73,10 +77,10 @@ class PasswordResetController(
         @RequestParam token: String,
         @RequestParam newPassword: String,
         @RequestParam confirmPassword: String,
-    ): ResponseEntity<MessageResponse> {
+    ): RedirectView {
         val stored = oneTimeTokenService.consume(token, OneTimeToken.Purpose.RESET_PASSWORD)
         val user = userService.findUser(stored.userId.toHexString())
-            ?: return ResponseEntity.notFound().build()
+            ?: throw BadRequestException("User not found")
 
         userService.updateUser(
             userId = user.id,
@@ -85,7 +89,6 @@ class PasswordResetController(
                 confirmPassword = confirmPassword
             )
         )
-
-        return ResponseEntity.ok(MessageResponse("Password updated successfully"))
+        return RedirectView("${appConfigProvider.websiteUrl}?passwordResetSuccess=true")
     }
 }

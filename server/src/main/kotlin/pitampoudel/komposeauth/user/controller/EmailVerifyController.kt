@@ -1,13 +1,17 @@
 package pitampoudel.komposeauth.user.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import org.apache.coyote.BadRequestException
 import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.core.data.MessageResponse
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_EMAIL
@@ -15,13 +19,14 @@ import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.service.UserService
 
-@RestController
+@Controller
 @RequestMapping("/$VERIFY_EMAIL")
 class EmailVerifyController(
     private val oneTimeTokenService: OneTimeTokenService,
     private val emailService: EmailService,
     private val userService: UserService,
     val userContextService: UserContextService,
+    val appConfigProvider: AppConfigProvider
 ) {
 
     @Operation(
@@ -61,17 +66,13 @@ class EmailVerifyController(
         description = "Verifies the user's email address using the provided token."
     )
     @GetMapping
-    fun verifyEmail(@RequestParam("token") token: String): ResponseEntity<MessageResponse> {
+    fun verifyEmail(@RequestParam("token") token: String): RedirectView {
         val stored = oneTimeTokenService.consume(token, OneTimeToken.Purpose.VERIFY_EMAIL)
         val user = userService.findUser(stored.userId.toHexString())
-            ?: return ResponseEntity.notFound().build()
-
-        if (user.emailVerified) {
-            return ResponseEntity.ok(MessageResponse("Email already verified"))
-        }
+            ?: throw BadRequestException("User not found")
 
         userService.emailVerified(user.id)
 
-        return ResponseEntity.ok(MessageResponse("Email successfully verified"))
+        return RedirectView("${appConfigProvider.websiteUrl}?emailVerified=true")
     }
 }
