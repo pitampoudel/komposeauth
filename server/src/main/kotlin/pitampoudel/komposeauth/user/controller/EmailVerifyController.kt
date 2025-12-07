@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.user.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import jakarta.servlet.http.HttpServletRequest
 import org.apache.coyote.BadRequestException
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
@@ -14,6 +15,7 @@ import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.service.EmailService
+import pitampoudel.komposeauth.core.utils.findCurrentBaseUrl
 import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_EMAIL
 import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.service.OneTimeTokenService
@@ -34,7 +36,7 @@ class EmailVerifyController(
         description = "Sends an email with a verification link to the currently authenticated user's email address."
     )
     @PostMapping
-    fun sendVerificationEmail(): ResponseEntity<MessageResponse> {
+    fun sendVerificationEmail(request: HttpServletRequest): ResponseEntity<MessageResponse> {
         val user = userContextService.getUserFromAuthentication()
 
         // Check if user email exists
@@ -42,7 +44,10 @@ class EmailVerifyController(
             return ResponseEntity.badRequest().body(MessageResponse("User email is not set."))
         }
 
-        val link = oneTimeTokenService.generateEmailVerificationLink(userId = user.id)
+        val link = oneTimeTokenService.generateEmailVerificationLink(
+            userId = user.id,
+            baseUrl = findCurrentBaseUrl(request)
+        )
 
         val sent = emailService.sendHtmlMail(
             to = user.email,

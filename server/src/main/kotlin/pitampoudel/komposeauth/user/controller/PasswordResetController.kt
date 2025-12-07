@@ -10,9 +10,11 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import jakarta.servlet.http.HttpServletRequest
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.EmailService
+import pitampoudel.komposeauth.core.utils.findCurrentBaseUrl
 import pitampoudel.komposeauth.data.ApiEndpoints.RESET_PASSWORD
 import pitampoudel.komposeauth.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.entity.OneTimeToken
@@ -45,11 +47,17 @@ class PasswordResetController(
         description = "Sends a password reset link to the user's email address."
     )
     @PutMapping
-    fun sendResetLink(@RequestParam email: String): ResponseEntity<MessageResponse> {
+    fun sendResetLink(
+        @RequestParam email: String,
+        request: HttpServletRequest
+    ): ResponseEntity<MessageResponse> {
         val user = userService.findByUserName(email)
             ?: return ResponseEntity.badRequest().body(MessageResponse("No user with that email"))
 
-        val link = oneTimeTokenService.generateResetPasswordLink(userId = user.id)
+        val link = oneTimeTokenService.generateResetPasswordLink(
+            userId = user.id,
+            baseUrl = findCurrentBaseUrl(request)
+        )
 
         val sent = emailService.sendHtmlMail(
             to = email,

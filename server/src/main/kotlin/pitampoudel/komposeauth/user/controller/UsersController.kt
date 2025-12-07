@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.user.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.core.data.PageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
+import pitampoudel.komposeauth.core.utils.findCurrentBaseUrl
 import pitampoudel.komposeauth.data.ApiEndpoints
 import pitampoudel.komposeauth.data.ApiEndpoints.ME
 import pitampoudel.komposeauth.data.ApiEndpoints.STATS
@@ -43,10 +45,13 @@ class UsersController(
         summary = "Create user",
         description = "Creates a new user account",
     )
-    fun create(@RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
+    fun create(
+        @RequestBody request: CreateUserRequest,
+        req: HttpServletRequest
+    ): ResponseEntity<UserResponse> {
         return ResponseEntity.ok()
             .body(
-                userService.createUser(request).mapToResponseDto(false)
+                userService.createUser(findCurrentBaseUrl(req), request).mapToResponseDto(false)
             )
 
     }
@@ -56,9 +61,12 @@ class UsersController(
         summary = "Create a user or return existing",
         description = "Creates a new user account or returns existing user",
     )
-    fun findOrCreateUser(@RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
+    fun findOrCreateUser(
+        @RequestBody request: CreateUserRequest,
+        req: HttpServletRequest
+    ): ResponseEntity<UserResponse> {
         return ResponseEntity.ok().body(
-            userService.findOrCreateUser(request).let {
+            userService.findOrCreateUser(findCurrentBaseUrl(req), request).let {
                 it.mapToResponseDto(kycService.isVerified(it.id))
             }
         )

@@ -25,6 +25,7 @@ import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService
+import pitampoudel.komposeauth.core.utils.findCurrentBaseUrl
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.data.CreateUserRequest
 import pitampoudel.komposeauth.data.Credential
@@ -181,9 +182,9 @@ class UserService(
         return userRepository.findByUserName(value)
     }
 
-    fun createUser(req: CreateUserRequest): User {
+    fun createUser(baseUrl: String?, req: CreateUserRequest): User {
         val newUser = req.mapToEntity(passwordEncoder)
-        if (newUser.email != null && !newUser.emailVerified) {
+        if (newUser.email != null && !newUser.emailVerified && baseUrl != null) {
             val emailSent = emailService.sendHtmlMail(
                 to = newUser.email,
                 subject = "Welcome to ${appConfigProvider.name}!",
@@ -193,7 +194,8 @@ class UserService(
                     "title" to "Welcome to ${appConfigProvider.name}!",
                     "message" to "Please click the button below to verify your email address and continue using our service.",
                     "actionUrl" to oneTimeTokenService.generateEmailVerificationLink(
-                        userId = newUser.id
+                        userId = newUser.id,
+                        baseUrl = baseUrl
                     ),
                     "actionText" to "Verify Email"
                 )
@@ -234,14 +236,14 @@ class UserService(
         )
     }
 
-    fun findOrCreateUser(req: CreateUserRequest): User {
+    fun findOrCreateUser(baseUrl: String?, req: CreateUserRequest): User {
         val emailOrPhone = req.email ?: req.phoneNumber?.let {
             parsePhoneNumber(
                 countryNameCode = null,
                 phoneNumber = it
             )?.fullNumberInInternationalFormat
         }
-        return emailOrPhone?.let { findByUserName(emailOrPhone) } ?: createUser(req)
+        return emailOrPhone?.let { findByUserName(emailOrPhone) } ?: createUser(baseUrl, req)
     }
 
     fun initiatePhoneNumberUpdate(@Valid req: UpdatePhoneNumberRequest): Boolean {
@@ -288,6 +290,7 @@ class UserService(
             idToken = idToken
         )
         val user = findOrCreateUser(
+            baseUrl = null,
             CreateUserRequest(
                 email = payload["email"] as String,
                 firstName = payload["given_name"] as String,
