@@ -60,7 +60,7 @@ class WebSecurityConfig {
                             .httpOnly(true)
                             .secure(request.isSecure)
                             .path("/")
-                            .sameSite("None")
+                            .sameSite(if (request.isSecure) "None" else "Lax")
                             .maxAge(0)
                             .build()
                         response.addHeader("Set-Cookie", clearCookie.toString())
