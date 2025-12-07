@@ -169,7 +169,7 @@ class WebAuthorizationConfig() {
                                 "User not found with id: $userId"
                             )
                             OidcUserInfo.builder()
-                                .claim("id", user.id.toHexString())
+                                .claim("sub", user.id.toHexString())
                                 .claim("email", user.email)
                                 .claim("emailVerified", user.emailVerified)
                                 .claim("phoneNumber", user.phoneNumber)
