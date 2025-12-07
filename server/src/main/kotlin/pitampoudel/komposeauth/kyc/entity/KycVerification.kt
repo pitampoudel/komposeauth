@@ -29,10 +29,6 @@ data class KycVerification(
     val fatherName: String?,
     val grandFatherName: String?,
     val maritalStatus: KycResponse.MaritalStatus?,
-    // OTHER
-    val pan: String?,
-    @field:Indexed(unique = true, partialFilter = $$"{ 'email': { '$type': 'string' } }")
-    val email: String?,
     // DOCUMENT
     val documentType: DocumentType? = null,
     @field:Indexed(unique = true, partialFilter = $$"{ 'documentNumber': { '$type': 'string' } }")

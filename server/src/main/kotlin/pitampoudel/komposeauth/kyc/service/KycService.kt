@@ -54,9 +54,7 @@ class KycService(
             gender = data.gender,
             fatherName = data.fatherName,
             grandFatherName = data.grandFatherName,
-            maritalStatus = data.maritalStatus,
-            pan = data.pan,
-            email = data.email
+            maritalStatus = data.maritalStatus
         ) ?: KycVerification(
             userId = userId,
             country = data.country,
@@ -68,9 +66,7 @@ class KycService(
             gender = data.gender,
             fatherName = data.fatherName,
             grandFatherName = data.grandFatherName,
-            maritalStatus = data.maritalStatus,
-            pan = data.pan,
-            email = data.email
+            maritalStatus = data.maritalStatus
         )
 
         if (existing?.status in KycResponse.Status.submitted() && existing != newKycData) {

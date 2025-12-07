@@ -127,24 +127,6 @@ class KycViewModel internal constructor(
                     )
                 }
 
-                is KycEvent.PanChanged -> _state.update {
-                    it.copy(
-                        personalInfo = it.personalInfo.copy(
-                            pan = event.value,
-                            panError = null
-                        )
-                    )
-                }
-
-                is KycEvent.EmailChanged -> _state.update {
-                    it.copy(
-                        personalInfo = it.personalInfo.copy(
-                            email = event.value,
-                            emailError = null
-                        )
-                    )
-                }
-
                 // Current Address Events
                 is KycEvent.CurrentAddressCountryChanged -> _state.update { s ->
                     s.copy(
@@ -340,8 +322,7 @@ class KycViewModel internal constructor(
         _state.update {
             it.copy(progress = 0.0f)
         }
-        val res = client.fetchMyKyc()
-        when (res) {
+        when (val res = client.fetchMyKyc()) {
             is Result.Error -> _state.update {
                 it.copy(infoMsg = res.message)
             }
@@ -405,9 +386,7 @@ class KycViewModel internal constructor(
                     grandFatherName = latestRecord?.personalInformation?.grandFatherName
                         ?: s.personalInfo.grandFatherName,
                     maritalStatus = latestRecord?.personalInformation?.maritalStatus
-                        ?: s.personalInfo.maritalStatus,
-                    pan = latestRecord?.personalInformation?.pan ?: s.personalInfo.pan,
-                    email = latestRecord?.personalInformation?.email ?: s.personalInfo.email
+                        ?: s.personalInfo.maritalStatus
                 ),
                 currentAddress = latestRecord?.currentAddress?.let {
                     AddressState.fromData(it)

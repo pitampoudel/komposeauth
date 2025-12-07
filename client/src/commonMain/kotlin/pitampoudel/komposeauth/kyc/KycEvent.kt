@@ -19,8 +19,6 @@ sealed interface KycEvent {
     data class FatherNameChanged(val value: String) : KycEvent
     data class GrandFatherNameChanged(val value: String) : KycEvent
     data class MaritalStatusChanged(val value: KycResponse.MaritalStatus?) : KycEvent
-    data class PanChanged(val value: String) : KycEvent
-    data class EmailChanged(val value: String) : KycEvent
 
     // Address Details Events
     data class CurrentAddressCountryChanged(val value: String) : KycEvent

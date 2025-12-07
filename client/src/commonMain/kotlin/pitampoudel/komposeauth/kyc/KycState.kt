@@ -77,11 +77,7 @@ data class PersonalInformationState(
     val grandFatherName: String = "",
     val grandFatherNameError: GeneralValidationError? = null,
     val maritalStatus: KycResponse.MaritalStatus? = null,
-    val maritalStatusError: GeneralValidationError? = null,
-    val pan: String = "",
-    val panError: GeneralValidationError? = null,
-    val email: String = "",
-    val emailError: GeneralValidationError? = null
+    val maritalStatusError: GeneralValidationError? = null
 ) {
 
     fun hasError(): Boolean {
@@ -94,9 +90,7 @@ data class PersonalInformationState(
                 genderError != null ||
                 fatherNameError != null ||
                 grandFatherNameError != null ||
-                maritalStatusError != null ||
-                panError != null ||
-                emailError != null
+                maritalStatusError != null
     }
 
     fun toRequest(): PersonalInformation {
@@ -112,9 +106,7 @@ data class PersonalInformationState(
             gender = gender!!,
             fatherName = fatherName,
             grandFatherName = grandFatherName,
-            maritalStatus = maritalStatus!!,
-            pan = pan,
-            email = email
+            maritalStatus = maritalStatus!!
         )
     }
 }

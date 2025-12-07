@@ -16,9 +16,7 @@ data class PersonalInformation(
     val gender: KycResponse.Gender,
     val fatherName: String?,
     val grandFatherName: String?,
-    val maritalStatus: KycResponse.MaritalStatus?,
-    val pan: String?,
-    val email: String?
+    val maritalStatus: KycResponse.MaritalStatus?
 )
 
 
