@@ -86,10 +86,9 @@ class PasswordResetController(
         @RequestParam newPassword: String,
         @RequestParam confirmPassword: String
     ): ResponseEntity<MessageResponse> {
-        val stored = oneTimeTokenService.consume(token, OneTimeToken.Purpose.RESET_PASSWORD)
+        val stored = oneTimeTokenService.findValidToken(token, OneTimeToken.Purpose.RESET_PASSWORD)
         val user = userService.findUser(stored.userId.toHexString())
             ?: throw BadRequestException("User not found")
-
         userService.updateUser(
             userId = user.id,
             req = UpdateProfileRequest(
@@ -97,6 +96,7 @@ class PasswordResetController(
                 confirmPassword = confirmPassword
             )
         )
+        oneTimeTokenService.consume(token, OneTimeToken.Purpose.RESET_PASSWORD)
         return ResponseEntity.ok(MessageResponse("Password reset successful"))
     }
 }
