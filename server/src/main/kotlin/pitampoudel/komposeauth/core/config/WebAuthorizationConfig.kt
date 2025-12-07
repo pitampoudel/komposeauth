@@ -95,24 +95,21 @@ class WebAuthorizationConfig() {
                 }
 
                 else -> {
-                    if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN) {
-                        val principal = context.getPrincipal<UsernamePasswordAuthenticationToken>()
-                        val user = userService.findByUserName(principal.name)
-                            ?: throw AccountNotFoundException("User not found with email: ${principal.name}")
-                        context.claims.claim(
-                            "authorities",
-                            principal.authorities.map { it.authority }
-                        )
-                        context.claims.claim("email", user.email)
-                        context.claims.claim("givenName", user.firstName)
-                        context.claims.claim("familyName", user.lastName)
-                        context.claims.claim("picture", user.picture)
-                        context.claims.claim("kycVerified", kycService.isVerified(user.id))
-                        context.claims.claim("phoneNumberVerified", user.phoneNumberVerified)
-                    }
+                    val principal = context.getPrincipal<UsernamePasswordAuthenticationToken>()
+                    val user = userService.findByUserName(
+                        principal.name
+                    ) ?: throw AccountNotFoundException(
+                        "User not found with email: ${principal.name}"
+                    )
+                    context.claims.claim("authorities", principal.authorities.map { it.authority })
+                    context.claims.claim("email", user.email)
+                    context.claims.claim("givenName", user.firstName)
+                    context.claims.claim("familyName", user.lastName)
+                    context.claims.claim("picture", user.picture)
+                    context.claims.claim("kycVerified", kycService.isVerified(user.id))
+                    context.claims.claim("phoneNumberVerified", user.phoneNumberVerified)
                 }
             }
-
         }
     }
 
