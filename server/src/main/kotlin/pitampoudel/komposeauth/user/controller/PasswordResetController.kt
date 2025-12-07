@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.EmailService
@@ -76,8 +75,8 @@ class PasswordResetController(
     fun resetPassword(
         @RequestParam token: String,
         @RequestParam newPassword: String,
-        @RequestParam confirmPassword: String,
-    ): RedirectView {
+        @RequestParam confirmPassword: String
+    ): ResponseEntity<MessageResponse> {
         val stored = oneTimeTokenService.consume(token, OneTimeToken.Purpose.RESET_PASSWORD)
         val user = userService.findUser(stored.userId.toHexString())
             ?: throw BadRequestException("User not found")
@@ -89,6 +88,6 @@ class PasswordResetController(
                 confirmPassword = confirmPassword
             )
         )
-        return RedirectView("${appConfigProvider.websiteUrl}?passwordResetSuccess=true")
+        return ResponseEntity.ok(MessageResponse("Password reset successful"))
     }
 }
