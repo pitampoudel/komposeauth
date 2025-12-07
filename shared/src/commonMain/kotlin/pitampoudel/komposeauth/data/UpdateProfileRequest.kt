@@ -24,12 +24,17 @@ data class UpdateProfileRequest(
         require(password == confirmPassword) {
             "Password and confirmation password must match"
         }
-        require(givenName == null || givenName.isNotBlank())
-        require(familyName == null || familyName.isNotBlank())
-        require(password == null || Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$").matches(password))
-        require(password == confirmPassword) {
-            "Password and confirmation password must match"
+        require(givenName == null || givenName.isNotBlank()) {
+            "Given name cannot be blank"
         }
-        require(email.isNullOrBlank() || email.isValidEmail())
+        require(familyName == null || familyName.isNotBlank()) {
+            "Family name cannot be blank"
+        }
+        require(password == null || Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$").matches(password)) {
+            "Password must contain at least one uppercase letter, one lowercase letter, and one digit"
+        }
+        require(email.isNullOrBlank() || email.isValidEmail()){
+            "Invalid email"
+        }
     }
 }
