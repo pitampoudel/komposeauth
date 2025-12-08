@@ -10,7 +10,9 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import pitampoudel.core.data.asResource
+import pitampoudel.core.data.download
 import pitampoudel.core.data.safeApiCall
+import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.data.ApiEndpoints.DEACTIVATE
@@ -172,5 +174,9 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
         httpClient.authProvider<BearerAuthProvider>()?.clearToken()
         return result
+    }
+
+    override suspend fun download(url: String): Result<KmpFile> {
+        return httpClient.download(url)
     }
 }

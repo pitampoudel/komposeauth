@@ -11,26 +11,25 @@ import io.ktor.serialization.JsonConvertException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.supervisorScope
 import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.domain.Result
 import pitampoudel.core.presentation.InfoMessage
 import kotlin.coroutines.cancellation.CancellationException
 
-suspend fun downloadAll(
+suspend fun HttpClient.downloadAll(
     urls: List<String>
 ): Result<List<KmpFile>> {
     return safeApiCall {
-        val client = HttpClient()
         var deferredList: List<Deferred<KmpFile>> = listOf()
-        coroutineScope {
+        supervisorScope {
             deferredList = urls.map { imageUrl ->
                 async {
-                    val response: HttpResponse = client.get(imageUrl)
+                    val response: HttpResponse = get(imageUrl)
                     KmpFile(
                         byteArray = response.readRawBytes(),
                         mimeType = response.contentType()?.toString() ?: "application/octet-stream",
-                        name = imageUrl.substringAfterLast("/")
+                        name = imageUrl.substringAfterLast("/", missingDelimiterValue = "file")
                     )
                 }
             }
@@ -39,40 +38,25 @@ suspend fun downloadAll(
     }
 }
 
-suspend fun download(
-    url: String
-): Result<KmpFile> {
-    val res = safeApiCall {
-        val client = HttpClient()
-        val response: HttpResponse = client.get(url)
-        Result.Success(
-            KmpFile(
-                byteArray = response.readRawBytes(),
-                mimeType = response.contentType()?.toString() ?: "application/octet-stream",
-                name = url.substringAfterLast("/")
-            )
+suspend fun HttpClient.download(url: String) = safeApiCall {
+    val response = get(url)
+    Result.Success(
+        KmpFile(
+            byteArray = response.readRawBytes(),
+            mimeType = response.contentType()?.toString() ?: "application/octet-stream",
+            name = url.substringAfterLast("/")
         )
-    }
-    return res
+    )
 }
 
 suspend fun HttpResponse.catchErrorResponse(): Result.Error.Http {
-    return try {
-        val message = body<MessageResponse>().message
-        Result.Error.Http(InfoMessage.Error(message), this.status)
-    } catch (e: JsonConvertException) {
-        val message = body<ErrorResponse>().error
-        Result.Error.Http(InfoMessage.Error(message), this.status)
-    } catch (e: JsonConvertException) {
-        val message = body<DetailResponse>().detail
-        Result.Error.Http(InfoMessage.Error(message), this.status)
-    } catch (e: JsonConvertException) {
-        val message = body<GoogleErrorResponse>().error.message
-        Result.Error.Http(InfoMessage.Error(message), this.status)
-    } catch (e: JsonConvertException) {
-        val message = bodyAsText()
-        Result.Error.Http(InfoMessage.Error(message), this.status)
-    }
+    val rawText = bodyAsText()
+    val message = runCatching { body<MessageResponse>().message }.getOrNull()
+        ?: runCatching { body<ErrorResponse>().error }.getOrNull()
+        ?: runCatching { body<DetailResponse>().detail }.getOrNull()
+        ?: runCatching { body<GoogleErrorResponse>().error.message }.getOrNull()
+        ?: rawText
+    return Result.Error.Http(InfoMessage.Error(message), status)
 }
 
 suspend inline fun <reified T> HttpResponse.asResource(parse: HttpResponse.() -> T): Result<T> {

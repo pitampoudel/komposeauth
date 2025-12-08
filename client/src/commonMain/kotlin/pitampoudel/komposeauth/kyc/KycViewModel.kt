@@ -339,13 +339,13 @@ class KycViewModel internal constructor(
 
     suspend fun refillAll(latestRecord: KycResponse?) {
         val documentFront = latestRecord?.documentInformation?.documentFrontUrl?.let {
-            download(url = it)
+            client.download(url = it)
         }
         val documentBack = latestRecord?.documentInformation?.documentBackUrl?.let {
-            download(url = it)
+            client.download(url = it)
         }
         val selfie = latestRecord?.documentInformation?.selfieUrl?.let {
-            download(url = it)
+            client.download(url = it)
         }
 
         if (documentFront != null && documentFront is Result.Error) {

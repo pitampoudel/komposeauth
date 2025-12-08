@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.core.domain
 
 import io.ktor.client.statement.HttpResponse
+import pitampoudel.core.domain.KmpFile
 import pitampoudel.komposeauth.data.CountryResponse
 import pitampoudel.komposeauth.data.Credential
 import pitampoudel.komposeauth.data.DocumentInformation
@@ -36,4 +37,5 @@ internal interface AuthClient {
     suspend fun fetchWebAuthnRegistrationOptions(): Result<String>
     suspend fun registerPublicKey(request: RegisterPublicKeyRequest): Result<HttpResponse>
     suspend fun logout(): Result<HttpResponse>
+    suspend fun download(url: String): Result<KmpFile>
 }
