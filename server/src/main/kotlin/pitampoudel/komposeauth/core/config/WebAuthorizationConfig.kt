@@ -179,8 +179,6 @@ class WebAuthorizationConfig() {
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
         kycService: KycService,
-        jwtAuthenticationConverter: JwtAuthenticationConverter,
-        bearerTokenResolver: BearerTokenResolver,
         authenticationEntryPoint: AuthenticationEntryPoint
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
@@ -226,17 +224,8 @@ class WebAuthorizationConfig() {
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
-            .oauth2ResourceServer { conf ->
-                conf.bearerTokenResolver(bearerTokenResolver)
-                conf.jwt {
-                    it.jwtAuthenticationConverter(jwtAuthenticationConverter)
-                }
-                conf.authenticationEntryPoint(authenticationEntryPoint)
-            }
             .authorizeHttpRequests { auth ->
-                auth
-                    .requestMatchers("/.well-known/**", "/oauth2/jwks").permitAll()
-                    .anyRequest().authenticated()
+                auth.anyRequest().authenticated()
             }
             .exceptionHandling { ex ->
                 ex.authenticationEntryPoint(authenticationEntryPoint)
