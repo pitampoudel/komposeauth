@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import pitampoudel.core.data.ErrorSnapshotResponse
-import pitampoudel.core.domain.now
 import javax.security.auth.login.AccountLockedException
 import javax.security.auth.login.AccountNotFoundException
 import kotlin.time.ExperimentalTime
@@ -29,6 +28,9 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 class GlobalExceptionHandler {
 
+    fun WebRequest.path() = getDescription(false).removePrefix("uri=")
+
+
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleJsonParseException(
         ex: HttpMessageNotReadableException,
@@ -36,10 +38,9 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorSnapshotResponse> {
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = ex.rootCause?.message ?: ex.message
                 ?: "Invalid request body: The provided JSON is malformed or invalid.",
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ),
             HttpStatus.BAD_REQUEST
         )
@@ -52,9 +53,8 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorSnapshotResponse> {
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = ex.message ?: "Method not supported",
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ),
             HttpStatus.METHOD_NOT_ALLOWED
         )
@@ -67,9 +67,8 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorSnapshotResponse> {
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = "A resource with the same unique identifier already exists.",
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ),
             HttpStatus.CONFLICT
         )
@@ -82,9 +81,8 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorSnapshotResponse> {
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = ex.rootCause?.message ?: ex.message ?: "Data integrity violation",
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ),
             HttpStatus.CONFLICT
         )
@@ -97,9 +95,8 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorSnapshotResponse> {
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = ex.message ?: "Invalid argument provided.",
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ),
             HttpStatus.BAD_REQUEST
         )
@@ -112,9 +109,8 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorSnapshotResponse> {
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = ex.message,
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ),
             HttpStatus.NOT_FOUND
         )
@@ -127,9 +123,8 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorSnapshotResponse> {
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = ex.message,
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ),
             HttpStatus.NOT_FOUND
         )
@@ -145,9 +140,8 @@ class GlobalExceptionHandler {
         }
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = "Validation failed: $errors",
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ),
             HttpStatus.BAD_REQUEST
         )
@@ -160,9 +154,8 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorSnapshotResponse> {
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = ex.message,
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ),
             HttpStatus.BAD_REQUEST
         )
@@ -175,9 +168,8 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorSnapshotResponse> {
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = ex.message ?: "You do not have permission to perform this action.",
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ),
             HttpStatus.FORBIDDEN
         )
@@ -190,9 +182,8 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorSnapshotResponse> {
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = ex.message ?: "This operation is not supported.",
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ),
             HttpStatus.NOT_IMPLEMENTED
         )
@@ -205,9 +196,8 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorSnapshotResponse> {
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = ex.message ?: "Unsupported media type",
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ),
             HttpStatus.UNSUPPORTED_MEDIA_TYPE
         )
@@ -221,9 +211,8 @@ class GlobalExceptionHandler {
         Sentry.captureException(ex)
         return ResponseEntity(
             ErrorSnapshotResponse(
-                timestamp = now(),
                 message = ex.message ?: "An unexpected error occurred",
-                path = request.getDescription(false).removePrefix("uri=")
+                path = request.path()
             ), HttpStatus.INTERNAL_SERVER_ERROR
         )
     }

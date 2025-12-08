@@ -3,6 +3,7 @@ package pitampoudel.core.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import pitampoudel.core.domain.now
 import kotlin.time.Instant
 
 @Serializable
@@ -57,7 +58,7 @@ data class PageResponse<T>(
 
 @Serializable
 data class ErrorSnapshotResponse(
-    val timestamp: Instant,
+    val timestamp: Instant = now(),
     val message: String?,
     val path: String
 )
