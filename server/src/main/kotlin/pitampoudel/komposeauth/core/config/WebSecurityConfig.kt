@@ -73,7 +73,7 @@ class WebSecurityConfig {
                     }
             }
             .sessionManagement { sessions ->
-                sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
             .oauth2ResourceServer { conf ->
                 conf.bearerTokenResolver(bearerTokenResolver)

@@ -222,7 +222,7 @@ class WebAuthorizationConfig() {
                 }
             }
             .sessionManagement { sessions ->
-                sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
             .authorizeHttpRequests { auth ->
                 auth.anyRequest().authenticated()
