@@ -3,6 +3,7 @@ package pitampoudel.core.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.time.Instant
 
 @Serializable
 data class MessageResponse(
@@ -52,4 +53,11 @@ data class PageResponse<T>(
     val totalItems: Long,
     @SerialName("hasNext")
     val hasNext: Boolean
+)
+
+@Serializable
+data class ErrorSnapshotResponse(
+    val timestamp: Instant,
+    val message: String?,
+    val path: String
 )
