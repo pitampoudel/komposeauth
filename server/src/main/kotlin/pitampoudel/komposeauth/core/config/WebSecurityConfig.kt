@@ -13,16 +13,15 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
-import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import pitampoudel.core.data.MessageResponse
-import pitampoudel.komposeauth.data.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.data.ApiEndpoints
+import pitampoudel.komposeauth.data.Constants.ACCESS_TOKEN_COOKIE_NAME
 import java.net.URLEncoder
 
 @Configuration
@@ -47,7 +46,8 @@ class WebSecurityConfig {
     fun securityFilterChain(
         http: HttpSecurity,
         jwtAuthenticationConverter: JwtAuthenticationConverter,
-        objectMapper: ObjectMapper
+        objectMapper: ObjectMapper,
+        bearerTokenResolver: BearerTokenResolver
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -76,21 +76,7 @@ class WebSecurityConfig {
                 sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
             .oauth2ResourceServer { conf ->
-                conf.bearerTokenResolver { request ->
-                    val delegate: BearerTokenResolver = DefaultBearerTokenResolver()
-                    // 1. Try Authorization header first
-                    val fromHeader = try {
-                        delegate.resolve(request)
-                    } catch (ex: Exception) {
-                        null // swallow it → public endpoints remain unaffected
-                    }
-                    return@bearerTokenResolver if (!fromHeader.isNullOrBlank()) fromHeader else {
-                        // 2. Then try cookie (ACCESS_TOKEN)
-                        val cookie =
-                            request.cookies?.firstOrNull { it.name == ACCESS_TOKEN_COOKIE_NAME }
-                        cookie?.value
-                    }
-                }
+                conf.bearerTokenResolver(bearerTokenResolver)
                 conf.jwt {
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }

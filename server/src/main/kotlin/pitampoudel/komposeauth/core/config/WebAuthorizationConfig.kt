@@ -29,12 +29,15 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
+import pitampoudel.komposeauth.data.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.data.KycResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.service.UserService
@@ -65,6 +68,25 @@ class WebAuthorizationConfig() {
             val expiresAt =
                 issuedAt.plus(context.registeredClient.tokenSettings.refreshTokenTimeToLive)
             return OAuth2RefreshToken(this.refreshTokenGenerator.generateKey(), issuedAt, expiresAt)
+        }
+    }
+
+    @Bean
+    fun bearerTokenResolver(): BearerTokenResolver {
+        return BearerTokenResolver { request ->
+
+            val delegate: BearerTokenResolver = DefaultBearerTokenResolver()
+            // 1. Try Authorization header first
+            val fromHeader = try {
+                delegate.resolve(request)
+            } catch (ex: Exception) {
+                null // swallow it → public endpoints remain unaffected
+            }
+            if (!fromHeader.isNullOrBlank()) fromHeader else {
+                // 2. Then try cookie (ACCESS_TOKEN)
+                val cookie = request.cookies?.firstOrNull { it.name == ACCESS_TOKEN_COOKIE_NAME }
+                cookie?.value
+            }
         }
     }
 
@@ -142,7 +164,9 @@ class WebAuthorizationConfig() {
         http: HttpSecurity,
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
-        kycService: KycService
+        kycService: KycService,
+        jwtAuthenticationConverter: JwtAuthenticationConverter,
+        bearerTokenResolver: BearerTokenResolver
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
 
@@ -186,6 +210,12 @@ class WebAuthorizationConfig() {
             }
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            }
+            .oauth2ResourceServer { conf ->
+                conf.bearerTokenResolver(bearerTokenResolver)
+                conf.jwt {
+                    it.jwtAuthenticationConverter(jwtAuthenticationConverter)
+                }
             }
             .authorizeHttpRequests {
                 it.anyRequest().authenticated()
