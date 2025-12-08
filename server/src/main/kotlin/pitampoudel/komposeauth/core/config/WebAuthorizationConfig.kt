@@ -31,6 +31,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
+import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.client.RestTemplate
@@ -159,6 +160,19 @@ class WebAuthorizationConfig() {
     }
 
     @Bean
+    fun loginRedirectEntryPoint() = AuthenticationEntryPoint { request, response, _ ->
+        response.status = 302
+        response.setHeader(
+            "Location",
+            "/login-bridge.html?continue=${
+                URLEncoder.encode(
+                    UrlUtils.buildFullRequestUrl(request), Charsets.UTF_8
+                )
+            }"
+        )
+    }
+
+    @Bean
     @Order(1)
     fun authFilterChain(
         http: HttpSecurity,
@@ -166,7 +180,8 @@ class WebAuthorizationConfig() {
         userService: UserService,
         kycService: KycService,
         jwtAuthenticationConverter: JwtAuthenticationConverter,
-        bearerTokenResolver: BearerTokenResolver
+        bearerTokenResolver: BearerTokenResolver,
+        authenticationEntryPoint: AuthenticationEntryPoint
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
 
@@ -216,22 +231,15 @@ class WebAuthorizationConfig() {
                 conf.jwt {
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
+                conf.authenticationEntryPoint(authenticationEntryPoint)
             }
-            .authorizeHttpRequests {
-                it.anyRequest().authenticated()
+            .authorizeHttpRequests { auth ->
+                auth
+                    .requestMatchers("/.well-known/**", "/oauth2/jwks").permitAll()
+                    .anyRequest().authenticated()
             }
             .exceptionHandling { ex ->
-                ex.authenticationEntryPoint { request, response, _ ->
-                    response.status = 302
-                    response.setHeader(
-                        "Location",
-                        "/login-bridge.html?continue=${
-                            URLEncoder.encode(
-                                UrlUtils.buildFullRequestUrl(request), Charsets.UTF_8
-                            )
-                        }"
-                    )
-                }
+                ex.authenticationEntryPoint(authenticationEntryPoint)
             }
             .build()
     }
