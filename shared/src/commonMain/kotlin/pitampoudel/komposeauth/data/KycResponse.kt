@@ -33,7 +33,7 @@ data class KycResponse(
         val state: String?,
         val city: String?,
         val addressLine1: String?,
-        val addressLine2: String?,
+        val addressLine2: String? = null,
     )
 
     enum class Status {
