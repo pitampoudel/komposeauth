@@ -15,7 +15,7 @@ logging:
     root: ERROR
 
 server:
-  address: 0.0.0.0
+  port: ${PORT:80}
   forward-headers-strategy: framework
 
 app:
