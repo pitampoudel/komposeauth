@@ -32,6 +32,12 @@ class WebSecurityConfig {
     fun corsConfigurationSource(appConfigProvider: AppConfigProvider): CorsConfigurationSource {
         return CorsConfigurationSource {
             val configuration = CorsConfiguration()
+            val origins = appConfigProvider.corsAllowedOrigins()
+            if (origins.any { it.contains("*") }) {
+                configuration.allowedOriginPatterns = origins
+            } else {
+                configuration.allowedOrigins = origins
+            }
             configuration.allowedOrigins = appConfigProvider.corsAllowedOrigins()
             configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
             configuration.allowedHeaders = listOf("*")
