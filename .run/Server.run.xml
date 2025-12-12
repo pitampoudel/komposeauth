@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run Server" type="JetRunConfigurationType">
+  <configuration default="false" name="Server" type="JetRunConfigurationType">
     <option name="MAIN_CLASS_NAME" value="pitampoudel.komposeauth.AuthApplicationKt" />
     <module name="komposeauth.server.main" />
     <shortenClasspath name="ARGS_FILE" />
