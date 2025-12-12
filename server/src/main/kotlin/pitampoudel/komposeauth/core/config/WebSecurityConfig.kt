@@ -17,7 +17,6 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.data.ApiEndpoints
@@ -31,14 +30,14 @@ class WebSecurityConfig {
 
     @Bean
     fun corsConfigurationSource(appConfigProvider: AppConfigProvider): CorsConfigurationSource {
-        val configuration = CorsConfiguration()
-        configuration.allowedOrigins = appConfigProvider.corsAllowedOrigins()
-        configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
-        configuration.allowedHeaders = listOf("*")
-        configuration.allowCredentials = true
-        val source = UrlBasedCorsConfigurationSource()
-        source.registerCorsConfiguration("/**", configuration)
-        return source
+        return CorsConfigurationSource {
+            val configuration = CorsConfiguration()
+            configuration.allowedOrigins = appConfigProvider.corsAllowedOrigins()
+            configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            configuration.allowedHeaders = listOf("*")
+            configuration.allowCredentials = true
+            configuration
+        }
     }
 
     @Bean
