@@ -15,7 +15,7 @@ import pitampoudel.komposeauth.app_config.service.AppConfigService
 class AppConfigController(
     private val appConfigService: AppConfigService
 ) {
-    @GetMapping("/setup")
+    @GetMapping("/config")
     @Operation(
         summary = "web page to configure this app"
     )
@@ -26,10 +26,10 @@ class AppConfigController(
         key: String?,
     ): String {
         model.addAttribute("config", appConfigService.get())
-        return "setup"
+        return "config"
     }
 
-    @PostMapping("/setup")
+    @PostMapping("/config")
     @PreAuthorize("@userService.countUsers() == 0 or hasAuthority('ROLE_SUPER_ADMIN') or @masterKeyValidator.isValid(#key)")
     fun submit(
         @RequestParam("key", required = false) key: String?,
@@ -39,6 +39,6 @@ class AppConfigController(
         appConfigService.save(form)
         appConfigService.clearCache()
         model.addAttribute("config", appConfigService.get())
-        return "setup"
+        return "config"
     }
 }
