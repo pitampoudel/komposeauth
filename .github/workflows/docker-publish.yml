@@ -71,9 +71,6 @@ jobs:
           else
             BRANCH="${{ github.ref_name }}"
             SANITIZED_BRANCH=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._-]/-/g')
-            SHORT_SHA="${{ github.sha }}"
-            SHORT_SHA="${SHORT_SHA:0:8}"
-            echo "SNAPSHOT_TAG=${SANITIZED_BRANCH}-${SHORT_SHA}" >> $GITHUB_OUTPUT
             echo "BRANCH_TAG=${SANITIZED_BRANCH}" >> $GITHUB_OUTPUT
           fi
 
@@ -111,7 +108,6 @@ jobs:
           provenance: mode=max
           sbom: true
           tags: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.SNAPSHOT_TAG }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.BRANCH_TAG }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
