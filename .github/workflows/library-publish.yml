@@ -40,25 +40,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Extract and validate release tag
-        id: tag
-        if: github.event_name == 'release'
-        shell: bash
-        run: |
-          TAG="${{ github.event.release.tag_name }}"
-          if [[ -z "$TAG" ]]; then
-            echo "No release tag found" >&2
-            exit 1
-          fi
-          # Validate simple SemVer with optional pre-release (vMAJOR.MINOR.PATCH(-prerelease))
-          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "Invalid tag format: $TAG (expected vMAJOR.MINOR.PATCH)" >&2
-            exit 1
-          fi
-          VERSION="${TAG#v}"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
       - name: Run tests
         run: ./gradlew clean :client:check --no-daemon
 
@@ -68,4 +49,4 @@ jobs:
 
       - name: Publish release to MavenCentral
         if: github.event_name == 'release'
-        run: ./gradlew publishAndReleaseToMavenCentral -Pversion=${{ steps.tag.outputs.version }}
+        run: ./gradlew publishAndReleaseToMavenCentral

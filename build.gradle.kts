@@ -20,7 +20,6 @@ buildscript {
 }
 
 group = property("group") as String
-version = property("version") as String
 
 subprojects {
     // Apply to modules that use vanniktech plugin
@@ -61,4 +60,9 @@ subprojects {
             onlyIf { !isSnapshot }
         }
     }
+}
+
+val tag: String? = System.getenv("GITHUB_REF_NAME")
+if (tag?.startsWith("v") == true) {
+    version = tag.removePrefix("v")
 }
