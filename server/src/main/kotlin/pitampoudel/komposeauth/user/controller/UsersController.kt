@@ -116,7 +116,6 @@ class UsersController(
         summary = "Get user profile",
         description = "Returns user information for the authenticated user"
     )
-    @OptIn(ExperimentalTime::class)
     fun getUserProfile(authentication: Authentication): ResponseEntity<ProfileResponse> {
         val userId = authentication.name
         val user = userService.findUser(userId) ?: return ResponseEntity.notFound().build()

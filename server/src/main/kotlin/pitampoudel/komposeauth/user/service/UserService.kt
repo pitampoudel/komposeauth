@@ -183,7 +183,8 @@ class UserService(
     }
 
     fun createUser(baseUrl: String?, req: CreateUserRequest): User {
-        val newUser = req.mapToEntity(passwordEncoder)
+        var newUser = req.mapToEntity(passwordEncoder)
+        newUser = userRepository.insert(newUser)
         if (newUser.email != null && !newUser.emailVerified && baseUrl != null) {
             val emailSent = emailService.sendHtmlMail(
                 to = newUser.email,
@@ -204,7 +205,7 @@ class UserService(
                 throw BadRequestException("Failed to send verification email.")
             }
         }
-        return userRepository.insert(newUser)
+        return newUser
     }
 
     fun updateUser(userId: ObjectId, req: UpdateProfileRequest): ProfileResponse {
