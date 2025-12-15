@@ -16,7 +16,7 @@ class EmailService(
     private val templateEngine: TemplateEngine,
 ) {
 
-    fun javaMailSender(): JavaMailSender {
+    private fun javaMailSender(): JavaMailSender {
         val impl = JavaMailSenderImpl()
         impl.host = appConfigProvider.smtpHost
         impl.port = appConfigProvider.smtpPort ?: 587
@@ -30,7 +30,7 @@ class EmailService(
         return impl
     }
 
-    fun render(template: String, variables: Map<String, Any?>): String {
+    private fun render(template: String, variables: Map<String, Any?>): String {
         val context = Context().apply {
             // branding defaults
             setVariable("appName", appConfigProvider.name)

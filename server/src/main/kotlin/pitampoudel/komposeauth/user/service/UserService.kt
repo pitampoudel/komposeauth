@@ -25,7 +25,6 @@ import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService
-import pitampoudel.komposeauth.core.utils.findCurrentBaseUrl
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.data.CreateUserRequest
 import pitampoudel.komposeauth.data.Credential
@@ -185,7 +184,7 @@ class UserService(
     fun createUser(baseUrl: String?, req: CreateUserRequest): User {
         var newUser = req.mapToEntity(passwordEncoder)
         newUser = userRepository.insert(newUser)
-        if (newUser.email != null && !newUser.emailVerified && baseUrl != null) {
+        if (newUser.email != null && baseUrl != null) {
             val emailSent = emailService.sendHtmlMail(
                 to = newUser.email,
                 subject = "Welcome to ${appConfigProvider.name}!",
@@ -194,10 +193,10 @@ class UserService(
                     "name" to newUser.firstName,
                     "title" to "Welcome to ${appConfigProvider.name}!",
                     "message" to "Please click the button below to verify your email address and continue using our service.",
-                    "actionUrl" to oneTimeTokenService.generateEmailVerificationLink(
+                    "actionUrl" to if (!newUser.emailVerified) oneTimeTokenService.generateEmailVerificationLink(
                         userId = newUser.id,
                         baseUrl = baseUrl
-                    ),
+                    ) else null,
                     "actionText" to "Verify Email"
                 )
             )
