@@ -3,7 +3,6 @@ package pitampoudel.komposeauth.user.dto
 import jakarta.validation.Valid
 import org.bson.types.ObjectId
 import org.springframework.security.crypto.password.PasswordEncoder
-import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.data.CreateUserRequest
 import pitampoudel.komposeauth.data.ProfileResponse
 import pitampoudel.komposeauth.data.UpdateProfileRequest
@@ -18,9 +17,7 @@ fun CreateUserRequest.mapToEntity(passwordEncoder: PasswordEncoder): @Valid User
         firstName = firstName,
         lastName = lastName,
         email = email,
-        phoneNumber = phoneNumber?.let {
-            parsePhoneNumber(null, it)
-        }?.fullNumberInInternationalFormat,
+        phoneNumber = phoneNumberInIntlFormat(),
         picture = photoUrl,
         passwordHash = password?.let { passwordEncoder.encode(it) }
     )

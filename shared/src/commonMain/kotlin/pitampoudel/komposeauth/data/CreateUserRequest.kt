@@ -2,7 +2,9 @@ package pitampoudel.komposeauth.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.core.domain.isValidEmail
+import pitampoudel.komposeauth.domain.use_cases.ValidatePhoneNumber
 
 @Serializable
 data class CreateUserRequest(
@@ -14,6 +16,8 @@ data class CreateUserRequest(
     val email: String? = null,
     @SerialName("phoneNumber")
     val phoneNumber: String? = null,
+    @SerialName("countryNameCode")
+    val countryNameCode: String = ValidatePhoneNumber.DEFAULT_COUNTRY_NAME_CODE,
     @SerialName("password")
     val password: String? = null,
     @SerialName("confirmPassword")
@@ -21,6 +25,13 @@ data class CreateUserRequest(
     @SerialName("photoUrl")
     val photoUrl: String? = null
 ) {
+    fun phoneNumberInIntlFormat() = phoneNumber?.let {
+        parsePhoneNumber(
+            countryNameCode = countryNameCode,
+            phoneNumber = it
+        )
+    }?.fullNumberInInternationalFormat
+
     init {
         require(firstName.isNotBlank()) {
             "First name cannot be blank"

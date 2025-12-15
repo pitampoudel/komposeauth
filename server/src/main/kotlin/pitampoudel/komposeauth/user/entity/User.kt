@@ -39,6 +39,12 @@ data class User(
     @LastModifiedDate
     val updatedAt: Instant = Instant.now()
 ) {
+
+    init {
+        require(!email.isNullOrBlank() || !phoneNumber.isNullOrBlank()){
+            "Either email or phone number must be provided"
+        }
+    }
     fun verifiedEmail() = if (emailVerified) email else null
 
     val fullName: String

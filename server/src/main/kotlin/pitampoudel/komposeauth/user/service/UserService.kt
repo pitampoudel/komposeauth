@@ -237,12 +237,7 @@ class UserService(
     }
 
     fun findOrCreateUser(baseUrl: String?, req: CreateUserRequest): User {
-        val emailOrPhone = req.email ?: req.phoneNumber?.let {
-            parsePhoneNumber(
-                countryNameCode = null,
-                phoneNumber = it
-            )?.fullNumberInInternationalFormat
-        }
+        val emailOrPhone = req.email ?: req.phoneNumberInIntlFormat()
         return emailOrPhone?.let { findByUserName(emailOrPhone) } ?: createUser(baseUrl, req)
     }
 
