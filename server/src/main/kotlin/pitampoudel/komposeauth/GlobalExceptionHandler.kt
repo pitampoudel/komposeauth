@@ -36,6 +36,7 @@ class GlobalExceptionHandler {
         ex: HttpMessageNotReadableException,
         request: WebRequest
     ): ResponseEntity<ErrorSnapshotResponse> {
+        ex.printStackTrace()
         return ResponseEntity(
             ErrorSnapshotResponse(
                 message = ex.rootCause?.message ?: ex.message
@@ -93,6 +94,7 @@ class GlobalExceptionHandler {
         ex: IllegalArgumentException,
         request: WebRequest
     ): ResponseEntity<ErrorSnapshotResponse> {
+        ex.printStackTrace()
         return ResponseEntity(
             ErrorSnapshotResponse(
                 message = ex.message ?: "Invalid argument provided.",
@@ -135,6 +137,7 @@ class GlobalExceptionHandler {
         ex: MethodArgumentNotValidException,
         request: WebRequest
     ): ResponseEntity<ErrorSnapshotResponse> {
+        ex.printStackTrace()
         val errors = ex.bindingResult.fieldErrors.joinToString(", ") {
             it.defaultMessage ?: "Validation failed for field ${it.field}"
         }
@@ -152,6 +155,7 @@ class GlobalExceptionHandler {
         ex: BadRequestException,
         request: WebRequest
     ): ResponseEntity<ErrorSnapshotResponse> {
+        ex.printStackTrace()
         return ResponseEntity(
             ErrorSnapshotResponse(
                 message = ex.message,
@@ -209,6 +213,7 @@ class GlobalExceptionHandler {
         request: WebRequest
     ): ResponseEntity<ErrorSnapshotResponse> {
         Sentry.captureException(ex)
+        ex.printStackTrace()
         return ResponseEntity(
             ErrorSnapshotResponse(
                 message = ex.message ?: "An unexpected error occurred",

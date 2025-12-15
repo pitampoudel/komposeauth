@@ -77,7 +77,11 @@ class AuthController(
             .notBefore(now)
             .claim("email", user.email)
             .claim("givenName", user.firstName)
-            .claim("familyName", user.lastName)
+            .apply {
+                user.lastName?.let {
+                    claim("familyName", user.lastName)
+                }
+            }
             .claim("picture", user.picture)
             .claim("authorities", user.roles.map { "ROLE_$it" })
             .claim("scope", scopes)

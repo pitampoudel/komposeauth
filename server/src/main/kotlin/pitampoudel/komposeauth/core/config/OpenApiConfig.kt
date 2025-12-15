@@ -57,5 +57,12 @@ class OpenApiConfig {
                     .tags(listOf("auth"))
             )
         )
+        openApi.paths?.values?.forEach { pathItem ->
+            pathItem.readOperations()?.forEach { operation ->
+                operation.parameters?.removeIf { parameter ->
+                    parameter.`in` == "query" && parameter.name == "securityContextRepository"
+                }
+            }
+        }
     }
 }
