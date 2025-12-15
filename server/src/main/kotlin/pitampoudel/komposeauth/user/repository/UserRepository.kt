@@ -5,12 +5,15 @@ import org.bson.types.ObjectId
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.mongodb.repository.MongoRepository
+import org.springframework.data.mongodb.repository.Query
 import org.springframework.stereotype.Repository
 import pitampoudel.core.data.parsePhoneNumber
 import kotlin.jvm.optionals.getOrNull
 
 @Repository
 interface UserRepository : MongoRepository<User, ObjectId> {
+    @Query($$"{ phoneNumber: { $exists: true }}")
+    fun findAllHavingPhoneNumber(): List<User>
     fun findByEmail(email: String): User?
     fun findByPhoneNumber(phoneNumber: String): User?
     fun findByIdIn(ids: List<ObjectId>): List<User>
@@ -35,7 +38,7 @@ interface UserRepository : MongoRepository<User, ObjectId> {
         user = user ?: parsePhoneNumber(
             countryNameCode = null,
             phoneNumber = value
-        )?.fullNumberInInternationalFormat?.let {
+        )?.fullNumberInE164Format?.let {
             findByPhoneNumber(it)
         }
         return user

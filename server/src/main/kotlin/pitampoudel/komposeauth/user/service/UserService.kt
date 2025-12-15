@@ -237,7 +237,7 @@ class UserService(
     }
 
     fun findOrCreateUser(baseUrl: String?, req: CreateUserRequest): User {
-        val emailOrPhone = req.email ?: req.phoneNumberInIntlFormat()
+        val emailOrPhone = req.email ?: req.phoneNumberParsed()
         return emailOrPhone?.let { findByUserName(emailOrPhone) } ?: createUser(baseUrl, req)
     }
 
@@ -245,7 +245,7 @@ class UserService(
         val parsedPhone = parsePhoneNumber(req.countryCode, req.phoneNumber)
             ?: throw IllegalArgumentException("Invalid phone number format")
         return phoneNumberVerificationService.initiate(
-            phoneNumber = parsedPhone.fullNumberInInternationalFormat
+            phoneNumber = parsedPhone.fullNumberInE164Format
         )
     }
 
@@ -256,7 +256,7 @@ class UserService(
         val parsedPhoneNumber = parsePhoneNumber(
             countryNameCode = req.countryCode,
             phoneNumber = req.phoneNumber
-        )?.fullNumberInInternationalFormat ?: throw IllegalArgumentException(
+        )?.fullNumberInE164Format ?: throw IllegalArgumentException(
             "Invalid phone number format"
         )
         val user = userRepository.findById(userId).orElse(null)

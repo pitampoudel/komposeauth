@@ -11,8 +11,8 @@ data class PhoneNumber(
     val nationalNumber: Long,
     @SerialName("countryNameCode")
     val countryNameCode: String?,
-    @SerialName("fullNumberInInternationalFormat")
-    val fullNumberInInternationalFormat: String
+    @SerialName("fullNumberInE164Format")
+    val fullNumberInE164Format: String
 )
 
 fun parsePhoneNumber(countryNameCode: String?, phoneNumber: String): PhoneNumber? {
@@ -22,8 +22,8 @@ fun parsePhoneNumber(countryNameCode: String?, phoneNumber: String): PhoneNumber
         if (phoneUtil.isValidNumber(num)) PhoneNumber(
             nationalNumber = num.nationalNumber,
             countryNameCode = phoneUtil.getRegionCodeForCountryCode(num.countryCode),
-            fullNumberInInternationalFormat = phoneUtil.format(
-                num, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL
+            fullNumberInE164Format = phoneUtil.format(
+                num, PhoneNumberUtil.PhoneNumberFormat.E164
             )
         )
         else null

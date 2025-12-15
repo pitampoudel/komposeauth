@@ -25,12 +25,12 @@ data class CreateUserRequest(
     @SerialName("photoUrl")
     val photoUrl: String? = null
 ) {
-    fun phoneNumberInIntlFormat() = phoneNumber?.let {
+    fun phoneNumberParsed() = phoneNumber?.let {
         parsePhoneNumber(
             countryNameCode = countryNameCode,
             phoneNumber = it
         )
-    }?.fullNumberInInternationalFormat
+    }?.fullNumberInE164Format
 
     init {
         require(firstName.isNotBlank()) {
