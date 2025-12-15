@@ -16,7 +16,7 @@ fun CreateUserRequest.mapToEntity(passwordEncoder: PasswordEncoder): @Valid User
         id = ObjectId(),
         firstName = firstName,
         lastName = lastName,
-        email = email,
+        email = email?.takeIf{it.isNotBlank},
         phoneNumber = phoneNumberParsed(),
         picture = photoUrl,
         passwordHash = password?.let { passwordEncoder.encode(it) }
