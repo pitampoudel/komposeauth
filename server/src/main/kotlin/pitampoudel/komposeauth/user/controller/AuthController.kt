@@ -68,26 +68,30 @@ class AuthController(
         )
         val now = Instant.now()
         val scopes = listOf("openid", "profile", "email")
-        val claims = JwtClaimsSet.builder()
+        val builder = JwtClaimsSet.builder()
             .issuer(appConfigProvider.selfBaseUrl)
             .subject(user.id.toHexString())
             .audience(listOf(appConfigProvider.selfBaseUrl))
             .issuedAt(now)
             .expiresAt(now + 1.days.toJavaDuration())
             .notBefore(now)
-            .claim("email", user.email)
             .claim("givenName", user.firstName)
-            .apply {
-                user.lastName?.let {
-                    claim("familyName", user.lastName)
-                }
-            }
-            .claim("picture", user.picture)
             .claim("authorities", user.roles.map { "ROLE_$it" })
             .claim("scope", scopes)
             .claim("kycVerified", kycService.isVerified(user.id))
             .claim("phoneNumberVerified", user.phoneNumberVerified)
-            .build()
+
+        user.email?.let {
+            builder.claim("email", it)
+        }
+        user.lastName?.let {
+            builder.claim("name", it)
+        }
+        user.picture?.let {
+            builder.claim("picture", it)
+        }
+
+        val claims = builder.build()
 
         val accessToken = jwtEncoder.encode(JwtEncoderParameters.from(claims)).tokenValue
         val refreshToken = oneTimeTokenService.generateRefreshToken(user.id)
