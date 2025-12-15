@@ -62,6 +62,7 @@ jobs:
 
       - name: Determine tags
         id: determine_tags
+        shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "release" ]]; then
             TAG="${{ github.event.release.tag_name }}"
@@ -71,15 +72,22 @@ jobs:
           else
             BRANCH="${{ github.ref_name }}"
             SANITIZED_BRANCH=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._-]/-/g')
-            echo "BRANCH_TAG=${SANITIZED_BRANCH}" >> $GITHUB_OUTPUT
+            echo "BRANCH_TAG=$SANITIZED_BRANCH" >> $GITHUB_OUTPUT
           fi
+
+      - name: Compute commit hash tag
+        id: image_meta
+        shell: bash
+        run: |
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
 
       - name: Validate SemVer tag (releases only)
         if: github.event_name == 'release'
         shell: bash
         run: |
           if [[ ! "${{ steps.determine_tags.outputs.TAG }}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "Tag '${{ steps.determine_tags.outputs.TAG }}' is not a valid SemVer (expected vMAJOR.MINOR.PATCH optionally with pre-release)" >&2
+            echo "Invalid release tag: ${{ steps.determine_tags.outputs.TAG }}"
             exit 1
           fi
 
@@ -94,6 +102,7 @@ jobs:
           tags: |
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:latest
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.VERSION }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:sha-${{ steps.image_meta.outputs.SHORT_SHA }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.version=${{ steps.determine_tags.outputs.VERSION }}
@@ -109,7 +118,7 @@ jobs:
           sbom: true
           tags: |
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.BRANCH_TAG }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:sha-${{ steps.image_meta.outputs.SHORT_SHA }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=${{ steps.determine_tags.outputs.SNAPSHOT_TAG }}
             org.opencontainers.image.revision=${{ github.sha }}

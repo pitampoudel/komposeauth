@@ -25,9 +25,6 @@ data class CreateUserRequest(
         require(firstName.isNotBlank()) {
             "First name cannot be blank"
         }
-        require(lastName?.isNotBlank() == true) {
-            "Last name cannot be blank"
-        }
         require(password == null || Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$").matches(password)) {
             "Password must contain at least one uppercase letter, one lowercase letter, and one digit"
         }
