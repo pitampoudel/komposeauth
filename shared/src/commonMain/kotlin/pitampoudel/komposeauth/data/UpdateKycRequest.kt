@@ -30,7 +30,21 @@ data class DocumentInformation(
     val documentFront: EncodedData,
     val documentBack: EncodedData,
     val selfie: EncodedData
-)
+) {
+    init {
+        when (documentType) {
+            DocumentType.PASSPORT -> require(documentExpiryDate != null){
+                "Passport must have an expiry date"
+            }
+            DocumentType.NATIONAL_ID ->require(documentExpiryDate == null){
+                "National ID must not have an expiry date"
+            }
+            DocumentType.CITIZENSHIP -> require(documentExpiryDate == null){
+                "Citizenship must not have an expiry date"
+            }
+        }
+    }
+}
 
 @Serializable
 data class UpdateAddressDetailsRequest(
