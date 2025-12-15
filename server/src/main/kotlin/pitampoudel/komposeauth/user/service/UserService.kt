@@ -253,10 +253,7 @@ class UserService(
         userId: ObjectId,
         @Valid req: VerifyPhoneOtpRequest
     ): UserResponse {
-        val parsedPhoneNumber = parsePhoneNumber(
-            countryNameCode = req.countryCode,
-            phoneNumber = req.phoneNumber
-        )?.fullNumberInE164Format ?: throw IllegalArgumentException(
+        val parsedPhoneNumber = req.parsedPhoneNumber() ?: throw IllegalArgumentException(
             "Invalid phone number format"
         )
         val user = userRepository.findById(userId).orElse(null)

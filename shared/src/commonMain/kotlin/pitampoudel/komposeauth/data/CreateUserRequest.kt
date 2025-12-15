@@ -17,7 +17,7 @@ data class CreateUserRequest(
     @SerialName("phoneNumber")
     val phoneNumber: String? = null,
     @SerialName("countryNameCode")
-    val countryNameCode: String = ValidatePhoneNumber.DEFAULT_COUNTRY_NAME_CODE,
+    val countryNameCode: String? = ValidatePhoneNumber.DEFAULT_COUNTRY_NAME_CODE,
     @SerialName("password")
     val password: String? = null,
     @SerialName("confirmPassword")
