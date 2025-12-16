@@ -185,7 +185,7 @@ class UserService(
         var newUser = req.mapToEntity(passwordEncoder)
         newUser = userRepository.insert(newUser)
         if (newUser.email != null && baseUrl != null) {
-            val emailSent = emailService.sendHtmlMail(
+            emailService.sendHtmlMail(
                 to = newUser.email,
                 subject = "Welcome to ${appConfigProvider.name}!",
                 template = "email/generic",
@@ -200,9 +200,6 @@ class UserService(
                     "actionText" to "Verify Email"
                 )
             )
-            if (!emailSent) {
-                throw BadRequestException("Failed to send verification email.")
-            }
         }
         return newUser
     }
