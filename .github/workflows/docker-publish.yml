@@ -54,7 +54,6 @@ jobs:
         with:
           images: |
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth
-            ghcr.io/${{ github.repository }}
 
       - name: Build and push Docker image
         id: build_and_push
