@@ -32,11 +32,6 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -60,15 +55,13 @@ jobs:
           driver: docker-container
           cleanup: true
 
-      - name: Determine Docker tag
-        shell: bash
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            TAG="${{ github.event.release.tag_name }}"
-          else
-            TAG="${GITHUB_REF##*/}"
-          fi
-          echo "TAG=$TAG" >> $GITHUB_ENV
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth
+            ghcr.io/${{ github.repository }}
 
       - name: Build and push Docker image
         id: build_and_push
@@ -78,12 +71,10 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
-          tags: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:$TAG
-          labels: |
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-      
-      - name: Print Deployed Image
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Print Deployed Image Info
         run: |
-         echo "Image with digest: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth@${{ steps.build_and_push.outputs.digest }}"
+          echo "Image digest: ${{ steps.build_and_push.outputs.digest }}"
+          echo "Tags: ${{ steps.meta.outputs.tags }}"
