@@ -60,38 +60,18 @@ jobs:
           driver: docker-container
           cleanup: true
 
-      - name: Determine tags
-        id: determine_tags
+      - name: Determine Docker tag
         shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "release" ]]; then
             TAG="${{ github.event.release.tag_name }}"
-            VERSION="${TAG#v}"
-            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-            echo "TAG=$TAG" >> $GITHUB_OUTPUT
           else
-            BRANCH="${{ github.ref_name }}"
-            SANITIZED_BRANCH=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._-]/-/g')
-            echo "BRANCH_TAG=$SANITIZED_BRANCH" >> $GITHUB_OUTPUT
+            TAG="${GITHUB_REF##*/}"
           fi
+          echo "TAG=$TAG" >> $GITHUB_ENV
 
-      - name: Compute commit hash tag
-        id: image_meta
-        shell: bash
-        run: |
-          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
-
-      - name: Validate SemVer tag (releases only)
-        if: github.event_name == 'release'
-        shell: bash
-        run: |
-          if [[ ! "${{ steps.determine_tags.outputs.TAG }}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "Invalid release tag: ${{ steps.determine_tags.outputs.TAG }}"
-            exit 1
-          fi
-
-      - name: Build and push Docker image (Release)
+      - name: Build and push Docker image
+        id: build_and_push
         if: github.event_name == 'release'
         uses: docker/build-push-action@v6
         with:
@@ -100,25 +80,11 @@ jobs:
           provenance: mode=max
           sbom: true
           tags: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:latest
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.VERSION }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:sha-${{ steps.image_meta.outputs.SHORT_SHA }}
-          labels: |
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=${{ steps.determine_tags.outputs.VERSION }}
-            org.opencontainers.image.revision=${{ github.sha }}
-
-      - name: Build and push Docker image (Snapshot)
-        if: github.event_name == 'push'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          provenance: mode=max
-          sbom: true
-          tags: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:${{ steps.determine_tags.outputs.BRANCH_TAG }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:sha-${{ steps.image_meta.outputs.SHORT_SHA }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:$TAG
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
+      
+      - name: Print Deployed Image
+        run: |
+         echo "Image with digest: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth@${{ steps.build_and_push.outputs.digest }}"
