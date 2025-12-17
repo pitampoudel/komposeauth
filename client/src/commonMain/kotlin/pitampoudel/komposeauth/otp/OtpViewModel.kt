@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import pitampoudel.core.domain.Result
 import pitampoudel.core.presentation.ResultUiEvent
 import pitampoudel.komposeauth.core.domain.AuthClient
-import pitampoudel.komposeauth.domain.use_cases.ValidateOtpCode
+import pitampoudel.komposeauth.core.domain.use_cases.ValidateOtpCode
 
 class OtpViewModel internal constructor(
     private val client: AuthClient

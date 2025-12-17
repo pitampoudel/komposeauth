@@ -25,8 +25,8 @@ import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.core.presentation.LazyState
 import pitampoudel.core.presentation.wrapper.screenstate.ScreenStateWrapper
 import pitampoudel.komposeauth.core.di.rememberAuthenticatedUser
-import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
+import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
 import pitampoudel.komposeauth.login.LoginEvent
 import pitampoudel.komposeauth.login.LoginState
 import pitampoudel.komposeauth.login.LoginViewModel

@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CreatePublicKeyCredentialRequest
 import androidx.credentials.CreatePublicKeyCredentialResponse
@@ -25,13 +26,14 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.LoginOptionsResponse
+import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 
 @Composable
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
+    val uriHandler = LocalUriHandler.current
     val activity = LocalActivity.current ?: throw Exception("No activity found")
-    val credentialManager = remember {
+    val credentialManager = remember(activity) {
         CredentialManager.create(activity)
     }
     return remember {

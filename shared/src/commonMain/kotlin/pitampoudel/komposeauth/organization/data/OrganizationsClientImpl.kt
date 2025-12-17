@@ -11,7 +11,7 @@ import pitampoudel.core.data.MessageResponse
 import pitampoudel.core.data.asResource
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.data.ApiEndpoints
+import pitampoudel.komposeauth.core.data.ApiEndpoints
 import pitampoudel.komposeauth.organization.domain.OrganizationsClient
 
 internal class OrganizationsClientImpl(

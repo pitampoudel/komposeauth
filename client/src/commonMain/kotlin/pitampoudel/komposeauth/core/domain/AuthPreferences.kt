@@ -1,7 +1,7 @@
 package pitampoudel.komposeauth.core.domain
 
 import kotlinx.coroutines.flow.Flow
-import pitampoudel.komposeauth.data.OAuth2Response
+import pitampoudel.komposeauth.core.data.OAuth2Response
 
 internal interface AuthPreferences {
     val accessTokenPayload: Flow<String?>

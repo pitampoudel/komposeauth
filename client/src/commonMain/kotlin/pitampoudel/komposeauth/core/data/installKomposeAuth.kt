@@ -21,12 +21,9 @@ import kotlinx.serialization.json.Json
 import pitampoudel.core.data.asResource
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.Result
+import pitampoudel.komposeauth.core.data.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.core.domain.Config
-import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN
-import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.OAuth2Response
-import pitampoudel.komposeauth.data.ResponseType
 
 internal fun HttpClientConfig<*>.installKomposeAuth(
     authPreferences: AuthPreferences,

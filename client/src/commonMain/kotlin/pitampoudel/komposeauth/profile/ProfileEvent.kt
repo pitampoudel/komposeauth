@@ -2,7 +2,7 @@ package pitampoudel.komposeauth.profile
 
 import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.presentation.InfoMessage
-import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
+import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
 
 sealed interface ProfileEvent {
     data class RegisterPublicKey(val credential: RegisterPublicKeyRequest.PublicKeyCredential) : ProfileEvent

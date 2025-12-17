@@ -1,9 +1,9 @@
 package pitampoudel.komposeauth.kyc
 
-import pitampoudel.komposeauth.domain.DocumentType
-import pitampoudel.komposeauth.data.KycResponse
-import pitampoudel.core.domain.KmpFile
 import kotlinx.datetime.LocalDate
+import pitampoudel.core.domain.KmpFile
+import pitampoudel.komposeauth.core.data.KycResponse
+import pitampoudel.komposeauth.core.domain.DocumentType
 
 sealed interface KycEvent {
     data object LoadExisting : KycEvent

@@ -3,8 +3,8 @@ package pitampoudel.komposeauth.profile
 import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.presentation.InfoMessage
-import pitampoudel.komposeauth.data.ProfileResponse
-import pitampoudel.komposeauth.data.UpdateProfileRequest
+import pitampoudel.komposeauth.core.data.ProfileResponse
+import pitampoudel.komposeauth.core.data.UpdateProfileRequest
 
 data class ProfileState(
     val progress: Float? = null,

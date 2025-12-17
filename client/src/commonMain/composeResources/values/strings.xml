@@ -30,6 +30,7 @@
     <string name="must_not_be_empty">Must not be empty</string>
     <string name="must_be_selected">Must be selected</string>
     <string name="too_short">Too short</string>
+    <string name="too_long">Too long</string>
     <string name="invalid_url">Invalid URL</string>
     <string name="invalid_email">Invalid email</string>
     <string name="invalid_phone_number">Invalid phone number</string>

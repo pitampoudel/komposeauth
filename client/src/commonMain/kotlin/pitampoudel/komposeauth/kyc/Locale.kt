@@ -19,8 +19,8 @@ import org.jetbrains.compose.resources.StringResource
 import pitampoudel.core.presentation.GREEN
 import pitampoudel.core.presentation.ORANGE
 import pitampoudel.core.presentation.RED
-import pitampoudel.komposeauth.data.KycResponse
-import pitampoudel.komposeauth.domain.DocumentType
+import pitampoudel.komposeauth.core.data.KycResponse
+import pitampoudel.komposeauth.core.domain.DocumentType
 
 fun DocumentType.toStringRes(): StringResource = when (this) {
     DocumentType.PASSPORT -> Res.string.kyc_document_type_passport

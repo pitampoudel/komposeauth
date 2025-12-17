@@ -1,7 +1,7 @@
 package pitampoudel.komposeauth.login
 
 import pitampoudel.core.presentation.InfoMessage
-import pitampoudel.komposeauth.data.Credential
+import pitampoudel.komposeauth.core.data.Credential
 
 sealed interface LoginEvent {
     data class Login(val credential: Credential) : LoginEvent

@@ -1,10 +1,10 @@
 package pitampoudel.komposeauth.login
 
-import pitampoudel.core.domain.Result
 import androidx.compose.runtime.Composable
 import kotlinx.serialization.json.JsonObject
-import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.LoginOptionsResponse
+import pitampoudel.core.domain.Result
+import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 
 interface KmpCredentialManager {
     suspend fun getCredential(options: LoginOptionsResponse): Result<Credential>

@@ -14,34 +14,20 @@ import pitampoudel.core.data.download
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.domain.Result
+import pitampoudel.komposeauth.core.data.ApiEndpoints.DEACTIVATE
+import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC
+import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_ADDRESS
+import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_DOCUMENTS
+import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_PERSONAL_INFO
+import pitampoudel.komposeauth.core.data.ApiEndpoints.LOGIN
+import pitampoudel.komposeauth.core.data.ApiEndpoints.LOGIN_OPTIONS
+import pitampoudel.komposeauth.core.data.ApiEndpoints.LOGOUT
+import pitampoudel.komposeauth.core.data.ApiEndpoints.ME
+import pitampoudel.komposeauth.core.data.ApiEndpoints.UPDATE_PHONE_NUMBER
+import pitampoudel.komposeauth.core.data.ApiEndpoints.UPDATE_PROFILE
+import pitampoudel.komposeauth.core.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import pitampoudel.komposeauth.core.domain.AuthClient
-import pitampoudel.komposeauth.data.ApiEndpoints.DEACTIVATE
-import pitampoudel.komposeauth.data.ApiEndpoints.KYC
-import pitampoudel.komposeauth.data.ApiEndpoints.KYC_ADDRESS
-import pitampoudel.komposeauth.data.ApiEndpoints.KYC_DOCUMENTS
-import pitampoudel.komposeauth.data.ApiEndpoints.KYC_PERSONAL_INFO
-import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN
-import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN_OPTIONS
-import pitampoudel.komposeauth.data.ApiEndpoints.LOGOUT
-import pitampoudel.komposeauth.data.ApiEndpoints.ME
-import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PHONE_NUMBER
-import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PROFILE
-import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_PHONE_NUMBER
-import pitampoudel.komposeauth.data.CountryResponse
-import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.DocumentInformation
-import pitampoudel.komposeauth.data.KycResponse
-import pitampoudel.komposeauth.data.LoginOptionsResponse
-import pitampoudel.komposeauth.data.OAuth2Response
-import pitampoudel.komposeauth.data.PersonalInformation
-import pitampoudel.komposeauth.data.ProfileResponse
-import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
-import pitampoudel.komposeauth.data.ResponseType
-import pitampoudel.komposeauth.data.UpdateAddressDetailsRequest
-import pitampoudel.komposeauth.data.UpdatePhoneNumberRequest
-import pitampoudel.komposeauth.data.UpdateProfileRequest
-import pitampoudel.komposeauth.data.VerifyPhoneOtpRequest
-import pitampoudel.komposeauth.domain.Platform
+import pitampoudel.komposeauth.core.domain.Platform
 
 internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClient {
 

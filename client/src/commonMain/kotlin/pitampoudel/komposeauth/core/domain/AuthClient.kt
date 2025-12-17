@@ -2,22 +2,21 @@ package pitampoudel.komposeauth.core.domain
 
 import io.ktor.client.statement.HttpResponse
 import pitampoudel.core.domain.KmpFile
-import pitampoudel.komposeauth.data.CountryResponse
-import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.DocumentInformation
-import pitampoudel.komposeauth.data.KycResponse
-import pitampoudel.komposeauth.data.LoginOptionsResponse
-import pitampoudel.komposeauth.data.PersonalInformation
-import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
-import pitampoudel.komposeauth.data.UpdateAddressDetailsRequest
-import pitampoudel.komposeauth.data.UpdatePhoneNumberRequest
-import pitampoudel.komposeauth.data.UpdateProfileRequest
-import pitampoudel.komposeauth.data.ProfileResponse
-import pitampoudel.komposeauth.data.VerifyPhoneOtpRequest
-import pitampoudel.komposeauth.domain.Platform
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.data.OAuth2Response
-import pitampoudel.komposeauth.data.ResponseType
+import pitampoudel.komposeauth.core.data.CountryResponse
+import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.core.data.DocumentInformation
+import pitampoudel.komposeauth.core.data.KycResponse
+import pitampoudel.komposeauth.core.data.LoginOptionsResponse
+import pitampoudel.komposeauth.core.data.OAuth2Response
+import pitampoudel.komposeauth.core.data.PersonalInformation
+import pitampoudel.komposeauth.core.data.ProfileResponse
+import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
+import pitampoudel.komposeauth.core.data.ResponseType
+import pitampoudel.komposeauth.core.data.UpdateAddressDetailsRequest
+import pitampoudel.komposeauth.core.data.UpdatePhoneNumberRequest
+import pitampoudel.komposeauth.core.data.UpdateProfileRequest
+import pitampoudel.komposeauth.core.data.VerifyPhoneOtpRequest
 
 
 internal interface AuthClient {

@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import pitampoudel.komposeauth.core.data.JwtUtils.decodeAndParseJwtPayload
 import pitampoudel.komposeauth.core.domain.AuthPreferences
-import pitampoudel.komposeauth.data.OAuth2Response
 
 @OptIn(ExperimentalSettingsApi::class)
 internal class AuthPreferencesImpl private constructor(

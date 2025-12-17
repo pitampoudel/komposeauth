@@ -1,7 +1,7 @@
 package pitampoudel.komposeauth.login
 
 import pitampoudel.core.presentation.InfoMessage
-import pitampoudel.komposeauth.data.LoginOptionsResponse
+import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 
 data class LoginState(
     val progress: Float? = null,

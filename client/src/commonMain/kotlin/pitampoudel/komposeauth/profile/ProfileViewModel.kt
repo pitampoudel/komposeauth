@@ -13,8 +13,8 @@ import pitampoudel.core.domain.validators.ValidateNotBlank
 import pitampoudel.core.presentation.ResultUiEvent
 import pitampoudel.komposeauth.core.data.AuthStateHandler
 import pitampoudel.komposeauth.core.domain.AuthClient
-import pitampoudel.komposeauth.data.ProfileResponse
-import pitampoudel.komposeauth.data.RegisterPublicKeyRequest
+import pitampoudel.komposeauth.core.data.ProfileResponse
+import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
 
 class ProfileViewModel internal constructor(
     private val authStateHandler: AuthStateHandler,

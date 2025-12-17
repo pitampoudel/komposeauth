@@ -3,7 +3,7 @@ package pitampoudel.komposeauth.kyc
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.data.KycResponse
+import pitampoudel.komposeauth.core.data.KycResponse
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.core.domain.validators.ValidateNotBlank
 import pitampoudel.core.domain.validators.ValidateNotNull

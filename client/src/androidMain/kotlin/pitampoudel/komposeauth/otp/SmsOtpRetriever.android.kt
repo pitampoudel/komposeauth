@@ -21,7 +21,7 @@ import com.google.android.gms.auth.api.phone.SmsRetrieverClient
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.tasks.Task
-import pitampoudel.komposeauth.domain.use_cases.ValidateOtpCode.OTP_LENGTH
+import pitampoudel.komposeauth.core.domain.use_cases.ValidateOtpCode.OTP_LENGTH
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
