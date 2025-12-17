@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.stereotype.Service
+import pitampoudel.komposeauth.organization.entity.Organization
 
 @Service
 class UserContextService(val userService: UserService) {
@@ -34,5 +35,11 @@ class UserContextService(val userService: UserService) {
             else -> throw IllegalStateException("Unsupported authentication type: ${authentication?.javaClass?.name}")
         }
     }
+}
+fun User.isAdmin() = roles.contains("ADMIN")
 
+fun canEditOrganization(organization: Organization, user: User): Boolean {
+    return if (user.isAdmin()) true
+    else if (organization.userIds.any { it == user.id }) true
+    else false
 }
