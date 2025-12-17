@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.webauthn.api.AuthenticatorAssertionResponse
@@ -20,6 +21,7 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestO
 import org.springframework.security.web.webauthn.management.RelyingPartyAuthenticationRequest
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.stereotype.Service
+import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.EmailService
@@ -241,6 +243,9 @@ class UserService(
     fun initiatePhoneNumberUpdate(@Valid req: UpdatePhoneNumberRequest): Boolean {
         val parsedPhone = parsePhoneNumber(req.countryCode, req.phoneNumber)
             ?: throw IllegalArgumentException("Invalid phone number format")
+        if (findByUserName(parsedPhone.fullNumberInE164Format) != null) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Phone number is already in use")
+        }
         return phoneNumberVerificationService.initiate(
             phoneNumber = parsedPhone.fullNumberInE164Format
         )
