@@ -1,7 +1,7 @@
 package pitampoudel.komposeauth
 
-import pitampoudel.komposeauth.data.Credential
 import kotlinx.serialization.json.Json
+import pitampoudel.komposeauth.core.data.Credential
 import kotlin.test.Test
 
 class SerializationTest {

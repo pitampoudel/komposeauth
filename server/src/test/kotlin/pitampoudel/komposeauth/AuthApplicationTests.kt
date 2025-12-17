@@ -13,8 +13,8 @@ import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
-import pitampoudel.komposeauth.data.ApiEndpoints
-import pitampoudel.komposeauth.domain.Platform
+import pitampoudel.komposeauth.core.data.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.Platform
 
 
 @SpringBootTest
