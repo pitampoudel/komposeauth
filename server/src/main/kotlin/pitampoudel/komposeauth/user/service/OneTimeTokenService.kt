@@ -2,7 +2,7 @@ package pitampoudel.komposeauth.user.service
 
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
-import pitampoudel.komposeauth.data.ApiEndpoints
+import pitampoudel.komposeauth.core.data.ApiEndpoints
 import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.repository.OneTimeTokenRepository
 import java.security.MessageDigest

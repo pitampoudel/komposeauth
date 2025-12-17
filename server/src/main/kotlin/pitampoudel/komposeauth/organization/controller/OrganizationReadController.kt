@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.core.config.UserContextService
-import pitampoudel.komposeauth.data.ApiEndpoints
+import pitampoudel.komposeauth.core.data.ApiEndpoints
 import pitampoudel.komposeauth.organization.data.OrganizationResponse
 import pitampoudel.komposeauth.organization.service.OrganizationService
 import pitampoudel.komposeauth.organization.service.toApiResponse

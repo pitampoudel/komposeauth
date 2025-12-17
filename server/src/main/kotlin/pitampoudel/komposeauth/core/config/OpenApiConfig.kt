@@ -10,7 +10,7 @@ import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springdoc.core.utils.SpringDocUtils
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import pitampoudel.komposeauth.data.ApiEndpoints
+import pitampoudel.komposeauth.core.data.ApiEndpoints
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 

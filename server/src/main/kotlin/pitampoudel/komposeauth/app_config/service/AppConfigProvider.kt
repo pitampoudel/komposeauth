@@ -1,7 +1,7 @@
 package pitampoudel.komposeauth.app_config.service
 
 import org.springframework.stereotype.Service
-import pitampoudel.komposeauth.domain.Platform
+import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.webauthn.utils.WebAuthnUtils.androidOrigin
 import java.net.Inet4Address
 import java.net.NetworkInterface

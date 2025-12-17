@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
-import pitampoudel.komposeauth.data.ApiEndpoints.LOGIN_OPTIONS
-import pitampoudel.komposeauth.data.LoginOptionsResponse
-import pitampoudel.komposeauth.domain.Platform
+import pitampoudel.komposeauth.core.data.ApiEndpoints.LOGIN_OPTIONS
+import pitampoudel.komposeauth.core.data.LoginOptionsResponse
+import pitampoudel.komposeauth.core.domain.Platform
 
 @RestController
 class WebAuthnController(

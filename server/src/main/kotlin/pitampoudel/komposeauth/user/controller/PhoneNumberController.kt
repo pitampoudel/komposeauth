@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
-import pitampoudel.komposeauth.data.ApiEndpoints.UPDATE_PHONE_NUMBER
-import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_PHONE_NUMBER
-import pitampoudel.komposeauth.data.UpdatePhoneNumberRequest
-import pitampoudel.komposeauth.data.UserResponse
-import pitampoudel.komposeauth.data.VerifyPhoneOtpRequest
+import pitampoudel.komposeauth.core.data.ApiEndpoints.UPDATE_PHONE_NUMBER
+import pitampoudel.komposeauth.core.data.ApiEndpoints.VERIFY_PHONE_NUMBER
+import pitampoudel.komposeauth.core.data.UpdatePhoneNumberRequest
+import pitampoudel.komposeauth.core.data.UserResponse
+import pitampoudel.komposeauth.core.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.user.service.UserService
 
 @RestController

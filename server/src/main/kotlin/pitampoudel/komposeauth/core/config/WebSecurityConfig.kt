@@ -19,8 +19,8 @@ import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
-import pitampoudel.komposeauth.data.ApiEndpoints
-import pitampoudel.komposeauth.data.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.data.ApiEndpoints
+import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
 import java.net.URLEncoder
 
 @Configuration

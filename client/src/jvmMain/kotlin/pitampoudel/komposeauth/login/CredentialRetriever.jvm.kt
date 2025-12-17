@@ -4,9 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import kotlinx.serialization.json.JsonObject
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.LoginOptionsResponse
-import pitampoudel.komposeauth.domain.Platform
+import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.core.data.LoginOptionsResponse
+import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.login.OAuthUtils.buildAuthUrl
 import pitampoudel.komposeauth.login.OAuthUtils.listenForCode
 import java.awt.Desktop

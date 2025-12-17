@@ -18,12 +18,12 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import pitampoudel.komposeauth.data.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
-import pitampoudel.komposeauth.data.ApiEndpoints
-import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.OAuth2Response
-import pitampoudel.komposeauth.data.ResponseType
+import pitampoudel.komposeauth.core.data.ApiEndpoints
+import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.core.data.OAuth2Response
+import pitampoudel.komposeauth.core.data.ResponseType
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
 import pitampoudel.komposeauth.user.service.OneTimeTokenService

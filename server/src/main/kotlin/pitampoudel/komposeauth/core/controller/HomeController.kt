@@ -4,7 +4,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 import pitampoudel.komposeauth.core.config.UserContextService
-import pitampoudel.komposeauth.data.ProfileResponse
+import pitampoudel.komposeauth.core.data.ProfileResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
 

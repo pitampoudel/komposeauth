@@ -3,8 +3,8 @@ package pitampoudel.komposeauth.login
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.LoginOptionsResponse
+import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import kotlinx.serialization.json.JsonObject
 import platform.AuthenticationServices.ASAuthorization
 import platform.AuthenticationServices.ASAuthorizationAppleIDCredential

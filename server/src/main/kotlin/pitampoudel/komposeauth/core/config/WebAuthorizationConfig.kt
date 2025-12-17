@@ -38,8 +38,8 @@ import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
-import pitampoudel.komposeauth.data.Constants.ACCESS_TOKEN_COOKIE_NAME
-import pitampoudel.komposeauth.data.KycResponse
+import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.data.KycResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.service.UserService
 import java.net.URLEncoder

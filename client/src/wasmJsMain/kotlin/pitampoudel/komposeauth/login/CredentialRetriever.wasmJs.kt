@@ -14,9 +14,9 @@ import org.koin.mp.KoinPlatform.getKoin
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.events.Event
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.data.Credential
-import pitampoudel.komposeauth.data.LoginOptionsResponse
-import pitampoudel.komposeauth.domain.Platform
+import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.core.data.LoginOptionsResponse
+import pitampoudel.komposeauth.core.domain.Platform
 import kotlin.coroutines.resume
 import kotlin.js.Promise
 import kotlin.random.Random
