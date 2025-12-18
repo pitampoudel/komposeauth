@@ -4,13 +4,16 @@ import io.sentry.Sentry
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import java.util.TimeZone
 import javax.annotation.PostConstruct
 
 @SpringBootApplication
 class AuthApplication(private val appConfigProvider: AppConfigProvider) {
 
     @PostConstruct
-    fun initSentry() {
+    fun init() {
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+
         // initialize Sentry when DSN is provided
         val dsn = appConfigProvider.sentryDsn
         if (dsn.isNullOrBlank()) return

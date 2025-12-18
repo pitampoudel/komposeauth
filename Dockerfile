@@ -18,7 +18,6 @@ LABEL org.opencontainers.image.title="komposeauth" \
 COPY --from=build /home/gradle/src/server/build/libs/app.jar /app/app.jar
 
 ENV JAVA_TOOL_OPTIONS="-Dserver.port=${PORT} -XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
-ENV TZ=UTC
 
 EXPOSE 8080
 
