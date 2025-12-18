@@ -5,12 +5,13 @@ import pitampoudel.core.data.PhoneNumber
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import pitampoudel.komposeauth.core.data.AddressInformation
 import kotlin.time.Instant
 
 @Serializable
 data class OrganizationResponse(
     @SerialName("address")
-    val address: String,
+    val address: AddressInformation,
     @SerialName("createdAt")
     @Contextual  val createdAt: Instant,
     @SerialName("description")

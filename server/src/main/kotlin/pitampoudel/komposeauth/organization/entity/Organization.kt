@@ -24,7 +24,11 @@ data class Organization(
     @Indexed(unique = true) val email: String,
     val emailVerified: Boolean = false,
     val logoUrl: String?,
-    val address: String,
+    val country: String?,
+    val state: String?,
+    val city: String?,
+    val addressLine1: String?,
+    val addressLine2: String?,
     @Indexed(unique = true, sparse = true)
     val phoneNumber: String?,
     val phoneNumberVerified: Boolean = false,

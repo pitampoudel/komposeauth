@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.kyc.dto
 
+import pitampoudel.komposeauth.core.data.AddressInformation
 import pitampoudel.komposeauth.core.data.KycResponse
 import pitampoudel.komposeauth.core.data.PersonalInformation
 import pitampoudel.komposeauth.kyc.entity.KycVerification
@@ -18,14 +19,14 @@ fun KycVerification.toResponse() = KycResponse(
         maritalStatus = maritalStatus,
         grandFatherName = grandFatherName
     ),
-    currentAddress = KycResponse.AddressInformation(
+    currentAddress = AddressInformation(
         country = currentAddressCountry,
         state = currentAddressState,
         city = currentAddressCity,
         addressLine1 = currentAddressLine1,
         addressLine2 = currentAddressLine2,
     ),
-    permanentAddress = KycResponse.AddressInformation(
+    permanentAddress = AddressInformation(
         country = permanentAddressCountry,
         state = permanentAddressState,
         city = permanentAddressCity,

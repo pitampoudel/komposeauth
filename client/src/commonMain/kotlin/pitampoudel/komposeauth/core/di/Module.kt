@@ -20,6 +20,7 @@ import pitampoudel.komposeauth.organization.data.OrganizationsClientImpl
 import pitampoudel.komposeauth.kyc.KycViewModel
 import pitampoudel.komposeauth.login.LoginViewModel
 import pitampoudel.komposeauth.organization.domain.OrganizationsClient
+import pitampoudel.komposeauth.organization.presentation.CreateOrganizationViewModel
 import pitampoudel.komposeauth.otp.OtpViewModel
 import pitampoudel.komposeauth.profile.ProfileViewModel
 
@@ -49,6 +50,7 @@ fun initializeKomposeAuth(
         viewModel<LoginViewModel> { LoginViewModel(get(), get(), get()) }
         viewModel<KycViewModel> { KycViewModel(get()) }
         viewModel<ProfileViewModel> { ProfileViewModel(get(), get()) }
+        viewModel<CreateOrganizationViewModel> { CreateOrganizationViewModel(get()) }
     }
 
     app?.let {

@@ -7,6 +7,7 @@ import pitampoudel.core.data.EncodedData
 import pitampoudel.core.domain.validators.ValidateNotBlank
 import pitampoudel.core.domain.validators.ValidateUrlOrBlank
 import pitampoudel.core.domain.validators.ValidationResult
+import pitampoudel.komposeauth.core.data.AddressInformation
 import pitampoudel.komposeauth.core.domain.use_cases.ValidateEmail
 import pitampoudel.komposeauth.core.domain.use_cases.ValidateFacebookLinkOrBlank
 import pitampoudel.komposeauth.organization.domain.use_cases.ValidateOrganizationDescription
@@ -16,7 +17,7 @@ import pitampoudel.komposeauth.organization.domain.use_cases.ValidateOrganizatio
 @Serializable
 data class CreateOrUpdateOrganizationRequest(
     @SerialName("address")
-    val address: String,
+    val address: AddressInformation,
     @SerialName("countryNameCode")
     val countryNameCode: String,
     @SerialName("description")

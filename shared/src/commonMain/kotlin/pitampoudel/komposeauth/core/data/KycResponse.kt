@@ -27,14 +27,6 @@ data class KycResponse(
         val selfieUrl: String?
     )
 
-    @Serializable
-    data class AddressInformation(
-        val country: String?,
-        val state: String?,
-        val city: String?,
-        val addressLine1: String?,
-        val addressLine2: String? = null,
-    )
 
     enum class Status {
         DRAFT, PENDING, APPROVED, REJECTED;

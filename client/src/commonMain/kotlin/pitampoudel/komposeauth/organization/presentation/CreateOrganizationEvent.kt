@@ -12,7 +12,7 @@ sealed interface CreateOrganizationEvent {
     class WebsiteChanged(val value: String) : CreateOrganizationEvent
     class DescriptionChanged(val value: String) : CreateOrganizationEvent
     class CountryChanged(val value: String) : CreateOrganizationEvent
-    class ProvinceChanged(val value: String) : CreateOrganizationEvent
+    class StateChanged(val value: String) : CreateOrganizationEvent
     class CityChanged(val value: String) : CreateOrganizationEvent
     class AddressLine1Changed(val value: String) : CreateOrganizationEvent
     class LoadOrganization(val orgId: String) : CreateOrganizationEvent

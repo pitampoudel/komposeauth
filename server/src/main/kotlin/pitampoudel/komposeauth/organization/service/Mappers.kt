@@ -4,6 +4,7 @@ package pitampoudel.komposeauth.organization.service
 import org.bson.types.ObjectId
 import pitampoudel.core.data.PhoneNumber
 import pitampoudel.core.data.parsePhoneNumber
+import pitampoudel.komposeauth.core.data.AddressInformation
 import pitampoudel.komposeauth.organization.data.CreateOrUpdateOrganizationRequest
 import pitampoudel.komposeauth.organization.data.OrganizationResponse
 import pitampoudel.komposeauth.organization.entity.Organization
@@ -25,7 +26,11 @@ fun CreateOrUpdateOrganizationRequest.toOrganization(
         email = email,
         logoUrl = logoImageUrl,
         phoneNumber = fullNumberInInternationalFormat,
-        address = address,
+        country = address.country,
+        state = address.state,
+        city = address.city,
+        addressLine1 = address.addressLine1,
+        addressLine2 = address.addressLine2,
         registrationNo = registrationNo.takeIf { it.isNotBlank() },
         description = description.takeIf { it.isNotBlank() },
         website = website.takeIf { it.isNotBlank() },
@@ -56,7 +61,11 @@ fun Organization.updated(
         emailVerified = if (oldEmail != request.email) false else oldEmailVerified,
         phoneNumber = newPhoneNumber,
         phoneNumberVerified = if (oldPhoneNumber != newPhoneNumber) false else oldPhoneNumberVerified,
-        address = request.address,
+        country = request.address.country,
+        state = request.address.state,
+        city = request.address.city,
+        addressLine1 = request.address.addressLine1,
+        addressLine2 = request.address.addressLine2,
         registrationNo = request.registrationNo.takeIf { it.isNotBlank() },
         description = request.description.takeIf { it.isNotBlank() },
         website = request.website.takeIf { it.isNotBlank() },
@@ -66,7 +75,13 @@ fun Organization.updated(
 
 fun Organization.toApiResponse(phoneNumber: PhoneNumber?): OrganizationResponse {
     return OrganizationResponse(
-        address = address,
+        address = AddressInformation(
+            country = country,
+            state = state,
+            city = city,
+            addressLine1 = addressLine1,
+            addressLine2 = addressLine2
+        ),
         createdAt = createdAt,
         description = description,
         email = email,

@@ -50,6 +50,6 @@ data class DocumentInformation(
 
 @Serializable
 data class UpdateAddressDetailsRequest(
-    val currentAddress: KycResponse.AddressInformation,
-    val permanentAddress: KycResponse.AddressInformation,
+    val currentAddress: AddressInformation,
+    val permanentAddress: AddressInformation,
 )

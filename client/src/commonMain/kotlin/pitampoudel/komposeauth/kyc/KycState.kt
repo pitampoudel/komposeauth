@@ -10,6 +10,7 @@ import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.core.domain.validators.GeneralValidationError
 import kotlinx.datetime.LocalDate
+import pitampoudel.komposeauth.core.data.AddressInformation
 
 data class AddressState(
     val country: String = "",
@@ -31,10 +32,10 @@ data class AddressState(
                 addressLine2Error != null
     }
 
-    fun toRequest(): KycResponse.AddressInformation {
+    fun toRequest(): AddressInformation {
         require(!hasError()) { "Form contains errors" }
 
-        return KycResponse.AddressInformation(
+        return AddressInformation(
             country = country,
             state = state,
             city = city,
@@ -45,7 +46,7 @@ data class AddressState(
 
 
     companion object {
-        fun fromData(data: KycResponse.AddressInformation): AddressState {
+        fun fromData(data: AddressInformation): AddressState {
             return AddressState(
                 country = data.country.orEmpty(),
                 state = data.state.orEmpty(),
