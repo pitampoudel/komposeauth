@@ -50,7 +50,7 @@ fun initializeKomposeAuth(
         viewModel<OtpViewModel> { OtpViewModel(get()) }
         viewModel<LoginViewModel> { LoginViewModel(get(), get(), get()) }
         viewModel<KycViewModel> { KycViewModel(get()) }
-        viewModel<ProfileViewModel> { ProfileViewModel(get(), get()) }
+        viewModel<ProfileViewModel> { ProfileViewModel(get(), get(),get()) }
         viewModel<CreateOrganizationViewModel> { CreateOrganizationViewModel(get()) }
         viewModel<OrganizationViewModel> { OrganizationViewModel(get()) }
     }

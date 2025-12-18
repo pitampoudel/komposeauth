@@ -8,6 +8,7 @@ import pitampoudel.komposeauth.organization.data.OrganizationResponse
 
 interface OrganizationsClient {
     suspend fun createOrUpdate(request: CreateOrUpdateOrganizationRequest): Result<MessageResponse>
+    suspend fun get(): Result<List<OrganizationResponse>>
     suspend fun get(orgId: String): Result<OrganizationResponse>
     suspend fun delete(orgId: String): Result<MessageResponse>
     suspend fun download(url: String): Result<KmpFile>

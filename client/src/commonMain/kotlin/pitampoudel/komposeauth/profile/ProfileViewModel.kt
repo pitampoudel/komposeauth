@@ -15,10 +15,12 @@ import pitampoudel.komposeauth.core.data.AuthStateHandler
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.data.ProfileResponse
 import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
+import pitampoudel.komposeauth.organization.domain.OrganizationsClient
 
 class ProfileViewModel internal constructor(
     private val authStateHandler: AuthStateHandler,
-    private val client: AuthClient
+    private val client: AuthClient,
+    val orgClient: OrganizationsClient
 ) : ViewModel() {
 
     private val uiEventChannel = Channel<ResultUiEvent>()
@@ -40,6 +42,11 @@ class ProfileViewModel internal constructor(
             }
             _state.update {
                 it.copy(webAuthnRegistrationOptions = options)
+            }
+        }
+        viewModelScope.launch {
+            _state.update {
+                it.copy(organizationsRes = orgClient.get())
             }
         }
         viewModelScope.launch {

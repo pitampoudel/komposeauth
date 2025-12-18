@@ -1,10 +1,12 @@
 package pitampoudel.komposeauth.profile
 
 import pitampoudel.core.domain.KmpFile
+import pitampoudel.core.domain.Result
 import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.komposeauth.core.data.ProfileResponse
 import pitampoudel.komposeauth.core.data.UpdateProfileRequest
+import pitampoudel.komposeauth.organization.data.OrganizationResponse
 
 data class ProfileState(
     val progress: Float? = null,
@@ -12,7 +14,8 @@ data class ProfileState(
     val profile: ProfileResponse? = null,
     val askingDeactivateConfirmation: Boolean = false,
     val editingState: EditingState = EditingState(),
-    val webAuthnRegistrationOptions: String? = null
+    val webAuthnRegistrationOptions: String? = null,
+    val organizationsRes: Result<List<OrganizationResponse>>? = null
 ) {
     data class EditingState(
         val givenName: String = "",

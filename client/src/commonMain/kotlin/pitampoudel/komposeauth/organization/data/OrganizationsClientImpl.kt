@@ -32,6 +32,14 @@ internal class OrganizationsClientImpl(
         }
     }
 
+    override suspend fun get(): Result<List<OrganizationResponse>> {
+        return safeApiCall {
+            httpClient.get(
+                baseUrl + "/" + ApiEndpoints.ORGANIZATION
+            ).asResource { body() }
+        }
+    }
+
     override suspend fun get(orgId: String): Result<OrganizationResponse> {
         return safeApiCall {
             httpClient.get(
