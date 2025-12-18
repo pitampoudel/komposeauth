@@ -9,14 +9,13 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.config.UserContextService
+import pitampoudel.komposeauth.core.data.ApiEndpoints.VERIFY_EMAIL
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.utils.findCurrentBaseUrl
-import pitampoudel.komposeauth.data.ApiEndpoints.VERIFY_EMAIL
 import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.service.UserService
