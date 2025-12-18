@@ -1,9 +1,9 @@
-package pitampoudel.komposeauth.core.data
+package pitampoudel.komposeauth.kyc.data
 
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
-import pitampoudel.komposeauth.core.domain.DocumentType
-
+import pitampoudel.komposeauth.core.data.AddressInformation
+import pitampoudel.komposeauth.kyc.domain.DocumentType
 
 @Serializable
 data class KycResponse(

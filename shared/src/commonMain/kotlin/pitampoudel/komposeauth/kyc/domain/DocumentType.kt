@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.domain
+package pitampoudel.komposeauth.kyc.domain
 
 enum class DocumentType {
     PASSPORT,

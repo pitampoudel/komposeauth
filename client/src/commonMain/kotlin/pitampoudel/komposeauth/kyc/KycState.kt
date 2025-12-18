@@ -1,11 +1,11 @@
 package pitampoudel.komposeauth.kyc
 
 import pitampoudel.komposeauth.core.data.CountryResponse
-import pitampoudel.komposeauth.core.data.DocumentInformation
-import pitampoudel.komposeauth.core.domain.DocumentType
-import pitampoudel.komposeauth.core.data.KycResponse
-import pitampoudel.komposeauth.core.data.PersonalInformation
-import pitampoudel.komposeauth.core.data.UpdateAddressDetailsRequest
+import pitampoudel.komposeauth.kyc.data.DocumentInformation
+import pitampoudel.komposeauth.kyc.domain.DocumentType
+import pitampoudel.komposeauth.kyc.data.KycResponse
+import pitampoudel.komposeauth.kyc.data.PersonalInformation
+import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
 import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.core.domain.validators.GeneralValidationError

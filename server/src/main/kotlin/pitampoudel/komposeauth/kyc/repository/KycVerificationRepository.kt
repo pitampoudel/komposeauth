@@ -1,6 +1,6 @@
 package pitampoudel.komposeauth.kyc.repository
 
-import pitampoudel.komposeauth.core.data.KycResponse
+import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.entity.KycVerification
 import org.bson.types.ObjectId
 import org.springframework.data.mongodb.repository.MongoRepository

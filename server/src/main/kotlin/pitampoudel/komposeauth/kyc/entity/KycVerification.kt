@@ -8,8 +8,8 @@ import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.annotation.TypeAlias
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
-import pitampoudel.komposeauth.core.data.KycResponse
-import pitampoudel.komposeauth.core.domain.DocumentType
+import pitampoudel.komposeauth.kyc.data.KycResponse
+import pitampoudel.komposeauth.kyc.domain.DocumentType
 import java.time.Instant
 
 @Document(collection = "kyc_verifications")

@@ -1,8 +1,8 @@
 package pitampoudel.komposeauth.kyc.dto
 
 import pitampoudel.komposeauth.core.data.AddressInformation
-import pitampoudel.komposeauth.core.data.KycResponse
-import pitampoudel.komposeauth.core.data.PersonalInformation
+import pitampoudel.komposeauth.kyc.data.KycResponse
+import pitampoudel.komposeauth.kyc.data.PersonalInformation
 import pitampoudel.komposeauth.kyc.entity.KycVerification
 
 fun KycVerification.toResponse() = KycResponse(

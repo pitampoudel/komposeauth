@@ -28,6 +28,10 @@ import pitampoudel.komposeauth.core.data.ApiEndpoints.UPDATE_PROFILE
 import pitampoudel.komposeauth.core.data.ApiEndpoints.VERIFY_PHONE_NUMBER
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.Platform
+import pitampoudel.komposeauth.kyc.data.DocumentInformation
+import pitampoudel.komposeauth.kyc.data.KycResponse
+import pitampoudel.komposeauth.kyc.data.PersonalInformation
+import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
 
 internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClient {
 

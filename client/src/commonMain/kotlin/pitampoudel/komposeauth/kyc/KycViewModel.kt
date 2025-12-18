@@ -10,7 +10,7 @@ import pitampoudel.core.domain.Result
 import pitampoudel.core.domain.validators.ValidateNotBlank
 import pitampoudel.core.domain.validators.ValidateNotNull
 import pitampoudel.core.domain.validators.ValidationResult
-import pitampoudel.komposeauth.core.data.KycResponse
+import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.core.domain.AuthClient
 
 class KycViewModel internal constructor(

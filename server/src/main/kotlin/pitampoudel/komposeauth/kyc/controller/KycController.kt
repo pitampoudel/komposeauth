@@ -17,10 +17,10 @@ import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_ADDRESS
 import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_DOCUMENTS
 import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_PENDING
 import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_PERSONAL_INFO
-import pitampoudel.komposeauth.core.data.DocumentInformation
-import pitampoudel.komposeauth.core.data.KycResponse
-import pitampoudel.komposeauth.core.data.PersonalInformation
-import pitampoudel.komposeauth.core.data.UpdateAddressDetailsRequest
+import pitampoudel.komposeauth.kyc.data.DocumentInformation
+import pitampoudel.komposeauth.kyc.data.KycResponse
+import pitampoudel.komposeauth.kyc.data.PersonalInformation
+import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.service.UserService
 import javax.security.auth.login.AccountNotFoundException

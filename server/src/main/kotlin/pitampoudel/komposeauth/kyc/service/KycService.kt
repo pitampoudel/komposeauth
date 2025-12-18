@@ -7,10 +7,10 @@ import org.springframework.transaction.annotation.Transactional
 import pitampoudel.core.data.EncodedData
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
-import pitampoudel.komposeauth.core.data.DocumentInformation
-import pitampoudel.komposeauth.core.data.KycResponse
-import pitampoudel.komposeauth.core.data.PersonalInformation
-import pitampoudel.komposeauth.core.data.UpdateAddressDetailsRequest
+import pitampoudel.komposeauth.kyc.data.DocumentInformation
+import pitampoudel.komposeauth.kyc.data.KycResponse
+import pitampoudel.komposeauth.kyc.data.PersonalInformation
+import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
 import pitampoudel.komposeauth.kyc.dto.toResponse
 import pitampoudel.komposeauth.kyc.entity.KycVerification
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
