@@ -17,6 +17,10 @@ class OrganizationService(private val repository: OrganizationRepository) {
         return orgs.associateBy { it.id.toHexString() }
     }
 
+    suspend fun findOrgs(ids: List<String>): List<Organization> {
+        return repository.findAllByIdIn(ids.map { ObjectId(it) })
+    }
+
     suspend fun findOrgsForUser(userId: ObjectId): List<Organization> {
         return repository.findAllByUserIdsContains(userId)
     }

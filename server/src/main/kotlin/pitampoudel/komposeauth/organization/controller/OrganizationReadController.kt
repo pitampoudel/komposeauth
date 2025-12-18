@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.websocket.server.PathParam
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
@@ -21,9 +22,14 @@ class OrganizationReadController(
 ) {
 
     @GetMapping("/" + ApiEndpoints.ORGANIZATION)
-    suspend fun getOrganizations(): List<OrganizationResponse> {
+    suspend fun getOrganizations(
+        @RequestParam("ids")
+        ids: String? = null
+    ): List<OrganizationResponse> {
         val user = userContextService.getUserFromAuthentication()
-        val organizations = organizationService.findOrgsForUser(user.id)
+
+        val organizations = if (!ids.isNullOrBlank()) organizationService.findOrgs(ids.split(","))
+        else organizationService.findOrgsForUser(user.id)
         return organizations.map { org ->
             org.toApiResponse(
                 org.phoneNumber?.let { phone -> parsePhoneNumber(null, phone) }
