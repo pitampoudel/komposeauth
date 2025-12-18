@@ -16,8 +16,10 @@ import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.core.domain.AuthUser
 import pitampoudel.komposeauth.core.domain.Config
+import pitampoudel.komposeauth.organization.data.OrganizationsClientImpl
 import pitampoudel.komposeauth.kyc.KycViewModel
 import pitampoudel.komposeauth.login.LoginViewModel
+import pitampoudel.komposeauth.organization.domain.OrganizationsClient
 import pitampoudel.komposeauth.otp.OtpViewModel
 import pitampoudel.komposeauth.profile.ProfileViewModel
 
@@ -36,6 +38,11 @@ fun initializeKomposeAuth(
             val authServerUrl = Config.authServerUrl
                 ?: throw Exception("The provided http client must have komposeauth installed")
             AuthClientImpl(httpClient = httpClient, authUrl = authServerUrl)
+        }
+        single<OrganizationsClient> {
+            val authServerUrl = Config.authServerUrl
+                ?: throw Exception("The provided http client must have komposeauth installed")
+            OrganizationsClientImpl(httpClient = httpClient, baseUrl = authServerUrl)
         }
         single { AuthStateHandler(get(), get()) }
         viewModel<OtpViewModel> { OtpViewModel(get()) }

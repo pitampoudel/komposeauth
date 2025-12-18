@@ -2,17 +2,16 @@ package pitampoudel.komposeauth.kyc
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.core.data.KycResponse
-import pitampoudel.komposeauth.core.domain.AuthClient
-import pitampoudel.core.domain.validators.ValidateNotBlank
-import pitampoudel.core.domain.validators.ValidateNotNull
-import pitampoudel.core.data.download
-import pitampoudel.core.domain.validators.ValidationResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import pitampoudel.core.domain.Result
+import pitampoudel.core.domain.validators.ValidateNotBlank
+import pitampoudel.core.domain.validators.ValidateNotNull
+import pitampoudel.core.domain.validators.ValidationResult
+import pitampoudel.komposeauth.core.data.KycResponse
+import pitampoudel.komposeauth.core.domain.AuthClient
 
 class KycViewModel internal constructor(
     private val client: AuthClient
