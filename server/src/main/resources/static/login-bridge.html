@@ -139,13 +139,6 @@
 
 <script>
     (function() {
-      const params = new URLSearchParams(location.search);
-      const cont = params.get('continue') || '';
-
-      function nextUrl() {
-         return decodeURIComponent(cont);
-      }
-
       const form = document.getElementById('login-form');
       const errorEl = document.getElementById('error');
       const button = document.getElementById('login-btn');
@@ -174,7 +167,8 @@
             throw new Error(text || `Login failed (${resp.status})`);
           }
 
-          location.href = nextUrl();
+          // Redirect to a controller that will handle the saved request
+          location.href = '/login/success';
         } catch (err) {
           errorEl.textContent = err?.message || 'Login failed';
         } finally {
