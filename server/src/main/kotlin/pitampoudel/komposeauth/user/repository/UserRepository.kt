@@ -14,7 +14,7 @@ interface UserRepository : MongoRepository<User, ObjectId> {
     @Query($$"{ phoneNumber: { $exists: true }}")
     fun findAllHavingPhoneNumber(): List<User>
     fun findByEmail(email: String): User?
-    fun findByPhoneNumberRegex(regex: String?): User?
+    fun findByPhoneNumber(phoneNumber: String): User?
     fun findByIdIn(ids: List<ObjectId>): List<User>
     fun findByRolesContaining(role: String, pageable: Pageable): Page<User>
     fun countByRolesContaining(role: String): Long
@@ -34,7 +34,7 @@ interface UserRepository : MongoRepository<User, ObjectId> {
             user = findById(ObjectId(value)).getOrNull()
         }
         user = user ?: findByEmail(value)
-        user = user ?: findByPhoneNumberRegex("$value$")
+        user = user ?: findByPhoneNumber(value)
         return user
     }
 }
