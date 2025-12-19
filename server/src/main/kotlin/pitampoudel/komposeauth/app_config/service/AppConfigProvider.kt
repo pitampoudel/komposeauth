@@ -33,7 +33,7 @@ class AppConfigProvider(val appConfigService: AppConfigService) {
     }
 
     fun rpId(): String? {
-        return appConfigService.get().rpId
+        return appConfigService.get().rpId ?: getLocalIpAddress()
     }
 
     val name: String get() = appConfigService.get().name ?: "komposeauth"
