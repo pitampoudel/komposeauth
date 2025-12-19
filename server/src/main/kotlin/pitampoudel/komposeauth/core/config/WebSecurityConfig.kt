@@ -14,14 +14,13 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.util.UrlUtils
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.data.ApiEndpoints
 import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
-import java.net.URLEncoder
 
 @Configuration
 @EnableWebSecurity
@@ -120,18 +119,9 @@ class WebSecurityConfig {
                     .anyRequest().authenticated()
             }
             .exceptionHandling { ex ->
-                ex.authenticationEntryPoint { request, response, authException ->
-                    val accept = request.getHeader("Accept") ?: ""
-                    val wantsHtml = accept.contains("text/html", ignoreCase = true)
-                    if (wantsHtml) {
-                        val continueUrl = URLEncoder.encode(
-                            UrlUtils.buildFullRequestUrl(request), Charsets.UTF_8
-                        )
-                        response.sendRedirect("/login-bridge.html?continue=$continueUrl")
-                    } else {
-                        response.sendError(401, authException?.message)
-                    }
-                }
+                ex.authenticationEntryPoint (
+                    LoginUrlAuthenticationEntryPoint("/login-bridge.html")
+                )
             }
             .build()
     }

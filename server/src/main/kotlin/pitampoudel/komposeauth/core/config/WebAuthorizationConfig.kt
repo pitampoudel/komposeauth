@@ -30,9 +30,8 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
-import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.util.UrlUtils
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
@@ -40,7 +39,6 @@ import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.service.UserService
-import java.net.URLEncoder
 import java.time.Instant
 import java.util.Base64
 import javax.security.auth.login.AccountNotFoundException
@@ -155,26 +153,12 @@ class WebAuthorizationConfig() {
     }
 
     @Bean
-    fun loginRedirectEntryPoint() = AuthenticationEntryPoint { request, response, _ ->
-        response.status = 302
-        response.setHeader(
-            "Location",
-            "/login-bridge.html?continue=${
-                URLEncoder.encode(
-                    UrlUtils.buildFullRequestUrl(request), Charsets.UTF_8
-                )
-            }"
-        )
-    }
-
-    @Bean
     @Order(1)
     fun authFilterChain(
         http: HttpSecurity,
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
-        kycService: KycService,
-        authenticationEntryPoint: AuthenticationEntryPoint
+        kycService: KycService
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
 
@@ -232,7 +216,9 @@ class WebAuthorizationConfig() {
                 auth.anyRequest().authenticated()
             }
             .exceptionHandling { ex ->
-                ex.authenticationEntryPoint(authenticationEntryPoint)
+                ex.authenticationEntryPoint(
+                    LoginUrlAuthenticationEntryPoint("/login-bridge.html")
+                )
             }
             .build()
     }
