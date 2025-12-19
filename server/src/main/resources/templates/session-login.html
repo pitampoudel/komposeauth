@@ -122,7 +122,7 @@
     <h1>Sign in</h1>
     <p>Access your account to continue with the authorization process.</p>
 
-    <form id="login-form">
+    <form id="login-form" method="post">
         <label for="username">Email or username</label>
         <input id="username" name="username" type="text" autocomplete="username" required/>
 
@@ -136,46 +136,5 @@
 
     <div class="hint" id="app-hint"></div>
 </div>
-
-<script>
-    (function() {
-      const form = document.getElementById('login-form');
-      const errorEl = document.getElementById('error');
-      const button = document.getElementById('login-btn');
-
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        errorEl.textContent = '';
-        button.disabled = true;
-
-        try {
-          const body = {
-            type: 'USERNAME_PASSWORD',
-            username: document.getElementById('username').value,
-            password: document.getElementById('password').value
-          };
-
-          const resp = await fetch(`${location.origin}/login?responseType=SESSION`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(body)
-          });
-
-          if (!resp.ok) {
-            const text = await resp.text();
-            throw new Error(text || `Login failed (${resp.status})`);
-          }
-
-          // Redirect to a controller that will handle the saved request
-          location.href = '/login/success';
-        } catch (err) {
-          errorEl.textContent = err?.message || 'Login failed';
-        } finally {
-          button.disabled = false;
-        }
-      });
-    })();
-</script>
 </body>
 </html>

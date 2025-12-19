@@ -94,7 +94,7 @@ class WebSecurityConfig {
                         "/lib/**",
                         "/favicon.ico",
                         "/assets/**",
-                        "/login-bridge.html",
+                        "/session-login",
                         "/oauth2/jwks",
                         "/${ApiEndpoints.LOGIN}",
                         "/${ApiEndpoints.LOGIN}/session",
@@ -120,7 +120,7 @@ class WebSecurityConfig {
             }
             .exceptionHandling { ex ->
                 ex.authenticationEntryPoint (
-                    LoginUrlAuthenticationEntryPoint("/login-bridge.html")
+                    LoginUrlAuthenticationEntryPoint("/session-login")
                 )
             }
             .build()

@@ -217,7 +217,7 @@ class WebAuthorizationConfig() {
             }
             .exceptionHandling { ex ->
                 ex.authenticationEntryPoint(
-                    LoginUrlAuthenticationEntryPoint("/login-bridge.html")
+                    LoginUrlAuthenticationEntryPoint("/session-login")
                 )
             }
             .build()

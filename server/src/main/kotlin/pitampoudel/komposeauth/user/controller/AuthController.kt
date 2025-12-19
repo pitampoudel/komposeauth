@@ -6,16 +6,10 @@ import jakarta.servlet.http.HttpServletResponse
 import kotlinx.serialization.json.Json
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository
-import org.springframework.security.web.savedrequest.SavedRequest
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
@@ -59,7 +53,6 @@ class AuthController(
         responseType: ResponseType,
         httpServletRequest: HttpServletRequest,
         httpServletResponse: HttpServletResponse,
-        securityContextRepository: HttpSessionSecurityContextRepository
     ): ResponseEntity<*> {
         val user = userService.resolveUserFromCredential(
             request = request,
@@ -109,19 +102,6 @@ class AuthController(
                             expiresIn = 1.days.inWholeSeconds,
                         )
                     )
-                )
-            }
-
-            ResponseType.SESSION -> {
-                val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
-                SecurityContextHolder.getContext().authentication =
-                    UsernamePasswordAuthenticationToken(
-                        user.id,
-                        null,
-                        authorities
-                    )
-                securityContextRepository.saveContext(
-                    SecurityContextHolder.getContext(), httpServletRequest, httpServletResponse
                 )
             }
 
