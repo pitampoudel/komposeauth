@@ -33,7 +33,10 @@ class SessionLoginController(
         @RequestParam("password") password: String
     ): String {
         val user = userService.resolveUserFromCredential(
-            request = Credential.UsernamePassword(username, password),
+            request = Credential.UsernamePassword(
+                username = username,
+                password = password
+            ),
             loadPublicKeyCredentialRequestOptions = {
                 null
             }
