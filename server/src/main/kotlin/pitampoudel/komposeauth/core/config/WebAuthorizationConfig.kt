@@ -20,7 +20,6 @@ import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
-import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.token.JwtGenerator
@@ -35,10 +34,9 @@ import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.client.RestTemplate
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
-import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.service.UserService
@@ -148,15 +146,6 @@ class WebAuthorizationConfig() {
             grantedAuthorities.toList()
         }
         return converter
-    }
-
-    @Bean
-    fun authorizationServerSettings(
-        appConfigProvider: AppConfigProvider
-    ): AuthorizationServerSettings {
-        return AuthorizationServerSettings.builder()
-            .issuer(appConfigProvider.selfBaseUrl)
-            .build()
     }
 
     @Bean

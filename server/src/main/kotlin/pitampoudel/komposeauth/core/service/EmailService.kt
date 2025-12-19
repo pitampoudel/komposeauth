@@ -30,7 +30,7 @@ class EmailService(
         return impl
     }
 
-    private fun render(template: String, variables: Map<String, Any?>): String {
+    private fun render(template: String, baseUrl: String, variables: Map<String, Any?>): String {
         val context = Context().apply {
             // branding defaults
             setVariable("appName", appConfigProvider.name)
@@ -38,7 +38,7 @@ class EmailService(
             setVariable("brandColor", appConfigProvider.brandColor)
             setVariable("supportEmail", appConfigProvider.supportEmail)
             setVariable("footerText", appConfigProvider.emailFooterText)
-            setVariable("baseUrl", appConfigProvider.selfBaseUrl)
+            setVariable("baseUrl", baseUrl)
             setVariable("facebookUrl", appConfigProvider.facebookLink)
             setVariable("instagramUrl", appConfigProvider.instagramLink)
             setVariable("youtubeUrl", appConfigProvider.youtubeLink)
@@ -51,13 +51,18 @@ class EmailService(
     }
 
     fun sendHtmlMail(
+        baseUrl: String,
         to: String,
         subject: String,
         template: String,
         model: Map<String, Any?> = emptyMap(),
     ): Boolean {
         return try {
-            val html = render(template, model + mapOf("subject" to subject))
+            val html = render(
+                template = template,
+                baseUrl = baseUrl,
+                variables = model + mapOf("subject" to subject)
+            )
             val sender = javaMailSender()
             val message: MimeMessage = sender.createMimeMessage()
             val helper = MimeMessageHelper(message, true, "UTF-8")

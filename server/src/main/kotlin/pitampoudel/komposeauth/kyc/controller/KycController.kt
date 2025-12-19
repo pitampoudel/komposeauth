@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.kyc.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
@@ -17,6 +18,7 @@ import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_ADDRESS
 import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_DOCUMENTS
 import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_PENDING
 import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_PERSONAL_INFO
+import pitampoudel.komposeauth.core.utils.findCurrentBaseUrl
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
@@ -76,11 +78,15 @@ class KycController(
         description = "Submits or updates the Document details for the currently authenticated user."
     )
     @PostMapping("/$KYC_DOCUMENTS")
-    fun submitDocumentDetails(@Validated @RequestBody data: DocumentInformation): ResponseEntity<KycResponse> {
+    fun submitDocumentDetails(
+        @Validated @RequestBody data: DocumentInformation,
+        request: HttpServletRequest
+    ): ResponseEntity<KycResponse> {
         val user = userContextService.getUserFromAuthentication()
         val result = kycService.submitDocumentDetails(user.id, data)
         user.email?.let {
             emailService.sendHtmlMail(
+                baseUrl = findCurrentBaseUrl(request),
                 to = it,
                 subject = "KYC Documents Received",
                 template = "email/generic.html",
@@ -100,8 +106,12 @@ class KycController(
     )
     @PostMapping("/kyc/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
-    fun approve(@PathVariable id: String): ResponseEntity<KycResponse> = ResponseEntity.ok(
+    fun approve(
+        @PathVariable id: String,
+        request: HttpServletRequest
+    ): ResponseEntity<KycResponse> = ResponseEntity.ok(
         kycService.approve(
+            baseUrl = findCurrentBaseUrl(request),
             userService.findUser(id) ?: throw AccountNotFoundException("User not found")
         )
     )
@@ -113,11 +123,14 @@ class KycController(
     @PostMapping("/kyc/{id}/reject")
     @PreAuthorize("hasRole('ADMIN')")
     fun reject(
+        httpServletRequest: HttpServletRequest,
         @PathVariable id: String,
         @RequestParam(required = false) reason: String?
     ): ResponseEntity<KycResponse> = ResponseEntity.ok(
         kycService.reject(
-            userService.findUser(id) ?: throw AccountNotFoundException("User not found"), reason
+            baseUrl = findCurrentBaseUrl(httpServletRequest),
+            user = userService.findUser(id) ?: throw AccountNotFoundException("User not found"),
+            reason = reason
         )
     )
 }

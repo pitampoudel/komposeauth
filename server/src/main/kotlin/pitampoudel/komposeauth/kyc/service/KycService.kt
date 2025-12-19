@@ -131,10 +131,11 @@ class KycService(
     }
 
     @Transactional
-    fun approve(user: User): KycResponse {
+    fun approve(baseUrl: String, user: User): KycResponse {
         val res = updateStatus(user.id, KycResponse.Status.APPROVED)
         user.email?.let {
             emailService.sendHtmlMail(
+                baseUrl = baseUrl,
                 to = it,
                 subject = "Your KYC has been approved",
                 template = "email/generic",
@@ -150,10 +151,11 @@ class KycService(
 
 
     @Transactional
-    fun reject(user: User, reason: String?): KycResponse {
+    fun reject(baseUrl: String,user: User, reason: String?): KycResponse {
         val res = updateStatus(user.id, KycResponse.Status.REJECTED)
         user.email?.let { userEmail ->
             emailService.sendHtmlMail(
+                baseUrl=baseUrl,
                 to = userEmail,
                 subject = "Your KYC has been rejected",
                 template = "email/generic",

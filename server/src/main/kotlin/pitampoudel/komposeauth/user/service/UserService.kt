@@ -24,10 +24,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
-import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.StorageService
-import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService
-import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.core.data.CreateUserRequest
 import pitampoudel.komposeauth.core.data.Credential
 import pitampoudel.komposeauth.core.data.ProfileResponse
@@ -36,6 +32,10 @@ import pitampoudel.komposeauth.core.data.UpdateProfileRequest
 import pitampoudel.komposeauth.core.data.UserResponse
 import pitampoudel.komposeauth.core.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.core.domain.Platform
+import pitampoudel.komposeauth.core.service.EmailService
+import pitampoudel.komposeauth.core.service.StorageService
+import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService
+import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.dto.mapToEntity
 import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
@@ -188,6 +188,7 @@ class UserService(
         newUser = userRepository.insert(newUser)
         if (newUser.email != null && baseUrl != null) {
             emailService.sendHtmlMail(
+                baseUrl = baseUrl,
                 to = newUser.email,
                 subject = "Welcome to ${appConfigProvider.name}!",
                 template = "email/generic",

@@ -61,6 +61,7 @@ class PasswordResetController(
         )
 
         val sent = emailService.sendHtmlMail(
+            baseUrl = findCurrentBaseUrl(request),
             to = email,
             subject = "Reset Your Password",
             template = "email/generic",

@@ -49,6 +49,7 @@ class EmailVerifyController(
         )
 
         val sent = emailService.sendHtmlMail(
+            baseUrl = findCurrentBaseUrl(request),
             to = user.email,
             subject = "Verify Your Email",
             template = "email/generic",

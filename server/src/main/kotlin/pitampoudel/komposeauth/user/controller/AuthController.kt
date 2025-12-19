@@ -24,6 +24,7 @@ import pitampoudel.komposeauth.core.data.ApiEndpoints
 import pitampoudel.komposeauth.core.data.Credential
 import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.core.data.ResponseType
+import pitampoudel.komposeauth.core.utils.findCurrentBaseUrl
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
 import pitampoudel.komposeauth.user.service.OneTimeTokenService
@@ -69,7 +70,7 @@ class AuthController(
         val now = Instant.now()
         val scopes = listOf("openid", "profile", "email")
         val builder = JwtClaimsSet.builder()
-            .issuer(appConfigProvider.selfBaseUrl)
+            .issuer(findCurrentBaseUrl(httpServletRequest))
             .subject(user.id.toHexString())
             .audience(listOf(appConfigProvider.selfBaseUrl))
             .issuedAt(now)
