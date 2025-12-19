@@ -27,6 +27,8 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Acce
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
+import org.springframework.security.oauth2.server.authorization.web.authentication.ClientSecretBasicAuthenticationConverter
+import org.springframework.security.oauth2.server.authorization.web.authentication.ClientSecretPostAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
@@ -123,10 +125,16 @@ class WebAuthorizationConfig() {
                         "User not found with email: ${principal.name}"
                     )
                     context.claims.claim("authorities", principal.authorities.map { it.authority })
-                    context.claims.claim("email", user.email)
+                    user.email?.let {
+                        context.claims.claim("email", it)
+                    }
                     context.claims.claim("givenName", user.firstName)
-                    context.claims.claim("familyName", user.lastName)
-                    context.claims.claim("picture", user.picture)
+                    user.lastName?.let {
+                        context.claims.claim("familyName", it)
+                    }
+                    user.picture?.let {
+                        context.claims.claim("picture", it)
+                    }
                     context.claims.claim("kycVerified", kycService.isVerified(user.id))
                     context.claims.claim("phoneNumberVerified", user.phoneNumberVerified)
                 }
