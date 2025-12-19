@@ -306,7 +306,7 @@ class UserService(
         loadPublicKeyCredentialRequestOptions: () -> PublicKeyCredentialRequestOptions?
     ): User {
         val user = when (request) {
-            is Credential.UsernamePassword -> findByUserName(request.username)
+            is Credential.UsernamePassword -> findByUserName(request.username())
                 ?.takeIf {
                     passwordEncoder.matches(request.password, it.passwordHash)
                 }

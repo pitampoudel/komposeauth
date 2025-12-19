@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.core.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.core.domain.Platform
 
 @Serializable
@@ -34,11 +35,17 @@ sealed class Credential {
     @Serializable
     @SerialName("USERNAME_PASSWORD")
     class UsernamePassword(
+        @SerialName("countryNameCode")
+        val countryNameCode: String? = null,
         @SerialName("username")
         val username: String,
         @SerialName("password")
         val password: String
-    ) : Credential()
+    ) : Credential() {
+        fun username() = parsePhoneNumber(
+            countryNameCode, username
+        )?.fullNumberInE164Format ?: username
+    }
 
     @Serializable
     @SerialName("PUBLIC_KEY")
