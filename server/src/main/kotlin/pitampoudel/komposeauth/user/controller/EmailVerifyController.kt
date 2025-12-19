@@ -15,7 +15,7 @@ import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.data.ApiEndpoints.VERIFY_EMAIL
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.utils.findCurrentBaseUrl
+import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.service.UserService
@@ -45,11 +45,11 @@ class EmailVerifyController(
 
         val link = oneTimeTokenService.generateEmailVerificationLink(
             userId = user.id,
-            baseUrl = findCurrentBaseUrl(request)
+            baseUrl = findServerUrl(request)
         )
 
         val sent = emailService.sendHtmlMail(
-            baseUrl = findCurrentBaseUrl(request),
+            baseUrl = findServerUrl(request),
             to = user.email,
             subject = "Verify Your Email",
             template = "email/generic",

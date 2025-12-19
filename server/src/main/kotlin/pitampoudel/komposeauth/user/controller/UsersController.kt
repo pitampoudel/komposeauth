@@ -25,7 +25,7 @@ import pitampoudel.komposeauth.core.data.ProfileResponse
 import pitampoudel.komposeauth.core.data.StatsResponse
 import pitampoudel.komposeauth.core.data.UpdateProfileRequest
 import pitampoudel.komposeauth.core.data.UserResponse
-import pitampoudel.komposeauth.core.utils.findCurrentBaseUrl
+import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client.Companion.SCOPE_READ_ANY_USER
 import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
@@ -50,7 +50,7 @@ class UsersController(
     ): ResponseEntity<UserResponse> {
         return ResponseEntity.ok()
             .body(
-                userService.createUser(findCurrentBaseUrl(req), request).mapToResponseDto(false)
+                userService.createUser(findServerUrl(req), request).mapToResponseDto(false)
             )
 
     }
@@ -65,7 +65,7 @@ class UsersController(
         req: HttpServletRequest
     ): ResponseEntity<UserResponse> {
         return ResponseEntity.ok().body(
-            userService.findOrCreateUser(findCurrentBaseUrl(req), request).let {
+            userService.findOrCreateUser(findServerUrl(req), request).let {
                 it.mapToResponseDto(kycService.isVerified(it.id))
             }
         )

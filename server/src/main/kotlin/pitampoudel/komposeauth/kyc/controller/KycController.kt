@@ -18,7 +18,7 @@ import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_ADDRESS
 import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_DOCUMENTS
 import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_PENDING
 import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_PERSONAL_INFO
-import pitampoudel.komposeauth.core.utils.findCurrentBaseUrl
+import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
@@ -86,7 +86,7 @@ class KycController(
         val result = kycService.submitDocumentDetails(user.id, data)
         user.email?.let {
             emailService.sendHtmlMail(
-                baseUrl = findCurrentBaseUrl(request),
+                baseUrl = findServerUrl(request),
                 to = it,
                 subject = "KYC Documents Received",
                 template = "email/generic.html",
@@ -111,7 +111,7 @@ class KycController(
         request: HttpServletRequest
     ): ResponseEntity<KycResponse> = ResponseEntity.ok(
         kycService.approve(
-            baseUrl = findCurrentBaseUrl(request),
+            baseUrl = findServerUrl(request),
             userService.findUser(id) ?: throw AccountNotFoundException("User not found")
         )
     )
@@ -128,7 +128,7 @@ class KycController(
         @RequestParam(required = false) reason: String?
     ): ResponseEntity<KycResponse> = ResponseEntity.ok(
         kycService.reject(
-            baseUrl = findCurrentBaseUrl(httpServletRequest),
+            baseUrl = findServerUrl(httpServletRequest),
             user = userService.findUser(id) ?: throw AccountNotFoundException("User not found"),
             reason = reason
         )

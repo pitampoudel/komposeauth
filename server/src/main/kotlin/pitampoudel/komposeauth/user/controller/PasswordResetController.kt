@@ -15,7 +15,7 @@ import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.utils.findCurrentBaseUrl
+import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.core.data.ApiEndpoints.RESET_PASSWORD
 import pitampoudel.komposeauth.core.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.entity.OneTimeToken
@@ -57,11 +57,11 @@ class PasswordResetController(
 
         val link = oneTimeTokenService.generateResetPasswordLink(
             userId = user.id,
-            baseUrl = findCurrentBaseUrl(request)
+            baseUrl = findServerUrl(request)
         )
 
         val sent = emailService.sendHtmlMail(
-            baseUrl = findCurrentBaseUrl(request),
+            baseUrl = findServerUrl(request),
             to = email,
             subject = "Reset Your Password",
             template = "email/generic",
