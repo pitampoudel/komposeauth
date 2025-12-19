@@ -27,8 +27,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Acce
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
-import org.springframework.security.oauth2.server.authorization.web.authentication.ClientSecretBasicAuthenticationConverter
-import org.springframework.security.oauth2.server.authorization.web.authentication.ClientSecretPostAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
@@ -199,7 +197,7 @@ class WebAuthorizationConfig() {
                             val user = userService.findUser(userId) ?: throw IllegalStateException(
                                 "User not found with id: $userId"
                             )
-                            OidcUserInfo.builder()
+                            val builder = OidcUserInfo.builder()
                                 .claim("sub", user.id.toHexString())
                                 .claim("emailVerified", user.emailVerified)
                                 .claim("phoneNumberVerified", user.phoneNumberVerified)
@@ -208,12 +206,21 @@ class WebAuthorizationConfig() {
                                     (kycService.find(user.id)?.status == KycResponse.Status.APPROVED)
                                 )
                                 .claim("givenName", user.firstName)
-                                .claim("familyName", user.lastName)
                                 .claim("createdAt", user.createdAt.toString())
                                 .claim("updatedAt", user.updatedAt.toString())
-                                .claim("picture", user.picture)
                                 .claim("roles", user.roles)
-                                .build()
+
+                            user.email?.let {
+                                builder.claim("email", user.email)
+                            }
+                            user.lastName?.let {
+                                builder.claim("familyName", user.lastName)
+                            }
+                            user.picture?.let {
+                                builder.claim("picture", user.picture)
+                            }
+
+                            builder.build()
                         }
                     }
                 }
