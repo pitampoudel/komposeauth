@@ -22,7 +22,6 @@ data class AppConfig(
     var privacyLink:String? = null,
 
     var supportEmail: String? = null,
-    var selfBaseUrl: String? = null,
     var rpId: String? = null,
     var gcpProjectId: String? = null,
     var gcpBucketName: String? = null,
@@ -64,7 +63,6 @@ data class AppConfig(
         if (privacyLink.isNullOrBlank()) privacyLink = null
 
         if (logoUrl.isNullOrBlank()) logoUrl = null
-        if (selfBaseUrl.isNullOrBlank()) selfBaseUrl = null
         if (gcpProjectId.isNullOrBlank()) gcpProjectId = null
         if (gcpBucketName.isNullOrBlank()) gcpBucketName = null
         if (googleAuthClientId.isNullOrBlank()) googleAuthClientId = null

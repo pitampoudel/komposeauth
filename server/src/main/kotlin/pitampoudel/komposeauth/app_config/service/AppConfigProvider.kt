@@ -5,17 +5,10 @@ import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.webauthn.utils.WebAuthnUtils.androidOrigin
 import java.net.Inet4Address
 import java.net.NetworkInterface
-import java.net.URL
 import java.util.Collections
 
 @Service
 class AppConfigProvider(val appConfigService: AppConfigService) {
-
-    val selfBaseUrl: String
-        get() {
-            val cfg = appConfigService.get().selfBaseUrl?.trim()
-            return cfg ?: "http://${getLocalIpAddress()}:8080"
-        }
 
     fun getLocalIpAddress(): String? {
         val excludePrefixes = listOf(
@@ -39,8 +32,8 @@ class AppConfigProvider(val appConfigService: AppConfigService) {
         return null
     }
 
-    fun rpId(): String {
-        return appConfigService.get().rpId ?: URL(selfBaseUrl).host
+    fun rpId(): String? {
+        return appConfigService.get().rpId
     }
 
     val name: String get() = appConfigService.get().name ?: "komposeauth"
@@ -105,7 +98,7 @@ class AppConfigProvider(val appConfigService: AppConfigService) {
     fun webauthnAllowedOrigins(): Set<String> {
         return allowedAndroidSha256List?.split(",")?.map {
             androidOrigin(it)
-        }.orEmpty().toSet() + corsAllowedOrigins() + selfBaseUrl
+        }.orEmpty().toSet() + corsAllowedOrigins()
     }
 
 

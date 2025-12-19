@@ -72,7 +72,6 @@ class AuthController(
         val builder = JwtClaimsSet.builder()
             .issuer(findCurrentBaseUrl(httpServletRequest))
             .subject(user.id.toHexString())
-            .audience(listOf(appConfigProvider.selfBaseUrl))
             .issuedAt(now)
             .expiresAt(now + 1.days.toJavaDuration())
             .notBefore(now)
