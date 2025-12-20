@@ -17,6 +17,11 @@ logging:
 server:
   port: ${PORT:80}
   forward-headers-strategy: framework
+  servlet:
+    session:
+      httponly: true
+      cookie:
+        name: KOMPOSEAUTH_SESSION
 
 app:
   base64-encryption-key: ${BASE64_ENCRYPTION_KEY:}
