@@ -124,13 +124,16 @@ class WebSecurityConfig {
                 ex.authenticationEntryPoint { request, response, authException ->
                     val accept = request.getHeader("Accept") ?: ""
                     val wantsHtml = accept.contains("text/html", ignoreCase = true)
-                    if (wantsHtml) {
+
+                    val entryPoint = if (wantsHtml) {
                         LoginUrlAuthenticationEntryPoint("/session-login")
                     } else {
                         HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
                     }
+                    entryPoint.commence(request, response, authException)
                 }
             }
+
             .build()
     }
 }
