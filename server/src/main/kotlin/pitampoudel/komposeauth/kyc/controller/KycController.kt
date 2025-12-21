@@ -91,8 +91,7 @@ class KycController(
                 subject = "KYC Documents Received",
                 template = "email/generic.html",
                 model = mapOf(
-                    "title" to "KYC Submission Received",
-                    "name" to user.fullName,
+                    "recipientName" to user.fullName,
                     "message" to "Thank you for submitting your KYC documents. We are now reviewing your information and will notify you once the process is complete. This usually takes 1-2 business days."
                 )
             )

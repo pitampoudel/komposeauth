@@ -66,8 +66,7 @@ class PasswordResetController(
             subject = "Reset Your Password",
             template = "email/generic",
             model = mapOf(
-                "name" to user.firstName,
-                "title" to "Reset your password",
+                "recipientName" to user.firstName,
                 "message" to "Click the button below to reset your password.",
                 "actionUrl" to link,
                 "actionText" to "Reset Password"

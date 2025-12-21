@@ -54,11 +54,12 @@ class EmailVerifyController(
             subject = "Verify Your Email",
             template = "email/generic",
             model = mapOf(
-                "name" to user.firstName,
-                "title" to "Verify your email",
-                "message" to "Click the button below to verify your email address.",
+                "recipientName" to user.firstName,
+                "message" to "Confirm that this is your email address to keep your account secure. This email will expire in 24 hours.",
                 "actionUrl" to link,
-                "actionText" to "Verify Email"
+                "actionText" to "Verify Your Email Address",
+                "illustration" to "https://cdn.prod.website-files.com/643507075046cf6dcb169402/6538ece41f8e698f9d43b881_blog-image-for-cyber-security-for-businesses-in-australia-a-guide-6538ecc6a10e6.webp",
+                "actionMessage" to "Click on Confirm your email address, and we'll move on!"
             )
         )
         if (!sent) throw Exception("Unable to send verification email")

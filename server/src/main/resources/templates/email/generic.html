@@ -9,7 +9,7 @@
         body {
           margin: 0;
           padding: 0;
-          font-family: "Montserrat", sans-serif;
+          font-family: "Montserrat", Arial, sans-serif;
           background-color: #f4f4f4;
         }
 
@@ -41,7 +41,6 @@
 
         .illustration img {
           max-width: 100%;
-          height: auto;
         }
 
         .content {
@@ -49,10 +48,6 @@
           color: #333333;
           line-height: 1.6;
           text-align: center;
-        }
-
-        .content p {
-          margin: 10px 0;
         }
 
         .content p strong {
@@ -83,22 +78,16 @@
           margin-bottom: 20px;
         }
 
-        .social-link {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background-color: #6ccef3;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 6px;
+        .socials a {
+          display: inline-block;
+          margin: 0 5px;
           text-decoration: none;
         }
 
-        .social-link img {
-          width: 20px;
-          height: 20px;
-          background: none;
+        .socials img {
+          width: 30px;
+          height: 30px;
+          filter: invert(1);
         }
 
         .footer {
@@ -112,22 +101,15 @@
           gap: 10px;
         }
 
-        .footer-logo {
+        .footer.logo {
           width: 50px;
           height: 50px;
           background-color: #6ccef3;
           border-radius: 5px;
+          margin-right: 15px;
           font-weight: bold;
           color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 10px;
-        }
-
-        .footer-logo img {
-          max-width: 100%;
-          max-height: 100%;
+          text-align: center;
         }
     </style>
 </head>
@@ -154,7 +136,7 @@
         </p>
 
         <!-- Action Button (Optional) -->
-        <a th:if="${actionUrl and actionText}"
+        <a th:if="${actionUrl != null and actionText != null}"
            th:href="${actionUrl}"
            th:text="${actionText}"
            class="verify-button">
@@ -165,61 +147,107 @@
     <hr/>
 
     <!-- Social Icons -->
-    <div class="socials">
+    <div class="socials" style="text-align: center; margin-bottom: 20px">
         <!-- YouTube -->
         <a th:if="${youtubeUrl}"
            th:href="${youtubeUrl}"
            aria-label="YouTube"
-           class="social-link">
-            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/youtube.svg"
+           style="
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #6ccef3;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 6px;
+            text-decoration: none;
+          ">
+            <img src="https://img.icons8.com/ios-filled/50/ffffff/youtube-play.png"
                  alt="YouTube"
-            />
+                 style="width: 20px; height: 20px; background: none"/>
         </a>
 
         <!-- TikTok -->
         <a th:if="${tiktokUrl}"
            th:href="${tiktokUrl}"
-           aria-label="TikTok"
-           class="social-link">
-            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/tiktok.svg"
+           aria-label="TikTok" style="
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #6ccef3;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 6px;
+            text-decoration: none;
+          ">
+            <img src="https://img.icons8.com/ios-filled/50/ffffff/tiktok.png"
                  alt="TikTok"
-            />
+                 style="width: 20px; height: 20px; background: none"/>
         </a>
 
         <!-- Facebook -->
         <a th:if="${facebookUrl}"
            th:href="${facebookUrl}"
-           aria-label="Facebook"
-           class="social-link">
-            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/facebook.svg"
+           aria-label="Facebook" style="
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #6ccef3;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 6px;
+            text-decoration: none;
+          ">
+            <img src="https://img.icons8.com/ios-filled/50/ffffff/facebook-new.png"
                  alt="Facebook"
-            />
+                 style="width: 20px; height: 20px; background: none"/>
         </a>
 
         <!-- LinkedIn -->
         <a th:if="${linkedinUrl}"
            th:href="${linkedinUrl}"
-           aria-label="LinkedIn"
-           class="social-link">
-            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/linkedin.svg"
+           aria-label="LinkedIn" style="
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #6ccef3;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 6px;
+            text-decoration: none;
+          ">
+            <img src="https://img.icons8.com/ios-filled/50/ffffff/linkedin.png"
                  alt="LinkedIn"
-            />
+                 style="width: 20px; height: 20px; background: none"/>
         </a>
 
         <!-- Instagram -->
         <a th:if="${instagramUrl}"
            th:href="${instagramUrl}"
-           aria-label="Instagram"
-           class="social-link">
-            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg"
+           aria-label="Instagram" style="
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #6ccef3;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 6px;
+            text-decoration: none;
+          ">
+            <img src="https://img.icons8.com/ios-filled/50/ffffff/instagram-new.png"
                  alt="Instagram"
-            />
+                 style="width: 20px; height: 20px; background: none"/>
         </a>
     </div>
 
     <!-- Footer / Logo -->
     <section class="footer">
-        <div class="footer-logo">
+        <div class="logo">
             <img th:if="${logoUrl}"
                  th:src="${logoUrl}"
                  alt="Logo"
