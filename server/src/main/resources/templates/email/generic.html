@@ -1,191 +1,231 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title th:text="${subject ?: 'Notification'}">Notification</title>
-    <!--[if mso]>
-    <style type="text/css">
-        table {border-collapse: collapse !important;}
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${subject}">Email Subject</title>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+        body {
+          margin: 0;
+          padding: 0;
+          font-family: "Montserrat", sans-serif;
+          background-color: #f4f4f4;
+        }
+
+        .email-container {
+          max-width: 600px;
+          margin: 40px auto;
+          background-color: #ffffff;
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+          background-color: #6ccef3;
+          color: white;
+          text-align: center;
+          padding: 30px 20px;
+        }
+
+        .header h1 {
+          margin: 0;
+          font-size: 24px;
+        }
+
+        .illustration {
+          text-align: center;
+          padding: 20px;
+        }
+
+        .illustration img {
+          max-width: 100%;
+          height: auto;
+        }
+
+        .content {
+          padding: 20px;
+          color: #333333;
+          line-height: 1.6;
+          text-align: center;
+        }
+
+        .content p {
+          margin: 10px 0;
+        }
+
+        .content p strong {
+          display: block;
+          margin-top: 15px;
+          font-weight: bold;
+        }
+
+        .verify-button {
+          display: inline-block;
+          margin: 25px 0;
+          padding: 12px 25px;
+          background-color: #3c6b99;
+          color: white;
+          text-decoration: none;
+          border-radius: 5px;
+          font-weight: bold;
+        }
+
+        hr {
+          border: 0;
+          border-top: 1px solid #dddddd;
+          margin: 30px 0;
+        }
+
+        .socials {
+          text-align: center;
+          margin-bottom: 20px;
+        }
+
+        .social-link {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background-color: #6ccef3;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 6px;
+          text-decoration: none;
+        }
+
+        .social-link img {
+          width: 20px;
+          height: 20px;
+          background: none;
+        }
+
+        .footer {
+          text-align: center;
+          font-size: 12px;
+          color: #999999;
+          padding: 15px 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        }
+
+        .footer-logo {
+          width: 50px;
+          height: 50px;
+          background-color: #6ccef3;
+          border-radius: 5px;
+          font-weight: bold;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+        }
+
+        .footer-logo img {
+          max-width: 100%;
+          max-height: 100%;
+        }
     </style>
-    <![endif]-->
 </head>
 
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+<body>
+<div class="email-container">
+    <!-- Header -->
+    <div class="header">
+        <h1 th:text="${subject}">Email Subject</h1>
+    </div>
 
-<!-- Preheader text (hidden but shows in inbox preview) -->
-<div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
-    <span th:text="${message ?: 'You have a new notification'}"></span>
+    <!-- Illustration (Optional) -->
+    <div class="illustration" th:if="${illustration}">
+        <img th:src="${illustration}" alt="Illustration"/>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <p th:utext="${message}">Email message content goes here.</p>
+
+        <!-- Action Message (Optional) -->
+        <p th:if="${actionMessage}">
+            <strong th:text="${actionMessage}">Action message</strong>
+        </p>
+
+        <!-- Action Button (Optional) -->
+        <a th:if="${actionUrl and actionText}"
+           th:href="${actionUrl}"
+           th:text="${actionText}"
+           class="verify-button">
+            Action Button
+        </a>
+    </div>
+
+    <hr/>
+
+    <!-- Social Icons -->
+    <div class="socials">
+        <!-- YouTube -->
+        <a th:if="${youtubeUrl}"
+           th:href="${youtubeUrl}"
+           aria-label="YouTube"
+           class="social-link">
+            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/youtube.svg"
+                 alt="YouTube"
+            />
+        </a>
+
+        <!-- TikTok -->
+        <a th:if="${tiktokUrl}"
+           th:href="${tiktokUrl}"
+           aria-label="TikTok"
+           class="social-link">
+            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/tiktok.svg"
+                 alt="TikTok"
+            />
+        </a>
+
+        <!-- Facebook -->
+        <a th:if="${facebookUrl}"
+           th:href="${facebookUrl}"
+           aria-label="Facebook"
+           class="social-link">
+            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/facebook.svg"
+                 alt="Facebook"
+            />
+        </a>
+
+        <!-- LinkedIn -->
+        <a th:if="${linkedinUrl}"
+           th:href="${linkedinUrl}"
+           aria-label="LinkedIn"
+           class="social-link">
+            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/linkedin.svg"
+                 alt="LinkedIn"
+            />
+        </a>
+
+        <!-- Instagram -->
+        <a th:if="${instagramUrl}"
+           th:href="${instagramUrl}"
+           aria-label="Instagram"
+           class="social-link">
+            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg"
+                 alt="Instagram"
+            />
+        </a>
+    </div>
+
+    <!-- Footer / Logo -->
+    <section class="footer">
+        <div class="footer-logo">
+            <img th:if="${logoUrl}"
+                 th:src="${logoUrl}"
+                 alt="Logo"
+            />
+        </div>
+    </section>
 </div>
-
-<table role="presentation" cellspacing="0" cellpadding="0" style="width: 100%; background-color: #f3f4f6; border-spacing: 0;">
-    <tr>
-        <td style="padding: 40px 20px;">
-
-            <table role="presentation" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border-spacing: 0;">
-
-                <!-- Header with dynamic brand color -->
-                <tr th:if="${!#strings.isEmpty(appName) or !#strings.isEmpty(appTagline)}">
-                    <td th:style="'background: linear-gradient(135deg, ' + ${brandColor ?: '#3C6B99'} + ' 0%, ' + ${brandColor ?: '#2d5278'} + ' 100%); padding: 40px 30px; text-align: center;'">
-                        <h1 th:if="${!#strings.isEmpty(appName)}" style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; line-height: 1.2;" th:text="${appName}">App Name</h1>
-                        <p th:if="${!#strings.isEmpty(appTagline)}" style="margin: 10px 0 0 0; color: #e0e7ff; font-size: 14px; line-height: 1.4;" th:text="${appTagline}">Tagline</p>
-                    </td>
-                </tr>
-
-                <!-- Main Content -->
-                <tr>
-                    <td style="padding: 40px 30px;">
-
-                        <!-- Icon -->
-                        <table th:if="${!#strings.isEmpty(icon)}" role="presentation" cellspacing="0" cellpadding="0" style="width: 100%; border-spacing: 0; margin-bottom: 30px;">
-                            <tr>
-                                <td style="text-align: center;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" style="display: inline-block; width: 80px; height: 80px; background: #f5f5f5; border-radius: 50%; border-spacing: 0;">
-                                        <tr>
-                                            <td style="text-align: center; vertical-align: middle; font-size: 40px;" th:text="${icon ?: '✉'}">✉</td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <!-- Title -->
-                        <h2 style="margin: 0 0 20px 0; color: #111827; font-size: 26px; font-weight: 600; text-align: center; line-height: 1.3;" th:text="${title ?: subject ?: 'Notification'}">Notification</h2>
-
-                        <!-- Greeting -->
-                        <p th:if="${!#strings.isEmpty(name)}" style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; text-align: center; line-height: 1.5;">
-                            Hello <strong th:text="${name}">there</strong>,
-                        </p>
-
-                        <!-- Message -->
-                        <p th:if="${!#strings.isEmpty(message)}" style="margin: 0 0 30px 0; color: #4b5563; font-size: 15px; line-height: 1.6; text-align: center;" th:text="${message}">You have a new notification.</p>
-
-                        <!-- Alert / Warning Box -->
-                        <table th:if="${!#strings.isEmpty(alertMessage)}" role="presentation" cellspacing="0" cellpadding="0" style="width: 100%; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 6px; margin: 30px 0; border-spacing: 0;">
-                            <tr>
-                                <td style="padding: 15px 20px;">
-                                    <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.5;" th:text="${alertMessage}">Alert message</p>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <!-- Steps List -->
-                        <div th:if="${steps != null and !steps.isEmpty()}">
-                            <h3 style="margin: 30px 0 15px 0; color: #111827; font-size: 18px; font-weight: 600; line-height: 1.3;">Next steps</h3>
-                            <table role="presentation" cellspacing="0" cellpadding="0" style="width: 100%; border-spacing: 0;">
-                                <tr th:each="step, iterStat : ${steps}">
-                                    <td style="padding: 8px 0; color: #4b5563; font-size: 15px; line-height: 1.6;">
-                                        <span th:text="${iterStat.count} + '. ' + ${step}"></span>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-
-                        <!-- Action Button with dynamic brand color -->
-                        <table th:if="${!#strings.isEmpty(actionUrl)}" role="presentation" cellspacing="0" cellpadding="0" style="width: 100%; margin: 35px 0; border-spacing: 0;">
-                            <tr>
-                                <td style="text-align: center;">
-                                    <!--[if mso]>
-                                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="" style="height:52px;v-text-anchor:middle;width:200px;" arcsize="15%" strokecolor="#3C6B99" fillcolor="#3C6B99">
-                                        <w:anchorlock/>
-                                        <center style="color:#ffffff;font-family:sans-serif;font-size:16px;font-weight:bold;">
-                                    <![endif]-->
-                                    <a th:href="${actionUrl}" th:text="${actionText ?: 'Take Action'}" th:style="'display: inline-block; background-color: ' + ${brandColor ?: '#3C6B99'} + '; color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 8px; font-size: 16px; font-weight: 600; line-height: 1; mso-padding-alt: 0; text-align: center;'">Take Action</a>
-                                    <!--[if mso]>
-                                    </center>
-                                    </v:roundrect>
-                                    <![endif]-->
-                                </td>
-                            </tr>
-                        </table>
-
-                        <!-- Fallback message -->
-                        <p th:if="${#strings.isEmpty(message) and #strings.isEmpty(actionUrl)}" style="margin: 20px 0 0 0; color: #6b7280; font-size: 14px; text-align: center; line-height: 1.5;">This is an automated system message.</p>
-
-                        <!-- Support -->
-                        <p th:if="${!#strings.isEmpty(supportEmail)}" style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; text-align: center; line-height: 1.5;">
-                            Need help? Contact
-                            <a th:href="'mailto:' + ${supportEmail}" th:text="${supportEmail}" th:style="'color: ' + ${brandColor ?: '#3C6B99'} + '; text-decoration: none; font-weight: 500;'">support@example.com</a>
-                        </p>
-                    </td>
-                </tr>
-
-                <!-- Footer -->
-                <tr>
-                    <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-
-                        <!-- Company info -->
-                        <p th:if="${!#strings.isEmpty(appName) or !#strings.isEmpty(footerTagline)}" style="margin: 0 0 20px 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
-                            <strong th:text="${appName}">App Name</strong>
-                            <span th:if="${!#strings.isEmpty(footerTagline)}"> - <span th:text="${footerTagline}">Tagline</span></span>
-                        </p>
-
-                        <!-- Social Icons -->
-                        <table th:if="${!#strings.isEmpty(facebookUrl) or !#strings.isEmpty(instagramUrl) or !#strings.isEmpty(tiktokUrl) or !#strings.isEmpty(linkedinUrl) or !#strings.isEmpty(youtubeUrl)}" role="presentation" cellspacing="0" cellpadding="0" style="margin: 20px auto; border-spacing: 0;">
-                            <tr>
-                                <td style="padding-bottom: 10px; text-align: center;">
-                                    <p style="margin: 0; color: #6b7280; font-size: 13px; line-height: 1.5;">Follow us:</p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="text-align: center;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" style="display: inline-block; border-spacing: 0;">
-                                        <tr>
-                                            <td th:if="${!#strings.isEmpty(facebookUrl)}" style="padding: 0 8px;">
-                                                <a th:href="${facebookUrl}" style="text-decoration: none;">
-                                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" style="display: block; width: 24px; height: 24px; border: 0;">
-                                                </a>
-                                            </td>
-                                            <td th:if="${!#strings.isEmpty(instagramUrl)}" style="padding: 0 8px;">
-                                                <a th:href="${instagramUrl}" style="text-decoration: none;">
-                                                    <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" style="display: block; width: 24px; height: 24px; border: 0;">
-                                                </a>
-                                            </td>
-                                            <td th:if="${!#strings.isEmpty(tiktokUrl)}" style="padding: 0 8px;">
-                                                <a th:href="${tiktokUrl}" style="text-decoration: none;">
-                                                    <img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" alt="TikTok" style="display: block; width: 24px; height: 24px; border: 0;">
-                                                </a>
-                                            </td>
-                                            <td th:if="${!#strings.isEmpty(linkedinUrl)}" style="padding: 0 8px;">
-                                                <a th:href="${linkedinUrl}" style="text-decoration: none;">
-                                                    <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" style="display: block; width: 24px; height: 24px; border: 0;">
-                                                </a>
-                                            </td>
-                                            <td th:if="${!#strings.isEmpty(youtubeUrl)}" style="padding: 0 8px;">
-                                                <a th:href="${youtubeUrl}" style="text-decoration: none;">
-                                                    <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="YouTube" style="display: block; width: 24px; height: 24px; border: 0;">
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <!-- Company Address -->
-                        <p th:if="${!#strings.isEmpty(companyAddress)}" style="margin: 20px 0 0 0; color: #9ca3af; font-size: 13px; line-height: 1.5;" th:text="${companyAddress}">Company Address</p>
-
-                        <!-- Copyright -->
-                        <p style="margin: 10px 0 0 0; color: #9ca3af; font-size: 12px; line-height: 1.5;">
-                            © <span th:text="${#temporals.year(#temporals.createNow())}">2024</span>
-                            <span th:if="${!#strings.isEmpty(appName)}" th:text="${appName}">App Name</span>
-                            <span th:if="${#strings.isEmpty(appName)}">All rights reserved</span>
-                        </p>
-
-                        <!-- Unsubscribe & Privacy Links -->
-                        <p th:if="${!#strings.isEmpty(unsubscribeUrl) or !#strings.isEmpty(privacyUrl)}" style="margin: 15px 0 0 0; color: #9ca3af; font-size: 11px; line-height: 1.5;">
-                            <a th:if="${!#strings.isEmpty(unsubscribeUrl)}" th:href="${unsubscribeUrl}" style="color: #9ca3af; text-decoration: underline;">Unsubscribe</a>
-                            <span th:if="${!#strings.isEmpty(unsubscribeUrl) and !#strings.isEmpty(privacyUrl)}"> | </span>
-                            <a th:if="${!#strings.isEmpty(privacyUrl)}" th:href="${privacyUrl}" style="color: #9ca3af; text-decoration: underline;">Privacy Policy</a>
-                        </p>
-                    </td>
-                </tr>
-
-            </table>
-
-        </td>
-    </tr>
-</table>
 </body>
 </html>
