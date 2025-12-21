@@ -237,8 +237,11 @@ class UserService(
     }
 
     fun findOrCreateUser(baseUrl: String?, req: CreateUserRequest): User {
-        val emailOrPhone = req.email ?: req.phoneNumberParsed()
-        return emailOrPhone?.let { findByUserName(emailOrPhone) } ?: createUser(baseUrl, req)
+        return req.findPrimaryUsername()?.let {
+            findByUserName(it)
+        } ?: req.findAlternateUsername()?.let {
+            findByUserName(it)
+        } ?: createUser(baseUrl, req)
     }
 
     fun initiatePhoneNumberUpdate(@Valid req: UpdatePhoneNumberRequest): Boolean {

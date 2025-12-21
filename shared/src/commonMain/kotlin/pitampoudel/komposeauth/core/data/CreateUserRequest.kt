@@ -32,6 +32,15 @@ data class CreateUserRequest(
         )
     }?.fullNumberInE164Format
 
+    fun findPrimaryUsername(): String? {
+        return email ?: phoneNumberParsed()
+    }
+
+    fun findAlternateUsername(): String? {
+        val primary = findPrimaryUsername()
+        return phoneNumberParsed().takeIf { it != primary }
+    }
+
     init {
         require(firstName.isNotBlank()) {
             "First name cannot be blank"
