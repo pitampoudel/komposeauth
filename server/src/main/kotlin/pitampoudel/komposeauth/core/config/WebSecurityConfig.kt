@@ -5,7 +5,6 @@ import jakarta.servlet.DispatcherType
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseCookie
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
@@ -15,14 +14,13 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.authentication.HttpStatusEntryPoint
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.security.GoogleOAuth2LoginSuccessHandler
 
 @Configuration
 @EnableWebSecurity
@@ -52,7 +50,8 @@ class WebSecurityConfig {
         http: HttpSecurity,
         jwtAuthenticationConverter: JwtAuthenticationConverter,
         objectMapper: ObjectMapper,
-        bearerTokenResolver: BearerTokenResolver
+        bearerTokenResolver: BearerTokenResolver,
+        googleOAuth2LoginSuccessHandler: GoogleOAuth2LoginSuccessHandler
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -86,6 +85,9 @@ class WebSecurityConfig {
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
             }
+            .oauth2Login { oauth2 ->
+                oauth2.successHandler(googleOAuth2LoginSuccessHandler)
+            }
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(
@@ -118,20 +120,6 @@ class WebSecurityConfig {
                     .permitAll()
                     .anyRequest().authenticated()
             }
-            .exceptionHandling { ex ->
-                ex.authenticationEntryPoint { request, response, authException ->
-                    val accept = request.getHeader("Accept") ?: ""
-                    val wantsHtml = accept.contains("text/html", ignoreCase = true)
-
-                    val entryPoint = if (wantsHtml) {
-                        LoginUrlAuthenticationEntryPoint("/session-login")
-                    } else {
-                        HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
-                    }
-                    entryPoint.commence(request, response, authException)
-                }
-            }
-
             .build()
     }
 }

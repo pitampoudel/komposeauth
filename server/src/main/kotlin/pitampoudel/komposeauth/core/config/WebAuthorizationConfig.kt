@@ -31,7 +31,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
@@ -51,6 +51,9 @@ class WebAuthorizationConfig() {
 
     @Bean
     fun restTemplate(): RestTemplate = RestTemplate()
+
+    @Bean
+    fun securityContextRepository() = HttpSessionSecurityContextRepository()
 
     class OAuth2RefreshTokenGenerator : OAuth2TokenGenerator<OAuth2RefreshToken> {
         private val refreshTokenGenerator: StringKeyGenerator = Base64StringKeyGenerator(
@@ -214,11 +217,6 @@ class WebAuthorizationConfig() {
             }
             .authorizeHttpRequests { auth ->
                 auth.anyRequest().authenticated()
-            }
-            .exceptionHandling { ex ->
-                ex.authenticationEntryPoint(
-                    LoginUrlAuthenticationEntryPoint("/session-login")
-                )
             }
             .build()
     }
