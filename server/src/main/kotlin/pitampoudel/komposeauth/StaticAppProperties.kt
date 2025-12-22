@@ -6,9 +6,5 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ConfigurationProperties(prefix = "app")
 class StaticAppProperties() {
-    var base64EncryptionKey: String? = null
-        get() {
-            if (!field.isNullOrBlank()) return field
-            throw IllegalStateException("No encryption key found")
-        }
+    lateinit var base64EncryptionKey: String
 }
