@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.config
+package pitampoudel.komposeauth.core.security
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

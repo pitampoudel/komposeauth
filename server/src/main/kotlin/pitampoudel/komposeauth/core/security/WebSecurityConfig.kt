@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.config
+package pitampoudel.komposeauth.core.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.DispatcherType
@@ -20,7 +20,6 @@ import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
-import pitampoudel.komposeauth.core.security.GoogleOAuth2LoginSuccessHandler
 
 @Configuration
 @EnableWebSecurity
@@ -51,7 +50,7 @@ class WebSecurityConfig {
         jwtAuthenticationConverter: JwtAuthenticationConverter,
         objectMapper: ObjectMapper,
         bearerTokenResolver: BearerTokenResolver,
-        googleOAuth2LoginSuccessHandler: GoogleOAuth2LoginSuccessHandler
+        OAuth2LoginSuccessHandler: OAuth2LoginSuccessHandler
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -86,7 +85,7 @@ class WebSecurityConfig {
                 }
             }
             .oauth2Login { oauth2 ->
-                oauth2.successHandler(googleOAuth2LoginSuccessHandler)
+                oauth2.successHandler(OAuth2LoginSuccessHandler)
             }
             .authorizeHttpRequests { auth ->
                 auth

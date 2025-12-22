@@ -21,7 +21,7 @@ import pitampoudel.komposeauth.user.service.UserService
  * This keeps the app's SecurityContext consistent regardless of login method.
  */
 @Component
-class GoogleOAuth2LoginSuccessHandler(
+class OAuth2LoginSuccessHandler(
     private val userService: UserService,
     private val securityContextRepository: HttpSessionSecurityContextRepository
 ) : SavedRequestAwareAuthenticationSuccessHandler() {
