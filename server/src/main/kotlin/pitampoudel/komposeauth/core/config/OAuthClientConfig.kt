@@ -23,6 +23,7 @@ class OAuthClientConfig {
                 .getBuilder("google")
                 .clientId(webClientId)
                 .clientSecret(webClientSecret)
+                .redirectUri("{baseUrl}/login/oauth2/code/{registrationId}")
                 .scope("openid", "profile", "email")
                 .build()
         }

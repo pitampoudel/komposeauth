@@ -39,7 +39,6 @@ class WebSecurityConfig {
             } else {
                 configuration.allowedOrigins = origins
             }
-            configuration.allowedOrigins = appConfigProvider.corsAllowedOrigins()
             configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
             configuration.allowedHeaders = listOf("*")
             configuration.allowCredentials = true
@@ -58,6 +57,7 @@ class WebSecurityConfig {
         return http
             .cors { }
             .csrf { csrf -> csrf.disable() }
+            .oauth2Login { }
             .logout { logout ->
                 logout
                     .logoutUrl("/${ApiEndpoints.LOGOUT}")
@@ -99,7 +99,6 @@ class WebSecurityConfig {
                         "/session-login",
                         "/oauth2/jwks",
                         "/${ApiEndpoints.LOGIN}",
-                        "/${ApiEndpoints.LOGIN}/session",
                         "/${ApiEndpoints.LOGOUT}",
                         "/signup",
                         "/api/auth/**",
