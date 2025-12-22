@@ -22,7 +22,7 @@ class OrganizationDeleteController(
     private val storageService: StorageService,
     private val userContextService: UserContextService
 ) {
-    @GetMapping("/" + ApiEndpoints.ORGANIZATIONS + "/{orgId}")
+    @DeleteMapping("/" + ApiEndpoints.ORGANIZATIONS + "/{orgId}")
     suspend fun deleteOrganization(
         @PathParam("orgId") orgId: String
     ): MessageResponse {
