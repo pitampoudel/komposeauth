@@ -63,6 +63,8 @@ dependencies {
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mongodb)
 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.10.2")
+
 }
 
 kotlin {
