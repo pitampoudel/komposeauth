@@ -50,7 +50,7 @@ class WebSecurityConfig {
         jwtAuthenticationConverter: JwtAuthenticationConverter,
         objectMapper: ObjectMapper,
         bearerTokenResolver: BearerTokenResolver,
-        OAuth2LoginSuccessHandler: OAuth2LoginSuccessHandler
+        loginSuccessHandler: OAuth2LoginSuccessHandler
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -85,7 +85,7 @@ class WebSecurityConfig {
                 }
             }
             .oauth2Login { oauth2 ->
-                oauth2.successHandler(OAuth2LoginSuccessHandler)
+                oauth2.successHandler(loginSuccessHandler)
             }
             .authorizeHttpRequests { auth ->
                 auth

@@ -122,7 +122,7 @@ class WebAuthnConfig(
             userEntityRepository,
             userCredentialRepository,
             PublicKeyCredentialRpEntity.builder()
-                .id(appConfigService.rpId())
+                .id(appConfigService.rpId() ?: "localhost")
                 .name(appConfigService.getConfig().name)
                 .build(),
             appConfigService.webauthnAllowedOrigins()
