@@ -1,259 +1,138 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
-<head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title th:text="${subject}">Email Subject</title>
-    <style>
-        @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
-        body {
-          margin: 0;
-          padding: 0;
-          font-family: "Montserrat", Arial, sans-serif;
-          background-color: #f4f4f4;
-        }
+<html xmlns:th="http://www.thymeleaf.org">
+<body style="margin:0; padding:0; background-color:#f4f4f4;">
 
-        .email-container {
-          max-width: 600px;
-          margin: 40px auto;
-          background-color: #ffffff;
-          border-radius: 10px;
-          overflow: hidden;
-          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4;">
+    <tr>
+        <td align="center">
 
-        .header {
-          background-color: #6ccef3;
-          color: white;
-          text-align: center;
-          padding: 30px 20px;
-        }
+            <!-- Main container -->
+            <table width="600" cellpadding="0" cellspacing="0"
+                   style="background-color:#ffffff; margin:40px 0; border-radius:10px; overflow:hidden;">
 
-        .header h1 {
-          margin: 0;
-          font-size: 24px;
-        }
+                <!-- Header -->
+                <tr>
+                    <td align="center" style="background-color:#6ccef3; padding:30px 20px;">
+                        <h1 style="margin:0; font-size:24px; color:#ffffff; font-family:Arial,Helvetica,sans-serif;"
+                            th:text="${subject}">
+                            Email Subject
+                        </h1>
+                    </td>
+                </tr>
 
-        .illustration {
-          text-align: center;
-          padding: 20px;
-        }
+                <!-- Illustration -->
+                <tr th:if="${illustration}">
+                    <td align="center" style="padding:20px;">
+                        <img th:src="${illustration}" alt="Illustration"
+                             style="max-width:100%; height:auto; display:block;">
+                    </td>
+                </tr>
 
-        .illustration img {
-          max-width: 100%;
-        }
+                <!-- Content -->
+                <tr>
+                    <td align="center"
+                        style="padding:20px; font-family:Arial,Helvetica,sans-serif; color:#333333; line-height:1.6;">
+                        <p th:utext="${message}" style="margin:0 0 15px 0;">
+                            Email message content goes here.
+                        </p>
 
-        .content {
-          padding: 20px;
-          color: #333333;
-          line-height: 1.6;
-          text-align: center;
-        }
+                        <p th:if="${actionMessage}" style="margin:15px 0;">
+                            <strong th:text="${actionMessage}">Action message</strong>
+                        </p>
 
-        .content p strong {
-          display: block;
-          margin-top: 15px;
-          font-weight: bold;
-        }
+                        <!-- Button -->
+                        <a th:if="${actionUrl != null and actionText != null}"
+                           th:href="${actionUrl}"
+                           th:text="${actionText}"
+                           style="
+                 display:inline-block;
+                 margin:20px 0;
+                 padding:12px 25px;
+                 background-color:#3c6b99;
+                 color:#ffffff;
+                 text-decoration:none;
+                 font-weight:bold;
+                 border-radius:5px;
+                 font-family:Arial,Helvetica,sans-serif;
+               ">
+                            Action Button
+                        </a>
+                    </td>
+                </tr>
 
-        .verify-button {
-          display: inline-block;
-          margin: 25px 0;
-          padding: 12px 25px;
-          background-color: #3c6b99;
-          color: white;
-          text-decoration: none;
-          border-radius: 5px;
-          font-weight: bold;
-        }
+                <!-- Divider -->
+                <tr>
+                    <td style="padding:0 20px;">
+                        <hr style="border:0; border-top:1px solid #dddddd;">
+                    </td>
+                </tr>
 
-        hr {
-          border: 0;
-          border-top: 1px solid #dddddd;
-          margin: 30px 0;
-        }
+                <!-- Social icons -->
+                <tr>
+                    <td align="center" style="padding:20px;">
+                        <table cellpadding="0" cellspacing="0">
+                            <tr>
 
-        .socials {
-          text-align: center;
-          margin-bottom: 20px;
-        }
+                                <td th:if="${youtubeUrl}" style="padding:0 6px;">
+                                    <a th:href="${youtubeUrl}">
+                                        <img src="https://img.icons8.com/ios-filled/50/ffffff/youtube-play.png"
+                                             width="20" height="20"
+                                             style="background-color:#6ccef3; padding:10px; border-radius:50%; display:block;">
+                                    </a>
+                                </td>
 
-        .socials a {
-          display: inline-block;
-          margin: 0 5px;
-          text-decoration: none;
-        }
+                                <td th:if="${tiktokUrl}" style="padding:0 6px;">
+                                    <a th:href="${tiktokUrl}">
+                                        <img src="https://img.icons8.com/ios-filled/50/ffffff/tiktok.png"
+                                             width="20" height="20"
+                                             style="background-color:#6ccef3; padding:10px; border-radius:50%; display:block;">
+                                    </a>
+                                </td>
 
-        .socials img {
-          width: 30px;
-          height: 30px;
-          filter: invert(1);
-        }
+                                <td th:if="${facebookUrl}" style="padding:0 6px;">
+                                    <a th:href="${facebookUrl}">
+                                        <img src="https://img.icons8.com/ios-filled/50/ffffff/facebook-new.png"
+                                             width="20" height="20"
+                                             style="background-color:#6ccef3; padding:10px; border-radius:50%; display:block;">
+                                    </a>
+                                </td>
 
-        .footer {
-          text-align: center;
-          font-size: 12px;
-          color: #999999;
-          padding: 15px 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-        }
+                                <td th:if="${linkedinUrl}" style="padding:0 6px;">
+                                    <a th:href="${linkedinUrl}">
+                                        <img src="https://img.icons8.com/ios-filled/50/ffffff/linkedin.png"
+                                             width="20" height="20"
+                                             style="background-color:#6ccef3; padding:10px; border-radius:50%; display:block;">
+                                    </a>
+                                </td>
 
-        .footer.logo {
-          width: 50px;
-          height: 50px;
-          background-color: #6ccef3;
-          border-radius: 5px;
-          margin-right: 15px;
-          font-weight: bold;
-          color: white;
-          text-align: center;
-        }
-    </style>
-</head>
+                                <td th:if="${instagramUrl}" style="padding:0 6px;">
+                                    <a th:href="${instagramUrl}">
+                                        <img src="https://img.icons8.com/ios-filled/50/ffffff/instagram-new.png"
+                                             width="20" height="20"
+                                             style="background-color:#6ccef3; padding:10px; border-radius:50%; display:block;">
+                                    </a>
+                                </td>
 
-<body>
-<div class="email-container">
-    <!-- Header -->
-    <div class="header">
-        <h1 th:text="${subject}">Email Subject</h1>
-    </div>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
 
-    <!-- Illustration (Optional) -->
-    <div class="illustration" th:if="${illustration}">
-        <img th:src="${illustration}" alt="Illustration"/>
-    </div>
+                <!-- Footer -->
+                <tr>
+                    <td align="center"
+                        style="padding:15px 20px; font-size:12px; color:#999999; font-family:Arial,Helvetica,sans-serif;">
+                        <img th:if="${logoUrl}"
+                             th:src="${logoUrl}"
+                             alt="Logo"
+                             width="50"
+                             style="display:block; margin:0 auto;">
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
 
-    <!-- Content -->
-    <div class="content">
-        <p th:utext="${message}">Email message content goes here.</p>
-
-        <!-- Action Message (Optional) -->
-        <p th:if="${actionMessage}">
-            <strong th:text="${actionMessage}">Action message</strong>
-        </p>
-
-        <!-- Action Button (Optional) -->
-        <a th:if="${actionUrl != null and actionText != null}"
-           th:href="${actionUrl}"
-           th:text="${actionText}"
-           class="verify-button">
-            Action Button
-        </a>
-    </div>
-
-    <hr/>
-
-    <!-- Social Icons -->
-    <div class="socials" style="text-align: center; margin-bottom: 20px">
-        <!-- YouTube -->
-        <a th:if="${youtubeUrl}"
-           th:href="${youtubeUrl}"
-           aria-label="YouTube"
-           style="
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #6ccef3;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 6px;
-            text-decoration: none;
-          ">
-            <img src="https://img.icons8.com/ios-filled/50/ffffff/youtube-play.png"
-                 alt="YouTube"
-                 style="width: 20px; height: 20px; background: none"/>
-        </a>
-
-        <!-- TikTok -->
-        <a th:if="${tiktokUrl}"
-           th:href="${tiktokUrl}"
-           aria-label="TikTok" style="
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #6ccef3;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 6px;
-            text-decoration: none;
-          ">
-            <img src="https://img.icons8.com/ios-filled/50/ffffff/tiktok.png"
-                 alt="TikTok"
-                 style="width: 20px; height: 20px; background: none"/>
-        </a>
-
-        <!-- Facebook -->
-        <a th:if="${facebookUrl}"
-           th:href="${facebookUrl}"
-           aria-label="Facebook" style="
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #6ccef3;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 6px;
-            text-decoration: none;
-          ">
-            <img src="https://img.icons8.com/ios-filled/50/ffffff/facebook-new.png"
-                 alt="Facebook"
-                 style="width: 20px; height: 20px; background: none"/>
-        </a>
-
-        <!-- LinkedIn -->
-        <a th:if="${linkedinUrl}"
-           th:href="${linkedinUrl}"
-           aria-label="LinkedIn" style="
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #6ccef3;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 6px;
-            text-decoration: none;
-          ">
-            <img src="https://img.icons8.com/ios-filled/50/ffffff/linkedin.png"
-                 alt="LinkedIn"
-                 style="width: 20px; height: 20px; background: none"/>
-        </a>
-
-        <!-- Instagram -->
-        <a th:if="${instagramUrl}"
-           th:href="${instagramUrl}"
-           aria-label="Instagram" style="
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #6ccef3;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 6px;
-            text-decoration: none;
-          ">
-            <img src="https://img.icons8.com/ios-filled/50/ffffff/instagram-new.png"
-                 alt="Instagram"
-                 style="width: 20px; height: 20px; background: none"/>
-        </a>
-    </div>
-
-    <!-- Footer / Logo -->
-    <section class="footer">
-        <div class="logo">
-            <img th:if="${logoUrl}"
-                 th:src="${logoUrl}"
-                 alt="Logo"
-            />
-        </div>
-    </section>
-</div>
 </body>
 </html>
