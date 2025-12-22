@@ -31,6 +31,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
@@ -214,6 +215,11 @@ class WebAuthorizationConfig() {
             }
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            }
+            .exceptionHandling { ex ->
+                ex.authenticationEntryPoint(
+                    LoginUrlAuthenticationEntryPoint("/oauth2/authorization/google")
+                )
             }
             .authorizeHttpRequests { auth ->
                 auth.anyRequest().authenticated()
