@@ -17,16 +17,16 @@ class AppConfigService(
         val cached = cache.get()
         if (cached != null) return cached
         val loadedEncrypted = repo.findById(AppConfig.SINGLETON_ID).orElse(AppConfig()).clean()
-        val loaded = decryptEnv(loadedEncrypted)
+        val loaded = decrypt(loadedEncrypted)
         cache.set(loaded)
         return loaded
     }
 
     fun save(appConfig: AppConfig): AppConfig {
         // Persist encrypted, cache decrypted
-        val toSave = encryptEnv(appConfig.copy(id = AppConfig.SINGLETON_ID).clean())
+        val toSave = encrypt(appConfig.copy(id = AppConfig.SINGLETON_ID).clean())
         val savedEncrypted = repo.save(toSave)
-        val saved = decryptEnv(savedEncrypted)
+        val saved = decrypt(savedEncrypted)
         cache.set(saved)
         return saved
     }
@@ -35,7 +35,7 @@ class AppConfigService(
         cache.set(null)
     }
 
-    private fun encryptEnv(src: AppConfig): AppConfig {
+    private fun encrypt(src: AppConfig): AppConfig {
         return src.copy(
             googleAuthClientSecret = src.googleAuthClientSecret?.let { crypto.encrypt(it) },
             googleAuthDesktopClientSecret = src.googleAuthDesktopClientSecret?.let {
@@ -47,7 +47,7 @@ class AppConfigService(
         )
     }
 
-    private fun decryptEnv(src: AppConfig): AppConfig {
+    private fun decrypt(src: AppConfig): AppConfig {
         return src.copy(
             googleAuthClientSecret = src.googleAuthClientSecret?.let { crypto.decrypt(it) },
             googleAuthDesktopClientSecret = src.googleAuthDesktopClientSecret?.let {

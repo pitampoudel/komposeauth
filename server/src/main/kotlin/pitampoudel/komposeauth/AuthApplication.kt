@@ -15,7 +15,7 @@ class AuthApplication(private val appConfigProvider: AppConfigProvider) {
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
 
         // initialize Sentry when DSN is provided
-        val dsn = appConfigProvider.sentryDsn
+        val dsn = appConfigProvider.getConfig().sentryDsn
         if (dsn.isNullOrBlank()) return
 
         Sentry.init {

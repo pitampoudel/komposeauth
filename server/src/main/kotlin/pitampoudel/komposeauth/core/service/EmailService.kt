@@ -18,14 +18,14 @@ class EmailService(
 
     private fun javaMailSender(): JavaMailSender {
         val impl = JavaMailSenderImpl()
-        impl.host = appConfigProvider.smtpHost
-        impl.port = appConfigProvider.smtpPort ?: 587
-        impl.username = appConfigProvider.smtpUsername
-        impl.password = appConfigProvider.smtpPassword
+        impl.host = appConfigProvider.getConfig().smtpHost
+        impl.port = appConfigProvider.getConfig().smtpPort ?: 587
+        impl.username = appConfigProvider.getConfig().smtpUsername
+        impl.password = appConfigProvider.getConfig().smtpPassword
 
         val props = impl.javaMailProperties
-        props["mail.smtp.from"] = appConfigProvider.smtpFromEmail
-        props["mail.smtp.auth"] = !appConfigProvider.smtpUsername.isNullOrBlank()
+        props["mail.smtp.from"] = appConfigProvider.getConfig().smtpFromEmail
+        props["mail.smtp.auth"] = !appConfigProvider.getConfig().smtpUsername.isNullOrBlank()
         props["mail.smtp.starttls.enable"] = "true"
         return impl
     }
@@ -33,18 +33,18 @@ class EmailService(
     private fun render(template: String, baseUrl: String, variables: Map<String, Any?>): String {
         val context = Context().apply {
             // branding defaults
-            setVariable("appName", appConfigProvider.name)
-            setVariable("logoUrl", appConfigProvider.logoUrl)
-            setVariable("brandColor", appConfigProvider.brandColor)
-            setVariable("supportEmail", appConfigProvider.supportEmail)
-            setVariable("footerText", appConfigProvider.emailFooterText)
+            setVariable("appName", appConfigProvider.getConfig().name)
+            setVariable("logoUrl", appConfigProvider.getConfig().logoUrl)
+            setVariable("brandColor", appConfigProvider.getConfig().brandColor)
+            setVariable("supportEmail", appConfigProvider.getConfig().supportEmail)
+            setVariable("footerText", appConfigProvider.getConfig().emailFooterText)
             setVariable("baseUrl", baseUrl)
-            setVariable("facebookUrl", appConfigProvider.facebookLink)
-            setVariable("instagramUrl", appConfigProvider.instagramLink)
-            setVariable("youtubeUrl", appConfigProvider.youtubeLink)
-            setVariable("linkedinUrl", appConfigProvider.linkedinLink)
-            setVariable("tiktokUrl", appConfigProvider.tiktokLink)
-            setVariable("privacyUrl", appConfigProvider.privacyLink)
+            setVariable("facebookUrl", appConfigProvider.getConfig().facebookLink)
+            setVariable("instagramUrl", appConfigProvider.getConfig().instagramLink)
+            setVariable("youtubeUrl", appConfigProvider.getConfig().youtubeLink)
+            setVariable("linkedinUrl", appConfigProvider.getConfig().linkedinLink)
+            setVariable("tiktokUrl", appConfigProvider.getConfig().tiktokLink)
+            setVariable("privacyUrl", appConfigProvider.getConfig().privacyLink)
             variables.forEach { (k, v) -> setVariable(k, v) }
         }
         return templateEngine.process(template, context)
@@ -66,8 +66,8 @@ class EmailService(
             val sender = javaMailSender()
             val message: MimeMessage = sender.createMimeMessage()
             val helper = MimeMessageHelper(message, true, "UTF-8")
-            val fromEmail = appConfigProvider.smtpFromEmail
-            val fromName = appConfigProvider.smtpFromName
+            val fromEmail = appConfigProvider.getConfig().smtpFromEmail
+            val fromName = appConfigProvider.getConfig().smtpFromName
             if (!fromEmail.isNullOrBlank()) {
                 helper.setFrom(InternetAddress(fromEmail, fromName))
             }

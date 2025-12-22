@@ -190,7 +190,7 @@ class UserService(
             emailService.sendHtmlMail(
                 baseUrl = baseUrl,
                 to = newUser.email,
-                subject = "Welcome to ${appConfigProvider.name}!",
+                subject = "Welcome to ${appConfigProvider.getConfig().name}!",
                 template = "email/generic",
                 model = mapOf(
                     "recipientName" to newUser.firstName,
@@ -281,8 +281,8 @@ class UserService(
     fun findOrCreateUserByGoogleIdToken(idToken: String): User {
         val payload = validateGoogleIdToken(
             clientIds = listOfNotNull(
-                appConfigProvider.googleAuthClientId,
-                appConfigProvider.googleAuthDesktopClientId
+                appConfigProvider.getConfig().googleAuthClientId,
+                appConfigProvider.getConfig().googleAuthDesktopClientId
             ),
             idToken = idToken
         )

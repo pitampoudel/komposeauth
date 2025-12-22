@@ -13,12 +13,12 @@ class GcpStorageService(
     val appConfigProvider: AppConfigProvider
 ) : StorageService {
     private val storage: Storage by lazy {
-        StorageOptions.newBuilder().setProjectId(appConfigProvider.gcpProjectId).build().service
+        StorageOptions.newBuilder().setProjectId(appConfigProvider.getConfig().gcpProjectId).build().service
     }
 
     private val bucket by lazy {
-        storage.get(appConfigProvider.gcpBucketName) ?: storage.create(
-            BucketInfo.newBuilder(appConfigProvider.gcpBucketName).build()
+        storage.get(appConfigProvider.getConfig().gcpBucketName) ?: storage.create(
+            BucketInfo.newBuilder(appConfigProvider.getConfig().gcpBucketName).build()
         )
     }
 

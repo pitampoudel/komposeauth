@@ -19,7 +19,7 @@ class SamayePhoneNumberVerificationService(
                 otp = otp
             )
         )
-        return smsService.sendSms(phoneNumber, "Your OTP for ${appConfigProvider.name} is $otp")
+        return smsService.sendSms(phoneNumber, "Your OTP for ${appConfigProvider.getConfig().name} is $otp")
     }
 
     override fun verify(phoneNumber: String, code: String): Boolean {

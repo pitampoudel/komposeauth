@@ -19,9 +19,9 @@ class TwilioSmsService(
     private val logger: Logger = LoggerFactory.getLogger(TwilioSmsService::class.java)
 
     override fun sendSms(phoneNumber: String, message: String): Boolean {
-        val accountSid = appConfigProvider.twilioAccountSid
-        val authToken = appConfigProvider.twilioAuthToken
-        val fromNumber = appConfigProvider.twilioFromNumber
+        val accountSid = appConfigProvider.getConfig().twilioAccountSid
+        val authToken = appConfigProvider.getConfig().twilioAuthToken
+        val fromNumber = appConfigProvider.getConfig().twilioFromNumber
 
         if (accountSid.isNullOrBlank() || authToken.isNullOrBlank() || fromNumber.isNullOrBlank()) {
             logger.debug("Twilio configuration missing; cannot send SMS.")

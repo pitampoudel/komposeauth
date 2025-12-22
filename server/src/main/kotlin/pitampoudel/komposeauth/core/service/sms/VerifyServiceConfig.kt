@@ -15,9 +15,9 @@ class VerifyServiceConfig {
         phoneOtpRepository: PhoneOtpRepository,
         smsService: SmsService
     ): PhoneNumberVerificationService {
-        return if (!appConfigProvider.twilioVerifyServiceSid.isNullOrBlank()) {
+        return if (!appConfigProvider.getConfig().twilioVerifyServiceSid.isNullOrBlank()) {
             TwilioPhoneNumberVerificationService(appConfigProvider, restTemplate)
-        } else if (!appConfigProvider.samayeApiKey.isNullOrBlank()) {
+        } else if (!appConfigProvider.getConfig().samayeApiKey.isNullOrBlank()) {
             SamayePhoneNumberVerificationService(phoneOtpRepository, smsService, appConfigProvider)
         } else {
             NoOpPhoneNumberVerificationService()

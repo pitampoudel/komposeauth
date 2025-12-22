@@ -39,7 +39,7 @@ class PasswordResetController(
         // Verify token without consuming
         oneTimeTokenService.findValidToken(token, OneTimeToken.Purpose.RESET_PASSWORD)
         model.addAttribute("token", token)
-        model.addAttribute("logoUrl", appConfigProvider.logoUrl)
+        model.addAttribute("logoUrl", appConfigProvider.getConfig().logoUrl)
         return "reset-password-form"
     }
 
@@ -98,6 +98,6 @@ class PasswordResetController(
             )
         )
         oneTimeTokenService.consume(token, OneTimeToken.Purpose.RESET_PASSWORD)
-        return RedirectView("${appConfigProvider.websiteUrl}?passwordReset=true")
+        return RedirectView("${appConfigProvider.getConfig().websiteUrl}?passwordReset=true")
     }
 }

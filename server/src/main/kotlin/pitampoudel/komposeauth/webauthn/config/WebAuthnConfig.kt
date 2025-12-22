@@ -123,7 +123,7 @@ class WebAuthnConfig(
             userCredentialRepository,
             PublicKeyCredentialRpEntity.builder()
                 .id(appConfigProvider.rpId())
-                .name(appConfigProvider.name)
+                .name(appConfigProvider.getConfig().name)
                 .build(),
             appConfigProvider.webauthnAllowedOrigins()
         )

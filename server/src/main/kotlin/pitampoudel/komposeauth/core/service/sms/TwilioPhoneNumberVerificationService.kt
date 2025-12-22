@@ -18,7 +18,7 @@ class TwilioPhoneNumberVerificationService(
     private fun basicHeaders(): HttpHeaders {
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_FORM_URLENCODED
-        val auth = "${appConfigProvider.twilioAccountSid}:${appConfigProvider.twilioAuthToken}"
+        val auth = "${appConfigProvider.getConfig().twilioAccountSid}:${appConfigProvider.getConfig().twilioAuthToken}"
         val encodedAuth =
             Base64.getEncoder().encodeToString(auth.toByteArray(StandardCharsets.UTF_8))
         headers.set(HttpHeaders.AUTHORIZATION, "Basic $encodedAuth")
@@ -26,7 +26,7 @@ class TwilioPhoneNumberVerificationService(
     }
 
     override fun initiate(phoneNumber: String): Boolean {
-        val verifySid = appConfigProvider.twilioVerifyServiceSid
+        val verifySid = appConfigProvider.getConfig().twilioVerifyServiceSid
         return try {
             val url = "https://verify.twilio.com/v2/Services/$verifySid/Verifications"
             val formData: MultiValueMap<String, String> = LinkedMultiValueMap()
@@ -43,7 +43,7 @@ class TwilioPhoneNumberVerificationService(
 
 
     override fun verify(phoneNumber: String, code: String): Boolean {
-        val verifySid = appConfigProvider.twilioVerifyServiceSid
+        val verifySid = appConfigProvider.getConfig().twilioVerifyServiceSid
         return try {
             val url = "https://verify.twilio.com/v2/Services/$verifySid/VerificationCheck"
             val formData: MultiValueMap<String, String> = LinkedMultiValueMap()

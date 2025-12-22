@@ -15,8 +15,8 @@ class OAuthClientConfig {
     fun clientRegistrationRepository(appConfigProvider: AppConfigProvider): ClientRegistrationRepository {
         val registrations = mutableListOf<ClientRegistration>()
 
-        val webClientId = appConfigProvider.googleAuthClientId
-        val webClientSecret = appConfigProvider.googleAuthClientSecret
+        val webClientId = appConfigProvider.getConfig().googleAuthClientId
+        val webClientSecret = appConfigProvider.getConfig().googleAuthClientSecret
 
         if (!webClientId.isNullOrBlank() && !webClientSecret.isNullOrBlank()) {
             registrations += CommonOAuth2Provider.GOOGLE

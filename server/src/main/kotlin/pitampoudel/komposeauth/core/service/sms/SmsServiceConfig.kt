@@ -12,11 +12,11 @@ class SmsServiceConfig {
     fun smsService(appConfigProvider: AppConfigProvider, restTemplate: RestTemplate): SmsService {
 
         return when {
-            !appConfigProvider.twilioAccountSid.isNullOrBlank() -> {
+            !appConfigProvider.getConfig().twilioAccountSid.isNullOrBlank() -> {
                 TwilioSmsService(appConfigProvider, restTemplate)
             }
 
-            !appConfigProvider.samayeApiKey.isNullOrBlank() -> {
+            !appConfigProvider.getConfig().samayeApiKey.isNullOrBlank() -> {
                 SamayaSmsService(appConfigProvider, restTemplate)
             }
 

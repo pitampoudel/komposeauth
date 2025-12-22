@@ -79,6 +79,6 @@ class EmailVerifyController(
 
         userService.emailVerified(user.id)
 
-        return RedirectView("${appConfigProvider.websiteUrl}?emailVerified=true")
+        return RedirectView("${appConfigProvider.getConfig().websiteUrl}?emailVerified=true")
     }
 }

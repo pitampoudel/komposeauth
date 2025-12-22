@@ -41,7 +41,7 @@ class SamayaSmsService(
 
     private fun buildFormData(phoneNumber: String, message: String): MultiValueMap<String, String> {
         val formData: MultiValueMap<String, String> = LinkedMultiValueMap()
-        formData.add("key", appConfigProvider.samayeApiKey)
+        formData.add("key", appConfigProvider.getConfig().samayeApiKey)
         formData.add("campaign", "8238")
         formData.add("routeid", "135")
         formData.add("type", "text")
