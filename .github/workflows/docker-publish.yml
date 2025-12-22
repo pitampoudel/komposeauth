@@ -24,8 +24,13 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Run tests
-        run: ./gradlew clean :server:check --no-daemon
+          cache: 'gradle'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run tests with parallel execution
+        run: ./gradlew clean :server:check --parallel --build-cache --no-daemon
 
   build-and-push:
     name: Build and Push Docker Image
@@ -36,32 +41,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          driver: docker-container
-          cleanup: true
-
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth
+          images: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth
 
       - name: Build and push Docker image
-        id: build_and_push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          provenance: mode=max
-          sbom: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:buildcache,mode=max
