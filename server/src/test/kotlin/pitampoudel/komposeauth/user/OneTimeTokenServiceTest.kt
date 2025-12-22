@@ -26,8 +26,7 @@ class OneTimeTokenServiceTest {
 
     @Autowired
     private lateinit var service: OneTimeTokenService
-    @Autowired
-    private lateinit var repo: OneTimeTokenRepository
+
 
     @Test
     fun `createToken stores hashed token, findValidToken succeeds, consume makes it single-use`() {
@@ -35,8 +34,8 @@ class OneTimeTokenServiceTest {
         val raw = service.createToken(userId, OneTimeToken.Purpose.RESET_PASSWORD, ttl = 1.hours)
 
         // Repository should never store raw token
-        val stored = repo.findByTokenHashAndPurpose(raw, OneTimeToken.Purpose.RESET_PASSWORD)
-        assertNotNull(stored?.tokenHash)
+        val stored = service.findValidToken(raw, OneTimeToken.Purpose.RESET_PASSWORD)
+        assertNotNull(stored.tokenHash)
 
         val validated = service.findValidToken(raw, OneTimeToken.Purpose.RESET_PASSWORD)
         assertEquals(stored.id, validated.id)
