@@ -31,7 +31,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
 @RestController
-class AuthController(
+class ResourceOwnerLoginController(
     val json: Json,
     val userService: UserService,
     val oneTimeTokenService: OneTimeTokenService,
