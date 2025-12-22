@@ -4,11 +4,12 @@ import org.bson.types.ObjectId
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
-import org.testcontainers.junit.jupiter.Testcontainers
-import pitampoudel.komposeauth.MongoContainerTest
+import org.springframework.test.context.ContextConfiguration
+import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.repository.OneTimeTokenRepository
 import pitampoudel.komposeauth.user.service.OneTimeTokenService
@@ -16,11 +17,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.time.Duration.Companion.hours
 
-@DataMongoTest
-@Testcontainers(disabledWithoutDocker = true)
+@SpringBootTest
 @ActiveProfiles("test")
+@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@AutoConfigureMockMvc
 @Import(OneTimeTokenService::class)
-class OneTimeTokenServiceTest  : MongoContainerTest() {
+class OneTimeTokenServiceTest {
 
     @Autowired private lateinit var service: OneTimeTokenService
     @Autowired private lateinit var repo: OneTimeTokenRepository

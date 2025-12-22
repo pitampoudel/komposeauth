@@ -9,7 +9,11 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import pitampoudel.komposeauth.MongoContainerTest
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.ContextConfiguration
+import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.kyc.data.KycResponse
@@ -21,7 +25,11 @@ import pitampoudel.komposeauth.user.entity.User
 import java.util.Optional
 import kotlin.test.assertEquals
 
-class KycServiceBusinessRulesTest  : MongoContainerTest() {
+@SpringBootTest
+@ActiveProfiles("test")
+@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@AutoConfigureMockMvc
+class KycServiceBusinessRulesTest {
 
     @Test
     fun `submitPersonalInformation blocks resubmit when country or nationality differs`() {

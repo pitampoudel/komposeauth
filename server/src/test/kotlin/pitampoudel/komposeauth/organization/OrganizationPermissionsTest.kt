@@ -2,14 +2,22 @@ package pitampoudel.komposeauth.organization
 
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
-import pitampoudel.komposeauth.MongoContainerTest
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.ContextConfiguration
+import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.core.config.canEditOrganization
-import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.organization.entity.Organization
+import pitampoudel.komposeauth.user.entity.User
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class OrganizationPermissionsTest  : MongoContainerTest() {
+@SpringBootTest
+@ActiveProfiles("test")
+@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@AutoConfigureMockMvc
+class OrganizationPermissionsTest {
 
     @Test
     fun `canEditOrganization true for admins`() {

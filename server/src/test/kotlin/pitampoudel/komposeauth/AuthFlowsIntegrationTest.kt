@@ -11,10 +11,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
-import org.testcontainers.junit.jupiter.Testcontainers
 import pitampoudel.komposeauth.core.data.ApiEndpoints
 import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.data.Credential
@@ -29,19 +29,23 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.hours
 
 @SpringBootTest
-@Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test")
+@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
 @AutoConfigureMockMvc
-class AuthFlowsIntegrationTest : MongoContainerTest()  {
+class AuthFlowsIntegrationTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
+
     @Autowired
     private lateinit var json: Json
+
     @Autowired
     private lateinit var userRepository: UserRepository
+
     @Autowired
     private lateinit var oneTimeTokenService: OneTimeTokenService
+
     @Autowired
     private lateinit var oneTimeTokenRepository: OneTimeTokenRepository
 

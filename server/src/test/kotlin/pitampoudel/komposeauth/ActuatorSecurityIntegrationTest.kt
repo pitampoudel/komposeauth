@@ -4,32 +4,34 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import pitampoudel.komposeauth.core.data.ApiEndpoints
-import pitampoudel.komposeauth.core.domain.Platform
 
+/**
+ * Production-safety smoke tests around Actuator endpoints.
+ *
+ * We mainly care that the app exposes a health endpoint and that it isn't accidentally public.
+ */
 @SpringBootTest
 @ActiveProfiles("test")
 @ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
 @AutoConfigureMockMvc
-class AuthApplicationTests {
+class ActuatorSecurityIntegrationTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
 
     @Test
-    fun `login options endpoint returns ok`() {
-        mockMvc.get("/${ApiEndpoints.LOGIN_OPTIONS}") {
-            param("platform", Platform.WEB.name)
+    fun `health endpoint exists and requires authentication`() {
+        mockMvc.get("/actuator/health") {
+            accept = MediaType.APPLICATION_JSON
         }.andExpect {
-            status { isOk() }
+            // By default our security config requires auth for any request not explicitly permitted.
+            // Health being protected is the safer production default.
+            status { isUnauthorized() }
         }
-    }
-
-    @Test
-    fun contextLoads() {
     }
 }

@@ -7,11 +7,15 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.security.core.userdetails.UsernameNotFoundException
-import pitampoudel.komposeauth.MongoContainerTest
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.ContextConfiguration
+import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import pitampoudel.komposeauth.user.service.UserService
@@ -19,7 +23,11 @@ import java.util.Optional
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class UserServiceAdminEdgeCasesTest  : MongoContainerTest() {
+@SpringBootTest
+@ActiveProfiles("test")
+@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@AutoConfigureMockMvc
+class UserServiceAdminEdgeCasesTest {
 
     @Test
     fun `revokeAdmin throws when trying to remove last admin`() {

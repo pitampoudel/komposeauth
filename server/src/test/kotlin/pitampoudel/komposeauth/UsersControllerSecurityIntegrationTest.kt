@@ -7,19 +7,20 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import org.testcontainers.junit.jupiter.Testcontainers
 import pitampoudel.komposeauth.core.data.ApiEndpoints
 
 @SpringBootTest
-@Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test")
+@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
 @AutoConfigureMockMvc
-class UsersControllerSecurityIntegrationTest : MongoContainerTest() {
+class UsersControllerSecurityIntegrationTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
+
     @Autowired
     private lateinit var json: Json
 

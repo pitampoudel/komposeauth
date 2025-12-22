@@ -6,7 +6,11 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import pitampoudel.komposeauth.MongoContainerTest
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.ContextConfiguration
+import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.repository.AppConfigRepository
 import pitampoudel.komposeauth.app_config.service.AppConfigService
@@ -14,7 +18,11 @@ import pitampoudel.komposeauth.core.service.security.CryptoService
 import java.util.Optional
 import kotlin.test.assertEquals
 
-class AppConfigServiceCryptoCacheTest : MongoContainerTest() {
+@SpringBootTest
+@ActiveProfiles("test")
+@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@AutoConfigureMockMvc
+class AppConfigServiceCryptoCacheTest {
 
     @Test
     fun `save encrypts secrets and get caches decrypted values`() {
@@ -39,7 +47,12 @@ class AppConfigServiceCryptoCacheTest : MongoContainerTest() {
 
         // Now simulate repo returning encrypted content.
         whenever(repo.findById(AppConfig.SINGLETON_ID)).thenReturn(
-            Optional.of(AppConfig(id = AppConfig.SINGLETON_ID, googleAuthClientSecret = "enc(secret)"))
+            Optional.of(
+                AppConfig(
+                    id = AppConfig.SINGLETON_ID,
+                    googleAuthClientSecret = "enc(secret)"
+                )
+            )
         )
 
         service.clearCache()
