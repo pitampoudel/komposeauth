@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.core.config
 
 import org.junit.jupiter.api.Test
 import pitampoudel.komposeauth.TestJwtUtil
+import pitampoudel.komposeauth.core.security.WebAuthorizationConfig
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
