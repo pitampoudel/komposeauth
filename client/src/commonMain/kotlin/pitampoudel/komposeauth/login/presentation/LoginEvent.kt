@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.login
+package pitampoudel.komposeauth.login.presentation
 
 import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.komposeauth.core.data.Credential

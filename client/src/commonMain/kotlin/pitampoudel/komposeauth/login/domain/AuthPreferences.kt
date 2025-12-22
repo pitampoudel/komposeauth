@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.domain
+package pitampoudel.komposeauth.login.domain
 
 import kotlinx.coroutines.flow.Flow
 import pitampoudel.komposeauth.core.data.OAuth2Response

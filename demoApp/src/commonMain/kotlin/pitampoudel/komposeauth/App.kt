@@ -27,10 +27,10 @@ import pitampoudel.core.presentation.wrapper.screenstate.ScreenStateWrapper
 import pitampoudel.komposeauth.core.di.rememberAuthenticatedUser
 import pitampoudel.komposeauth.core.data.Credential
 import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
-import pitampoudel.komposeauth.login.LoginEvent
-import pitampoudel.komposeauth.login.LoginState
-import pitampoudel.komposeauth.login.LoginViewModel
-import pitampoudel.komposeauth.login.rememberKmpCredentialManager
+import pitampoudel.komposeauth.login.presentation.LoginEvent
+import pitampoudel.komposeauth.login.presentation.LoginState
+import pitampoudel.komposeauth.login.presentation.LoginViewModel
+import pitampoudel.komposeauth.login.presentation.rememberKmpCredentialManager
 import pitampoudel.komposeauth.profile.ProfileEvent
 import pitampoudel.komposeauth.profile.ProfileState
 import pitampoudel.komposeauth.profile.ProfileViewModel

@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.core.data
 
 import io.ktor.client.HttpClientConfig
+import pitampoudel.komposeauth.login.data.AuthPreferencesImpl
 
 fun HttpClientConfig<*>.installKomposeAuth(
     authServerUrl: String,

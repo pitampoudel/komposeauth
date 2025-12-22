@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.core.data
 
 import android.content.Context
 import io.ktor.client.HttpClientConfig
+import pitampoudel.komposeauth.login.data.AuthPreferencesImpl
 
 fun HttpClientConfig<*>.installKomposeAuth(
     context: Context,

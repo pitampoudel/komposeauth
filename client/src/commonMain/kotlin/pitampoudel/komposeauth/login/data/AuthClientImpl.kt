@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.data
+package pitampoudel.komposeauth.login.data
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -14,6 +14,15 @@ import pitampoudel.core.data.download
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.domain.Result
+import pitampoudel.komposeauth.core.data.CountryResponse
+import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.core.data.LoginOptionsResponse
+import pitampoudel.komposeauth.core.data.OAuth2Response
+import pitampoudel.komposeauth.core.data.ProfileResponse
+import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
+import pitampoudel.komposeauth.core.data.UpdatePhoneNumberRequest
+import pitampoudel.komposeauth.core.data.UpdateProfileRequest
+import pitampoudel.komposeauth.core.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.DEACTIVATE
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_ADDRESS
@@ -26,7 +35,7 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.ME
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.UPDATE_PHONE_NUMBER
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.UPDATE_PROFILE
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_PHONE_NUMBER
-import pitampoudel.komposeauth.core.domain.AuthClient
+import pitampoudel.komposeauth.login.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.kyc.data.DocumentInformation

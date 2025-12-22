@@ -12,7 +12,7 @@ import pitampoudel.core.domain.Result
 import pitampoudel.core.domain.validators.ValidateNotBlank
 import pitampoudel.core.presentation.ResultUiEvent
 import pitampoudel.komposeauth.core.data.AuthStateHandler
-import pitampoudel.komposeauth.core.domain.AuthClient
+import pitampoudel.komposeauth.login.domain.AuthClient
 import pitampoudel.komposeauth.core.data.ProfileResponse
 import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
 import pitampoudel.komposeauth.organization.domain.OrganizationsClient

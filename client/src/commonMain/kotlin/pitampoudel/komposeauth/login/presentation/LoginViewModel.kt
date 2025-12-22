@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.login
+package pitampoudel.komposeauth.login.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.core.domain.AuthClient
-import pitampoudel.komposeauth.core.domain.AuthPreferences
+import pitampoudel.komposeauth.login.domain.AuthClient
+import pitampoudel.komposeauth.login.domain.AuthPreferences
 import pitampoudel.komposeauth.core.data.AuthStateHandler
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.core.domain.Platform

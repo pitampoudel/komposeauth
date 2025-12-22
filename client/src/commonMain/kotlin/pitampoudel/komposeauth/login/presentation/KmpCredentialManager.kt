@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.login
+package pitampoudel.komposeauth.login.presentation
 
 import androidx.compose.runtime.Composable
 import kotlinx.serialization.json.JsonObject

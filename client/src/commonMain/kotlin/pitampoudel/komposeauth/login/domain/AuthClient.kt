@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.domain
+package pitampoudel.komposeauth.login.domain
 
 import io.ktor.client.statement.HttpResponse
 import pitampoudel.core.domain.KmpFile
@@ -12,6 +12,8 @@ import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
 import pitampoudel.komposeauth.core.data.UpdatePhoneNumberRequest
 import pitampoudel.komposeauth.core.data.UpdateProfileRequest
 import pitampoudel.komposeauth.core.data.VerifyPhoneOtpRequest
+import pitampoudel.komposeauth.core.domain.Platform
+import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation

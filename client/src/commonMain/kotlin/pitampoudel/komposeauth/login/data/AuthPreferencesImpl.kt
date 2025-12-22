@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.data
+package pitampoudel.komposeauth.login.data
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ObservableSettings
@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import pitampoudel.komposeauth.core.data.JwtUtils.decodeAndParseJwtPayload
-import pitampoudel.komposeauth.core.domain.AuthPreferences
+import pitampoudel.komposeauth.core.data.OAuth2Response
+import pitampoudel.komposeauth.login.domain.AuthPreferences
 
 @OptIn(ExperimentalSettingsApi::class)
 internal class AuthPreferencesImpl private constructor(

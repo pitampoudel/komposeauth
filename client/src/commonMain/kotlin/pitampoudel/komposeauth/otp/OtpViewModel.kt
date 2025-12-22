@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pitampoudel.core.domain.Result
 import pitampoudel.core.presentation.ResultUiEvent
-import pitampoudel.komposeauth.core.domain.AuthClient
+import pitampoudel.komposeauth.login.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.use_cases.ValidateOtpCode
 
 class OtpViewModel internal constructor(

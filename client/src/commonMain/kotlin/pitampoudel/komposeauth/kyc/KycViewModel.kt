@@ -11,7 +11,7 @@ import pitampoudel.core.domain.validators.ValidateNotBlank
 import pitampoudel.core.domain.validators.ValidateNotNull
 import pitampoudel.core.domain.validators.ValidationResult
 import pitampoudel.komposeauth.kyc.data.KycResponse
-import pitampoudel.komposeauth.core.domain.AuthClient
+import pitampoudel.komposeauth.login.domain.AuthClient
 
 class KycViewModel internal constructor(
     private val client: AuthClient

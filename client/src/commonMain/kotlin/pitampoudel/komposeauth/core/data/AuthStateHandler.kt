@@ -12,8 +12,8 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import pitampoudel.core.domain.Result
 import pitampoudel.core.presentation.LazyState
-import pitampoudel.komposeauth.core.domain.AuthClient
-import pitampoudel.komposeauth.core.domain.AuthPreferences
+import pitampoudel.komposeauth.login.domain.AuthClient
+import pitampoudel.komposeauth.login.domain.AuthPreferences
 import pitampoudel.komposeauth.core.domain.AuthUser
 
 internal class AuthStateHandler(
@@ -52,7 +52,7 @@ internal class AuthStateHandler(
         )
     }
 
-    suspend fun fetchUserInfo(): Result<AuthUser> {
+    private suspend fun fetchUserInfo(): Result<AuthUser> {
         return when (val res = authClient.fetchUserInfo()) {
             is Result.Success -> Result.Success(
                 AuthUser(
