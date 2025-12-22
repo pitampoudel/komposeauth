@@ -24,7 +24,7 @@ class OrganizationWriteController(
     private val organizationService: OrganizationService,
     val userContextService: UserContextService
 ) {
-    @PostMapping("/" + ApiEndpoints.ORGANIZATION)
+    @PostMapping("/" + ApiEndpoints.ORGANIZATIONS)
     suspend fun createOrUpdate(
         @RequestBody request: CreateOrUpdateOrganizationRequest
     ): MessageResponse {

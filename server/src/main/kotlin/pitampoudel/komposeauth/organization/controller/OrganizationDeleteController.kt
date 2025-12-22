@@ -1,8 +1,10 @@
 package pitampoudel.komposeauth.organization.controller
 
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.websocket.server.PathParam
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
@@ -20,10 +22,9 @@ class OrganizationDeleteController(
     private val storageService: StorageService,
     private val userContextService: UserContextService
 ) {
-    @DeleteMapping("/" + ApiEndpoints.ORGANIZATION)
+    @GetMapping("/" + ApiEndpoints.ORGANIZATIONS + "/{orgId}")
     suspend fun deleteOrganization(
-        @RequestParam("orgId")
-        orgId: String
+        @PathParam("orgId") orgId: String
     ): MessageResponse {
         val user = userContextService.getUserFromAuthentication()
 

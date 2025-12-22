@@ -23,7 +23,7 @@ internal class OrganizationsClientImpl(
         request: CreateOrUpdateOrganizationRequest,
     ): Result<MessageResponse> {
         return safeApiCall {
-            httpClient.post(baseUrl + "/" + ApiEndpoints.ORGANIZATION) {
+            httpClient.post(baseUrl + "/" + ApiEndpoints.ORGANIZATIONS) {
                 setBody(request)
             }.asResource {
                 body()
@@ -35,7 +35,7 @@ internal class OrganizationsClientImpl(
     override suspend fun get(): Result<List<OrganizationResponse>> {
         return safeApiCall {
             httpClient.get(
-                baseUrl + "/" + ApiEndpoints.ORGANIZATION
+                baseUrl + "/" + ApiEndpoints.ORGANIZATIONS
             ).asResource { body() }
         }
     }
@@ -43,14 +43,14 @@ internal class OrganizationsClientImpl(
     override suspend fun get(orgId: String): Result<OrganizationResponse> {
         return safeApiCall {
             httpClient.get(
-                baseUrl + "/" + ApiEndpoints.ORGANIZATION + "/$orgId"
+                baseUrl + "/" + ApiEndpoints.ORGANIZATIONS + "/$orgId"
             ).asResource { body() }
         }
     }
 
     override suspend fun delete(orgId: String): Result<MessageResponse> {
         return safeApiCall {
-            httpClient.delete(baseUrl + "/" + ApiEndpoints.ORGANIZATION) {
+            httpClient.delete(baseUrl + "/" + ApiEndpoints.ORGANIZATIONS) {
                 parameter("orgId", orgId)
             }.asResource { body() }
         }

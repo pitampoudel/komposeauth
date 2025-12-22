@@ -21,7 +21,7 @@ class OrganizationReadController(
     val userContextService: UserContextService
 ) {
 
-    @GetMapping("/" + ApiEndpoints.ORGANIZATION)
+    @GetMapping("/" + ApiEndpoints.ORGANIZATIONS)
     suspend fun getOrganizations(
         @RequestParam("ids")
         ids: String? = null
@@ -37,7 +37,7 @@ class OrganizationReadController(
         }
     }
 
-    @GetMapping("/" + ApiEndpoints.ORGANIZATION + "/{orgId}")
+    @GetMapping("/" + ApiEndpoints.ORGANIZATIONS + "/{orgId}")
     suspend fun getOrganizationById(
         @PathParam("orgId") orgId: String
     ): OrganizationResponse {

@@ -20,7 +20,7 @@ object ApiEndpoints {
     const val VERIFY_EMAIL = "verify-email"
     const val RESET_PASSWORD = "reset-password"
 
-    const val ORGANIZATION = "organization"
+    const val ORGANIZATIONS = "organizations"
 
 
 }
