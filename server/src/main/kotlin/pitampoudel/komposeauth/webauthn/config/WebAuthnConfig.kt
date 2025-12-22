@@ -14,7 +14,7 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations
 import org.springframework.security.web.webauthn.registration.HttpSessionPublicKeyCredentialCreationOptionsRepository
 import org.springframework.stereotype.Repository
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.user.repository.UserRepository
 import pitampoudel.komposeauth.webauthn.entity.PublicKeyCredential
 import pitampoudel.komposeauth.webauthn.entity.PublicKeyUser
@@ -101,7 +101,7 @@ class PublicKeyCredentialUserEntityRepositoryImpl(
 
 @Configuration
 class WebAuthnConfig(
-    private val appConfigProvider: AppConfigProvider,
+    private val appConfigService: AppConfigService,
 ) {
     @Bean
     fun requestOptionsRepository(): PublicKeyCredentialRequestOptionsRepository {
@@ -122,10 +122,10 @@ class WebAuthnConfig(
             userEntityRepository,
             userCredentialRepository,
             PublicKeyCredentialRpEntity.builder()
-                .id(appConfigProvider.rpId())
-                .name(appConfigProvider.getConfig().name)
+                .id(appConfigService.rpId())
+                .name(appConfigService.getConfig().name)
                 .build(),
-            appConfigProvider.webauthnAllowedOrigins()
+            appConfigService.webauthnAllowedOrigins()
         )
     }
 

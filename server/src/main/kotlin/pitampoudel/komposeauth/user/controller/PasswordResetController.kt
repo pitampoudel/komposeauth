@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.core.data.MessageResponse
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.RESET_PASSWORD
@@ -28,7 +28,7 @@ class PasswordResetController(
     private val userService: UserService,
     private val emailService: EmailService,
     private val oneTimeTokenService: OneTimeTokenService,
-    private val appConfigProvider: AppConfigProvider
+    private val appConfigService: AppConfigService
 ) {
     @Operation(
         summary = "Show password reset form",
@@ -39,7 +39,7 @@ class PasswordResetController(
         // Verify token without consuming
         oneTimeTokenService.findValidToken(token, OneTimeToken.Purpose.RESET_PASSWORD)
         model.addAttribute("token", token)
-        model.addAttribute("logoUrl", appConfigProvider.getConfig().logoUrl)
+        model.addAttribute("logoUrl", appConfigService.getConfig().logoUrl)
         return "reset-password-form"
     }
 
@@ -98,6 +98,6 @@ class PasswordResetController(
             )
         )
         oneTimeTokenService.consume(token, OneTimeToken.Purpose.RESET_PASSWORD)
-        return RedirectView("${appConfigProvider.getConfig().websiteUrl}?passwordReset=true")
+        return RedirectView("${appConfigService.getConfig().websiteUrl}?passwordReset=true")
     }
 }

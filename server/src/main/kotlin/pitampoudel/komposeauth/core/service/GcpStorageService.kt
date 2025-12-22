@@ -5,20 +5,20 @@ import com.google.cloud.storage.BucketInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 import org.springframework.stereotype.Service
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 
 
 @Service
 class GcpStorageService(
-    val appConfigProvider: AppConfigProvider
+    val appConfigService: AppConfigService
 ) : StorageService {
     private val storage: Storage by lazy {
-        StorageOptions.newBuilder().setProjectId(appConfigProvider.getConfig().gcpProjectId).build().service
+        StorageOptions.newBuilder().setProjectId(appConfigService.getConfig().gcpProjectId).build().service
     }
 
     private val bucket by lazy {
-        storage.get(appConfigProvider.getConfig().gcpBucketName) ?: storage.create(
-            BucketInfo.newBuilder(appConfigProvider.getConfig().gcpBucketName).build()
+        storage.get(appConfigService.getConfig().gcpBucketName) ?: storage.create(
+            BucketInfo.newBuilder(appConfigService.getConfig().gcpBucketName).build()
         )
     }
 

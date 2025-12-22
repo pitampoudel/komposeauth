@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGIN_OPTIONS
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.core.domain.Platform
@@ -30,7 +30,7 @@ class WebAuthnController(
     private val rpOperations: WebAuthnRelyingPartyOperations,
     private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
     private val publicKeyCredentialCreationOptionsRepository: PublicKeyCredentialCreationOptionsRepository,
-    private val appConfigProvider: AppConfigProvider
+    private val appConfigService: AppConfigService
 ) {
     @Operation(
         summary = "Get configuration for login",
@@ -52,7 +52,7 @@ class WebAuthnController(
 
         return ResponseEntity.ok(
             LoginOptionsResponse(
-                googleClientId = appConfigProvider.googleClientId(platform),
+                googleClientId = appConfigService.googleClientId(platform),
                 publicKeyAuthOptionsJson = json
             )
         )

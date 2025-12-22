@@ -8,20 +8,20 @@ import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestTemplate
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 class TwilioSmsService(
-    private val appConfigProvider: AppConfigProvider,
+    private val appConfigService: AppConfigService,
     private val restTemplate: RestTemplate
 ) : SmsService {
     private val logger: Logger = LoggerFactory.getLogger(TwilioSmsService::class.java)
 
     override fun sendSms(phoneNumber: String, message: String): Boolean {
-        val accountSid = appConfigProvider.getConfig().twilioAccountSid
-        val authToken = appConfigProvider.getConfig().twilioAuthToken
-        val fromNumber = appConfigProvider.getConfig().twilioFromNumber
+        val accountSid = appConfigService.getConfig().twilioAccountSid
+        val authToken = appConfigService.getConfig().twilioAuthToken
+        val fromNumber = appConfigService.getConfig().twilioFromNumber
 
         if (accountSid.isNullOrBlank() || authToken.isNullOrBlank() || fromNumber.isNullOrBlank()) {
             logger.debug("Twilio configuration missing; cannot send SMS.")

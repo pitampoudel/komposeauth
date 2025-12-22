@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import pitampoudel.komposeauth.app_config.entity.AppConfig
-import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 
 @Controller
 class AppConfigController(
-    private val appConfigService: AppConfigService
+    private val appConfigProvider: AppConfigProvider
 ) {
     @GetMapping("/config")
     @Operation(
@@ -25,7 +25,7 @@ class AppConfigController(
         @RequestParam("key", required = false)
         key: String?,
     ): String {
-        model.addAttribute("config", appConfigService.get())
+        model.addAttribute("config", appConfigProvider.get())
         return "config"
     }
 
@@ -36,9 +36,8 @@ class AppConfigController(
         @ModelAttribute form: AppConfig,
         model: Model
     ): String {
-        appConfigService.save(form)
-        appConfigService.clearCache()
-        model.addAttribute("config", appConfigService.get())
+        appConfigProvider.save(form)
+        model.addAttribute("config", appConfigProvider.get())
         return "config"
     }
 }

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.core.data.MessageResponse
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_EMAIL
 import pitampoudel.komposeauth.core.service.EmailService
@@ -27,7 +27,7 @@ class EmailVerifyController(
     private val emailService: EmailService,
     private val userService: UserService,
     val userContextService: UserContextService,
-    val appConfigProvider: AppConfigProvider
+    val appConfigService: AppConfigService
 ) {
 
     @Operation(
@@ -79,6 +79,6 @@ class EmailVerifyController(
 
         userService.emailVerified(user.id)
 
-        return RedirectView("${appConfigProvider.getConfig().websiteUrl}?emailVerified=true")
+        return RedirectView("${appConfigService.getConfig().websiteUrl}?emailVerified=true")
     }
 }

@@ -8,10 +8,10 @@ import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestTemplate
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 
 class SamayaSmsService(
-    private val appConfigProvider: AppConfigProvider,
+    private val appConfigService: AppConfigService,
     private val restTemplate: RestTemplate
 ) : SmsService {
     val logger: Logger = LoggerFactory.getLogger(SamayaSmsService::class.java)
@@ -41,7 +41,7 @@ class SamayaSmsService(
 
     private fun buildFormData(phoneNumber: String, message: String): MultiValueMap<String, String> {
         val formData: MultiValueMap<String, String> = LinkedMultiValueMap()
-        formData.add("key", appConfigProvider.getConfig().samayeApiKey)
+        formData.add("key", appConfigService.getConfig().samayeApiKey)
         formData.add("campaign", "8238")
         formData.add("routeid", "135")
         formData.add("type", "text")

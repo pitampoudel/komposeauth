@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.data.Credential
@@ -37,7 +37,7 @@ class ResourceOwnerLoginController(
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
     private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
-    val appConfigProvider: AppConfigProvider,
+    val appConfigService: AppConfigService,
     private val jwtEncoder: JwtEncoder
 ) {
 

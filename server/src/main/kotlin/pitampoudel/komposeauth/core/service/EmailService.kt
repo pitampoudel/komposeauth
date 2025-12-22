@@ -8,24 +8,24 @@ import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.stereotype.Service
 import org.thymeleaf.TemplateEngine
 import org.thymeleaf.context.Context
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 
 @Service
 class EmailService(
-    private val appConfigProvider: AppConfigProvider,
+    private val appConfigService: AppConfigService,
     private val templateEngine: TemplateEngine,
 ) {
 
     private fun javaMailSender(): JavaMailSender {
         val impl = JavaMailSenderImpl()
-        impl.host = appConfigProvider.getConfig().smtpHost
-        impl.port = appConfigProvider.getConfig().smtpPort ?: 587
-        impl.username = appConfigProvider.getConfig().smtpUsername
-        impl.password = appConfigProvider.getConfig().smtpPassword
+        impl.host = appConfigService.getConfig().smtpHost
+        impl.port = appConfigService.getConfig().smtpPort ?: 587
+        impl.username = appConfigService.getConfig().smtpUsername
+        impl.password = appConfigService.getConfig().smtpPassword
 
         val props = impl.javaMailProperties
-        props["mail.smtp.from"] = appConfigProvider.getConfig().smtpFromEmail
-        props["mail.smtp.auth"] = !appConfigProvider.getConfig().smtpUsername.isNullOrBlank()
+        props["mail.smtp.from"] = appConfigService.getConfig().smtpFromEmail
+        props["mail.smtp.auth"] = !appConfigService.getConfig().smtpUsername.isNullOrBlank()
         props["mail.smtp.starttls.enable"] = "true"
         return impl
     }
@@ -33,18 +33,18 @@ class EmailService(
     private fun render(template: String, baseUrl: String, variables: Map<String, Any?>): String {
         val context = Context().apply {
             // branding defaults
-            setVariable("appName", appConfigProvider.getConfig().name)
-            setVariable("logoUrl", appConfigProvider.getConfig().logoUrl)
-            setVariable("brandColor", appConfigProvider.getConfig().brandColor)
-            setVariable("supportEmail", appConfigProvider.getConfig().supportEmail)
-            setVariable("footerText", appConfigProvider.getConfig().emailFooterText)
+            setVariable("appName", appConfigService.getConfig().name)
+            setVariable("logoUrl", appConfigService.getConfig().logoUrl)
+            setVariable("brandColor", appConfigService.getConfig().brandColor)
+            setVariable("supportEmail", appConfigService.getConfig().supportEmail)
+            setVariable("footerText", appConfigService.getConfig().emailFooterText)
             setVariable("baseUrl", baseUrl)
-            setVariable("facebookUrl", appConfigProvider.getConfig().facebookLink)
-            setVariable("instagramUrl", appConfigProvider.getConfig().instagramLink)
-            setVariable("youtubeUrl", appConfigProvider.getConfig().youtubeLink)
-            setVariable("linkedinUrl", appConfigProvider.getConfig().linkedinLink)
-            setVariable("tiktokUrl", appConfigProvider.getConfig().tiktokLink)
-            setVariable("privacyUrl", appConfigProvider.getConfig().privacyLink)
+            setVariable("facebookUrl", appConfigService.getConfig().facebookLink)
+            setVariable("instagramUrl", appConfigService.getConfig().instagramLink)
+            setVariable("youtubeUrl", appConfigService.getConfig().youtubeLink)
+            setVariable("linkedinUrl", appConfigService.getConfig().linkedinLink)
+            setVariable("tiktokUrl", appConfigService.getConfig().tiktokLink)
+            setVariable("privacyUrl", appConfigService.getConfig().privacyLink)
             variables.forEach { (k, v) -> setVariable(k, v) }
         }
         return templateEngine.process(template, context)
@@ -66,8 +66,8 @@ class EmailService(
             val sender = javaMailSender()
             val message: MimeMessage = sender.createMimeMessage()
             val helper = MimeMessageHelper(message, true, "UTF-8")
-            val fromEmail = appConfigProvider.getConfig().smtpFromEmail
-            val fromName = appConfigProvider.getConfig().smtpFromName
+            val fromEmail = appConfigService.getConfig().smtpFromEmail
+            val fromName = appConfigService.getConfig().smtpFromName
             if (!fromEmail.isNullOrBlank()) {
                 helper.setFrom(InternetAddress(fromEmail, fromName))
             }

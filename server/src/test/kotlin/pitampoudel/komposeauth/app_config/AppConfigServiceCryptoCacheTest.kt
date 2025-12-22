@@ -13,7 +13,7 @@ import org.springframework.test.context.ContextConfiguration
 import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.repository.AppConfigRepository
-import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.security.CryptoService
 import java.util.Optional
 import kotlin.test.assertEquals
@@ -28,7 +28,7 @@ class AppConfigServiceCryptoCacheTest {
     fun `save encrypts secrets and get caches decrypted values`() {
         val repo = mock<AppConfigRepository>()
         val crypto = mock<CryptoService>()
-        val service = AppConfigService(repo, crypto)
+        val configProvider = AppConfigProvider(repo, crypto)
 
         whenever(crypto.encrypt("secret")).thenReturn("enc(secret)")
         whenever(crypto.decrypt("enc(secret)")).thenReturn("secret")
@@ -39,7 +39,7 @@ class AppConfigServiceCryptoCacheTest {
 
         whenever(repo.save(any())).thenAnswer { it.arguments[0] as AppConfig }
 
-        val saved = service.save(toSave)
+        val saved = configProvider.save(toSave)
         assertEquals("secret", saved.googleAuthClientSecret)
 
         // save() decrypts once when caching the saved entity.
@@ -55,9 +55,9 @@ class AppConfigServiceCryptoCacheTest {
             )
         )
 
-        service.clearCache()
-        val first = service.get()
-        val second = service.get()
+        configProvider.clearCache()
+        val first = configProvider.get()
+        val second = configProvider.get()
 
         assertEquals("secret", first.googleAuthClientSecret)
         assertEquals("secret", second.googleAuthClientSecret)

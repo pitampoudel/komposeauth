@@ -17,7 +17,7 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import pitampoudel.core.data.MessageResponse
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.security.GoogleOAuth2LoginSuccessHandler
@@ -28,10 +28,10 @@ import pitampoudel.komposeauth.core.security.GoogleOAuth2LoginSuccessHandler
 class WebSecurityConfig {
 
     @Bean
-    fun corsConfigurationSource(appConfigProvider: AppConfigProvider): CorsConfigurationSource {
+    fun corsConfigurationSource(appConfigService: AppConfigService): CorsConfigurationSource {
         return CorsConfigurationSource {
             val configuration = CorsConfiguration()
-            val origins = appConfigProvider.corsAllowedOrigins()
+            val origins = appConfigService.corsAllowedOrigins()
             if (origins.any { it.contains("*") }) {
                 configuration.allowedOriginPatterns = origins
             } else {

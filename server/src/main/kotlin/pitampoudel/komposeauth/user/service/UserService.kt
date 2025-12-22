@@ -23,7 +23,7 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.data.CreateUserRequest
 import pitampoudel.komposeauth.core.data.Credential
 import pitampoudel.komposeauth.core.data.ProfileResponse
@@ -58,7 +58,7 @@ class UserService(
     private val userRepository: UserRepository,
     val passwordEncoder: PasswordEncoder,
     private val phoneNumberVerificationService: PhoneNumberVerificationService,
-    val appConfigProvider: AppConfigProvider,
+    val appConfigService: AppConfigService,
     val emailService: EmailService,
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
@@ -78,11 +78,11 @@ class UserService(
         val client = HttpClient.newHttpClient()
         val form = String.format(
             "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&client_secret=%s",
-            URLEncoder.encode(appConfigProvider.googleClientId(platform), StandardCharsets.UTF_8),
+            URLEncoder.encode(appConfigService.googleClientId(platform), StandardCharsets.UTF_8),
             URLEncoder.encode(code, StandardCharsets.UTF_8),
             URLEncoder.encode(redirectUri, StandardCharsets.UTF_8),
             URLEncoder.encode(
-                appConfigProvider.googleClientSecret(platform),
+                appConfigService.googleClientSecret(platform),
                 StandardCharsets.UTF_8
             )
         )
@@ -190,7 +190,7 @@ class UserService(
             emailService.sendHtmlMail(
                 baseUrl = baseUrl,
                 to = newUser.email,
-                subject = "Welcome to ${appConfigProvider.getConfig().name}!",
+                subject = "Welcome to ${appConfigService.getConfig().name}!",
                 template = "email/generic",
                 model = mapOf(
                     "recipientName" to newUser.firstName,
@@ -281,8 +281,8 @@ class UserService(
     fun findOrCreateUserByGoogleIdToken(idToken: String): User {
         val payload = validateGoogleIdToken(
             clientIds = listOfNotNull(
-                appConfigProvider.getConfig().googleAuthClientId,
-                appConfigProvider.getConfig().googleAuthDesktopClientId
+                appConfigService.getConfig().googleAuthClientId,
+                appConfigService.getConfig().googleAuthDesktopClientId
             ),
             idToken = idToken
         )

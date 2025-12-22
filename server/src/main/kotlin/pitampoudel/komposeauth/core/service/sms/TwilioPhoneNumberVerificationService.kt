@@ -6,19 +6,19 @@ import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestTemplate
-import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 class TwilioPhoneNumberVerificationService(
-    private val appConfigProvider: AppConfigProvider,
+    private val appConfigService: AppConfigService,
     private val restTemplate: RestTemplate
 ) : PhoneNumberVerificationService {
 
     private fun basicHeaders(): HttpHeaders {
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_FORM_URLENCODED
-        val auth = "${appConfigProvider.getConfig().twilioAccountSid}:${appConfigProvider.getConfig().twilioAuthToken}"
+        val auth = "${appConfigService.getConfig().twilioAccountSid}:${appConfigService.getConfig().twilioAuthToken}"
         val encodedAuth =
             Base64.getEncoder().encodeToString(auth.toByteArray(StandardCharsets.UTF_8))
         headers.set(HttpHeaders.AUTHORIZATION, "Basic $encodedAuth")
@@ -26,7 +26,7 @@ class TwilioPhoneNumberVerificationService(
     }
 
     override fun initiate(phoneNumber: String): Boolean {
-        val verifySid = appConfigProvider.getConfig().twilioVerifyServiceSid
+        val verifySid = appConfigService.getConfig().twilioVerifyServiceSid
         return try {
             val url = "https://verify.twilio.com/v2/Services/$verifySid/Verifications"
             val formData: MultiValueMap<String, String> = LinkedMultiValueMap()
@@ -43,7 +43,7 @@ class TwilioPhoneNumberVerificationService(
 
 
     override fun verify(phoneNumber: String, code: String): Boolean {
-        val verifySid = appConfigProvider.getConfig().twilioVerifyServiceSid
+        val verifySid = appConfigService.getConfig().twilioVerifyServiceSid
         return try {
             val url = "https://verify.twilio.com/v2/Services/$verifySid/VerificationCheck"
             val formData: MultiValueMap<String, String> = LinkedMultiValueMap()
