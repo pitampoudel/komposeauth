@@ -12,8 +12,8 @@ Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Client 
 
 ## Overview
 
-- Server: Spring Boot Application
-- Shared KMP SDK: Shared DTOs and utilities used by client and server
+- Server: Spring Boot Authorization Application
+- Shared KMP SDK: Shared DTOs and utilities to be used by client and server
 - Client CMP SDK: Ktor, ViewModels, platform utilities, and reusable UI components
 
 ## Features
@@ -22,18 +22,14 @@ Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Client 
 - username/password
 - passkey
 - email verification
-- Phone OTP,
+- Phone OTP
 - KYC
-- Sentry, Swagger/OpenAPI
-
-## Shared KMP SDK
-
-- DTOs shared between client and server
-- RegexUtils, KmpFile, DateTimeUtils, KtorClientUtils, PhoneNumberParser, validators etc
+- Sentry
+- Swagger/OpenAPI
 
 ## Quickstart
 
-### 1) Run the Auth Server (Docker)
+### 1) Run the Server (Docker)
 
 ```bash
 // BASE64_ENCRYPTION_KEY generator
@@ -42,14 +38,14 @@ openssl rand -base64 32
 
 ```bash
 docker pull pitampoudel/komposeauth:latest
-# Quick start: only these two variables are required
-docker run -p 8080:8080 \
-  -e MONGODB_URI="mongodb://your-mongo-host:27017/auth" \
+# Quick start
+docker run -p 80:80 \
+  -e MONGODB_URI="mongodb://your-mongo-host:27017/db-name" \
   -e BASE64_ENCRYPTION_KEY="<paste-your-base64-key>" \
   pitampoudel/komposeauth:latest
 ```
 
-- After the container is running, open the Setup page to configure everything else:
+- After the container is running, open this page to configure everything else:
   - http://localhost/config
 
 ### 2) Add the SDKs to your KMP project
