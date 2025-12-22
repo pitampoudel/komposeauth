@@ -7,12 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.containers.MongoDBContainer
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
-import org.testcontainers.utility.DockerImageName
+import pitampoudel.komposeauth.MongoContainerTest
 import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.repository.OneTimeTokenRepository
 import pitampoudel.komposeauth.user.service.OneTimeTokenService
@@ -24,7 +20,7 @@ import kotlin.time.Duration.Companion.hours
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test")
 @Import(OneTimeTokenService::class)
-class OneTimeTokenServiceTest {
+class OneTimeTokenServiceTest  : MongoContainerTest() {
 
     @Autowired private lateinit var service: OneTimeTokenService
     @Autowired private lateinit var repo: OneTimeTokenRepository
@@ -59,16 +55,4 @@ class OneTimeTokenServiceTest {
         }
     }
 
-    companion object {
-        @Container
-        @JvmStatic
-        var mongo: MongoDBContainer = MongoDBContainer(DockerImageName.parse("mongo:5.0"))
-
-        @DynamicPropertySource
-        @JvmStatic
-        fun setProperties(registry: DynamicPropertyRegistry) {
-            registry.add("spring.data.mongodb.uri") { mongo.connectionString }
-            registry.add("spring.data.mongodb.database") { "test" }
-        }
-    }
 }

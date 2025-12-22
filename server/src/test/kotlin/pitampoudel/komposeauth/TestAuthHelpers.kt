@@ -1,0 +1,77 @@
+package pitampoudel.komposeauth
+
+import jakarta.servlet.http.Cookie
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.post
+import pitampoudel.komposeauth.core.data.ApiEndpoints
+import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.data.CreateUserRequest
+import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.core.data.ResponseType
+import kotlin.test.assertNotNull
+
+/**
+ * Shared helpers for integration tests that need to create a user and log in to obtain the access token cookie.
+ * Keeping this in one file avoids copy/paste drift across integration tests.
+ */
+object TestAuthHelpers {
+
+    /**
+     * Creates a user via the public API and returns the created user id.
+     *
+     * Supports both response shapes used across the codebase:
+     * - JSON object: {"id": "..."}
+     * - JSON string: "..."
+     */
+    fun createUser(mockMvc: MockMvc, json: Json, email: String, password: String = "Password1"): String {
+        val mvcResult = mockMvc.post("/${ApiEndpoints.USERS}") {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString(
+                CreateUserRequest(
+                    firstName = "Test",
+                    lastName = "User",
+                    email = email,
+                    password = password,
+                    confirmPassword = password
+                )
+            )
+        }.andExpect {
+            status { isOk() }
+        }.andReturn()
+
+        val body = mvcResult.response.contentAsString
+        val element = json.parseToJsonElement(body)
+
+        val id = when {
+            element is kotlinx.serialization.json.JsonObject -> element.jsonObject["id"]?.jsonPrimitive?.content
+            element is kotlinx.serialization.json.JsonPrimitive && element.isString -> element.content
+            else -> null
+        }
+
+        assertNotNull(id)
+        return id
+    }
+
+    /** Logs in with username+password and returns the access token cookie. */
+    fun loginCookie(mockMvc: MockMvc, json: Json, username: String, password: String = "Password1"): Cookie {
+        val mvcResult = mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            param("responseType", ResponseType.COOKIE.name)
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString<Credential>(
+                Credential.UsernamePassword(username = username, password = password)
+            )
+        }.andExpect {
+            status { isOk() }
+            cookie { exists(ACCESS_TOKEN_COOKIE_NAME) }
+        }.andReturn()
+
+        return mvcResult.response.getCookie(ACCESS_TOKEN_COOKIE_NAME)
+            .also { assertNotNull(it) }!!
+    }
+}

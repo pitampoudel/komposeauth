@@ -11,18 +11,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
-import org.testcontainers.containers.MongoDBContainer
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
-import org.testcontainers.utility.DockerImageName
 import pitampoudel.komposeauth.core.data.ApiEndpoints
 import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
-import pitampoudel.komposeauth.core.data.CreateUserRequest
 import pitampoudel.komposeauth.core.data.Credential
 import pitampoudel.komposeauth.core.data.ResponseType
 import pitampoudel.komposeauth.user.entity.OneTimeToken
@@ -38,36 +32,21 @@ import kotlin.time.Duration.Companion.hours
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
-class AuthFlowsIntegrationTest {
+class AuthFlowsIntegrationTest : MongoContainerTest()  {
 
-    @Autowired private lateinit var mockMvc: MockMvc
-    @Autowired private lateinit var json: Json
-    @Autowired private lateinit var userRepository: UserRepository
-    @Autowired private lateinit var oneTimeTokenService: OneTimeTokenService
-    @Autowired private lateinit var oneTimeTokenRepository: OneTimeTokenRepository
+    @Autowired
+    private lateinit var mockMvc: MockMvc
+    @Autowired
+    private lateinit var json: Json
+    @Autowired
+    private lateinit var userRepository: UserRepository
+    @Autowired
+    private lateinit var oneTimeTokenService: OneTimeTokenService
+    @Autowired
+    private lateinit var oneTimeTokenRepository: OneTimeTokenRepository
 
     private fun createUser(email: String = "jane@example.com"): String {
-        val body = json.encodeToString(
-            CreateUserRequest(
-                firstName = "Jane",
-                lastName = "Doe",
-                email = email,
-                password = "Password1",
-                confirmPassword = "Password1"
-            )
-        )
-
-        val res = mockMvc.post("/${ApiEndpoints.USERS}") {
-            contentType = MediaType.APPLICATION_JSON
-            content = body
-        }.andExpect {
-            status { isOk() }
-        }.andReturn()
-
-        val userId = json.parseToJsonElement(res.response.contentAsString)
-            .jsonObject["id"]?.jsonPrimitive?.content
-        assertNotNull(userId)
-        return userId
+        return TestAuthHelpers.createUser(mockMvc, json, email, password = "Password1")
     }
 
     @Test
@@ -95,7 +74,9 @@ class AuthFlowsIntegrationTest {
         assertEquals("Bearer", root["token_type"]?.jsonPrimitive?.content)
 
         // Refresh token should exist in DB and be consumable only once.
-        assertTrue(oneTimeTokenRepository.findAll().any { it.purpose == OneTimeToken.Purpose.REFRESH_TOKEN })
+        assertTrue(
+            oneTimeTokenRepository.findAll()
+                .any { it.purpose == OneTimeToken.Purpose.REFRESH_TOKEN })
         oneTimeTokenService.consume(refreshToken, OneTimeToken.Purpose.REFRESH_TOKEN)
         assertThrows(IllegalStateException::class.java) {
             oneTimeTokenService.consume(refreshToken, OneTimeToken.Purpose.REFRESH_TOKEN)
@@ -203,17 +184,4 @@ class AuthFlowsIntegrationTest {
         }
     }
 
-    companion object {
-        @Container
-        @JvmStatic
-        var mongo: MongoDBContainer = MongoDBContainer(DockerImageName.parse("mongo:5.0"))
-
-        @DynamicPropertySource
-        @JvmStatic
-        fun setProperties(registry: DynamicPropertyRegistry) {
-            registry.add("spring.data.mongodb.uri") { mongo.connectionString }
-            registry.add("spring.data.mongodb.database") { "test" }
-        }
-    }
 }
-
