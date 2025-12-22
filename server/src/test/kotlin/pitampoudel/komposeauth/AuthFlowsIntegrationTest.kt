@@ -64,7 +64,7 @@ class AuthFlowsIntegrationTest {
             status { isOk() }
         }.andReturn()
 
-        val userId = Json.parseToJsonElement(res.response.contentAsString)
+        val userId = json.parseToJsonElement(res.response.contentAsString)
             .jsonObject["id"]?.jsonPrimitive?.content
         assertNotNull(userId)
         return userId
@@ -87,12 +87,12 @@ class AuthFlowsIntegrationTest {
             status { isOk() }
         }.andReturn().response.contentAsString
 
-        val root = Json.parseToJsonElement(loginResponse).jsonObject
+        val root = json.parseToJsonElement(loginResponse).jsonObject
         val accessToken = root["access_token"]?.jsonPrimitive?.content
         val refreshToken = root["refresh_token"]?.jsonPrimitive?.content
         assertNotNull(accessToken)
         assertNotNull(refreshToken)
-        assertEquals("Bearer", root["tokenType"]?.jsonPrimitive?.content)
+        assertEquals("Bearer", root["token_type"]?.jsonPrimitive?.content)
 
         // Refresh token should exist in DB and be consumable only once.
         assertTrue(oneTimeTokenRepository.findAll().any { it.purpose == OneTimeToken.Purpose.REFRESH_TOKEN })
