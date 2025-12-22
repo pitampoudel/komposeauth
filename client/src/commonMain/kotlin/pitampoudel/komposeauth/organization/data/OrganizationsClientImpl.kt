@@ -12,7 +12,7 @@ import pitampoudel.core.data.asResource
 import pitampoudel.core.data.download
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.core.data.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.organization.domain.OrganizationsClient
 
 internal class OrganizationsClientImpl(

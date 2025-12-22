@@ -11,7 +11,7 @@ import pitampoudel.core.domain.now
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.config.canEditOrganization
 import pitampoudel.komposeauth.core.service.StorageService
-import pitampoudel.komposeauth.core.data.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.organization.data.CreateOrUpdateOrganizationRequest
 import pitampoudel.komposeauth.organization.service.OrganizationService
 import pitampoudel.komposeauth.organization.service.toOrganization

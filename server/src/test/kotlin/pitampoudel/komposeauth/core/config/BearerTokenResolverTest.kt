@@ -3,7 +3,7 @@ package pitampoudel.komposeauth.core.config
 import jakarta.servlet.http.Cookie
 import org.junit.jupiter.api.Test
 import org.springframework.mock.web.MockHttpServletRequest
-import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 

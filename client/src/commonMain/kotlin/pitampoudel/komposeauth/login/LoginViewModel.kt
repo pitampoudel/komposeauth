@@ -10,7 +10,7 @@ import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.AuthPreferences
 import pitampoudel.komposeauth.core.data.AuthStateHandler
-import pitampoudel.komposeauth.core.data.ResponseType
+import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.currentPlatform
 

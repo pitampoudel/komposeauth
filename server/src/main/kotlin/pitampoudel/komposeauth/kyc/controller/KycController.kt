@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.data.ApiEndpoints
-import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_ADDRESS
-import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_DOCUMENTS
-import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_PENDING
-import pitampoudel.komposeauth.core.data.ApiEndpoints.KYC_PERSONAL_INFO
+import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_ADDRESS
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_DOCUMENTS
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_PENDING
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_PERSONAL_INFO
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse

@@ -10,7 +10,7 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
-import pitampoudel.komposeauth.core.data.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.ApiEndpoints
 
 @SpringBootTest
 @ActiveProfiles("test")

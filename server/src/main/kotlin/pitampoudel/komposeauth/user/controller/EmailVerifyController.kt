@@ -13,7 +13,7 @@ import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.config.UserContextService
-import pitampoudel.komposeauth.core.data.ApiEndpoints.VERIFY_EMAIL
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_EMAIL
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.user.entity.OneTimeToken

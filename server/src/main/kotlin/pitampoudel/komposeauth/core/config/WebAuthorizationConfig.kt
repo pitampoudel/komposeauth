@@ -33,7 +33,7 @@ import org.springframework.security.oauth2.server.resource.web.DefaultBearerToke
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.web.client.RestTemplate
-import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
 import pitampoudel.komposeauth.kyc.data.KycResponse

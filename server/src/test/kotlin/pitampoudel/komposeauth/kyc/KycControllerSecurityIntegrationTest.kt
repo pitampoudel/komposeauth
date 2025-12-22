@@ -12,7 +12,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.TestAuthHelpers
-import pitampoudel.komposeauth.core.data.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.ApiEndpoints
 
 @SpringBootTest
 @ActiveProfiles("test")

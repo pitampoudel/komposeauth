@@ -15,10 +15,10 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
-import pitampoudel.komposeauth.core.data.ApiEndpoints
-import pitampoudel.komposeauth.core.data.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.data.Credential
-import pitampoudel.komposeauth.core.data.ResponseType
+import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.user.entity.OneTimeToken
 import pitampoudel.komposeauth.user.repository.OneTimeTokenRepository
 import pitampoudel.komposeauth.user.repository.UserRepository

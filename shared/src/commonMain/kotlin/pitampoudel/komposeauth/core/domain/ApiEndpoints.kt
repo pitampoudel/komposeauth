@@ -1,5 +1,4 @@
-package pitampoudel.komposeauth.core.data
-
+package pitampoudel.komposeauth.core.domain
 
 object ApiEndpoints {
     const val LOGIN = "login"

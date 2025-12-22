@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import pitampoudel.komposeauth.core.data.ApiEndpoints.OAUTH2_CLIENTS
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.OAUTH2_CLIENTS
 import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
 import pitampoudel.komposeauth.oauth_clients.dto.OAuth2ClientResponse
 import pitampoudel.komposeauth.oauth_clients.dto.toClientRegistrationResponse

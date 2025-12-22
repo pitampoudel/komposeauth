@@ -5,18 +5,17 @@ import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.data.CountryResponse
 import pitampoudel.komposeauth.core.data.Credential
-import pitampoudel.komposeauth.kyc.data.DocumentInformation
-import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.core.data.OAuth2Response
-import pitampoudel.komposeauth.kyc.data.PersonalInformation
 import pitampoudel.komposeauth.core.data.ProfileResponse
 import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
-import pitampoudel.komposeauth.core.data.ResponseType
-import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
 import pitampoudel.komposeauth.core.data.UpdatePhoneNumberRequest
 import pitampoudel.komposeauth.core.data.UpdateProfileRequest
 import pitampoudel.komposeauth.core.data.VerifyPhoneOtpRequest
+import pitampoudel.komposeauth.kyc.data.DocumentInformation
+import pitampoudel.komposeauth.kyc.data.KycResponse
+import pitampoudel.komposeauth.kyc.data.PersonalInformation
+import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
 
 
 internal interface AuthClient {

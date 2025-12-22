@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.data
+package pitampoudel.komposeauth.core.domain
 
 /**
  * Represents how the server should deliver authentication on login.

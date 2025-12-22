@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.core.data.PageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
-import pitampoudel.komposeauth.core.data.ApiEndpoints
-import pitampoudel.komposeauth.core.data.ApiEndpoints.ME
-import pitampoudel.komposeauth.core.data.ApiEndpoints.STATS
-import pitampoudel.komposeauth.core.data.ApiEndpoints.USERS
+import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.ME
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.STATS
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.USERS
 import pitampoudel.komposeauth.core.data.CreateUserRequest
 import pitampoudel.komposeauth.core.data.ProfileResponse
 import pitampoudel.komposeauth.core.data.StatsResponse
