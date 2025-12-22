@@ -57,7 +57,6 @@ class WebSecurityConfig {
         return http
             .cors { }
             .csrf { csrf -> csrf.disable() }
-            .oauth2Login { }
             .logout { logout ->
                 logout
                     .logoutUrl("/${ApiEndpoints.LOGOUT}")
