@@ -8,7 +8,7 @@ import pitampoudel.komposeauth.jwk.utils.RsaPemUtils
 import java.security.KeyPair
 
 @Service
-class PersistentKeyService(
+class JwkService(
     private val jwkRepository: JwkRepository,
     private val cryptoService: CryptoService
 ) {

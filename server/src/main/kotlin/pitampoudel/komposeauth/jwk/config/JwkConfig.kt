@@ -12,19 +12,19 @@ import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder
-import pitampoudel.komposeauth.jwk.service.PersistentKeyService
+import pitampoudel.komposeauth.jwk.service.JwkService
 import java.security.KeyPair
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 
 @Configuration(proxyBeanMethods = false)
 class JwkConfig(
-    private val persistentKeyService: PersistentKeyService
+    private val jwkService: JwkService
 ) {
 
     @Bean
     @Lazy
-    fun serverKeyPair(): KeyPair = persistentKeyService.loadOrCreateKeyPair()
+    fun serverKeyPair(): KeyPair = jwkService.loadOrCreateKeyPair()
 
     @Bean
     @Lazy
@@ -34,7 +34,7 @@ class JwkConfig(
 
         val rsaKey = RSAKey.Builder(publicKey)
             .privateKey(privateKey)
-            .keyID(persistentKeyService.currentKid())
+            .keyID(jwkService.currentKid())
             .build()
 
         return JWKSet(rsaKey)
