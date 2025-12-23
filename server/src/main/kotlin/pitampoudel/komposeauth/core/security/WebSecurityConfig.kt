@@ -103,6 +103,7 @@ class WebSecurityConfig {
                         "/signup",
                         "/api/auth/**",
                         "/users",
+                        "/config",
                         "/${ApiEndpoints.LOGIN_OPTIONS}",
                         "/${ApiEndpoints.VERIFY_EMAIL}",
                         "/reset-password",

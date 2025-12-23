@@ -20,6 +20,7 @@ class AppConfigControllerSecurityIntegrationTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
+
     @Autowired
     private lateinit var json: Json
 
@@ -38,13 +39,12 @@ class AppConfigControllerSecurityIntegrationTest {
     fun `GET config is allowed with valid master key even when users exist`() {
         // Create a user to ensure countUsers() > 0.
         TestAuthHelpers.createUser(mockMvc, json, "config-test@example.com", password = "Password1")
+        val queryKey = MongoTestSupport.TEST_BASE64_ENCRYPTION_KEY
 
         mockMvc.get("/config") {
-            // TEST_BASE64_ENCRYPTION_KEY contains no '+'; keeping this explicit anyway.
-            param("key", MongoTestSupport.TEST_BASE64_ENCRYPTION_KEY)
+            param("key", queryKey)
         }.andExpect {
             status { isOk() }
         }
     }
 }
-
