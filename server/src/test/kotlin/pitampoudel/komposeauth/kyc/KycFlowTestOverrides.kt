@@ -13,7 +13,10 @@ import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.security.CryptoService
+import pitampoudel.komposeauth.jwk.service.JwkService
+import java.security.KeyPairGenerator
 import java.util.Optional
+import java.util.UUID
 
 @TestConfiguration
 class KycFlowTestOverrides {
@@ -33,6 +36,16 @@ class KycFlowTestOverrides {
         // Deterministic no-op.
         return mock {
             on { sendHtmlMail(any(), any(), any(), any(), anyOrNull()) } doReturn true
+        }
+    }
+
+    @Bean
+    @Primary
+    fun jwkService(): JwkService {
+        val keyPair = KeyPairGenerator.getInstance("RSA").genKeyPair()
+        return mock {
+            on { loadOrCreateKeyPair() } doReturn keyPair
+            on { currentKid() } doReturn UUID.randomUUID().toString()
         }
     }
 
