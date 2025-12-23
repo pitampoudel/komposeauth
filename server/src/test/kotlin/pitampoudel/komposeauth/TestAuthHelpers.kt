@@ -6,6 +6,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
@@ -28,7 +29,7 @@ object TestAuthHelpers {
      * - JSON string: "..."
      */
     fun createUser(mockMvc: MockMvc, json: Json, email: String, password: String = "Password1"): String {
-        val mvcResult = mockMvc.post("/${ApiEndpoints.USERS}") {
+        val mvcResult = mockMvc.patch("/${ApiEndpoints.USERS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             content = json.encodeToString(
@@ -45,11 +46,9 @@ object TestAuthHelpers {
         }.andReturn()
 
         val body = mvcResult.response.contentAsString
-        val element = json.parseToJsonElement(body)
-
-        val id = when {
-            element is kotlinx.serialization.json.JsonObject -> element.jsonObject["id"]?.jsonPrimitive?.content
-            element is kotlinx.serialization.json.JsonPrimitive && element.isString -> element.content
+        val id = when (val element = json.parseToJsonElement(body)) {
+            is kotlinx.serialization.json.JsonObject -> element.jsonObject["id"]?.jsonPrimitive?.content
+            is kotlinx.serialization.json.JsonPrimitive if element.isString -> element.content
             else -> null
         }
 
