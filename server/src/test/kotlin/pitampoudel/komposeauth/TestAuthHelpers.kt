@@ -4,15 +4,17 @@ import jakarta.servlet.http.Cookie
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.bson.types.ObjectId
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
-import pitampoudel.komposeauth.core.domain.ApiEndpoints
-import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.data.CreateUserRequest
 import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.domain.ResponseType
+import pitampoudel.komposeauth.user.repository.UserRepository
 import kotlin.test.assertNotNull
 
 /**
@@ -46,9 +48,9 @@ object TestAuthHelpers {
         }.andReturn()
 
         val body = mvcResult.response.contentAsString
-        val id = when (val element = json.parseToJsonElement(body)) {
+        val id: String? = when (val element = json.parseToJsonElement(body)) {
             is kotlinx.serialization.json.JsonObject -> element.jsonObject["id"]?.jsonPrimitive?.content
-            is kotlinx.serialization.json.JsonPrimitive if element.isString -> element.content
+            is kotlinx.serialization.json.JsonPrimitive -> if (element.isString) element.content else null
             else -> null
         }
 
@@ -72,5 +74,28 @@ object TestAuthHelpers {
 
         return mvcResult.response.getCookie(ACCESS_TOKEN_COOKIE_NAME)
             .also { assertNotNull(it) }!!
+    }
+
+    /**
+     * Creates an ADMIN user (via API) and grants ADMIN role directly in the DB.
+     * Returns the created user id + an authenticated cookie for that user.
+     */
+    fun createAdminAndLogin(
+        mockMvc: MockMvc,
+        json: Json,
+        userRepository: UserRepository,
+        email: String,
+        password: String = "Password1"
+    ): Pair<String, Cookie> {
+        val userId = createUser(mockMvc, json, email, password)
+
+        val objId = ObjectId(userId)
+        val user = userRepository.findById(objId).orElseThrow()
+        if (!user.roles.contains("ADMIN")) {
+            userRepository.save(user.copy(roles = user.roles + "ADMIN"))
+        }
+
+        val cookie = loginCookie(mockMvc, json, email, password)
+        return userId to cookie
     }
 }
