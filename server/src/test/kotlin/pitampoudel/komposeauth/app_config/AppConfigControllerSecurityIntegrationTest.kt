@@ -31,7 +31,7 @@ class AppConfigControllerSecurityIntegrationTest {
 
         mockMvc.get("/config")
             .andExpect {
-                status { isUnauthorized() }
+                status { isForbidden() }
             }
     }
 
