@@ -1,7 +1,11 @@
 package pitampoudel.komposeauth.user.service
 
 import org.bson.types.ObjectId
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -34,6 +38,7 @@ class UserServiceCoreTest {
                 firstName = "Find",
                 lastName = "Test",
                 email = "find-user-test@example.com",
+                phoneNumber = null,
                 passwordHash = passwordEncoder.encode("Password1"),
                 roles = emptyList()
             )
@@ -62,7 +67,9 @@ class UserServiceCoreTest {
                 lastName = "Test",
                 email = email,
                 passwordHash = passwordEncoder.encode("Password1"),
-                roles = emptyList()
+                roles = emptyList(),
+                phoneNumber = null
+
             )
         )
 
@@ -87,7 +94,9 @@ class UserServiceCoreTest {
                 lastName = "Test",
                 email = "grant-admin-test@example.com",
                 passwordHash = passwordEncoder.encode("Password1"),
-                roles = emptyList()
+                roles = emptyList(),
+                phoneNumber = null
+
             )
         )
 
@@ -105,7 +114,9 @@ class UserServiceCoreTest {
                 lastName = "Test",
                 email = "idempotent-admin@example.com",
                 passwordHash = passwordEncoder.encode("Password1"),
-                roles = listOf("ADMIN")
+                roles = listOf("ADMIN"),
+                phoneNumber = null
+
             )
         )
 
@@ -125,11 +136,12 @@ class UserServiceCoreTest {
                 email = "email-verify-test@example.com",
                 passwordHash = passwordEncoder.encode("Password1"),
                 roles = emptyList(),
-                emailVerified = false
+                emailVerified = false,
+                phoneNumber = null
             )
         )
 
-        userService.emailVerified(user.id.toHexString())
+        userService.emailVerified(user.id)
 
         val updated = userRepository.findById(user.id).orElseThrow()
         assertTrue(updated.emailVerified)
@@ -145,7 +157,9 @@ class UserServiceCoreTest {
                 lastName = "User",
                 email = "regular-list-admins@example.com",
                 passwordHash = passwordEncoder.encode("Password1"),
-                roles = emptyList()
+                roles = emptyList(),
+                phoneNumber = null
+
             )
         )
 
@@ -157,7 +171,8 @@ class UserServiceCoreTest {
                 lastName = "User",
                 email = "admin-list-admins@example.com",
                 passwordHash = passwordEncoder.encode("Password1"),
-                roles = listOf("ADMIN")
+                roles = listOf("ADMIN"),
+                phoneNumber = null
             )
         )
 
@@ -178,7 +193,8 @@ class UserServiceCoreTest {
                     lastName = "User",
                     email = "admin-page-$index@example.com",
                     passwordHash = passwordEncoder.encode("Password1"),
-                    roles = listOf("ADMIN")
+                    roles = listOf("ADMIN"),
+                    phoneNumber = null
                 )
             )
         }
@@ -201,13 +217,13 @@ class UserServiceCoreTest {
                 email = "deactivate-test@example.com",
                 passwordHash = passwordEncoder.encode("Password1"),
                 roles = emptyList(),
-                active = true
+                phoneNumber = null
             )
         )
 
-        userService.deactivate(user.id.toHexString())
+        userService.deactivateUser(user.id)
 
         val updated = userRepository.findById(user.id).orElseThrow()
-        assertFalse(updated.active)
+        assertFalse(updated.deactivated)
     }
 }

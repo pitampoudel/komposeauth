@@ -13,7 +13,6 @@ import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
-import org.springframework.test.web.servlet.put
 import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.core.data.CreateUserRequest
@@ -149,7 +148,7 @@ class EndpointSecurityIntegrationTest {
             content = "{}"
         }.andExpect {
             // Not checking exact status - just ensuring it's not 403 (Forbidden)
-            status { isNot(403) }
+            status { isOk() }
         }
 
         // Create user endpoint should be public
