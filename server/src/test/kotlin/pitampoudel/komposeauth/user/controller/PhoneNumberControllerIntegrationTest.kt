@@ -45,7 +45,7 @@ class PhoneNumberControllerIntegrationTest {
             content = json.encodeToString(UpdatePhoneNumberRequest.serializer(), request)
         }.andExpect {
             // Expect either success or bad request depending on SMS service configuration
-            status { isOk().or(isBadRequest()) }
+            status { isOk() }
         }
     }
 
@@ -67,6 +67,7 @@ class PhoneNumberControllerIntegrationTest {
     @Test
     fun `verifyPhoneNumberUpdate requires authentication`() {
         val request = VerifyPhoneOtpRequest(
+            countryCode = null,
             phoneNumber = "+1234567890",
             otp = "123456"
         )
@@ -87,6 +88,7 @@ class PhoneNumberControllerIntegrationTest {
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
         val request = VerifyPhoneOtpRequest(
+            countryCode = null,
             phoneNumber = "+1234567890",
             otp = "000000" // Invalid OTP
         )

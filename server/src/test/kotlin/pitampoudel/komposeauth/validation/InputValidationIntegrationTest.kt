@@ -198,7 +198,7 @@ class InputValidationIntegrationTest {
             content = json.encodeToString(UpdateProfileRequest.serializer(), request)
         }.andExpect {
             // Should either succeed or return bad request, not crash
-            status { isOk().or(isBadRequest()) }
+            status { isOk() }
         }
     }
 
