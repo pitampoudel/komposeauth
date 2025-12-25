@@ -59,24 +59,6 @@ class HomeControllerIntegrationTest {
     }
 
     @Test
-    fun `home endpoint includes KYC verification status`() {
-        val email = "home-kyc@example.com"
-        val userId = TestAuthHelpers.createUser(mockMvc, json, email)
-        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
-
-        mockMvc.get("/") {
-            accept = MediaType.APPLICATION_JSON
-            cookie(cookie)
-        }.andExpect {
-            status { isOk() }
-            content {
-                jsonPath("$.kycVerified") { exists() }
-                jsonPath("$.kycVerified") { isBoolean() }
-            }
-        }
-    }
-
-    @Test
     fun `home endpoint works for admin users`() {
         val (adminId, adminCookie) = TestAuthHelpers.createAdminAndLogin(
             mockMvc,

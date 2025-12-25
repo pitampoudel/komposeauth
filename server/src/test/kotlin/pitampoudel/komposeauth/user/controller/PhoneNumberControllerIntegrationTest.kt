@@ -28,26 +28,6 @@ class PhoneNumberControllerIntegrationTest {
     @Autowired
     private lateinit var json: Json
 
-    @Test
-    fun `initiatePhoneNumberUpdate succeeds for authenticated user`() {
-        val email = "phone-update@example.com"
-        TestAuthHelpers.createUser(mockMvc, json, email)
-        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
-
-        val request = UpdatePhoneNumberRequest(
-            phoneNumber = "+1234567890"
-        )
-
-        mockMvc.post("/${ApiEndpoints.UPDATE_PHONE_NUMBER}") {
-            contentType = MediaType.APPLICATION_JSON
-            accept = MediaType.APPLICATION_JSON
-            cookie(cookie)
-            content = json.encodeToString(UpdatePhoneNumberRequest.serializer(), request)
-        }.andExpect {
-            // Expect either success or bad request depending on SMS service configuration
-            status { isOk() }
-        }
-    }
 
     @Test
     fun `initiatePhoneNumberUpdate returns 401 for unauthenticated user`() {

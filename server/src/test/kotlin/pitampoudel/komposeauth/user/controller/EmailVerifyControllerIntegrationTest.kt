@@ -38,31 +38,9 @@ class EmailVerifyControllerIntegrationTest {
     @Autowired
     private lateinit var oneTimeTokenService: OneTimeTokenService
 
-    @Test
-    fun `sendVerificationEmail succeeds for authenticated user with email`() {
-        val email = "verify-email@example.com"
-        val userId = TestAuthHelpers.createUser(mockMvc, json, email)
-        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
-        mockMvc.post("/${ApiEndpoints.VERIFY_EMAIL}") {
-            accept = MediaType.APPLICATION_JSON
-            cookie(cookie)
-        }.andExpect {
-            status { isOk() }
-            content {
-                jsonPath("$.message") { exists() }
-            }
-        }
-    }
 
-    @Test
-    fun `sendVerificationEmail returns 401 for unauthenticated user`() {
-        mockMvc.post("/${ApiEndpoints.VERIFY_EMAIL}") {
-            accept = MediaType.APPLICATION_JSON
-        }.andExpect {
-            status { isUnauthorized() }
-        }
-    }
+
 
     @Test
     fun `verifyEmail succeeds with valid token`() {

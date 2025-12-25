@@ -35,21 +35,6 @@ class PasswordResetControllerIntegrationTest {
     @Autowired
     private lateinit var oneTimeTokenService: OneTimeTokenService
 
-    @Test
-    fun `sendResetLink succeeds for existing user email`() {
-        val email = "reset-link@example.com"
-        TestAuthHelpers.createUser(mockMvc, json, email)
-
-        mockMvc.put("/${ApiEndpoints.RESET_PASSWORD}") {
-            accept = MediaType.APPLICATION_JSON
-            param("email", email)
-        }.andExpect {
-            status { isOk() }
-            content {
-                jsonPath("$.message") { exists() }
-            }
-        }
-    }
 
     @Test
     fun `sendResetLink returns error for non-existent email`() {

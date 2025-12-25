@@ -224,6 +224,6 @@ class UserServiceCoreTest {
         userService.deactivateUser(user.id)
 
         val updated = userRepository.findById(user.id).orElseThrow()
-        assertFalse(updated.deactivated)
+        assertTrue(updated.deactivated)
     }
 }

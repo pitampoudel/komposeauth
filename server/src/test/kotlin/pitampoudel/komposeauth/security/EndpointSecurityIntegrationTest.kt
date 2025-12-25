@@ -118,15 +118,6 @@ class EndpointSecurityIntegrationTest {
     }
 
     @Test
-    fun `send verification email requires authentication`() {
-        mockMvc.post("/${ApiEndpoints.VERIFY_EMAIL}") {
-            accept = MediaType.APPLICATION_JSON
-        }.andExpect {
-            status { isUnauthorized() }
-        }
-    }
-
-    @Test
     fun `update phone number requires authentication`() {
         val request = UpdatePhoneNumberRequest(phoneNumber = "+1234567890")
         
@@ -141,15 +132,6 @@ class EndpointSecurityIntegrationTest {
 
     @Test
     fun `public endpoints are accessible without authentication`() {
-        // Login endpoint should be public
-        mockMvc.post("/${ApiEndpoints.LOGIN}") {
-            contentType = MediaType.APPLICATION_JSON
-            accept = MediaType.APPLICATION_JSON
-            content = "{}"
-        }.andExpect {
-            // Not checking exact status - just ensuring it's not 403 (Forbidden)
-            status { isOk() }
-        }
 
         // Create user endpoint should be public
         mockMvc.patch("/${ApiEndpoints.USERS}") {

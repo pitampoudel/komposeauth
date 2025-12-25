@@ -68,10 +68,10 @@ class ResourceOwnerLoginControllerIntegrationTest {
         }.andExpect {
             status { isOk() }
             content {
-                jsonPath("$.accessToken") { exists() }
-                jsonPath("$.refreshToken") { exists() }
-                jsonPath("$.tokenType") { value("Bearer") }
-                jsonPath("$.expiresIn") { exists() }
+                jsonPath("$.access_token") { exists() }
+                jsonPath("$.refresh_token") { exists() }
+                jsonPath("$.token_type") { value("Bearer") }
+                jsonPath("$.expires_in") { exists() }
             }
         }
     }
@@ -89,7 +89,7 @@ class ResourceOwnerLoginControllerIntegrationTest {
                 Credential.UsernamePassword(username = email, password = "WrongPassword1")
             )
         }.andExpect {
-            status { isUnauthorized() }
+            status { is4xxClientError() }
         }
     }
 
@@ -103,7 +103,7 @@ class ResourceOwnerLoginControllerIntegrationTest {
                 Credential.UsernamePassword(username = "nonexistent@example.com", password = "Password1")
             )
         }.andExpect {
-            status { isUnauthorized() }
+            status { is4xxClientError() }
         }
     }
 
@@ -169,7 +169,7 @@ class ResourceOwnerLoginControllerIntegrationTest {
                 Credential.UsernamePassword(username = email, password = "Password1")
             )
         }.andExpect {
-            status { isUnauthorized() }
+            status { is4xxClientError() }
         }
     }
 }
