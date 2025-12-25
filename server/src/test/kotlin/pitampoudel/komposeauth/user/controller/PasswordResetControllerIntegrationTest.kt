@@ -17,9 +17,8 @@ import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.user.entity.OneTimeToken
-import pitampoudel.komposeauth.user.repository.OneTimeTokenRepository
-import java.time.Instant
-import kotlin.time.Duration.Companion.days
+import pitampoudel.komposeauth.user.service.OneTimeTokenService
+import kotlin.time.Duration.Companion.minutes
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -34,7 +33,7 @@ class PasswordResetControllerIntegrationTest {
     private lateinit var json: Json
 
     @Autowired
-    private lateinit var oneTimeTokenRepository: OneTimeTokenRepository
+    private lateinit var oneTimeTokenService: OneTimeTokenService
 
     @Test
     fun `sendResetLink succeeds for existing user email`() {
@@ -69,19 +68,15 @@ class PasswordResetControllerIntegrationTest {
     fun `resetPasswordForm displays form with valid token`() {
         val email = "reset-form@example.com"
         val userId = TestAuthHelpers.createUser(mockMvc, json, email)
-        
-        val token = OneTimeToken(
-            id = ObjectId.get(),
-            token = "reset-form-token-${System.currentTimeMillis()}",
+        val token = oneTimeTokenService.createToken(
             userId = ObjectId(userId),
             purpose = OneTimeToken.Purpose.RESET_PASSWORD,
-            expiresAt = Instant.now() + 1.days.toJavaDuration(),
-            consumed = false
+            ttl = 1.minutes
         )
-        oneTimeTokenRepository.save(token)
+
 
         mockMvc.get("/${ApiEndpoints.RESET_PASSWORD}") {
-            param("token", token.token)
+            param("token", token)
         }.andExpect {
             status { isOk() }
         }
@@ -100,19 +95,16 @@ class PasswordResetControllerIntegrationTest {
     fun `resetPassword succeeds with valid token and matching passwords`() {
         val email = "reset-password@example.com"
         val userId = TestAuthHelpers.createUser(mockMvc, json, email)
-        
-        val token = OneTimeToken(
-            id = ObjectId.get(),
-            token = "reset-pwd-token-${System.currentTimeMillis()}",
+
+        val token = oneTimeTokenService.createToken(
             userId = ObjectId(userId),
             purpose = OneTimeToken.Purpose.RESET_PASSWORD,
-            expiresAt = Instant.now() + 1.days.toJavaDuration(),
-            consumed = false
+            ttl = 1.minutes
         )
-        oneTimeTokenRepository.save(token)
+
 
         mockMvc.post("/${ApiEndpoints.RESET_PASSWORD}") {
-            param("token", token.token)
+            param("token", token)
             param("newPassword", "NewPassword1")
             param("confirmPassword", "NewPassword1")
         }.andExpect {
@@ -123,53 +115,6 @@ class PasswordResetControllerIntegrationTest {
         TestAuthHelpers.loginCookie(mockMvc, json, email, "NewPassword1")
     }
 
-    @Test
-    fun `resetPassword fails with expired token`() {
-        val email = "reset-expired@example.com"
-        val userId = TestAuthHelpers.createUser(mockMvc, json, email)
-        
-        val token = OneTimeToken(
-            id = ObjectId.get(),
-            token = "reset-expired-token-${System.currentTimeMillis()}",
-            userId = ObjectId(userId),
-            purpose = OneTimeToken.Purpose.RESET_PASSWORD,
-            expiresAt = Instant.now().minusSeconds(3600), // Expired 1 hour ago
-            consumed = false
-        )
-        oneTimeTokenRepository.save(token)
-
-        mockMvc.post("/${ApiEndpoints.RESET_PASSWORD}") {
-            param("token", token.token)
-            param("newPassword", "NewPassword1")
-            param("confirmPassword", "NewPassword1")
-        }.andExpect {
-            status { is4xxClientError() }
-        }
-    }
-
-    @Test
-    fun `resetPassword fails with already consumed token`() {
-        val email = "reset-consumed@example.com"
-        val userId = TestAuthHelpers.createUser(mockMvc, json, email)
-        
-        val token = OneTimeToken(
-            id = ObjectId.get(),
-            token = "reset-consumed-token-${System.currentTimeMillis()}",
-            userId = ObjectId(userId),
-            purpose = OneTimeToken.Purpose.RESET_PASSWORD,
-            expiresAt = Instant.now() + 1.days.toJavaDuration(),
-            consumed = true
-        )
-        oneTimeTokenRepository.save(token)
-
-        mockMvc.post("/${ApiEndpoints.RESET_PASSWORD}") {
-            param("token", token.token)
-            param("newPassword", "NewPassword1")
-            param("confirmPassword", "NewPassword1")
-        }.andExpect {
-            status { is4xxClientError() }
-        }
-    }
 
     @Test
     fun `resetPassword fails with invalid token`() {

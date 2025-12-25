@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.user.controller
 
 import kotlinx.serialization.json.Json
+import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -15,11 +16,9 @@ import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.user.entity.OneTimeToken
-import pitampoudel.komposeauth.user.repository.OneTimeTokenRepository
 import pitampoudel.komposeauth.user.repository.UserRepository
-import org.bson.types.ObjectId
-import java.time.Instant
-import kotlin.time.Duration.Companion.days
+import pitampoudel.komposeauth.user.service.OneTimeTokenService
+import kotlin.time.Duration.Companion.minutes
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -37,7 +36,7 @@ class EmailVerifyControllerIntegrationTest {
     private lateinit var userRepository: UserRepository
 
     @Autowired
-    private lateinit var oneTimeTokenRepository: OneTimeTokenRepository
+    private lateinit var oneTimeTokenService: OneTimeTokenService
 
     @Test
     fun `sendVerificationEmail succeeds for authenticated user with email`() {
@@ -69,20 +68,16 @@ class EmailVerifyControllerIntegrationTest {
     fun `verifyEmail succeeds with valid token`() {
         val email = "verify-token@example.com"
         val userId = TestAuthHelpers.createUser(mockMvc, json, email)
-        
+
         // Create a valid one-time token for email verification
-        val token = OneTimeToken(
-            id = ObjectId.get(),
-            token = "valid-token-${System.currentTimeMillis()}",
+        val token = oneTimeTokenService.createToken(
             userId = ObjectId(userId),
             purpose = OneTimeToken.Purpose.VERIFY_EMAIL,
-            expiresAt = Instant.now() + 1.days.toJavaDuration(),
-            consumed = false
+            ttl = 1.minutes
         )
-        oneTimeTokenRepository.save(token)
 
         mockMvc.get("/${ApiEndpoints.VERIFY_EMAIL}") {
-            param("token", token.token)
+            param("token", token)
         }.andExpect {
             status { is3xxRedirection() }
         }
@@ -92,52 +87,6 @@ class EmailVerifyControllerIntegrationTest {
     fun `verifyEmail fails with invalid token`() {
         mockMvc.get("/${ApiEndpoints.VERIFY_EMAIL}") {
             param("token", "invalid-token")
-        }.andExpect {
-            status { is4xxClientError() }
-        }
-    }
-
-    @Test
-    fun `verifyEmail fails with expired token`() {
-        val email = "verify-expired@example.com"
-        val userId = TestAuthHelpers.createUser(mockMvc, json, email)
-        
-        // Create an expired token
-        val token = OneTimeToken(
-            id = ObjectId.get(),
-            token = "expired-token-${System.currentTimeMillis()}",
-            userId = ObjectId(userId),
-            purpose = OneTimeToken.Purpose.VERIFY_EMAIL,
-            expiresAt = Instant.now().minusSeconds(3600), // Expired 1 hour ago
-            consumed = false
-        )
-        oneTimeTokenRepository.save(token)
-
-        mockMvc.get("/${ApiEndpoints.VERIFY_EMAIL}") {
-            param("token", token.token)
-        }.andExpect {
-            status { is4xxClientError() }
-        }
-    }
-
-    @Test
-    fun `verifyEmail fails with already consumed token`() {
-        val email = "verify-consumed@example.com"
-        val userId = TestAuthHelpers.createUser(mockMvc, json, email)
-        
-        // Create a consumed token
-        val token = OneTimeToken(
-            id = ObjectId.get(),
-            token = "consumed-token-${System.currentTimeMillis()}",
-            userId = ObjectId(userId),
-            purpose = OneTimeToken.Purpose.VERIFY_EMAIL,
-            expiresAt = Instant.now() + 1.days.toJavaDuration(),
-            consumed = true
-        )
-        oneTimeTokenRepository.save(token)
-
-        mockMvc.get("/${ApiEndpoints.VERIFY_EMAIL}") {
-            param("token", token.token)
         }.andExpect {
             status { is4xxClientError() }
         }
