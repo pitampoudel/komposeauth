@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.data.CreateUserRequest
 import pitampoudel.komposeauth.core.data.Credential
 import pitampoudel.komposeauth.core.data.ProfileResponse
@@ -65,6 +66,8 @@ class UserService(
     val storageService: StorageService,
     private val objectMapper: ObjectMapper,
     private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
+    private val userContextService: UserContextService,
+    private val roleChangeEmailNotifier: RoleChangeEmailNotifier,
 ) {
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
@@ -105,7 +108,7 @@ class UserService(
         val objectIds = ids.mapNotNull { id ->
             try {
                 ObjectId(id)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null // Skip invalid IDs
             }
         }
@@ -120,7 +123,7 @@ class UserService(
     fun grantAdmin(userId: String): User {
         val id = try {
             ObjectId(userId)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw UsernameNotFoundException("Invalid user id: $userId")
         }
         val user = userRepository.findById(id).orElseThrow {
@@ -128,13 +131,22 @@ class UserService(
         }
         if (user.roles.contains("ADMIN")) return user
         val updated = user.copy(roles = user.roles + "ADMIN")
-        return userRepository.save(updated)
+        val saved = userRepository.save(updated)
+
+        val actor = userContextService.getUserFromAuthentication()
+        roleChangeEmailNotifier.notify(
+            target = saved,
+            action = RoleChangeEmailNotifier.Action.GRANTED,
+            actor = actor.fullName
+        )
+
+        return saved
     }
 
     fun revokeAdmin(userId: String): User {
         val id = try {
             ObjectId(userId)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw UsernameNotFoundException("Invalid user id: $userId")
         }
         val user = userRepository.findById(id).orElseThrow {
@@ -146,7 +158,17 @@ class UserService(
             throw BadRequestException("Cannot remove the last admin")
         }
         val updated = user.copy(roles = user.roles.filterNot { it == "ADMIN" })
-        return userRepository.save(updated)
+        val saved = userRepository.save(updated)
+
+        val actor = userContextService.getUserFromAuthentication()
+
+        roleChangeEmailNotifier.notify(
+            target = saved,
+            action = RoleChangeEmailNotifier.Action.REVOKED,
+            actor = actor.fullName
+        )
+
+        return saved
     }
 
     fun findUsersFlexible(ids: List<String>?, q: String?, page: Int, size: Int): Page<User> {

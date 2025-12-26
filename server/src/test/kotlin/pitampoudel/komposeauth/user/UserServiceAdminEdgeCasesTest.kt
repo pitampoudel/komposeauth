@@ -56,6 +56,8 @@ class UserServiceAdminEdgeCasesTest {
             storageService = mock(),
             objectMapper = mock(),
             webAuthnRelyingPartyOperations = mock(),
+            userContextService = mock(),
+            roleChangeEmailNotifier = mock(),
         )
 
         assertThrows<org.apache.coyote.BadRequestException> {
@@ -78,6 +80,8 @@ class UserServiceAdminEdgeCasesTest {
             storageService = mock(),
             objectMapper = mock(),
             webAuthnRelyingPartyOperations = mock(),
+            userContextService = mock(),
+            roleChangeEmailNotifier = mock(),
         )
 
         assertThrows<UsernameNotFoundException> {
@@ -103,6 +107,8 @@ class UserServiceAdminEdgeCasesTest {
             storageService = mock(),
             objectMapper = mock(),
             webAuthnRelyingPartyOperations = mock(),
+            userContextService = mock(),
+            roleChangeEmailNotifier = mock(),
         )
 
         val result = service.findUsersFlexible(ids = null, q = null, page = -10, size = 9999)
