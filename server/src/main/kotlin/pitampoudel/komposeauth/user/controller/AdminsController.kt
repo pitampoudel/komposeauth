@@ -3,6 +3,7 @@ package pitampoudel.komposeauth.user.controller
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pitampoudel.core.data.PageResponse
+import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.data.UserResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.dto.mapToResponseDto
@@ -18,7 +20,9 @@ import pitampoudel.komposeauth.user.service.UserService
 @RestController
 class AdminsController(
     private val userService: UserService,
-    private val kycService: KycService
+    private val kycService: KycService,
+    val userContextService: UserContextService
+
 ) {
 
     @GetMapping("/admins")
@@ -44,8 +48,12 @@ class AdminsController(
     @PostMapping("/admins/{id}")
     @Operation(summary = "Grant admin", description = "Grant ADMIN role to a user")
     @PreAuthorize("hasRole('ADMIN')")
-    fun grant(@PathVariable id: String): ResponseEntity<UserResponse> {
-        val user = userService.grantAdmin(id)
+    fun grant(
+        @PathVariable id: String,
+        authentication: Authentication
+    ): ResponseEntity<UserResponse> {
+        val actor = userContextService.getUserFromAuthentication(authentication)
+        val user = userService.grantAdmin(actor.fullName, id)
         return ResponseEntity.ok(user.mapToResponseDto(kycService.isVerified(user.id)))
     }
 
@@ -55,8 +63,12 @@ class AdminsController(
         description = "Revoke ADMIN role from a user. Will fail if it is the last admin."
     )
     @PreAuthorize("hasRole('ADMIN')")
-    fun revoke(@PathVariable id: String): ResponseEntity<UserResponse> {
-        val user = userService.revokeAdmin(id)
+    fun revoke(
+        @PathVariable id: String,
+        authentication: Authentication
+    ): ResponseEntity<UserResponse> {
+        val actor = userContextService.getUserFromAuthentication(authentication)
+        val user = userService.revokeAdmin(actor.fullName, id)
         return ResponseEntity.ok(user.mapToResponseDto(kycService.isVerified(user.id)))
     }
 }

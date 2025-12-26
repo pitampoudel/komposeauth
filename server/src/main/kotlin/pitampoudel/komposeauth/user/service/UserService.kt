@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.app_config.service.AppConfigService
-import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.data.CreateUserRequest
 import pitampoudel.komposeauth.core.data.Credential
 import pitampoudel.komposeauth.core.data.ProfileResponse
@@ -66,7 +65,6 @@ class UserService(
     val storageService: StorageService,
     private val objectMapper: ObjectMapper,
     private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
-    private val userContextService: UserContextService,
     private val roleChangeEmailNotifier: RoleChangeEmailNotifier,
 ) {
     fun findUser(id: String): User? {
@@ -120,7 +118,7 @@ class UserService(
         return userRepository.findByRolesContaining("ADMIN", pageable)
     }
 
-    fun grantAdmin(userId: String): User {
+    fun grantAdmin(actor: String, userId: String): User {
         val id = try {
             ObjectId(userId)
         } catch (_: Exception) {
@@ -133,17 +131,16 @@ class UserService(
         val updated = user.copy(roles = user.roles + "ADMIN")
         val saved = userRepository.save(updated)
 
-        val actor = userContextService.getUserFromAuthentication()
         roleChangeEmailNotifier.notify(
             target = saved,
             action = RoleChangeEmailNotifier.Action.GRANTED,
-            actor = actor.fullName
+            actor = actor
         )
 
         return saved
     }
 
-    fun revokeAdmin(userId: String): User {
+    fun revokeAdmin(actor: String, userId: String): User {
         val id = try {
             ObjectId(userId)
         } catch (_: Exception) {
@@ -160,12 +157,11 @@ class UserService(
         val updated = user.copy(roles = user.roles.filterNot { it == "ADMIN" })
         val saved = userRepository.save(updated)
 
-        val actor = userContextService.getUserFromAuthentication()
 
         roleChangeEmailNotifier.notify(
             target = saved,
             action = RoleChangeEmailNotifier.Action.REVOKED,
-            actor = actor.fullName
+            actor = actor
         )
 
         return saved

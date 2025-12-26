@@ -100,7 +100,7 @@ class UserServiceCoreTest {
             )
         )
 
-        val updated = userService.grantAdmin(user.id.toHexString())
+        val updated = userService.grantAdmin("Test Admin", user.id.toHexString())
 
         assertTrue(updated.roles.contains("ADMIN"))
     }
@@ -120,7 +120,7 @@ class UserServiceCoreTest {
             )
         )
 
-        val updated = userService.grantAdmin(user.id.toHexString())
+        val updated = userService.grantAdmin("Test Admin", user.id.toHexString())
 
         assertTrue(updated.roles.contains("ADMIN"))
         assertEquals(1, updated.roles.count { it == "ADMIN" })

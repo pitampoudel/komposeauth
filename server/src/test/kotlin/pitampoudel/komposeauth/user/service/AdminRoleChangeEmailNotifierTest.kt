@@ -38,7 +38,7 @@ class AdminRoleChangeEmailNotifierTest {
             firstName = "No",
             lastName = "Email",
             email = null,
-            phoneNumber = null,
+            phoneNumber = "+15555550100",
             passwordHash = "hash",
             roles = emptyList()
         )
@@ -96,4 +96,3 @@ class AdminRoleChangeEmailNotifierTest {
         )
     }
 }
-

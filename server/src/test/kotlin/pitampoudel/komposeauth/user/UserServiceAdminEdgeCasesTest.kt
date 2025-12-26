@@ -56,12 +56,11 @@ class UserServiceAdminEdgeCasesTest {
             storageService = mock(),
             objectMapper = mock(),
             webAuthnRelyingPartyOperations = mock(),
-            userContextService = mock(),
             roleChangeEmailNotifier = mock(),
         )
 
         assertThrows<org.apache.coyote.BadRequestException> {
-            service.revokeAdmin(user.id.toHexString())
+            service.revokeAdmin("Test Admin", user.id.toHexString())
         }
     }
 
@@ -80,12 +79,11 @@ class UserServiceAdminEdgeCasesTest {
             storageService = mock(),
             objectMapper = mock(),
             webAuthnRelyingPartyOperations = mock(),
-            userContextService = mock(),
             roleChangeEmailNotifier = mock(),
         )
 
         assertThrows<UsernameNotFoundException> {
-            service.grantAdmin("not-an-object-id")
+            service.grantAdmin("Test Admin", "not-an-object-id")
         }
     }
 
@@ -107,7 +105,6 @@ class UserServiceAdminEdgeCasesTest {
             storageService = mock(),
             objectMapper = mock(),
             webAuthnRelyingPartyOperations = mock(),
-            userContextService = mock(),
             roleChangeEmailNotifier = mock(),
         )
 
