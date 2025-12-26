@@ -84,17 +84,7 @@ class AdminRoleChangeEmailNotifierTest {
             roles = emptyList()
         )
 
-        val actor = User(
-            id = ObjectId.get(),
-            firstName = "Actor",
-            lastName = "Admin",
-            email = "actor@example.com",
-            phoneNumber = null,
-            passwordHash = "hash",
-            roles = listOf("ADMIN")
-        )
-
-        val ok = notifier.notify(target, RoleChangeEmailNotifier.Action.REVOKED, actor = actor)
+        val ok = notifier.notify(target, RoleChangeEmailNotifier.Action.REVOKED, actor = "Test Admin")
         assertTrue(ok)
 
         verify(emailService).sendHtmlMail(

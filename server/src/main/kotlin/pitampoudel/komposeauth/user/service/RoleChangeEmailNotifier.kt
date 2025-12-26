@@ -16,7 +16,7 @@ class RoleChangeEmailNotifier(
      * Best-effort: returns whether the email send call succeeded.
      * Never throws.
      */
-    fun notify(target: User, action: Action, actor: String): Boolean {
+    fun notify(target: User, action: Action, actor: String?): Boolean {
         val to = target.email
         if (to.isNullOrBlank()) return false
 
@@ -30,8 +30,8 @@ class RoleChangeEmailNotifier(
 
 
         val message = when (action) {
-            Action.GRANTED -> "You’ve been granted <b>ADMIN</b> access in $appName by $actor."
-            Action.REVOKED -> "Your <b>ADMIN</b> access in $appName was revoked by $actor."
+            Action.GRANTED -> "You’ve been granted <b>ADMIN</b> access in $appName by ${actor ?: "an admin"}."
+            Action.REVOKED -> "Your <b>ADMIN</b> access in $appName was revoked by ${actor ?: "an admin"}."
         }
 
         return emailService.sendHtmlMail(
