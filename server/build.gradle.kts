@@ -5,7 +5,6 @@ plugins {
     kotlin("plugin.spring") version "1.9.25"
     id("org.springframework.boot") version "3.5.7"
     id("io.spring.dependency-management") version "1.1.7"
-    id("io.sentry.jvm.gradle") version "5.12.2"
     alias(libs.plugins.kotlinx.serialization)
 }
 
@@ -44,7 +43,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.core.jvm)
 
     // Sentry for error tracking
-    implementation(platform(libs.sentry.bom))
     implementation(libs.sentry.spring.boot.starter.jakarta)
 
     testImplementation(libs.spring.security.test)
