@@ -9,7 +9,6 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.core.data.asResource
-import pitampoudel.core.data.download
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
@@ -56,5 +55,4 @@ internal class OrganizationsClientImpl(
         }
     }
 
-    override suspend fun download(url: String) = httpClient.download(url)
 }

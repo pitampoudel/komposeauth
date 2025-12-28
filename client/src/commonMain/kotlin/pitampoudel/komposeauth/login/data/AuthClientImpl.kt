@@ -10,9 +10,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import pitampoudel.core.data.asResource
-import pitampoudel.core.data.download
 import pitampoudel.core.data.safeApiCall
-import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.data.CountryResponse
 import pitampoudel.komposeauth.core.data.Credential
@@ -35,13 +33,13 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.ME
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.UPDATE_PHONE_NUMBER
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.UPDATE_PROFILE
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_PHONE_NUMBER
-import pitampoudel.komposeauth.login.domain.AuthClient
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
 import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
+import pitampoudel.komposeauth.login.domain.AuthClient
 
 internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClient {
 
@@ -174,9 +172,5 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
         httpClient.authProvider<BearerAuthProvider>()?.clearToken()
         return result
-    }
-
-    override suspend fun download(url: String): Result<KmpFile> {
-        return httpClient.download(url)
     }
 }

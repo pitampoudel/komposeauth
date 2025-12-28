@@ -61,12 +61,10 @@ class CreateOrganizationViewModel(
                         }
 
                         is Result.Success -> {
-                            val logoRes = res.data.logoUrl?.let { client.download(it) }
                             _state.update { createOrEditOrganizationState ->
                                 createOrEditOrganizationState.copy(
                                     progress = null,
-                                    organizationId = res.data.id,
-                                    logoFile = if (logoRes is Result.Success) logoRes.data else null,
+                                    existingOrganization = res.data,
                                     name = res.data.name,
                                     email = res.data.email,
                                     phoneNumber = res.data.phoneNumber?.nationalNumber?.toString()
@@ -217,7 +215,7 @@ class CreateOrganizationViewModel(
                 }
 
                 CreateOrganizationEvent.Delete -> {
-                    val id = state.value.organizationId ?: return@launch
+                    val id = state.value.existingOrganization?.id ?: return@launch
                     _state.update {
                         it.copy(progress = 0.0F)
                     }

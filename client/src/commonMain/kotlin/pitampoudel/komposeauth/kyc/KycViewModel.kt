@@ -337,31 +337,6 @@ class KycViewModel internal constructor(
     }
 
     suspend fun refillAll(latestRecord: KycResponse?) {
-        val documentFront = latestRecord?.documentInformation?.documentFrontUrl?.let {
-            client.download(url = it)
-        }
-        val documentBack = latestRecord?.documentInformation?.documentBackUrl?.let {
-            client.download(url = it)
-        }
-        val selfie = latestRecord?.documentInformation?.selfieUrl?.let {
-            client.download(url = it)
-        }
-
-        if (documentFront != null && documentFront is Result.Error) {
-            _state.update {
-                it.copy(infoMsg = documentFront.message)
-            }
-        }
-        if (documentBack != null && documentBack is Result.Error) {
-            _state.update {
-                it.copy(infoMsg = documentBack.message)
-            }
-        }
-        if (selfie != null && selfie is Result.Error) {
-            _state.update {
-                it.copy(infoMsg = selfie.message)
-            }
-        }
 
         _state.update { s ->
             s.copy(
@@ -403,13 +378,7 @@ class KycViewModel internal constructor(
                     documentExpiryDate = latestRecord?.documentInformation?.documentExpiryDate
                         ?: s.documentInfo.documentExpiryDate,
                     documentIssuedPlace = latestRecord?.documentInformation?.documentIssuedPlace
-                        ?: s.documentInfo.documentIssuedPlace,
-                    documentFront = (documentFront as? Result.Success)?.data
-                        ?: s.documentInfo.documentFront,
-                    documentBack = (documentBack as? Result.Success)?.data
-                        ?: s.documentInfo.documentBack,
-                    selfie = (selfie as? Result.Success)?.data
-                        ?: s.documentInfo.selfie
+                        ?: s.documentInfo.documentIssuedPlace
                 )
             )
         }

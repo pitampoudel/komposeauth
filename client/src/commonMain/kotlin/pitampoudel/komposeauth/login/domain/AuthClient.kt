@@ -37,5 +37,4 @@ internal interface AuthClient {
     suspend fun fetchWebAuthnRegistrationOptions(): Result<String>
     suspend fun registerPublicKey(request: RegisterPublicKeyRequest): Result<HttpResponse>
     suspend fun logout(): Result<HttpResponse>
-    suspend fun download(url: String): Result<KmpFile>
 }

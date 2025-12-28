@@ -6,11 +6,12 @@ import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.komposeauth.core.data.AddressInformation
 import pitampoudel.komposeauth.core.domain.use_cases.ValidatePhoneNumber
 import pitampoudel.komposeauth.organization.data.CreateOrUpdateOrganizationRequest
+import pitampoudel.komposeauth.organization.data.OrganizationResponse
 
 data class CreateOrganizationState(
     val progress: Float? = null,
     val infoMsg: InfoMessage? = null,
-    val organizationId: String? = null,
+    val existingOrganization: OrganizationResponse? = null,
     val name: String = "",
     val nameError: GeneralValidationError? = null,
     val email: String = "",
@@ -69,7 +70,7 @@ data class CreateOrganizationState(
                 website = website,
                 facebookLink = facebookLink,
                 logo = logoFile?.toEncodedData(),
-                orgId = organizationId
+                orgId = existingOrganization?.id
             )
         }
     }
