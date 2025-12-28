@@ -10,6 +10,7 @@ import io.github.pitampoudel.client.generated.resources.must_not_be_empty
 import io.github.pitampoudel.client.generated.resources.passwords_dont_match
 import io.github.pitampoudel.client.generated.resources.too_long
 import io.github.pitampoudel.client.generated.resources.too_short
+import io.github.pitampoudel.client.generated.resources.validation_error_password_requirement
 import org.jetbrains.compose.resources.StringResource
 import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_INVALID_EMAIL
