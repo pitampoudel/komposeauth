@@ -30,8 +30,8 @@ data class UpdateProfileRequest(
         require(familyName == null || familyName.isNotBlank()) {
             "Family name cannot be blank"
         }
-        require(password == null || Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$").matches(password)) {
-            "Password must contain at least one uppercase letter, one lowercase letter, and one digit"
+        require(password == null || Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*\\W)(?!.* ).{8,16}$").matches(password)) {
+            "Password must be 8-16 characters with at least one uppercase, lowercase, digit, and special character"
         }
         require(email.isNullOrBlank() || email.isValidEmail()){
             "Invalid email"

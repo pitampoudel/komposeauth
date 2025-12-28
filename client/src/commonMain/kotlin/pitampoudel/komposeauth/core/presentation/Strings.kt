@@ -10,6 +10,7 @@ import io.github.pitampoudel.client.generated.resources.must_not_be_empty
 import io.github.pitampoudel.client.generated.resources.passwords_dont_match
 import io.github.pitampoudel.client.generated.resources.too_long
 import io.github.pitampoudel.client.generated.resources.too_short
+import io.github.pitampoudel.client.generated.resources.validation_error_password_requirement
 import org.jetbrains.compose.resources.StringResource
 import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_INVALID_EMAIL
@@ -32,5 +33,6 @@ fun GeneralValidationError.toStringRes(): StringResource {
         VALIDATION_ERROR_PASSWORDS_DONT_MATCH -> Res.string.passwords_dont_match
         VALIDATION_ERROR_MUST_NOT_BE_EMPTY -> Res.string.must_not_be_empty
         GeneralValidationError.VALIDATION_ERROR_TOO_LONG -> Res.string.too_long
+        GeneralValidationError.VALIDATION_ERROR_PASSWORD_REQUIREMENT -> Res.string.validation_error_password_requirement
     }
 }
