@@ -32,8 +32,12 @@ class CryptoService(private val props: StaticAppProperties) {
     private val secureRandom = SecureRandom()
 
     private fun resolveKey(): SecretKey {
+        val keyString = props.base64EncryptionKey
+        if (keyString.isBlank()) {
+            throw IllegalStateException("encryption key must be provided")
+        }
         val raw = try {
-            Base64.getDecoder().decode(props.base64EncryptionKey)
+            Base64.getDecoder().decode(keyString)
         } catch (e: IllegalArgumentException) {
             throw IllegalStateException("encryption key must be Base64-encoded", e)
         }

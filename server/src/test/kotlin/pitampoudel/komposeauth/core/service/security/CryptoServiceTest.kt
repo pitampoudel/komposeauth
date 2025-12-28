@@ -35,6 +35,14 @@ class CryptoServiceTest {
     }
 
     @Test
+    fun `rejects missing encryption key`() {
+        val props = StaticAppProperties()
+        assertThrows<UninitializedPropertyAccessException> {
+            CryptoService(props)
+        }
+    }
+
+    @Test
     fun `encrypt decrypt round trip works`() {
         val service = CryptoService(propsWithKey(base64KeyOfLength(16)))
         val plain = "hello world"

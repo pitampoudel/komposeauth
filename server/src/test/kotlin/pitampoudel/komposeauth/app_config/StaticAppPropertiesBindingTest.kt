@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAut
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.env.StandardEnvironment
 import pitampoudel.komposeauth.StaticAppProperties
 
 class StaticAppPropertiesBindingTest {
@@ -15,6 +16,12 @@ class StaticAppPropertiesBindingTest {
     private val contextRunner = ApplicationContextRunner()
         .withConfiguration(AutoConfigurations.of(ConfigurationPropertiesAutoConfiguration::class.java))
         .withUserConfiguration(TestConfig::class.java)
+        .withInitializer { ctx ->
+            val sources = ctx.environment.propertySources
+            // Ensure host env/system properties don't accidentally satisfy the binding
+            sources.remove(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME)
+            sources.remove(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME)
+        }
 
     @Configuration
     @EnableConfigurationProperties(StaticAppProperties::class)
