@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth
 
 import io.sentry.Sentry
+import kotlinx.serialization.Serializable
 import org.apache.coyote.BadRequestException
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.dao.DuplicateKeyException
@@ -18,10 +19,18 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.resource.NoResourceFoundException
-import pitampoudel.core.data.ErrorSnapshotResponse
+import pitampoudel.core.domain.now
 import javax.security.auth.login.AccountLockedException
 import javax.security.auth.login.AccountNotFoundException
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+
+@Serializable
+data class ErrorSnapshotResponse(
+    val timestamp: Instant = now(),
+    val message: String?,
+    val path: String
+)
 
 @ControllerAdvice
 @RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
