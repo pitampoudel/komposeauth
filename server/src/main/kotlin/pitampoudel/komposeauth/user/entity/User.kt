@@ -8,12 +8,28 @@ import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.annotation.TypeAlias
+import org.springframework.data.mongodb.core.index.CompoundIndex
+import org.springframework.data.mongodb.core.index.CompoundIndexes
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
 
 @Document(collection = "users")
 @TypeAlias("user")
+@CompoundIndexes(
+    CompoundIndex(
+        name = "search_fields_idx",
+        def = "{'firstName': 1, 'lastName': 1, 'email': 1, 'phoneNumber': 1}"
+    ),
+    CompoundIndex(
+        name = "roles_created_idx",
+        def = "{'roles': 1, 'createdAt': -1}"
+    ),
+    CompoundIndex(
+        name = "deactivated_created_idx",
+        def = "{'deactivated': 1, 'createdAt': -1}"
+    )
+)
 data class User(
     @Id
     val id: ObjectId,

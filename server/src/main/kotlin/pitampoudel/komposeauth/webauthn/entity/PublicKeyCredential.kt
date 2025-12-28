@@ -4,6 +4,8 @@ import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.annotation.TypeAlias
+import org.springframework.data.mongodb.core.index.CompoundIndex
+import org.springframework.data.mongodb.core.index.CompoundIndexes
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.security.web.webauthn.api.AuthenticatorTransport
@@ -15,6 +17,16 @@ import java.time.Instant
 
 @Document(collection = "public_key_credentials")
 @TypeAlias("public_key_credential")
+@CompoundIndexes(
+    CompoundIndex(
+        name = "user_created_idx",
+        def = "{'publicKeyUserId': 1, 'createdAt': -1}"
+    ),
+    CompoundIndex(
+        name = "user_lastused_idx",
+        def = "{'publicKeyUserId': 1, 'lastUsed': -1}"
+    )
+)
 data class PublicKeyCredential(
     @Id
     val id: Bytes,

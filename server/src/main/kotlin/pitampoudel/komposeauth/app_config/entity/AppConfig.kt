@@ -1,8 +1,13 @@
 package pitampoudel.komposeauth.app_config.entity
 
+import jakarta.validation.constraints.Email
+import org.hibernate.validator.constraints.URL
+import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.annotation.TypeAlias
 import org.springframework.data.mongodb.core.mapping.Document
+import java.time.Instant
 
 @Document("config")
 @TypeAlias("config")
@@ -11,16 +16,25 @@ data class AppConfig(
     val id: String = SINGLETON_ID,
 
     var name: String? = null,
+    @field:URL(message = "Logo URL must be a valid URL")
     var logoUrl: String? = null,
     var brandColor: String? = null,
+    @field:URL(message = "Website URL must be a valid URL")
     var websiteUrl:String? = null,
+    @field:URL(message = "Facebook link must be a valid URL")
     var facebookLink:String? = null,
+    @field:URL(message = "Instagram link must be a valid URL")
     var instagramLink:String? = null,
+    @field:URL(message = "TikTok link must be a valid URL")
     var tiktokLink:String? = null,
+    @field:URL(message = "LinkedIn link must be a valid URL")
     var linkedinLink:String? = null,
+    @field:URL(message = "YouTube link must be a valid URL")
     var youtubeLink:String? = null,
+    @field:URL(message = "Privacy link must be a valid URL")
     var privacyLink:String? = null,
 
+    @field:Email(message = "Invalid support email address")
     var supportEmail: String? = null,
     var rpId: String? = null,
     var gcpProjectId: String? = null,
@@ -44,6 +58,7 @@ data class AppConfig(
     var smtpPort: Int? = null,
     var smtpUsername: String? = null,
     var smtpPassword: String? = null,
+    @field:Email(message = "Invalid SMTP from email address")
     var smtpFromEmail: String? = null,
     var smtpFromName: String? = null,
     var emailFooterText: String? = null,
@@ -51,6 +66,11 @@ data class AppConfig(
     var sentryDsn: String? = null,
     // Third-party SMS provider (Samaye) API key
     var samayeApiKey: String? = null,
+
+    @CreatedDate
+    val createdAt: Instant = Instant.now(),
+    @LastModifiedDate
+    val updatedAt: Instant = Instant.now()
 ) {
     fun clean(): AppConfig {
         if (name.isNullOrBlank()) name = null

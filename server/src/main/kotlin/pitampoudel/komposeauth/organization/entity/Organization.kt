@@ -1,10 +1,15 @@
 package pitampoudel.komposeauth.organization.entity
 
+import jakarta.validation.constraints.Email
+import jakarta.validation.constraints.NotBlank
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import org.bson.types.ObjectId
+import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.mongodb.core.index.CompoundIndex
+import org.springframework.data.mongodb.core.index.CompoundIndexes
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import pitampoudel.komposeauth.core.domain.EntityId
@@ -14,13 +19,28 @@ import kotlin.time.Instant
 
 @Serializable
 @Document(collection = "organizations")
-@CompoundIndex(def = "{'name': 'text', 'email': 'text'}")
+@CompoundIndexes(
+    CompoundIndex(
+        name = "text_search_idx",
+        def = "{'name': 'text', 'email': 'text'}"
+    ),
+    CompoundIndex(
+        name = "users_created_idx",
+        def = "{'userIds': 1, 'createdAt': -1}"
+    )
+)
 data class Organization(
     @Contextual
     @Id val id: ObjectId = ObjectId(),
-    @Contextual val createdAt: Instant = Clock.System.now(),
-    @Contextual val updatedAt: Instant = Clock.System.now(),
+    @Contextual 
+    @CreatedDate
+    val createdAt: Instant = Clock.System.now(),
+    @Contextual 
+    @LastModifiedDate
+    val updatedAt: Instant = Clock.System.now(),
+    @field:NotBlank(message = "Organization name is required")
     @Indexed(unique = true) val name: String,
+    @field:Email(message = "Invalid email address")
     @Indexed(unique = true) val email: String,
     val emailVerified: Boolean = false,
     val logoUrl: String?,
