@@ -1,6 +1,5 @@
 package pitampoudel.komposeauth
 
-import co.touchlab.kermit.Logger
 import io.sentry.Sentry
 import kotlinx.serialization.Serializable
 import org.apache.coyote.BadRequestException
@@ -38,8 +37,6 @@ data class ErrorSnapshotResponse(
 @OptIn(ExperimentalTime::class)
 class GlobalExceptionHandler {
 
-    private val logger = Logger.withTag("GlobalExceptionHandler")
-
     fun WebRequest.path() = getDescription(false).removePrefix("uri=")
 
 
@@ -48,10 +45,11 @@ class GlobalExceptionHandler {
         ex: HttpMessageNotReadableException,
         request: WebRequest
     ): ResponseEntity<ErrorSnapshotResponse> {
-        logger.e(ex) { "JSON parse error at ${request.path()}" }
+        ex.printStackTrace()
         return ResponseEntity(
             ErrorSnapshotResponse(
-                message = "Invalid request body: The provided JSON is malformed or invalid.",
+                message = ex.rootCause?.message ?: ex.message
+                ?: "Invalid request body: The provided JSON is malformed or invalid.",
                 path = request.path()
             ),
             HttpStatus.BAD_REQUEST
@@ -91,10 +89,9 @@ class GlobalExceptionHandler {
         ex: DataIntegrityViolationException,
         request: WebRequest
     ): ResponseEntity<ErrorSnapshotResponse> {
-        logger.e(ex) { "Data integrity violation at ${request.path()}" }
         return ResponseEntity(
             ErrorSnapshotResponse(
-                message = "Data integrity violation",
+                message = ex.rootCause?.message ?: ex.message ?: "Data integrity violation",
                 path = request.path()
             ),
             HttpStatus.CONFLICT
@@ -106,7 +103,7 @@ class GlobalExceptionHandler {
         ex: IllegalArgumentException,
         request: WebRequest
     ): ResponseEntity<ErrorSnapshotResponse> {
-        logger.e(ex) { "Illegal argument at ${request.path()}" }
+        ex.printStackTrace()
         return ResponseEntity(
             ErrorSnapshotResponse(
                 message = ex.message ?: "Invalid argument provided.",
@@ -149,7 +146,7 @@ class GlobalExceptionHandler {
         ex: MethodArgumentNotValidException,
         request: WebRequest
     ): ResponseEntity<ErrorSnapshotResponse> {
-        logger.e(ex) { "Validation error at ${request.path()}" }
+        ex.printStackTrace()
         val errors = ex.bindingResult.fieldErrors.joinToString(", ") {
             it.defaultMessage ?: "Validation failed for field ${it.field}"
         }
@@ -167,7 +164,7 @@ class GlobalExceptionHandler {
         ex: BadRequestException,
         request: WebRequest
     ): ResponseEntity<ErrorSnapshotResponse> {
-        logger.e(ex) { "Bad request at ${request.path()}" }
+        ex.printStackTrace()
         return ResponseEntity(
             ErrorSnapshotResponse(
                 message = ex.message,
@@ -225,10 +222,10 @@ class GlobalExceptionHandler {
         request: WebRequest
     ): ResponseEntity<ErrorSnapshotResponse> {
         Sentry.captureException(ex)
-        logger.e(ex) { "Unexpected error at ${request.path()}" }
+        ex.printStackTrace()
         return ResponseEntity(
             ErrorSnapshotResponse(
-                message = "An unexpected error occurred",
+                message = ex.message ?: "An unexpected error occurred",
                 path = request.path()
             ), HttpStatus.INTERNAL_SERVER_ERROR
         )

@@ -32,5 +32,6 @@ fun GeneralValidationError.toStringRes(): StringResource {
         VALIDATION_ERROR_PASSWORDS_DONT_MATCH -> Res.string.passwords_dont_match
         VALIDATION_ERROR_MUST_NOT_BE_EMPTY -> Res.string.must_not_be_empty
         GeneralValidationError.VALIDATION_ERROR_TOO_LONG -> Res.string.too_long
+        GeneralValidationError.VALIDATION_ERROR_PASSWORD_REQUIREMENT -> Res.string.validation_error_password_requirement
     }
 }
