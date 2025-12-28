@@ -15,7 +15,9 @@ object ValidatePassword {
     }
 
     private fun matchesPasswordRequirements(password: String): Boolean {
-        val pattern = "^(?=.*\\W)(?!.* ).{8,16}$"
+        // Password must be 8-16 characters, contain at least one uppercase, one lowercase, 
+        // one digit, and one special character, no spaces allowed
+        val pattern = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*\\W)(?!.* ).{8,16}$"
         return Regex(pattern).matches(password)
     }
 }
