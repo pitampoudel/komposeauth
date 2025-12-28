@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.user.controller
 
+import co.touchlab.kermit.Logger
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
@@ -20,6 +21,8 @@ class PhoneNumberController(
     private val userService: UserService,
     private val userContextService: UserContextService
 ) {
+
+    private val logger = Logger.withTag("PhoneNumberController")
 
     @Operation(
         summary = "Initiate phone number update",
@@ -48,7 +51,7 @@ class PhoneNumberController(
         return try {
             ResponseEntity.ok(userService.verifyPhoneNumberUpdate(user.id, request))
         } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
+            logger.e(e) { "Phone number verification failed for user ${user.id}" }
             ResponseEntity.badRequest().build()
         }
     }

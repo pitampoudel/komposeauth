@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.core.service.sms
 
+import co.touchlab.kermit.Logger
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -14,6 +15,8 @@ class TwilioPhoneNumberVerificationService(
     private val appConfigService: AppConfigService,
     private val restTemplate: RestTemplate
 ) : PhoneNumberVerificationService {
+
+    private val logger = Logger.withTag("TwilioPhoneNumberVerificationService")
 
     private fun basicHeaders(): HttpHeaders {
         val headers = HttpHeaders()
@@ -36,7 +39,7 @@ class TwilioPhoneNumberVerificationService(
             restTemplate.postForObject(url, entity, String::class.java)
             true
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.e(e) { "Failed to initiate phone verification for $phoneNumber" }
             false
         }
     }
@@ -53,7 +56,7 @@ class TwilioPhoneNumberVerificationService(
             restTemplate.postForObject(url, entity, String::class.java)
             true
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.e(e) { "Failed to verify phone number $phoneNumber" }
             false
         }
     }
