@@ -6,9 +6,9 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
-import pitampoudel.komposeauth.MongoTestSupport
+import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.app_config.service.AppConfigService
@@ -18,7 +18,7 @@ import kotlin.test.assertNull
 
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@Import(TestConfig::class)
 class AppConfigServiceTest {
 
     @Autowired

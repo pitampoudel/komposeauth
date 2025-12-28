@@ -5,9 +5,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
-import pitampoudel.komposeauth.MongoTestSupport
+import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.jwk.repository.JwkRepository
 import pitampoudel.komposeauth.jwk.service.JwkService
 import java.security.interfaces.RSAPublicKey
@@ -17,11 +17,13 @@ import java.util.concurrent.TimeUnit
 
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@Import(TestConfig::class)
 class JwkConcurrencyIntegrationTest {
 
-    @Autowired private lateinit var jwkRepository: JwkRepository
-    @Autowired private lateinit var jwkService: JwkService
+    @Autowired
+    private lateinit var jwkRepository: JwkRepository
+    @Autowired
+    private lateinit var jwkService: JwkService
 
     @Test
     fun `concurrent loadOrCreateKeyPair calls converge on single persisted key`() {

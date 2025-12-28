@@ -2,8 +2,9 @@ package pitampoudel.komposeauth
 
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
@@ -17,7 +18,7 @@ import kotlin.test.assertEquals
  */
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@Import(TestConfig::class)
 @AutoConfigureMockMvc
 class MongoContainerSmokeTest {
 

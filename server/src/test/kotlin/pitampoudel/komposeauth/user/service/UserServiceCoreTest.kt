@@ -9,16 +9,17 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
-import pitampoudel.komposeauth.MongoTestSupport
+import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@Import(TestConfig::class)
 class UserServiceCoreTest {
 
     @Autowired

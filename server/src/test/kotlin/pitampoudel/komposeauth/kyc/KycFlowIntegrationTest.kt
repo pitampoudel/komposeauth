@@ -7,26 +7,24 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
-import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.TestAuthHelpers
+import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.user.repository.UserRepository
 import kotlin.test.assertTrue
 
 @SpringBootTest(properties = ["spring.main.allow-bean-definition-overriding=true"])
 @ActiveProfiles("test")
-@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@Import(TestConfig::class,KycFlowTestOverrides::class)
 @AutoConfigureMockMvc
-@Import(KycFlowTestOverrides::class)
 class KycFlowIntegrationTest {
 
     @Autowired

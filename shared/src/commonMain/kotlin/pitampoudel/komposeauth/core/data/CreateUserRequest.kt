@@ -45,8 +45,8 @@ data class CreateUserRequest(
         require(firstName.isNotBlank()) {
             "First name cannot be blank"
         }
-        require(password == null || Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*\\W)(?!.* ).{8,16}$").matches(password)) {
-            "Password must be 8-16 characters with at least one uppercase, lowercase, digit, and special character"
+        require(password == null || Regex("^.{8,}").matches(password)) {
+            "Password must be at least 8 characters long and may include letters, numbers, and special characters"
         }
         require(password == confirmPassword) {
             "Password and confirmation password must match"

@@ -7,7 +7,9 @@ import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAut
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import pitampoudel.komposeauth.StaticAppProperties
+import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.service.security.CryptoService
 
 /**
@@ -15,6 +17,7 @@ import pitampoudel.komposeauth.core.service.security.CryptoService
  *
  * Goal: JWK private keys must never be stored/loaded without a valid AES key.
  */
+@Import(TestConfig::class)
 class JwkStartupPropertySafetyTest {
 
     private val contextRunner = ApplicationContextRunner()

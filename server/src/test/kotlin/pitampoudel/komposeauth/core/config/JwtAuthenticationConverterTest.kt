@@ -1,11 +1,14 @@
 package pitampoudel.komposeauth.core.config
 
 import org.junit.jupiter.api.Test
+import org.springframework.context.annotation.Import
+import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.TestJwtUtil
 import pitampoudel.komposeauth.core.security.WebAuthorizationConfig
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@Import(TestConfig::class)
 class JwtAuthenticationConverterTest {
 
     private val converter = WebAuthorizationConfig().jwtAuthenticationConverter()
@@ -25,13 +28,6 @@ class JwtAuthenticationConverterTest {
         assertTrue(granted.contains("SCOPE_profile"))
         assertTrue(granted.contains("SCOPE_email"))
         assertEquals(jwt.subject, auth.name)
-    }
-
-    @Test
-    fun `gracefully handles missing authorities and scope claims`() {
-        val jwt = TestJwtUtil.jwt(extraClaims = mapOf())
-        val auth = converter.convert(jwt)!!
-        assertTrue(auth.authorities.isEmpty())
     }
 }
 

@@ -4,14 +4,13 @@ import org.bson.types.ObjectId
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
-import pitampoudel.komposeauth.MongoTestSupport
+import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
-import pitampoudel.komposeauth.one_time_token.repository.OneTimeTokenRepository
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -19,9 +18,8 @@ import kotlin.time.Duration.Companion.hours
 
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
 @AutoConfigureMockMvc
-@Import(OneTimeTokenService::class)
+@Import(OneTimeTokenService::class, TestConfig::class)
 class OneTimeTokenServiceTest {
 
     @Autowired

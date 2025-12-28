@@ -2,11 +2,12 @@ package pitampoudel.komposeauth.organization
 
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
-import pitampoudel.komposeauth.MongoTestSupport
+import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.config.canEditOrganization
 import pitampoudel.komposeauth.organization.entity.Organization
 import pitampoudel.komposeauth.user.entity.User
@@ -15,7 +16,7 @@ import kotlin.test.assertTrue
 
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@Import(TestConfig::class)
 @AutoConfigureMockMvc
 class OrganizationPermissionsTest {
 

@@ -12,8 +12,9 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
+import org.springframework.context.annotation.Import
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
@@ -21,10 +22,9 @@ import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import pitampoudel.komposeauth.MongoTestSupport
+import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.jwk.entity.Jwk
 import pitampoudel.komposeauth.jwk.repository.JwkRepository
 import pitampoudel.komposeauth.jwk.service.JwkService
@@ -33,14 +33,18 @@ import java.time.Instant
 
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@Import(TestConfig::class)
 @AutoConfigureMockMvc
 class JwkIntegrationTest {
 
-    @Autowired private lateinit var mockMvc: MockMvc
-    @Autowired private lateinit var jwkRepository: JwkRepository
-    @Autowired private lateinit var jwtEncoder: JwtEncoder
-    @Autowired private lateinit var jwkService: JwkService
+    @Autowired
+    private lateinit var mockMvc: MockMvc
+    @Autowired
+    private lateinit var jwkRepository: JwkRepository
+    @Autowired
+    private lateinit var jwtEncoder: JwtEncoder
+    @Autowired
+    private lateinit var jwkService: JwkService
 
     private val objectMapper = ObjectMapper()
 

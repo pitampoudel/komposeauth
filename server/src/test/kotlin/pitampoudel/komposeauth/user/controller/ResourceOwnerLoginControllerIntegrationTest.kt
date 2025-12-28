@@ -3,15 +3,16 @@ package pitampoudel.komposeauth.user.controller
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
-import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.TestAuthHelpers
+import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.data.Credential
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants
@@ -19,7 +20,7 @@ import pitampoudel.komposeauth.core.domain.ResponseType
 
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(initializers = [MongoTestSupport.Initializer::class])
+@Import(TestConfig::class)
 @AutoConfigureMockMvc
 class ResourceOwnerLoginControllerIntegrationTest {
 

@@ -35,5 +35,5 @@
     <string name="invalid_email">Invalid email</string>
     <string name="invalid_phone_number">Invalid phone number</string>
     <string name="passwords_dont_match">Passwords don't match</string>
-    <string name="validation_error_password_requirement">Password must be 8-16 characters, contain at least one uppercase, one lowercase, one digit, and one special character, no spaces allowed</string>
+    <string name="validation_error_password_requirement">Password must be at least 8 characters long and may include letters, numbers, and special characters</string>
 </resources>
