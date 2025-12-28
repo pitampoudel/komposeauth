@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.http.converter.json.KotlinSerializationJsonHttpMessageConverter
-import org.springframework.security.web.webauthn.jackson.WebauthnJackson2Module
 
 @Configuration
 class SerializationConfig {
@@ -27,7 +26,6 @@ class SerializationConfig {
     fun cborObjectMapper(): ObjectMapper {
         val mapper = ObjectMapper(CBORFactory())
         mapper.registerModule(JavaTimeModule())
-        mapper.registerModule(WebauthnJackson2Module())
         return mapper
     }
 
@@ -36,7 +34,6 @@ class SerializationConfig {
     fun objectMapper(): ObjectMapper {
         val mapper = ObjectMapper()
         mapper.registerModule(JavaTimeModule())
-        mapper.registerModule(WebauthnJackson2Module())
         return mapper
     }
 

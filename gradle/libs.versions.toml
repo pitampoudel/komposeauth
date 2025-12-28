@@ -3,8 +3,6 @@ agp = "8.13.2"
 credentials = "1.6.0-rc01"
 credentialsPlayServicesAuth = "1.6.0-rc01"
 cryptography = "0.5.0"
-jjwtApi = "0.13.0"
-junitJupiter = "1.21.3"
 kermit = "2.0.8"
 kotlin = "2.3.0"
 android-minSdk = "24"
@@ -14,7 +12,6 @@ koin-bom = "4.1.1"
 ktor = "3.3.3"
 libphonenumberKotlin = "0.1.9"
 chucker = "4.2.0"
-mockitoKotlin = "6.1.0"
 multiplatformSettings = "1.3.0"
 kotlinx-serialization = "2.3.0"
 kotlinxSerializationCore = "1.9.0"
@@ -26,11 +23,6 @@ googleid = "1.1.1"
 playServicesAuth = "21.4.0"
 playServicesAuthApiPhone = "18.3.0"
 ccp = "2.7.3"
-sentrySpringBootStarterJakarta = "8.25.0"
-springCloudGcpStorage = "7.4.1"
-springdocOpenapiStarterWebmvcUi = "2.8.14"
-testcontainers = "2.0.2"
-webauthn4jCore = "0.29.7.RELEASE"
 androidx-security-crypto = "1.1.0"
 composeHotReload = "1.0.0"
 androidx-activity = "1.12.2"
@@ -44,23 +36,15 @@ androidx-credentials = { module = "androidx.credentials:credentials", version.re
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto" }
 cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptography" }
 cryptography-provider-webcrypto = { module = "dev.whyoleg.cryptography:cryptography-provider-webcrypto", version.ref = "cryptography" }
-jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwtApi" }
-jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwtApi" }
-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "junitJupiter" }
-junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
 coil3-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.3.0" }
 coil3-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version = "3.3.0" }
 koin-core = { module = "io.insert-koin:koin-core" }
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
-kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5" }
 libphonenumber-kotlin = { module = "io.github.luca992.libphonenumber-kotlin:libphonenumber", version.ref = "libphonenumberKotlin" }
 chucker = { module = "com.github.chuckerteam.chucker:library", version.ref = "chucker" }
 lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "jetbrains-lifecycle" }
-mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }
-mongodb = { module = "org.testcontainers:mongodb" }
 multiplatformSettings-core = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatformSettings" }
 multiplatformSettings-serialization = { module = "com.russhwolf:multiplatform-settings-serialization", version.ref = "multiplatformSettings" }
 multiplatformSettings-noArg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings" }
@@ -82,26 +66,6 @@ googleid = { module = "com.google.android.libraries.identity.googleid:googleid",
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-auth-api-phone = { module = "com.google.android.gms:play-services-auth-api-phone", version.ref = "playServicesAuthApiPhone" }
 ccp = { module = "com.hbb20:ccp", version.ref = "ccp" }
-sentry-spring-boot-starter-jakarta = { module = "io.sentry:sentry-spring-boot-starter-jakarta", version.ref = "sentrySpringBootStarterJakarta" }
-spring-boot-devtools = { module = "org.springframework.boot:spring-boot-devtools" }
-spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
-spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
-spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb" }
-spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail" }
-spring-boot-starter-oauth2-client = { module = "org.springframework.boot:spring-boot-starter-oauth2-client" }
-spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
-spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
-spring-boot-starter-thymeleaf = { module = "org.springframework.boot:spring-boot-starter-thymeleaf" }
-spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
-spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
-spring-cloud-gcp-storage = { module = "com.google.cloud:spring-cloud-gcp-storage", version.ref = "springCloudGcpStorage" }
-spring-security-crypto = { module = "org.springframework.security:spring-security-crypto" }
-spring-boot-starter-oauth2-authorization-server = { module = "org.springframework.boot:spring-boot-starter-oauth2-authorization-server" }
-spring-security-test = { module = "org.springframework.security:spring-security-test" }
-spring-security-web = { module = "org.springframework.security:spring-security-web" }
-springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdocOpenapiStarterWebmvcUi" }
-testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
-webauthn4j-core = { module = "com.webauthn4j:webauthn4j-core", version.ref = "webauthn4jCore" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 androidx-lifecycle-viewmodelCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }

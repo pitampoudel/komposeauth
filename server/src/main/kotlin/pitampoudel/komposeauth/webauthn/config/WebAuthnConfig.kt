@@ -123,7 +123,7 @@ class WebAuthnConfig(
             userCredentialRepository,
             PublicKeyCredentialRpEntity.builder()
                 .id(appConfigService.rpId() ?: "localhost")
-                .name(appConfigService.getConfig().name)
+                .name(appConfigService.getConfig().name ?: "komposeauth")
                 .build(),
             appConfigService.webauthnAllowedOrigins()
         )

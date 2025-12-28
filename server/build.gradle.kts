@@ -3,7 +3,7 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 plugins {
     kotlin("jvm")
     kotlin("plugin.spring") version "1.9.25"
-    id("org.springframework.boot") version "3.5.7"
+    id("org.springframework.boot") version "4.0.1"
     id("io.spring.dependency-management") version "1.1.7"
     alias(libs.plugins.kotlinx.serialization)
 }
@@ -13,53 +13,51 @@ configurations.all {
 }
 
 dependencies {
+    //noinspection UseTomlInstead
     implementation(project(":shared"))
-    implementation(libs.spring.boot.starter)
-    implementation(libs.spring.boot.starter.thymeleaf)
-    implementation(libs.spring.boot.starter.web)
-    implementation(libs.spring.boot.starter.data.mongodb)
-    implementation(libs.kotlin.reflect)
-    implementation(libs.spring.boot.starter.actuator)
-    testImplementation(libs.spring.boot.starter.test)
-    testImplementation(libs.kotlin.test.junit5)
-    "developmentOnly"(libs.spring.boot.devtools)
-    testRuntimeOnly(libs.junit.platform.launcher)
+    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.3.0")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:2.3.0")
+    "developmentOnly"("org.springframework.boot:spring-boot-devtools")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    implementation(libs.spring.boot.starter.security)
-    implementation(libs.spring.security.crypto)
-    implementation(libs.spring.boot.starter.oauth2.client)
-    implementation (libs.spring.boot.starter.oauth2.authorization.server)
-    implementation(libs.spring.boot.starter.validation)
-    implementation(libs.spring.boot.starter.mail)
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.security:spring-security-webauthn")
+    implementation("org.springframework.security:spring-security-crypto")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-authorization-server")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-mail")
 
     // Passkeys
-    implementation(libs.spring.security.web)
-    implementation(libs.webauthn4j.core)
+    implementation("org.springframework.security:spring-security-web")
+    implementation("com.webauthn4j:webauthn4j-core:0.29.7.RELEASE")
 
-    implementation(libs.kotlinx.datetime)
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
 
     // kotlinx serialization
-    implementation(libs.kotlinx.serialization.json.jvm)
-    implementation(libs.kotlinx.serialization.core.jvm)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.9.0")
 
     // Sentry for error tracking
-    implementation(libs.sentry.spring.boot.starter.jakarta)
+    implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.29.0")
 
-    testImplementation(libs.spring.security.test)
-    testImplementation(libs.mockito.kotlin)
+    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:6.1.0")
 
-    implementation(libs.jjwt.api)
-    runtimeOnly(libs.jjwt.impl)
+    implementation("io.jsonwebtoken:jjwt-api:0.13.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
 
     // Google Cloud Platform
-    implementation(libs.spring.cloud.gcp.storage)
+    implementation("com.google.cloud:spring-cloud-gcp-storage:7.4.2")
 
     // OpenAPI documentation
-    implementation(libs.springdoc.openapi.starter.webmvc.ui)
-
-    testImplementation(libs.testcontainers)
-    testImplementation(libs.junit.jupiter)
-    testImplementation(libs.mongodb)
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0")
 
     //noinspection UseTomlInstead
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.10.2")

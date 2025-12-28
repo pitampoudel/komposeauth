@@ -1,9 +1,10 @@
 spring:
   application:
     name: "komposeauth"
+  mongodb:
+    uri: ${MONGODB_URI}
   data:
     mongodb:
-      uri: ${MONGODB_URI}
       auto-index-creation: true
   main:
     lazy-initialization: true
