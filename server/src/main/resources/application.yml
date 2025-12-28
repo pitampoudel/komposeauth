@@ -25,4 +25,4 @@ server:
         name: KOMPOSEAUTH_SESSION
 
 app:
-  base64-encryption-key: ${BASE64_ENCRYPTION_KEY:}
+  base64-encryption-key: ${BASE64_ENCRYPTION_KEY}
