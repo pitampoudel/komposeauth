@@ -27,9 +27,6 @@ class MongoConfig {
         converter.customConversions = conversions
         converter.setTypeMapper(DefaultMongoTypeMapper("_type", context))
 
-        // Configure map key dot replacement to handle keys with dots (like java.security.Principal)
-        converter.setMapKeyDotReplacement("_DOT_")
-
         return converter
     }
 }

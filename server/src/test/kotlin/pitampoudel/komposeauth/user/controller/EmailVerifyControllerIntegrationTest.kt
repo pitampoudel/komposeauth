@@ -15,9 +15,9 @@ import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.MongoTestSupport
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
-import pitampoudel.komposeauth.user.entity.OneTimeToken
+import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.user.repository.UserRepository
-import pitampoudel.komposeauth.user.service.OneTimeTokenService
+import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import kotlin.time.Duration.Companion.minutes
 
 @SpringBootTest

@@ -10,9 +10,9 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import pitampoudel.komposeauth.MongoTestSupport
-import pitampoudel.komposeauth.user.entity.OneTimeToken
-import pitampoudel.komposeauth.user.repository.OneTimeTokenRepository
-import pitampoudel.komposeauth.user.service.OneTimeTokenService
+import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
+import pitampoudel.komposeauth.one_time_token.repository.OneTimeTokenRepository
+import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.time.Duration.Companion.hours

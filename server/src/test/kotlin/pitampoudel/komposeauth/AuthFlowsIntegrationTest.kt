@@ -19,10 +19,10 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.data.Credential
 import pitampoudel.komposeauth.core.domain.ResponseType
-import pitampoudel.komposeauth.user.entity.OneTimeToken
-import pitampoudel.komposeauth.user.repository.OneTimeTokenRepository
+import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
+import pitampoudel.komposeauth.one_time_token.repository.OneTimeTokenRepository
 import pitampoudel.komposeauth.user.repository.UserRepository
-import pitampoudel.komposeauth.user.service.OneTimeTokenService
+import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue

@@ -1,10 +1,10 @@
-package pitampoudel.komposeauth.user.service
+package pitampoudel.komposeauth.one_time_token.service
 
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
-import pitampoudel.komposeauth.user.entity.OneTimeToken
-import pitampoudel.komposeauth.user.repository.OneTimeTokenRepository
+import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
+import pitampoudel.komposeauth.one_time_token.repository.OneTimeTokenRepository
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.time.Instant
