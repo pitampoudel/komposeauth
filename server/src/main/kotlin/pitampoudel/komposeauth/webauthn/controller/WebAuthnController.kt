@@ -112,7 +112,7 @@ class WebAuthnController(
                 creationOptions,
                 publicKey
             )
-        ) ?: return ResponseEntity.badRequest().build()
+        )
 
 
         return ResponseEntity.ok(credentialRecord)

@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.user.entity
+package pitampoudel.komposeauth.phone_otp.entity
 
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.CreatedDate

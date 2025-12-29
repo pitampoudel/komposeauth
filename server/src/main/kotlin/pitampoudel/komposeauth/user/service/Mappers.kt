@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.user.dto
+package pitampoudel.komposeauth.user.service
 
 import jakarta.validation.Valid
 import org.bson.types.ObjectId

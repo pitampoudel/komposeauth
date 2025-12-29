@@ -14,7 +14,7 @@ import pitampoudel.core.data.PageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.user.data.UserResponse
 import pitampoudel.komposeauth.kyc.service.KycService
-import pitampoudel.komposeauth.user.dto.mapToResponseDto
+import pitampoudel.komposeauth.user.service.mapToResponseDto
 import pitampoudel.komposeauth.user.service.UserService
 
 @RestController

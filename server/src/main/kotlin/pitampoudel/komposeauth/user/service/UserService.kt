@@ -37,10 +37,6 @@ import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.kyc.service.KycService
-import pitampoudel.komposeauth.user.dto.mapToEntity
-import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
-import pitampoudel.komposeauth.user.dto.mapToResponseDto
-import pitampoudel.komposeauth.user.dto.update
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.entity.User

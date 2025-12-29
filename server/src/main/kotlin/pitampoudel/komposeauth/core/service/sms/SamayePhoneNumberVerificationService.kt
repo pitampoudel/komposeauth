@@ -1,8 +1,8 @@
 package pitampoudel.komposeauth.core.service.sms
 
 import pitampoudel.komposeauth.app_config.service.AppConfigService
-import pitampoudel.komposeauth.user.entity.PhoneOtp
-import pitampoudel.komposeauth.user.repository.PhoneOtpRepository
+import pitampoudel.komposeauth.phone_otp.entity.PhoneOtp
+import pitampoudel.komposeauth.phone_otp.repository.PhoneOtpRepository
 import kotlin.random.Random
 
 class SamayePhoneNumberVerificationService(

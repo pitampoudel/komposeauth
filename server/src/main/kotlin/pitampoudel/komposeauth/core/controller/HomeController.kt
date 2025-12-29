@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.user.data.ProfileResponse
 import pitampoudel.komposeauth.kyc.service.KycService
-import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
+import pitampoudel.komposeauth.user.service.mapToProfileResponseDto
 
 @RestController
 class HomeController(

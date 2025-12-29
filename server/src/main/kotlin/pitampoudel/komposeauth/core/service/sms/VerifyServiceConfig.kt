@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.app_config.service.AppConfigService
-import pitampoudel.komposeauth.user.repository.PhoneOtpRepository
+import pitampoudel.komposeauth.phone_otp.repository.PhoneOtpRepository
 
 @Configuration
 class VerifyServiceConfig {

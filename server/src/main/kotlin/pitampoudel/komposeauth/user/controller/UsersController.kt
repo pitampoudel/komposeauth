@@ -28,8 +28,8 @@ import pitampoudel.komposeauth.user.data.UserResponse
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client.Companion.SCOPE_READ_ANY_USER
-import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
-import pitampoudel.komposeauth.user.dto.mapToResponseDto
+import pitampoudel.komposeauth.user.service.mapToProfileResponseDto
+import pitampoudel.komposeauth.user.service.mapToResponseDto
 import pitampoudel.komposeauth.user.service.UserService
 
 

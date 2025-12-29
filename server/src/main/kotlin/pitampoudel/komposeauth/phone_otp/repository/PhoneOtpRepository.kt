@@ -1,9 +1,9 @@
-package pitampoudel.komposeauth.user.repository
+package pitampoudel.komposeauth.phone_otp.repository
 
-import pitampoudel.komposeauth.user.entity.PhoneOtp
 import org.bson.types.ObjectId
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.stereotype.Repository
+import pitampoudel.komposeauth.phone_otp.entity.PhoneOtp
 
 @Repository
 interface PhoneOtpRepository : MongoRepository<PhoneOtp, ObjectId> {

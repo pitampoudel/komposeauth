@@ -22,7 +22,7 @@ import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.service.KycService
-import pitampoudel.komposeauth.user.dto.mapToProfileResponseDto
+import pitampoudel.komposeauth.user.service.mapToProfileResponseDto
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.service.UserService
 import java.time.Instant
