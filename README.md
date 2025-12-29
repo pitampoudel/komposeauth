@@ -48,9 +48,9 @@ docker run -p 80:80 \
 - After the container is running, open this page to configure everything else:
   - http://localhost/config
 
-### 2) Add the SDKs to your KMP project
+### 2) Add the SDK to your KMP project
 
-Shared module
+Shared module (optional and also included already on client module)
 
 ```kotlin
 // Check the badge above for the latest version
