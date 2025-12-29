@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.domain.use_cases
+package pitampoudel.komposeauth.core.domain.validators
 
 import pitampoudel.core.domain.isUrlValid
 import pitampoudel.core.domain.validators.GeneralValidationError

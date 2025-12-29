@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
-import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.core.utils.findServerUrl

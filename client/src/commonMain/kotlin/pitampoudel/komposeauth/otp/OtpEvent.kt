@@ -1,6 +1,6 @@
 package pitampoudel.komposeauth.otp
 
-import pitampoudel.komposeauth.core.data.UpdatePhoneNumberRequest
+import pitampoudel.komposeauth.user.data.UpdatePhoneNumberRequest
 
 sealed interface OtpEvent {
     data object DismissInfoMsg : OtpEvent

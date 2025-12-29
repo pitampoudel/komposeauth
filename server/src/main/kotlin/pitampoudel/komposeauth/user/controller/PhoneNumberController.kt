@@ -10,9 +10,9 @@ import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.UPDATE_PHONE_NUMBER
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_PHONE_NUMBER
-import pitampoudel.komposeauth.core.data.UpdatePhoneNumberRequest
-import pitampoudel.komposeauth.core.data.UserResponse
-import pitampoudel.komposeauth.core.data.VerifyPhoneOtpRequest
+import pitampoudel.komposeauth.user.data.UpdatePhoneNumberRequest
+import pitampoudel.komposeauth.user.data.UserResponse
+import pitampoudel.komposeauth.user.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.user.service.UserService
 
 @RestController

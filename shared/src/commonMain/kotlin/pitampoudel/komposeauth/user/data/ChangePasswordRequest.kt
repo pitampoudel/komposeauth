@@ -1,10 +1,10 @@
-package pitampoudel.komposeauth.core.data
+package pitampoudel.komposeauth.user.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import pitampoudel.core.domain.validators.ValidationResult
-import pitampoudel.komposeauth.core.domain.use_cases.ValidateConfirmPassword
-import pitampoudel.komposeauth.core.domain.use_cases.ValidatePassword
+import pitampoudel.komposeauth.user.domain.validators.ValidateConfirmPassword
+import pitampoudel.komposeauth.user.domain.validators.ValidatePassword
 
 @Serializable
 data class ChangePasswordRequest(

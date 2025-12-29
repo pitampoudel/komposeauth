@@ -17,7 +17,7 @@ import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.RESET_PASSWORD
-import pitampoudel.komposeauth.core.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.service.UserService

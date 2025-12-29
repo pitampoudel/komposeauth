@@ -12,8 +12,8 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
-import pitampoudel.komposeauth.core.data.UpdatePhoneNumberRequest
-import pitampoudel.komposeauth.core.data.VerifyPhoneOtpRequest
+import pitampoudel.komposeauth.user.data.UpdatePhoneNumberRequest
+import pitampoudel.komposeauth.user.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 
 @SpringBootTest

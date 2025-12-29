@@ -3,7 +3,7 @@ package pitampoudel.komposeauth.login.presentation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import kotlinx.serialization.json.JsonObject
 import pitampoudel.komposeauth.login.presentation.KmpCredentialManager

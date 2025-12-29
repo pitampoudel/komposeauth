@@ -20,11 +20,11 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.ME
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.STATS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.USERS
-import pitampoudel.komposeauth.core.data.CreateUserRequest
-import pitampoudel.komposeauth.core.data.ProfileResponse
+import pitampoudel.komposeauth.user.data.CreateUserRequest
+import pitampoudel.komposeauth.user.data.ProfileResponse
 import pitampoudel.komposeauth.core.data.StatsResponse
-import pitampoudel.komposeauth.core.data.UpdateProfileRequest
-import pitampoudel.komposeauth.core.data.UserResponse
+import pitampoudel.komposeauth.user.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.data.UserResponse
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client.Companion.SCOPE_READ_ANY_USER

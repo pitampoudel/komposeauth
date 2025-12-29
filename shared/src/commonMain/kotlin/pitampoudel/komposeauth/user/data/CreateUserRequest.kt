@@ -1,10 +1,9 @@
-package pitampoudel.komposeauth.core.data
+package pitampoudel.komposeauth.user.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.core.domain.isValidEmail
-import pitampoudel.komposeauth.core.domain.use_cases.ValidatePhoneNumber
 
 @Serializable
 data class CreateUserRequest(

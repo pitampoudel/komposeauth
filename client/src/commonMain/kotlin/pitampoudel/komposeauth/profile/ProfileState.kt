@@ -4,8 +4,8 @@ import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.domain.Result
 import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.presentation.InfoMessage
-import pitampoudel.komposeauth.core.data.ProfileResponse
-import pitampoudel.komposeauth.core.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.data.ProfileResponse
+import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.organization.data.OrganizationResponse
 
 data class ProfileState(

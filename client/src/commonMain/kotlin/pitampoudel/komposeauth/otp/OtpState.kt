@@ -2,8 +2,8 @@ package pitampoudel.komposeauth.otp
 
 import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.presentation.InfoMessage
-import pitampoudel.komposeauth.core.data.UpdatePhoneNumberRequest
-import pitampoudel.komposeauth.core.data.VerifyPhoneOtpRequest
+import pitampoudel.komposeauth.user.data.UpdatePhoneNumberRequest
+import pitampoudel.komposeauth.user.data.VerifyPhoneOtpRequest
 
 data class OtpState(
     val progress: Float? = null,

@@ -14,8 +14,8 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
-import pitampoudel.komposeauth.core.data.Credential
-import pitampoudel.komposeauth.core.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.data.Credential
+import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 
 @SpringBootTest

@@ -3,11 +3,10 @@ package pitampoudel.komposeauth.user.dto
 import jakarta.validation.Valid
 import org.bson.types.ObjectId
 import org.springframework.security.crypto.password.PasswordEncoder
-import pitampoudel.core.data.parsePhoneNumber
-import pitampoudel.komposeauth.core.data.CreateUserRequest
-import pitampoudel.komposeauth.core.data.ProfileResponse
-import pitampoudel.komposeauth.core.data.UpdateProfileRequest
-import pitampoudel.komposeauth.core.data.UserResponse
+import pitampoudel.komposeauth.user.data.CreateUserRequest
+import pitampoudel.komposeauth.user.data.ProfileResponse
+import pitampoudel.komposeauth.user.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.data.UserResponse
 import pitampoudel.komposeauth.user.entity.User
 import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinInstant

@@ -14,7 +14,7 @@ import org.koin.mp.KoinPlatform.getKoin
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.events.Event
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.core.data.Credential
+import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.login.presentation.KmpCredentialManager

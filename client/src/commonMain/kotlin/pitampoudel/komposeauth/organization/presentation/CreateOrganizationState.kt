@@ -4,7 +4,7 @@ import pitampoudel.core.domain.KmpFile
 import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.komposeauth.core.data.AddressInformation
-import pitampoudel.komposeauth.core.domain.use_cases.ValidatePhoneNumber
+import pitampoudel.komposeauth.core.domain.validators.ValidatePhoneNumber
 import pitampoudel.komposeauth.organization.data.CreateOrUpdateOrganizationRequest
 import pitampoudel.komposeauth.organization.data.OrganizationResponse
 

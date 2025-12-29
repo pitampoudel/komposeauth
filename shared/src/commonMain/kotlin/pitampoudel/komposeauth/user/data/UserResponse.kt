@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.data
+package pitampoudel.komposeauth.user.data
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable

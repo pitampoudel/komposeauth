@@ -16,9 +16,9 @@ import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
-import pitampoudel.komposeauth.core.data.CreateUserRequest
-import pitampoudel.komposeauth.core.data.UpdatePhoneNumberRequest
-import pitampoudel.komposeauth.core.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.data.CreateUserRequest
+import pitampoudel.komposeauth.user.data.UpdatePhoneNumberRequest
+import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.user.repository.UserRepository
 

@@ -25,6 +25,7 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.login.domain.AuthPreferences
 import pitampoudel.komposeauth.core.domain.Config
 import pitampoudel.komposeauth.core.domain.ResponseType
+import pitampoudel.komposeauth.user.data.Credential
 
 internal fun HttpClientConfig<*>.installKomposeAuth(
     authPreferences: AuthPreferences,

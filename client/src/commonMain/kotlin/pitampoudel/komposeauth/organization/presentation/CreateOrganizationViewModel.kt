@@ -16,9 +16,9 @@ import pitampoudel.core.domain.validators.ValidateNotNull
 import pitampoudel.core.domain.validators.ValidateUrlOrBlank
 import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.core.presentation.ResultUiEvent
-import pitampoudel.komposeauth.core.domain.use_cases.ValidateEmail
-import pitampoudel.komposeauth.core.domain.use_cases.ValidateFacebookLinkOrBlank
-import pitampoudel.komposeauth.core.domain.use_cases.ValidatePhoneNumber
+import pitampoudel.komposeauth.core.domain.validators.ValidateEmail
+import pitampoudel.komposeauth.core.domain.validators.ValidateFacebookLinkOrBlank
+import pitampoudel.komposeauth.core.domain.validators.ValidatePhoneNumber
 import pitampoudel.komposeauth.organization.domain.OrganizationsClient
 import pitampoudel.komposeauth.organization.domain.use_cases.ValidateOrganizationDescription
 import pitampoudel.komposeauth.organization.domain.use_cases.ValidateOrganizationPhoneNumber
