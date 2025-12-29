@@ -1,10 +1,14 @@
 package pitampoudel.komposeauth.webauthn.entity
 
+import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.annotation.TypeAlias
+import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.security.web.webauthn.api.Bytes
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEntity
+import java.time.Instant
 
 @Document(collection = "public_key_users")
 @TypeAlias("public_key_user")
@@ -12,9 +16,14 @@ data class PublicKeyUser(
     @Id
     val id: String,
     @get:JvmName("nameValue")
+    @Indexed
     val name: String,
     @get:JvmName("displayNameValue")
-    val displayName: String?
+    val displayName: String?,
+    @CreatedDate
+    val createdAt: Instant = Instant.now(),
+    @LastModifiedDate
+    val updatedAt: Instant = Instant.now()
 ) : PublicKeyCredentialUserEntity {
     override fun getId(): Bytes = Bytes.fromBase64(id)
     override fun getName(): String = name

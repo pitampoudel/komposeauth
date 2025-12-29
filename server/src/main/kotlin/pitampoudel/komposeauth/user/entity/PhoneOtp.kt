@@ -15,6 +15,7 @@ import kotlin.time.toJavaDuration
 data class PhoneOtp(
     @Id
     val id: ObjectId = ObjectId(),
+    @Indexed
     val phoneNumber: String,
     val otp: String,
     @CreatedDate

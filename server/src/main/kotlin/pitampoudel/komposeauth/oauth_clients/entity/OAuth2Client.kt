@@ -1,9 +1,11 @@
 package pitampoudel.komposeauth.oauth_clients.entity
 
+import jakarta.validation.constraints.NotBlank
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.annotation.TypeAlias
+import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
@@ -15,15 +17,18 @@ data class OAuth2Client(
     @Id
     val clientId: String,
     val clientSecret: String?,
+    @field:NotBlank(message = "Client name is required")
     val clientName: String,
     val clientAuthenticationMethods: Set<ClientAuthenticationMethod>,
     val authorizationGrantTypes: Set<AuthorizationGrantType>,
     val redirectUris: Set<String>,
     val scopes: Set<String>,
+    @Indexed
     val requireAuthorizationConsent: Boolean,
     val clientUri: String?,
     val logoUri: String?,
     @CreatedDate
+    @Indexed
     val createdAt: Instant = Instant.now(),
     @LastModifiedDate
     val updatedAt: Instant = Instant.now()
