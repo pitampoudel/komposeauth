@@ -65,7 +65,7 @@ class ProfileViewModel internal constructor(
                         progress = null,
                         profile = res.data,
                         editingState = it.editingState.copy(
-                            givenName = res.data.givenName,
+                            givenName = res.data.givenName.orEmpty(),
                             familyName = res.data.familyName ?: it.editingState.familyName
                         ),
                     )

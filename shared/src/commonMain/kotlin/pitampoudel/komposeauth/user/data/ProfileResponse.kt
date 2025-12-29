@@ -8,7 +8,7 @@ import kotlin.time.Instant
 @Serializable
 data class ProfileResponse(
     @SerialName("givenName")
-    val givenName: String,
+    val givenName: String?,
     @SerialName("familyName")
     val familyName: String?,
     @SerialName("email")

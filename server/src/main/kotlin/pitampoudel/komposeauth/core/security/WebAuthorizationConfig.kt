@@ -128,7 +128,9 @@ class WebAuthorizationConfig() {
                     user.email?.let {
                         context.claims.claim("email", it)
                     }
-                    context.claims.claim("givenName", user.firstName)
+                    user.firstName?.let {
+                        context.claims.claim("givenName", it)
+                    }
                     user.lastName?.let {
                         context.claims.claim("familyName", it)
                     }
@@ -193,13 +195,15 @@ class WebAuthorizationConfig() {
                                     "kycVerified",
                                     (kycService.find(user.id)?.status == KycResponse.Status.APPROVED)
                                 )
-                                .claim("givenName", user.firstName)
                                 .claim("createdAt", user.createdAt.toString())
                                 .claim("updatedAt", user.updatedAt.toString())
                                 .claim("roles", user.roles)
 
                             user.email?.let {
                                 builder.claim("email", user.email)
+                            }
+                            user.firstName?.let {
+                                builder.claim("givenName", user.firstName)
                             }
                             user.lastName?.let {
                                 builder.claim("familyName", user.lastName)

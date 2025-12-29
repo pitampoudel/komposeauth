@@ -70,7 +70,6 @@ class ResourceOwnerLoginController(
             .issuedAt(now)
             .expiresAt(now + 1.days.toJavaDuration())
             .notBefore(now)
-            .claim("givenName", user.firstName)
             .claim("authorities", user.roles.map { "ROLE_$it" })
             .claim("scope", scopes)
             .claim("kycVerified", kycService.isVerified(user.id))
@@ -79,8 +78,11 @@ class ResourceOwnerLoginController(
         user.email?.let {
             builder.claim("email", it)
         }
+        user.firstName?.let {
+            builder.claim("givenName", it)
+        }
         user.lastName?.let {
-            builder.claim("name", it)
+            builder.claim("familyName", it)
         }
         user.picture?.let {
             builder.claim("picture", it)

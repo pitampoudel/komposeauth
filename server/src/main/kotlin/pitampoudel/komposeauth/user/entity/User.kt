@@ -34,7 +34,7 @@ data class User(
     @Id
     val id: ObjectId,
     @field:NotBlank(message = "First name is required")
-    val firstName: String,
+    val firstName: String?,
     @field:NotBlank(message = "Last name is required")
     val lastName: String?,
     @field:Email(message = "Invalid email address")

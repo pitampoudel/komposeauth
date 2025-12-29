@@ -8,9 +8,9 @@ import pitampoudel.core.domain.isValidEmail
 @Serializable
 data class CreateUserRequest(
     @SerialName("firstName")
-    val firstName: String,
+    val firstName: String? = null,
     @SerialName("lastName")
-    val lastName: String?,
+    val lastName: String? = null,
     @SerialName("email")
     val email: String? = null,
     @SerialName("phoneNumber")
@@ -41,9 +41,6 @@ data class CreateUserRequest(
     }
 
     init {
-        require(firstName.isNotBlank()) {
-            "First name cannot be blank"
-        }
         require(password == null || Regex("^.{8,}").matches(password)) {
             "Password must be at least 8 characters long and may include letters, numbers, and special characters"
         }

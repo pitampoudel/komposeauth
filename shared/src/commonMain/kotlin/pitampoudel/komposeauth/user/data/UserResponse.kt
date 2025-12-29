@@ -7,7 +7,7 @@ import kotlin.time.Instant
 @Serializable
 data class UserResponse(
     val id: String,
-    val firstName: String,
+    val firstName: String?,
     val lastName: String?,
     val email: String?,
     val emailVerified: Boolean,

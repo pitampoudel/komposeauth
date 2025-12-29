@@ -12,7 +12,7 @@ data class AuthUser(
     @SerialName("familyName")
     val familyName: String? = null,
     @SerialName("givenName")
-    val givenName: String,
+    val givenName: String?,
     @SerialName("kycVerified")
     val kycVerified: Boolean,
     @SerialName("phoneNumberVerified")
