@@ -13,7 +13,6 @@ import org.springframework.data.mongodb.core.index.CompoundIndexes
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import pitampoudel.core.domain.now
-import pitampoudel.komposeauth.core.domain.EntityId
 import kotlin.time.Instant
 
 @Serializable
@@ -57,6 +56,4 @@ data class Organization(
     val website: String?,
     val socialLinks: List<String> = listOf(),
     val userIds: List<@Contextual ObjectId>
-) {
-    fun asEntityId(): EntityId = EntityId.Organization(id = id.toHexString())
-}
+)
