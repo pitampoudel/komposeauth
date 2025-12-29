@@ -46,7 +46,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":shared"))
+                api(project(":shared"))
                 // koin
                 api(project.dependencies.platform(libs.koin.bom))
                 implementation(libs.koin.core)
