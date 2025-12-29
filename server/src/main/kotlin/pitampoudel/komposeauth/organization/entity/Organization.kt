@@ -12,9 +12,9 @@ import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.CompoundIndexes
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
+import pitampoudel.core.domain.now
 import pitampoudel.komposeauth.core.domain.EntityId
-import java.time.Instant
-
+import kotlin.time.Instant
 
 @Serializable
 @Document(collection = "organizations")
@@ -31,12 +31,12 @@ import java.time.Instant
 data class Organization(
     @Contextual
     @Id val id: ObjectId = ObjectId(),
-    @Contextual 
+    @Contextual
     @CreatedDate
-    val createdAt: Instant = Instant.now(),
-    @Contextual 
+    val createdAt: Instant = now(),
+    @Contextual
     @LastModifiedDate
-    val updatedAt: Instant = Instant.now(),
+    val updatedAt: Instant = now(),
     @field:NotBlank(message = "Organization name is required")
     @Indexed(unique = true) val name: String,
     @field:Email(message = "Invalid email address")
