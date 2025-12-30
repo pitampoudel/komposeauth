@@ -8,7 +8,9 @@ import pitampoudel.komposeauth.core.data.AddressInformation
 import pitampoudel.komposeauth.organization.data.CreateOrUpdateOrganizationRequest
 import pitampoudel.komposeauth.organization.data.OrganizationResponse
 import pitampoudel.komposeauth.organization.entity.Organization
+import java.time.Instant
 import kotlin.time.Clock
+import kotlin.time.toKotlinInstant
 
 fun CreateOrUpdateOrganizationRequest.toOrganization(
     userId: ObjectId,
@@ -54,7 +56,7 @@ fun Organization.updated(
         )
     }?.fullNumberInE164Format
     return this.copy(
-        updatedAt = Clock.System.now(),
+        updatedAt = Instant.now(),
         logoUrl = logoImageUrl,
         name = request.name.trim(),
         email = request.email,
@@ -82,7 +84,7 @@ fun Organization.toApiResponse(phoneNumber: PhoneNumber?): OrganizationResponse 
             addressLine1 = addressLine1,
             addressLine2 = addressLine2
         ),
-        createdAt = createdAt,
+        createdAt = createdAt.toKotlinInstant(),
         description = description,
         email = email,
         emailVerified = emailVerified,

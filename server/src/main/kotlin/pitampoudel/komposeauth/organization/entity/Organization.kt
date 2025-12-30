@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.index.CompoundIndexes
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import pitampoudel.core.domain.now
-import kotlin.time.Instant
+import java.time.Instant
 
 @Serializable
 @Document(collection = "organizations")
@@ -32,10 +32,10 @@ data class Organization(
     @Id val id: ObjectId = ObjectId(),
     @Contextual
     @CreatedDate
-    val createdAt: Instant = now(),
+    val createdAt: Instant = Instant.now(),
     @Contextual
     @LastModifiedDate
-    val updatedAt: Instant = now(),
+    val updatedAt: Instant = Instant.now(),
     @field:NotBlank(message = "Organization name is required")
     @Indexed(unique = true) val name: String,
     @field:Email(message = "Invalid email address")
