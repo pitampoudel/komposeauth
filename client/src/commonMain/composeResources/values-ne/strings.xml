@@ -19,6 +19,7 @@
     <!--  Marital Status  -->
     <string name="kyc_marital_status_married">विवाहित</string>
     <string name="kyc_marital_status_unmarried">अविवाहित</string>
+    <string name="kyc_marital_status_divorced">सम्बन्धविच्छेद</string>
 
      <!-- General-->
     <string name="ok">ठीक छ</string>
@@ -29,8 +30,10 @@
     <string name="must_not_be_empty">खाली हुनु हुँदैन</string>
     <string name="must_be_selected">चयन गर्नुपर्छ</string>
     <string name="too_short">धेरै छोटो</string>
+    <string name="too_long">धेरै लामो</string>
     <string name="invalid_url">अमान्य URL</string>
     <string name="invalid_email">अमान्य इमेल</string>
     <string name="invalid_phone_number">अमान्य फोन नम्बर</string>
     <string name="passwords_dont_match">पासवर्डहरू मेल खाँदैनन्</string>
+    <string name="validation_error_password_requirement">पासवर्ड कम्तीमा ८ अक्षर/अङ्कको हुनुपर्छ र अक्षर, अङ्क तथा विशेष चिन्हहरू समावेश हुन सक्छन्</string>
 </resources>
