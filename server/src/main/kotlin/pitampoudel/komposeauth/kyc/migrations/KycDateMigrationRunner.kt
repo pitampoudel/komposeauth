@@ -7,10 +7,15 @@ import org.springframework.stereotype.Component
 import pitampoudel.komposeauth.core.migrations.DbMigration
 import java.util.*
 
+/**
+ * Normalize KYC date fields from nested { value: ... } to Date
+ */
 @Component
 class KycDateFieldMigration : DbMigration {
 
     private val logger = LoggerFactory.getLogger(javaClass)
+
+    override val migrationId: String = "2026-01-01-kyc-date-field"
     override val fromSchemaVersion: Int = 0
 
     override fun run(mongoTemplate: MongoTemplate) {
@@ -33,7 +38,6 @@ class KycDateFieldMigration : DbMigration {
 
         documentsToMigrate.forEachIndexed { index, doc ->
             try {
-                logger.info("Processing document ${index + 1}/${documentsToMigrate.size}, ID: ${doc["_id"]}")
 
                 val updates = Document()
                 var hasUpdate = false
@@ -65,17 +69,14 @@ class KycDateFieldMigration : DbMigration {
 
                 if (hasUpdate) {
                     val updateDoc = Document($$"$set", updates)
-                    val result = collection.updateOne(
+                    collection.updateOne(
                         Document("_id", doc["_id"]),
                         updateDoc
                     )
-                    logger.info("  ✓ Updated - matched: ${result.matchedCount}, modified: ${result.modifiedCount}")
                     successCount++
-                } else {
-                    logger.info("  - No updates needed")
                 }
             } catch (e: Exception) {
-                logger.error("  ✗ Error processing document ${doc["_id"]}: ${e.message}", e)
+                logger.error("Error processing document ${doc["_id"]}: ${e.message}", e)
                 errorCount++
             }
         }
@@ -85,11 +86,7 @@ class KycDateFieldMigration : DbMigration {
 
     private fun extractDateFromValue(value: Any?): Date? {
         return when (value) {
-            is Date -> {
-                logger.info("    Value is already a Date: $value")
-                value
-            }
-
+            is Date -> value
             is Document -> {
                 val dateField = value[$$"$date"]
                 when (dateField) {
@@ -101,10 +98,7 @@ class KycDateFieldMigration : DbMigration {
                 }
             }
 
-            else -> {
-                logger.warn("    Unexpected value type: ${value?.javaClass?.simpleName}")
-                null
-            }
+            else -> null
         }
     }
 }
