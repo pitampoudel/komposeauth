@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.kyc.config
+package pitampoudel.komposeauth.kyc.migrations
 
 import org.bson.Document
 import org.slf4j.LoggerFactory
