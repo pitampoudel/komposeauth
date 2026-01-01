@@ -15,6 +15,7 @@ import pitampoudel.komposeauth.kyc.dto.toResponse
 import pitampoudel.komposeauth.kyc.entity.KycVerification
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.user.entity.User
+import kotlinx.datetime.toJavaLocalDate
 
 
 @Service
@@ -50,7 +51,7 @@ class KycService(
             firstName = data.firstName,
             middleName = data.middleName,
             lastName = data.lastName,
-            dateOfBirth = data.dateOfBirth,
+            dateOfBirth = data.dateOfBirth.toJavaLocalDate(),
             gender = data.gender,
             fatherName = data.fatherName,
             grandFatherName = data.grandFatherName,
@@ -62,7 +63,7 @@ class KycService(
             firstName = data.firstName,
             middleName = data.middleName,
             lastName = data.lastName,
-            dateOfBirth = data.dateOfBirth,
+            dateOfBirth = data.dateOfBirth.toJavaLocalDate(),
             gender = data.gender,
             fatherName = data.fatherName,
             grandFatherName = data.grandFatherName,
@@ -119,8 +120,8 @@ class KycService(
         val entity = existing.copy(
             documentType = data.documentType,
             documentNumber = data.documentNumber,
-            documentIssuedDate = data.documentIssuedDate,
-            documentExpiryDate = data.documentExpiryDate,
+            documentIssuedDate = data.documentIssuedDate.toJavaLocalDate(),
+            documentExpiryDate = data.documentExpiryDate?.toJavaLocalDate(),
             documentIssuedPlace = data.documentIssuedPlace,
             documentFrontUrl = newFrontUrl,
             documentBackUrl = newBackUrl,

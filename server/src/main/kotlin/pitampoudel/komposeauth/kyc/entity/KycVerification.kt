@@ -2,7 +2,7 @@ package pitampoudel.komposeauth.kyc.entity
 
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.PastOrPresent
-import kotlinx.datetime.LocalDate
+import java.time.LocalDate
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id

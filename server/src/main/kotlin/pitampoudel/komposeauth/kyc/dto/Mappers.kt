@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.kyc.dto
 
+import kotlinx.datetime.toKotlinLocalDate
 import pitampoudel.komposeauth.core.data.AddressInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
@@ -13,7 +14,7 @@ fun KycVerification.toResponse() = KycResponse(
         firstName = firstName,
         middleName = middleName,
         lastName = lastName,
-        dateOfBirth = dateOfBirth,
+        dateOfBirth = dateOfBirth.toKotlinLocalDate(),
         gender = gender,
         fatherName = fatherName,
         maritalStatus = maritalStatus,
@@ -36,8 +37,8 @@ fun KycVerification.toResponse() = KycResponse(
     documentInformation = KycResponse.DocumentInformationResponse(
         documentType = documentType,
         documentNumber = documentNumber,
-        documentIssuedDate = documentIssuedDate,
-        documentExpiryDate = documentExpiryDate,
+        documentIssuedDate = documentIssuedDate?.toKotlinLocalDate(),
+        documentExpiryDate = documentExpiryDate?.toKotlinLocalDate(),
         documentIssuedPlace = documentIssuedPlace,
         documentFrontUrl = documentFrontUrl,
         documentBackUrl = documentBackUrl,
