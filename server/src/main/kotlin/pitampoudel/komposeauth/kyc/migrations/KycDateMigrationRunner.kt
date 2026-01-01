@@ -2,27 +2,18 @@ package pitampoudel.komposeauth.kyc.migrations
 
 import org.bson.Document
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.boot.context.event.ApplicationReadyEvent
-import org.springframework.context.event.EventListener
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.stereotype.Service
-import java.util.Date
+import org.springframework.stereotype.Component
+import pitampoudel.komposeauth.core.migrations.DbMigration
+import java.util.*
 
-@Service
-@ConditionalOnProperty(
-    prefix = "migrations.kyc-date",
-    name = ["enabled"],
-    havingValue = "true",
-    matchIfMissing = true
-)
-class KycDateFieldMigration(
-    private val mongoTemplate: MongoTemplate
-) {
+@Component
+class KycDateFieldMigration : DbMigration {
+
     private val logger = LoggerFactory.getLogger(javaClass)
+    override val fromSchemaVersion: Int = 0
 
-    @EventListener(ApplicationReadyEvent::class)
-    fun migrateDateFields() {
+    override fun run(mongoTemplate: MongoTemplate) {
         logger.info("Starting KYC date field migration...")
 
         val collection = mongoTemplate.getCollection("kyc_verifications")
@@ -98,9 +89,9 @@ class KycDateFieldMigration(
                 logger.info("    Value is already a Date: $value")
                 value
             }
+
             is Document -> {
                 val dateField = value[$$"$date"]
-                logger.info($$"    Value is Document with $date: $$dateField (type: $${dateField?.javaClass?.simpleName})")
                 when (dateField) {
                     is Date -> dateField
                     is String -> Date.from(java.time.Instant.parse(dateField))
@@ -109,6 +100,7 @@ class KycDateFieldMigration(
                     else -> null
                 }
             }
+
             else -> {
                 logger.warn("    Unexpected value type: ${value?.javaClass?.simpleName}")
                 null
