@@ -10,6 +10,7 @@ import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CreatePublicKeyCredentialRequest
 import androidx.credentials.CreatePublicKeyCredentialResponse
 import androidx.credentials.CredentialManager
+import androidx.credentials.CredentialOption
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetPublicKeyCredentialOption
@@ -28,44 +29,21 @@ import kotlinx.serialization.json.jsonObject
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
-import pitampoudel.komposeauth.login.presentation.KmpCredentialManager
 
 @Composable
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
-    val uriHandler = LocalUriHandler.current
     val activity = LocalActivity.current ?: throw Exception("No activity found")
     val credentialManager = remember(activity) {
         CredentialManager.create(activity)
     }
     return remember {
         object : KmpCredentialManager {
-            override suspend fun getCredential(options: LoginOptionsResponse): Result<Credential> {
-
-                val googleAuthClientId = options.googleClientId
-                val publicKeyVerificationOptionsJson = options.publicKeyAuthOptionsJson
-
-                val googleIdOption: GetGoogleIdOption? = googleAuthClientId?.let {
-                    GetGoogleIdOption.Builder()
-                        .setFilterByAuthorizedAccounts(false)
-                        .setServerClientId(googleAuthClientId)
-                        .build()
-                }
-
-                val request = GetCredentialRequest.Builder()
-                    .also { req ->
-                        googleIdOption?.let {
-                            req.addCredentialOption(googleIdOption)
-                        }
-                        publicKeyVerificationOptionsJson?.let {
-                            req.addCredentialOption(
-                                GetPublicKeyCredentialOption(
-                                    requestJson = publicKeyVerificationOptionsJson
-                                )
-                            )
-                        }
+            suspend fun getCredentialForOptions(options: List<CredentialOption>): Result<Credential> {
+                val request = GetCredentialRequest.Builder().also { req ->
+                    options.forEach {
+                        req.addCredentialOption(it)
                     }
-                    .build()
-
+                }.build()
                 try {
                     val result = credentialManager.getCredential(
                         context = activity,
@@ -110,20 +88,49 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
 
                 } catch (e: GetCredentialException) {
                     e.printStackTrace()
-                    val userMessage = when (e) {
-                        is GetCredentialProviderConfigurationException ->
+                    when (e) {
+                        is GetCredentialProviderConfigurationException -> return Result.Error(
                             "Google Play services on this device is missing, out of date, or not compatible to sign in with Google. Please update/install Google Play services and try again."
+                        )
 
-                        is NoCredentialException ->
-                            "No Google account available for sign-in on this device. Please add a Google account and try again."
+                        is NoCredentialException -> {
+                            if (options.any { it is GetPublicKeyCredentialOption }) {
+                                return getCredentialForOptions(options.filterNot { it is GetPublicKeyCredentialOption })
+                            }
+                            return Result.Error(
+                                "No Google account available for sign-in on this device. Please add a Google account and try again."
+                            )
+                        }
 
-                        else -> e.message
-                            ?: "Unable to retrieve credentials at the moment. Please try again."
+
+                        else -> return Result.Error(
+                            e.message ?: "Unable to retrieve credentials at the moment. Please try again."
+                        )
+
                     }
-                    return Result.Error(userMessage)
+                }
+            }
+
+            override suspend fun getCredential(options: LoginOptionsResponse): Result<Credential> {
+                val googleAuthClientId = options.googleClientId
+                val publicKeyOption = options.publicKeyAuthOptionsJson?.let {
+                    GetPublicKeyCredentialOption(requestJson = it)
+                }
+                val googleIdOption: GetGoogleIdOption? = googleAuthClientId?.let {
+                    GetGoogleIdOption.Builder()
+                        .setFilterByAuthorizedAccounts(false)
+                        .setServerClientId(googleAuthClientId)
+                        .build()
                 }
 
-
+                val options: List<CredentialOption> = listOfNotNull(
+                    googleIdOption,
+                    publicKeyOption
+                )
+                if (options.isEmpty()) {
+                    return Result.Error("No credential options available")
+                }
+                return getCredentialForOptions(options)
             }
 
             override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
