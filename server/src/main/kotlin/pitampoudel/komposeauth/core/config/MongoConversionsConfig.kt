@@ -18,9 +18,7 @@ class MongoConversionsConfig {
     fun mongoCustomConversions(): MongoCustomConversions {
         val converters = listOf(
             LocalDateToDateConverter,
-            DateToLocalDateConverter,
-            InstantToDateConverter,
-            DateToInstantConverter
+            DateToLocalDateConverter
         )
 
         return MongoCustomConversions(converters)
@@ -37,14 +35,4 @@ object LocalDateToDateConverter : Converter<LocalDate, Date> {
 object DateToLocalDateConverter : Converter<Date, LocalDate> {
     override fun convert(source: Date): LocalDate =
         Instant.ofEpochMilli(source.time).atZone(ZoneOffset.UTC).toLocalDate()
-}
-
-@WritingConverter
-object InstantToDateConverter : Converter<Instant, Date> {
-    override fun convert(source: Instant): Date = Date.from(source)
-}
-
-@ReadingConverter
-object DateToInstantConverter : Converter<Date, Instant> {
-    override fun convert(source: Date): Instant = source.toInstant()
 }
