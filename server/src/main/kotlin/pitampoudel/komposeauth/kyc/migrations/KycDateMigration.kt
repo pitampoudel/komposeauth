@@ -26,7 +26,8 @@ class KycDateFieldMigration : DbMigration {
         val filter = Document(
             $$"$or", listOf(
                 Document("dateOfBirth.value", Document($$"$exists", true)),
-                Document("documentIssuedDate.value", Document($$"$exists", true))
+                Document("documentIssuedDate.value", Document($$"$exists", true)),
+                Document("documentExpiryDate.value", Document($$"$exists", true))
             )
         )
 
@@ -63,6 +64,18 @@ class KycDateFieldMigration : DbMigration {
                     val dateValue = extractDateFromValue(value)
                     if (dateValue != null) {
                         updates["documentIssuedDate"] = dateValue
+                        hasUpdate = true
+                    }
+                }
+
+                val documentExpiryDate = doc["documentExpiryDate"]
+
+                if (documentExpiryDate is Document && documentExpiryDate.containsKey("value")) {
+                    val value = documentExpiryDate["value"]
+
+                    val dateValue = extractDateFromValue(value)
+                    if (dateValue != null) {
+                        updates["documentExpiryDate"] = dateValue
                         hasUpdate = true
                     }
                 }
