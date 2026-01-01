@@ -28,7 +28,6 @@ class KycService(
     fun find(userId: ObjectId): KycResponse? = kycRepo.findByUserId(userId)?.toResponse()
 
     fun isVerified(userId: ObjectId): Boolean {
-        return false
         return find(userId)?.status == KycResponse.Status.APPROVED
     }
 
