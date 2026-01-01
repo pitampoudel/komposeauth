@@ -27,44 +27,46 @@ class DbMigrationRunner(
         try {
             ensureSchemaStateExists()
 
-            val startingVersion = getCurrentVersion()
-            logger.info("Current DB schema version: $startingVersion")
+            while (true) {
+                val startingVersion = getCurrentVersion()
+                logger.info("Current DB schema version: $startingVersion")
 
-            val requiredMigrations = migrations
-                .filter { it.fromSchemaVersion == startingVersion }
-                .sortedWith(compareBy<DbMigration> { it.fromSchemaVersion }.thenBy { it.migrationId })
+                val requiredMigrations = migrations
+                    .filter { it.fromSchemaVersion == startingVersion }
+                    .sortedWith(compareBy<DbMigration> { it.fromSchemaVersion }.thenBy { it.migrationId })
 
-            if (requiredMigrations.isEmpty()) {
-                logger.info("No migrations needed. DB is up-to-date at version $startingVersion")
-                return
-            }
-
-            requiredMigrations.forEach { migration ->
-                heartbeatBestEffort(ownerId)
-
-                if (isMigrationAlreadyApplied(migration.migrationId)) {
-                    logger.info("Skipping already-applied migration '${migration.migrationId}'")
-                    return@forEach
+                if (requiredMigrations.isEmpty()) {
+                    logger.info("No migrations needed. DB is up-to-date at version $startingVersion")
+                    return
                 }
 
-                val runId = UUID.randomUUID().toString()
-                startMigrationRun(runId, migration, ownerId)
+                requiredMigrations.forEach { migration ->
+                    heartbeatBestEffort(ownerId)
 
-                logger.info("Running DB migration '${migration.migrationId}' from v${migration.fromSchemaVersion}")
+                    if (isMigrationAlreadyApplied(migration.migrationId)) {
+                        logger.info("Skipping already-applied migration '${migration.migrationId}'")
+                        return@forEach
+                    }
 
-                try {
-                    migration.run(mongoTemplate)
-                    markMigrationSuccess(runId)
-                } catch (e: Exception) {
-                    markMigrationFailure(runId, e)
-                    throw e
+                    val runId = UUID.randomUUID().toString()
+                    startMigrationRun(runId, migration, ownerId)
+
+                    logger.info("Running DB migration '${migration.migrationId}' from v${migration.fromSchemaVersion}")
+
+                    try {
+                        migration.run(mongoTemplate)
+                        markMigrationSuccess(runId)
+                    } catch (e: Exception) {
+                        markMigrationFailure(runId, e)
+                        throw e
+                    }
                 }
+
+                val endingVersion = startingVersion + 1
+                bumpVersionCas(expectedOldVersion = startingVersion, newVersion = endingVersion)
+
+                logger.info("DB migrations complete. DB at version $endingVersion")
             }
-
-            val endingVersion = startingVersion + 1
-            bumpVersionCas(expectedOldVersion = startingVersion, newVersion = endingVersion)
-
-            logger.info("DB migrations complete. DB at version $endingVersion")
         } finally {
             releaseLockBestEffort(ownerId)
         }
