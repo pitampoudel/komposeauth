@@ -72,7 +72,7 @@ class ResourceOwnerLoginController(
             .notBefore(now)
             .claim("authorities", user.roles.map { "ROLE_$it" })
             .claim("scope", scopes)
-            .claim("kycVerified", kycService.isVerified(user.id))
+            .claim("kycVerified", false)
             .claim("phoneNumberVerified", user.phoneNumberVerified)
 
         user.email?.let {
