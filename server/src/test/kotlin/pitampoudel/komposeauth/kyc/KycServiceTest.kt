@@ -1,6 +1,5 @@
 package pitampoudel.komposeauth.kyc
 
-import kotlinx.datetime.LocalDate
 import org.apache.coyote.BadRequestException
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
@@ -24,6 +23,7 @@ import pitampoudel.komposeauth.kyc.entity.KycVerification
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.entity.User
+import java.time.LocalDate
 import java.util.Optional
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -82,7 +82,7 @@ class KycServiceTest {
                 firstName = "John",
                 middleName = "M",
                 lastName = "Doe",
-                dateOfBirth = LocalDate.parse("1999-12-31"),
+                dateOfBirth = kotlinx.datetime.LocalDate.parse("1999-12-31"),
                 gender = KycResponse.Gender.OTHER,
                 fatherName = "Dad",
                 grandFatherName = "Grand",
@@ -142,7 +142,7 @@ class KycServiceTest {
             DocumentInformation(
                 documentType = DocumentType.NATIONAL_ID,
                 documentNumber = "ABC123",
-                documentIssuedDate = LocalDate.parse("2010-01-01"),
+                documentIssuedDate = kotlinx.datetime.LocalDate.parse("2010-01-01"),
                 documentExpiryDate = null,
                 documentIssuedPlace = "Kathmandu",
                 documentFront = encoded,
@@ -175,8 +175,8 @@ class KycServiceTest {
                 DocumentInformation(
                     documentType = DocumentType.PASSPORT,
                     documentNumber = "P123",
-                    documentIssuedDate = LocalDate.parse("2010-01-01"),
-                    documentExpiryDate = LocalDate.parse("2030-01-01"),
+                    documentIssuedDate = kotlinx.datetime.LocalDate.parse("2010-01-01"),
+                    documentExpiryDate = kotlinx.datetime.LocalDate.parse("2030-01-01"),
                     documentIssuedPlace = "Kathmandu",
                     documentFront = EncodedData(base64EncodedData = "aGVsbG8=", mimeType = "image/png", name = "front.png"),
                     documentBack = EncodedData(base64EncodedData = "aGVsbG8=", mimeType = "image/png", name = "back.png"),

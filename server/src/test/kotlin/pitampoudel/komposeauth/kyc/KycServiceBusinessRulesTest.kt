@@ -1,6 +1,5 @@
 package pitampoudel.komposeauth.kyc
 
-import kotlinx.datetime.LocalDate
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -22,6 +21,7 @@ import pitampoudel.komposeauth.kyc.entity.KycVerification
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.entity.User
+import java.time.LocalDate
 import java.util.Optional
 import kotlin.test.assertEquals
 
@@ -65,7 +65,7 @@ class KycServiceBusinessRulesTest {
                     firstName = "A",
                     middleName = null,
                     lastName = "B",
-                    dateOfBirth = LocalDate.parse("2000-01-01"),
+                    dateOfBirth = kotlinx.datetime.LocalDate.parse("2000-01-01"),
                     gender = KycResponse.Gender.MALE,
                     fatherName = null,
                     grandFatherName = null,
