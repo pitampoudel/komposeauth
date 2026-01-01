@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.webauthn.config
 
+import org.bson.types.ObjectId
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.web.webauthn.api.Bytes
@@ -20,21 +21,37 @@ import pitampoudel.komposeauth.webauthn.entity.PublicKeyCredential
 import pitampoudel.komposeauth.webauthn.entity.PublicKeyUser
 import pitampoudel.komposeauth.webauthn.repository.PublicKeyCredentialRepository
 import pitampoudel.komposeauth.webauthn.repository.PublicKeyUserRepository
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import kotlin.jvm.optionals.getOrNull
+
+private fun stableWebAuthnUserHandle(userId: ObjectId): Bytes {
+    // 32 bytes, stable. Purpose-separated so it doesn't collide with other hashes.
+    val digest = MessageDigest.getInstance("SHA-256")
+    val bytes =
+        digest.digest("komposeauth:webauthn:userHandle:${userId.toHexString()}".toByteArray(StandardCharsets.UTF_8))
+    return Bytes(bytes)
+}
 
 @Repository
 class UserCredentialRepositoryImpl(
-    private val repository: PublicKeyCredentialRepository
+    private val repository: PublicKeyCredentialRepository,
+    private val publicKeyUserRepository: PublicKeyUserRepository
 ) : UserCredentialRepository {
     override fun delete(credentialId: Bytes) {
         repository.deleteById(credentialId)
     }
 
     override fun save(credentialRecord: CredentialRecord) {
+        // Best-effort denormalization: map userHandle -> userId.
+        val publicKeyUser = publicKeyUserRepository.findByUserHandle(credentialRecord.userEntityUserId) ?: return
+        val userId = publicKeyUser.userId
+
         repository.save(
             PublicKeyCredential(
                 id = credentialRecord.credentialId,
                 publicKeyUserId = credentialRecord.userEntityUserId,
+                userId = userId,
                 label = credentialRecord.label,
                 attestationClientDataJSON = credentialRecord.attestationClientDataJSON,
                 attestationObject = credentialRecord.attestationObject,
@@ -45,7 +62,7 @@ class UserCredentialRepositoryImpl(
                 backupState = credentialRecord.isBackupState,
                 uvInitialized = credentialRecord.isUvInitialized,
                 credentialType = credentialRecord.credentialType,
-                lastUsed = credentialRecord.lastUsed
+                lastUsedAt = credentialRecord.lastUsed
             )
         )
     }
@@ -66,17 +83,19 @@ class PublicKeyCredentialUserEntityRepositoryImpl(
     private val repository: PublicKeyUserRepository
 ) : PublicKeyCredentialUserEntityRepository {
     override fun findById(id: Bytes): PublicKeyCredentialUserEntity? {
-        return repository.findById(id.toBase64UrlString()).getOrNull()
+        return repository.findByUserHandle(id)
     }
 
     override fun findByUsername(username: String): PublicKeyCredentialUserEntity? {
         var record = repository.findByName(username)
         if (record == null) {
-            val user = userRepository.findByUserName(username) ?: return record
+            val user = userRepository.findByUserName(username) ?: return null
             record = PublicKeyUser(
-                id = Bytes.random().toBase64UrlString(),
+                userId = user.id,
+                userHandle = stableWebAuthnUserHandle(user.id),
                 name = username,
-                displayName = user.fullName
+                displayName = user.fullName,
+                id = ObjectId()
             )
             repository.save(record)
         }
@@ -84,17 +103,22 @@ class PublicKeyCredentialUserEntityRepositoryImpl(
     }
 
     override fun save(userEntity: PublicKeyCredentialUserEntity) {
+        // This repository is only used by the WebAuthn flow; we still enforce that the username maps to a real user.
+        val user = userRepository.findByUserName(userEntity.name) ?: return
         repository.save(
             PublicKeyUser(
-                id = userEntity.id.toBase64UrlString(),
+                userId = user.id,
+                userHandle = userEntity.id,
                 name = userEntity.name,
-                displayName = userEntity.displayName
+                displayName = userEntity.displayName,
+                id = ObjectId()
             )
         )
     }
 
     override fun delete(id: Bytes) {
-        repository.deleteById(id.toBase64UrlString())
+        val existing = repository.findByUserHandle(id) ?: return
+        repository.deleteById(existing.id)
     }
 
 }

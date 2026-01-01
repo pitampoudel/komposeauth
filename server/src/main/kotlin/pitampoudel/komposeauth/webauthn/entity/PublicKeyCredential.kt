@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.webauthn.entity
 
+import org.bson.types.ObjectId
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
@@ -24,91 +25,87 @@ import java.time.Instant
     ),
     CompoundIndex(
         name = "user_lastused_idx",
-        def = "{'publicKeyUserId': 1, 'lastUsed': -1}"
+        def = "{'publicKeyUserId': 1, 'lastUsedAt': -1}"
+    ),
+    CompoundIndex(
+        name = "userid_lastused_idx",
+        def = "{'userId': 1, 'lastUsedAt': -1}"
     )
 )
 data class PublicKeyCredential(
+    /** WebAuthn credentialId. */
     @Id
     val id: Bytes,
+
+    /** WebAuthn user handle. */
     @Indexed
     val publicKeyUserId: Bytes,
+
+    /** Reference to `users._id` for fast cleanup/queries (optional but recommended). */
+    @Indexed
+    val userId: ObjectId,
+
     @get:JvmName("labelValue")
     val label: String,
+
     @get:JvmName("signatureCountValue")
     val signatureCount: Long,
+
     @get:JvmName("credentialTypeValue")
     val credentialType: PublicKeyCredentialType?,
+
     @get:JvmName("publicKeyValue")
     val publicKey: PublicKeyCose,
+
+    /** Optional: store only if you need attestation troubleshooting/compliance. */
     @get:JvmName("attestationClientDataJSONValue")
     val attestationClientDataJSON: Bytes?,
+
+    /** Optional: store only if you need attestation troubleshooting/compliance. */
     @get:JvmName("attestationObjectValue")
     val attestationObject: Bytes?,
+
     @get:JvmName("transportsValue")
     val transports: Set<AuthenticatorTransport>,
+
     val backupEligible: Boolean,
     val backupState: Boolean,
     val uvInitialized: Boolean,
+
     @CreatedDate
     val createdAt: Instant = Instant.now(),
+
     @LastModifiedDate
     var updatedAt: Instant = Instant.now(),
+
     @get:JvmName("lastUsedValue")
-    val lastUsed: Instant
+    val lastUsedAt: Instant
 ) : CredentialRecord {
-    override fun getCredentialType(): PublicKeyCredentialType? {
-        return credentialType
-    }
+    override fun getCredentialType(): PublicKeyCredentialType? = credentialType
 
-    override fun getCredentialId(): Bytes {
-        return id
-    }
+    override fun getCredentialId(): Bytes = id
 
-    override fun getPublicKey(): PublicKeyCose {
-        return publicKey
-    }
+    override fun getPublicKey(): PublicKeyCose = publicKey
 
-    override fun getSignatureCount(): Long {
-        return signatureCount
-    }
+    override fun getSignatureCount(): Long = signatureCount
 
-    override fun isUvInitialized(): Boolean {
-        return uvInitialized
-    }
+    override fun isUvInitialized(): Boolean = uvInitialized
 
-    override fun getTransports(): Set<AuthenticatorTransport> {
-        return transports
-    }
+    override fun getTransports(): Set<AuthenticatorTransport> = transports
 
-    override fun isBackupEligible(): Boolean {
-        return backupEligible
-    }
+    override fun isBackupEligible(): Boolean = backupEligible
 
-    override fun isBackupState(): Boolean {
-        return backupState
-    }
+    override fun isBackupState(): Boolean = backupState
 
-    override fun getUserEntityUserId(): Bytes {
-        return publicKeyUserId
-    }
+    override fun getUserEntityUserId(): Bytes = publicKeyUserId
 
-    override fun getAttestationObject(): Bytes? {
-        return attestationObject
-    }
+    override fun getAttestationObject(): Bytes? = attestationObject
 
-    override fun getAttestationClientDataJSON(): Bytes? {
-        return attestationClientDataJSON
-    }
+    override fun getAttestationClientDataJSON(): Bytes? = attestationClientDataJSON
 
-    override fun getLabel(): String {
-        return label
-    }
+    override fun getLabel(): String = label
 
-    override fun getLastUsed(): Instant {
-        return lastUsed
-    }
+    override fun getLastUsed(): Instant = lastUsedAt
 
-    override fun getCreated(): Instant {
-        return createdAt
-    }
+    override fun getCreated(): Instant = createdAt
 }
