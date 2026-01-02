@@ -8,7 +8,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
@@ -17,7 +16,7 @@ import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.user.data.CreateUserRequest
-import pitampoudel.komposeauth.user.data.UpdatePhoneNumberRequest
+import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.user.repository.UserRepository
@@ -119,13 +118,13 @@ class EndpointSecurityIntegrationTest {
     }
 
     @Test
-    fun `update phone number requires authentication`() {
-        val request = UpdatePhoneNumberRequest(phoneNumber = "+1234567890")
+    fun `send otp to phone number requires authentication`() {
+        val request = SendOtpRequest(phoneNumber = "+1234567890")
         
-        mockMvc.post("/${ApiEndpoints.UPDATE_PHONE_NUMBER}") {
+        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
-            content = json.encodeToString(UpdatePhoneNumberRequest.serializer(), request)
+            content = json.encodeToString(SendOtpRequest.serializer(), request)
         }.andExpect {
             status { isUnauthorized() }
         }

@@ -12,8 +12,8 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
-import pitampoudel.komposeauth.user.data.UpdatePhoneNumberRequest
-import pitampoudel.komposeauth.user.data.VerifyPhoneOtpRequest
+import pitampoudel.komposeauth.user.data.SendOtpRequest
+import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 
 @SpringBootTest
@@ -30,74 +30,74 @@ class PhoneNumberControllerIntegrationTest {
 
 
     @Test
-    fun `initiatePhoneNumberUpdate returns 401 for unauthenticated user`() {
-        val request = UpdatePhoneNumberRequest(
+    fun `send otp returns 401 for unauthenticated user`() {
+        val request = SendOtpRequest(
             phoneNumber = "+1234567890"
         )
 
-        mockMvc.post("/${ApiEndpoints.UPDATE_PHONE_NUMBER}") {
+        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
-            content = json.encodeToString(UpdatePhoneNumberRequest.serializer(), request)
+            content = json.encodeToString(SendOtpRequest.serializer(), request)
         }.andExpect {
             status { isUnauthorized() }
         }
     }
 
     @Test
-    fun `verifyPhoneNumberUpdate requires authentication`() {
-        val request = VerifyPhoneOtpRequest(
+    fun `verify phone number requires authentication`() {
+        val request = VerifyOtpRequest(
             countryCode = null,
             phoneNumber = "+1234567890",
             otp = "123456"
         )
 
-        mockMvc.post("/${ApiEndpoints.VERIFY_PHONE_NUMBER}") {
+        mockMvc.post("/${ApiEndpoints.VERIFY_OTP}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
-            content = json.encodeToString(VerifyPhoneOtpRequest.serializer(), request)
+            content = json.encodeToString(VerifyOtpRequest.serializer(), request)
         }.andExpect {
             status { isUnauthorized() }
         }
     }
 
     @Test
-    fun `verifyPhoneNumberUpdate fails with invalid OTP`() {
+    fun `verify phone number fails with invalid OTP`() {
         val email = "phone-verify@example.com"
         TestAuthHelpers.createUser(mockMvc, json, email)
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
-        val request = VerifyPhoneOtpRequest(
+        val request = VerifyOtpRequest(
             countryCode = null,
             phoneNumber = "+1234567890",
             otp = "000000" // Invalid OTP
         )
 
-        mockMvc.post("/${ApiEndpoints.VERIFY_PHONE_NUMBER}") {
+        mockMvc.post("/${ApiEndpoints.VERIFY_OTP}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             cookie(cookie)
-            content = json.encodeToString(VerifyPhoneOtpRequest.serializer(), request)
+            content = json.encodeToString(VerifyOtpRequest.serializer(), request)
         }.andExpect {
             status { isBadRequest() }
         }
     }
 
     @Test
-    fun `initiatePhoneNumberUpdate rejects invalid phone number format`() {
+    fun `send otp rejects invalid phone number format`() {
         val email = "phone-invalid@example.com"
         TestAuthHelpers.createUser(mockMvc, json, email)
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
-        val request = UpdatePhoneNumberRequest(
+        val request = SendOtpRequest(
             phoneNumber = "invalid-phone"
         )
 
-        mockMvc.post("/${ApiEndpoints.UPDATE_PHONE_NUMBER}") {
+        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             cookie(cookie)
-            content = json.encodeToString(UpdatePhoneNumberRequest.serializer(), request)
+            content = json.encodeToString(SendOtpRequest.serializer(), request)
         }.andExpect {
             status { isBadRequest() }
         }

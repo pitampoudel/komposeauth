@@ -24,13 +24,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.app_config.service.AppConfigService
-import pitampoudel.komposeauth.user.data.CreateUserRequest
-import pitampoudel.komposeauth.user.data.Credential
-import pitampoudel.komposeauth.user.data.ProfileResponse
-import pitampoudel.komposeauth.user.data.UpdatePhoneNumberRequest
-import pitampoudel.komposeauth.user.data.UpdateProfileRequest
-import pitampoudel.komposeauth.user.data.UserResponse
-import pitampoudel.komposeauth.user.data.VerifyPhoneOtpRequest
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
@@ -39,6 +32,7 @@ import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
+import pitampoudel.komposeauth.user.data.*
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import java.net.URI
@@ -258,7 +252,7 @@ class UserService(
         } ?: createUser(baseUrl, req)
     }
 
-    fun initiatePhoneNumberUpdate(@Valid req: UpdatePhoneNumberRequest): Boolean {
+    fun sendOtp(@Valid req: SendOtpRequest): Boolean {
         val parsedPhone = parsePhoneNumber(req.countryCode, req.phoneNumber)
             ?: throw IllegalArgumentException("Invalid phone number format")
         if (findByUserName(parsedPhone.fullNumberInE164Format) != null) {
@@ -269,11 +263,12 @@ class UserService(
         )
     }
 
-    fun verifyPhoneNumberUpdate(
+    fun verifyPhoneNumber(
         userId: ObjectId,
-        @Valid req: VerifyPhoneOtpRequest
+        @Valid req: VerifyOtpRequest
     ): UserResponse {
-        val parsedPhoneNumber = req.parsedPhoneNumber() ?: throw IllegalArgumentException(
+        val parsedPhoneNumber = req.parsedPhoneNumber() ?: throw ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
             "Invalid phone number format"
         )
         val user = userRepository.findById(userId).orElse(null)
@@ -364,6 +359,16 @@ class UserService(
                 publicKeyUser?.let {
                     findByUserName(publicKeyUser.name)
                 }
+            }
+
+            is Credential.OTP -> {
+                val parsedPhoneNumber = request.parsedPhoneNumber() ?: throw ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid phone number format"
+                )
+                if (phoneNumberVerificationService.verify(parsedPhoneNumber, request.otp)) {
+                    findByUserName(parsedPhoneNumber)
+                } else throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid OTP")
             }
         } ?: throw UsernameNotFoundException("User not found or invalid credentials")
 

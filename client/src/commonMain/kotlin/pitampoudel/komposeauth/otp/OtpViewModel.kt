@@ -12,10 +12,12 @@ import kotlinx.coroutines.launch
 import pitampoudel.core.domain.Result
 import pitampoudel.core.presentation.ResultUiEvent
 import pitampoudel.komposeauth.login.domain.AuthClient
+import pitampoudel.komposeauth.login.domain.use_cases.LoginUser
 import pitampoudel.komposeauth.user.domain.validators.ValidateOtpCode
 
 class OtpViewModel internal constructor(
-    private val client: AuthClient
+    private val client: AuthClient,
+    private val loginUser: LoginUser
 ) : ViewModel() {
     private val _state = MutableStateFlow(OtpState())
     val state = _state.asStateFlow()
@@ -42,8 +44,8 @@ class OtpViewModel internal constructor(
                         it.copy(codeError = ValidateOtpCode(state.value.code).error())
                     }
 
-                    state.value.verifyParam()?.let { req ->
-                        when (val res = client.verifyPhoneOtp(req)) {
+                    state.value.asVerifyRequest()?.let { req ->
+                        when (val res = client.verifyOtp(req)) {
                             is Result.Error -> {
                                 _state.update {
                                     it.copy(infoMsg = res.message)
@@ -58,7 +60,25 @@ class OtpViewModel internal constructor(
                     _state.update {
                         it.copy(progress = null)
                     }
+                }
 
+                OtpEvent.Login -> {
+                    _state.update {
+                        it.copy(progress = 0.0F)
+                    }
+                    _state.update {
+                        it.copy(codeError = ValidateOtpCode(state.value.code).error())
+                    }
+                    state.value.asLoginCredential()?.let { req ->
+                        loginUser(req) { msg ->
+                            _state.update {
+                                it.copy(infoMsg = msg)
+                            }
+                        }
+                    }
+                    _state.update {
+                        it.copy(progress = null)
+                    }
                 }
 
                 is OtpEvent.SendOtp -> {
@@ -66,7 +86,7 @@ class OtpViewModel internal constructor(
                     _state.update {
                         it.copy(progress = 0.0F)
                     }
-                    val res = client.sendPhoneOtp(req)
+                    val res = client.sendOtp(req)
                     when (res) {
                         is Result.Error -> {
                             _state.update {
@@ -86,7 +106,7 @@ class OtpViewModel internal constructor(
                     }
                 }
 
-                is OtpEvent.SubmitPhoneNumber -> _state.update {
+                is OtpEvent.PhoneNumberChanged -> _state.update {
                     it.copy(req = event.req)
                 }
             }

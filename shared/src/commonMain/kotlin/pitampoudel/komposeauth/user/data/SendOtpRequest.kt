@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UpdatePhoneNumberRequest(
+data class SendOtpRequest(
     @SerialName("phoneNumber")
     val phoneNumber: String,
     @SerialName("countryCode")

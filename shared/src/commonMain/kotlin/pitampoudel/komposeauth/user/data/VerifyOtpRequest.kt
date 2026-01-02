@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import pitampoudel.core.data.parsePhoneNumber
 
 @Serializable
-data class VerifyPhoneOtpRequest(
+data class VerifyOtpRequest(
     @SerialName("countryCode")
     val countryCode: String?,
     @SerialName("phoneNumber")

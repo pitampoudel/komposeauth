@@ -7,17 +7,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.login.domain.AuthClient
-import pitampoudel.komposeauth.login.domain.AuthPreferences
-import pitampoudel.komposeauth.core.data.AuthStateHandler
-import pitampoudel.komposeauth.core.domain.ResponseType
-import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.currentPlatform
+import pitampoudel.komposeauth.login.domain.AuthClient
+import pitampoudel.komposeauth.login.domain.use_cases.LoginUser
 
 class LoginViewModel internal constructor(
     private val authClient: AuthClient,
-    private val authPreferences: AuthPreferences,
-    private val authStateHandler: AuthStateHandler
+    private val loginUser: LoginUser
 ) : ViewModel() {
     private val _state = MutableStateFlow(LoginState())
     val state = _state.asStateFlow()
@@ -48,7 +44,11 @@ class LoginViewModel internal constructor(
                     _state.update {
                         it.copy(progress = 0.0F)
                     }
-                    login(event)
+                    loginUser(event.credential) { msg ->
+                        _state.update {
+                            it.copy(infoMsg = msg)
+                        }
+                    }
                     _state.update {
                         it.copy(progress = null)
                     }
@@ -63,36 +63,6 @@ class LoginViewModel internal constructor(
                 }
             }
         }
-    }
-
-    suspend fun login(event: LoginEvent.Login) {
-        when (currentPlatform()) {
-            Platform.WEB -> when (
-                val res = authClient.login(event.credential, ResponseType.COOKIE)
-            ) {
-                is Result.Error -> _state.update {
-                    it.copy(infoMsg = res.message)
-                }
-
-                is Result.Success -> {
-                    authStateHandler.updateCurrentUser()
-                }
-            }
-
-            else -> when (val res = authClient.login(event.credential)) {
-                is Result.Error -> _state.update {
-                    it.copy(infoMsg = res.message)
-                }
-
-                is Result.Success -> {
-                    authPreferences.saveTokenData(
-                        tokenData = res.data
-                    )
-                }
-            }
-        }
-
-
     }
 }
 

@@ -1,11 +1,12 @@
 package pitampoudel.komposeauth.otp
 
-import pitampoudel.komposeauth.user.data.UpdatePhoneNumberRequest
+import pitampoudel.komposeauth.user.data.SendOtpRequest
 
 sealed interface OtpEvent {
     data object DismissInfoMsg : OtpEvent
-    class CodeChanged(val value: String) : OtpEvent
+    class PhoneNumberChanged(val req: SendOtpRequest) : OtpEvent
     object SendOtp : OtpEvent
-    class SubmitPhoneNumber(val req: UpdatePhoneNumberRequest) : OtpEvent
+    class CodeChanged(val value: String) : OtpEvent
     data object Verify : OtpEvent
+    data object Login : OtpEvent
 }

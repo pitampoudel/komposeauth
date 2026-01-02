@@ -2,18 +2,25 @@ package pitampoudel.komposeauth.otp
 
 import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.presentation.InfoMessage
-import pitampoudel.komposeauth.user.data.UpdatePhoneNumberRequest
-import pitampoudel.komposeauth.user.data.VerifyPhoneOtpRequest
+import pitampoudel.komposeauth.user.data.Credential
+import pitampoudel.komposeauth.user.data.SendOtpRequest
+import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 
 data class OtpState(
     val progress: Float? = null,
     val infoMsg: InfoMessage? = null,
-    val req: UpdatePhoneNumberRequest? = null,
+    val req: SendOtpRequest? = null,
     val code: String = "",
     val codeError: GeneralValidationError? = null
 ) {
     fun containsError() = codeError != null
-    fun verifyParam() = if (containsError() || req == null) null else VerifyPhoneOtpRequest(
+    fun asVerifyRequest() = if (containsError() || req == null) null else VerifyOtpRequest(
+        phoneNumber = req.phoneNumber,
+        countryCode = req.countryCode,
+        otp = code
+    )
+
+    fun asLoginCredential() = if (containsError() || req == null) null else Credential.OTP(
         phoneNumber = req.phoneNumber,
         countryCode = req.countryCode,
         otp = code

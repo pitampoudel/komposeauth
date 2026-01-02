@@ -18,6 +18,7 @@ import pitampoudel.komposeauth.core.domain.AuthUser
 import pitampoudel.komposeauth.core.domain.Config
 import pitampoudel.komposeauth.organization.data.OrganizationsClientImpl
 import pitampoudel.komposeauth.kyc.KycViewModel
+import pitampoudel.komposeauth.login.domain.use_cases.LoginUser
 import pitampoudel.komposeauth.login.presentation.LoginViewModel
 import pitampoudel.komposeauth.organization.domain.OrganizationsClient
 import pitampoudel.komposeauth.organization.presentation.CreateOrganizationViewModel
@@ -47,10 +48,11 @@ fun initializeKomposeAuth(
             OrganizationsClientImpl(httpClient = httpClient, baseUrl = authServerUrl)
         }
         single { AuthStateHandler(get(), get()) }
-        viewModel<OtpViewModel> { OtpViewModel(get()) }
-        viewModel<LoginViewModel> { LoginViewModel(get(), get(), get()) }
+        single { LoginUser(get(), get(), get()) }
+        viewModel<OtpViewModel> { OtpViewModel(get(), get()) }
+        viewModel<LoginViewModel> { LoginViewModel(get(), get()) }
         viewModel<KycViewModel> { KycViewModel(get()) }
-        viewModel<ProfileViewModel> { ProfileViewModel(get(), get(),get()) }
+        viewModel<ProfileViewModel> { ProfileViewModel(get(), get(), get()) }
         viewModel<CreateOrganizationViewModel> { CreateOrganizationViewModel(get()) }
         viewModel<OrganizationViewModel> { OrganizationViewModel(get()) }
     }

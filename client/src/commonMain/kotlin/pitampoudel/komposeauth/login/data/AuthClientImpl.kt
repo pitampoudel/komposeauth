@@ -18,9 +18,9 @@ import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.user.data.ProfileResponse
 import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
-import pitampoudel.komposeauth.user.data.UpdatePhoneNumberRequest
+import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
-import pitampoudel.komposeauth.user.data.VerifyPhoneOtpRequest
+import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.DEACTIVATE
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_ADDRESS
@@ -30,9 +30,9 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGIN_OPTIONS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGOUT
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.ME
-import pitampoudel.komposeauth.core.domain.ApiEndpoints.UPDATE_PHONE_NUMBER
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.SEND_OTP
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.UPDATE_PROFILE
-import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_PHONE_NUMBER
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_OTP
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
@@ -88,17 +88,17 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
     }
 
-    override suspend fun verifyPhoneOtp(req: VerifyPhoneOtpRequest): Result<HttpResponse> {
+    override suspend fun verifyOtp(req: VerifyOtpRequest): Result<HttpResponse> {
         return safeApiCall {
-            httpClient.post("$authUrl/$VERIFY_PHONE_NUMBER") {
+            httpClient.post("$authUrl/$VERIFY_OTP") {
                 setBody(req)
             }.asResource { this }
         }
     }
 
-    override suspend fun sendPhoneOtp(request: UpdatePhoneNumberRequest): Result<HttpResponse> {
+    override suspend fun sendOtp(request: SendOtpRequest): Result<HttpResponse> {
         return safeApiCall {
-            httpClient.post("$authUrl/$UPDATE_PHONE_NUMBER") {
+            httpClient.post("$authUrl/$SEND_OTP") {
                 setBody(request)
             }.asResource { this }
         }

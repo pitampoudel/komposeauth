@@ -8,9 +8,9 @@ import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.user.data.ProfileResponse
 import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
-import pitampoudel.komposeauth.user.data.UpdatePhoneNumberRequest
+import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
-import pitampoudel.komposeauth.user.data.VerifyPhoneOtpRequest
+import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
@@ -25,8 +25,8 @@ internal interface AuthClient {
     suspend fun login(credential: Credential, responseType: ResponseType): Result<HttpResponse>
     suspend fun fetchUserInfo(): Result<ProfileResponse>
     suspend fun deactivate(): Result<HttpResponse>
-    suspend fun verifyPhoneOtp(req: VerifyPhoneOtpRequest): Result<HttpResponse>
-    suspend fun sendPhoneOtp(request: UpdatePhoneNumberRequest): Result<HttpResponse>
+    suspend fun verifyOtp(req: VerifyOtpRequest): Result<HttpResponse>
+    suspend fun sendOtp(request: SendOtpRequest): Result<HttpResponse>
     suspend fun fetchMyKyc(): Result<KycResponse?>
     suspend fun submitKycPersonalInfo(body: PersonalInformation): Result<KycResponse>
     suspend fun submitKycDocuments(body: DocumentInformation): Result<KycResponse>
