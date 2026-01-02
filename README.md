@@ -39,7 +39,7 @@ openssl rand -base64 32
 ```bash
 docker pull pitampoudel/komposeauth:latest
 # Quick start
-docker run -p 80:80 \
+docker run -p 80:8080 \
   -e MONGODB_URI="mongodb://your-mongo-host:27017/db-name" \
   -e BASE64_ENCRYPTION_KEY="<paste-your-base64-key>" \
   pitampoudel/komposeauth:latest

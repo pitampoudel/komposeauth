@@ -13,7 +13,7 @@ logging:
     root: ERROR
 
 server:
-  port: ${PORT:80}
+  port: ${PORT:8080}
   forward-headers-strategy: framework
   servlet:
     session:
