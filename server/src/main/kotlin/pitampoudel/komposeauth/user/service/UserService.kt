@@ -68,7 +68,7 @@ class UserService(
         return userRepository.findById(ObjectId(id)).orElse(null)
     }
 
-    fun findOrCreateUserByAuthCode(
+    fun findOrCreateUserByGoogleAuthCode(
         code: String,
         redirectUri: String,
         platform: Platform
@@ -329,7 +329,7 @@ class UserService(
                 }
 
             is Credential.GoogleId -> findOrCreateUserByGoogleIdToken(request.idToken)
-            is Credential.AuthCode -> findOrCreateUserByAuthCode(
+            is Credential.AuthCode -> findOrCreateUserByGoogleAuthCode(
                 code = request.code,
                 redirectUri = request.redirectUri,
                 platform = request.platform
