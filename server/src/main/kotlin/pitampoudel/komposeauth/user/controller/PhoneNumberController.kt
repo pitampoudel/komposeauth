@@ -34,13 +34,8 @@ class PhoneNumberController(
     @PostMapping("/$VERIFY_OTP")
     fun verifyPhoneNumber(
         @Valid @RequestBody request: VerifyOtpRequest
-    ): ResponseEntity<UserResponse> {
+    ): UserResponse {
         val user = userContextService.getUserFromAuthentication()
-        return try {
-            ResponseEntity.ok(userService.verifyPhoneNumber(user.id, request))
-        } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
-            ResponseEntity.badRequest().build()
-        }
+        return userService.verifyPhoneNumber(user.id, request)
     }
 }

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.context.request.WebRequest
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import pitampoudel.core.domain.now
 import javax.security.auth.login.AccountLockedException
@@ -213,6 +214,20 @@ class GlobalExceptionHandler {
                 path = request.path()
             ),
             HttpStatus.UNSUPPORTED_MEDIA_TYPE
+        )
+    }
+
+    @ExceptionHandler(ResponseStatusException::class)
+    fun handleResponseCodeException(
+        ex: ResponseStatusException,
+        request: WebRequest
+    ): ResponseEntity<ErrorSnapshotResponse> {
+        return ResponseEntity(
+            ErrorSnapshotResponse(
+                message = ex.reason,
+                path = request.path()
+            ),
+            ex.statusCode
         )
     }
 

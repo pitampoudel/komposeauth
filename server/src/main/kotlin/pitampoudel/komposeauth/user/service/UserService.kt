@@ -272,12 +272,15 @@ class UserService(
             "Invalid phone number format"
         )
         val user = userRepository.findById(userId).orElse(null)
-            ?: throw IllegalStateException("User not found")
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
         val verified = phoneNumberVerificationService.verify(
             parsedPhoneNumber,
             req.otp
         )
-        if (!verified) throw IllegalArgumentException("Invalid or expired OTP")
+        if (!verified) throw ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            "Invalid or expired OTP"
+        )
         val updatedUser = user.copy(
             phoneNumber = parsedPhoneNumber,
             phoneNumberVerified = true,
@@ -362,10 +365,11 @@ class UserService(
             }
 
             is Credential.OTP -> {
-                val parsedPhoneNumber = request.parsedPhoneNumber() ?: throw ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid phone number format"
-                )
+                val parsedPhoneNumber =
+                    request.parsedPhoneNumber() ?: throw ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid phone number format"
+                    )
                 if (phoneNumberVerificationService.verify(parsedPhoneNumber, request.otp)) {
                     findByUserName(parsedPhoneNumber)
                 } else throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid OTP")
