@@ -255,9 +255,6 @@ class UserService(
     fun sendOtp(@Valid req: SendOtpRequest): Boolean {
         val parsedPhone = parsePhoneNumber(req.countryCode, req.phoneNumber)
             ?: throw IllegalArgumentException("Invalid phone number format")
-        if (findByUserName(parsedPhone.fullNumberInE164Format) != null) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Phone number is already in use")
-        }
         return phoneNumberVerificationService.initiate(
             phoneNumber = parsedPhone.fullNumberInE164Format
         )
