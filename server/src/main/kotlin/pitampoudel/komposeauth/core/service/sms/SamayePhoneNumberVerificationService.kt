@@ -3,6 +3,10 @@ package pitampoudel.komposeauth.core.service.sms
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.phone_otp.entity.PhoneOtp
 import pitampoudel.komposeauth.phone_otp.repository.PhoneOtpRepository
+import org.springframework.http.HttpStatus
+import org.springframework.web.server.ResponseStatusException
+import java.time.Duration
+import java.time.Instant
 import kotlin.random.Random
 
 class SamayePhoneNumberVerificationService(
@@ -12,6 +16,15 @@ class SamayePhoneNumberVerificationService(
 ) : PhoneNumberVerificationService {
 
     override fun initiate(phoneNumber: String): Boolean {
+        val resendCooldown = Duration.ofSeconds(60)
+        val now = Instant.now()
+        val recentOtp = phoneOtpRepository.findByPhoneNumberOrderByCreatedAtDesc(phoneNumber).firstOrNull()
+        if (recentOtp != null && recentOtp.createdAt.isAfter(now.minus(resendCooldown))) {
+            throw ResponseStatusException(
+                HttpStatus.TOO_MANY_REQUESTS,
+                "OTP already sent. Please wait ${resendCooldown.seconds} seconds before requesting again."
+            )
+        }
         val otp = generateOtp()
         phoneOtpRepository.save(
             PhoneOtp(
