@@ -106,6 +106,8 @@ class WebSecurityConfig {
                         "/config",
                         "/${ApiEndpoints.LOGIN_OPTIONS}",
                         "/${ApiEndpoints.VERIFY_EMAIL}",
+                        "/${ApiEndpoints.RESET_PASSWORD}",
+                        "/${ApiEndpoints.SEND_OTP}",
                         "/reset-password",
                         "/countries.json",
                         "/.well-known/**",
