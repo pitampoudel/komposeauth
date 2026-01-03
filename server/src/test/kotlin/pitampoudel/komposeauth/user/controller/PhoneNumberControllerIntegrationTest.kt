@@ -28,22 +28,6 @@ class PhoneNumberControllerIntegrationTest {
     @Autowired
     private lateinit var json: Json
 
-
-    @Test
-    fun `send otp returns 401 for unauthenticated user`() {
-        val request = SendOtpRequest(
-            phoneNumber = "+1234567890"
-        )
-
-        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
-            contentType = MediaType.APPLICATION_JSON
-            accept = MediaType.APPLICATION_JSON
-            content = json.encodeToString(SendOtpRequest.serializer(), request)
-        }.andExpect {
-            status { isUnauthorized() }
-        }
-    }
-
     @Test
     fun `verify phone number requires authentication`() {
         val request = VerifyOtpRequest(

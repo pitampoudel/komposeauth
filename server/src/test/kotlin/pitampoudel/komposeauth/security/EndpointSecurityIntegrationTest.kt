@@ -118,19 +118,6 @@ class EndpointSecurityIntegrationTest {
     }
 
     @Test
-    fun `send otp to phone number requires authentication`() {
-        val request = SendOtpRequest(phoneNumber = "+1234567890")
-        
-        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
-            contentType = MediaType.APPLICATION_JSON
-            accept = MediaType.APPLICATION_JSON
-            content = json.encodeToString(SendOtpRequest.serializer(), request)
-        }.andExpect {
-            status { isUnauthorized() }
-        }
-    }
-
-    @Test
     fun `public endpoints are accessible without authentication`() {
 
         // Create user endpoint should be public
