@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.phone_otp.entity
+package pitampoudel.komposeauth.otp.entity
 
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.CreatedDate
@@ -10,13 +10,13 @@ import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
-@Document(collection = "phone_otps")
-@TypeAlias("phone_otp")
-data class PhoneOtp(
+@Document(collection = "otps")
+@TypeAlias("otp")
+data class Otp(
     @Id
     val id: ObjectId = ObjectId(),
     @Indexed
-    val phoneNumber: String,
+    val receiver: String,
     val otp: String,
     @CreatedDate
     @Indexed(expireAfter = "5m") // 5 minutes TTL

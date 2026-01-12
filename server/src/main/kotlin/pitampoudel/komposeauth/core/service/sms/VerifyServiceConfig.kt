@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.app_config.service.AppConfigService
-import pitampoudel.komposeauth.phone_otp.repository.PhoneOtpRepository
+import pitampoudel.komposeauth.otp.repository.OtpRepository
 
 @Configuration
 class VerifyServiceConfig {
@@ -12,13 +12,13 @@ class VerifyServiceConfig {
     fun verifyService(
         appConfigService: AppConfigService,
         restTemplate: RestTemplate,
-        phoneOtpRepository: PhoneOtpRepository,
+        otpRepository: OtpRepository,
         smsService: SmsService
     ): PhoneNumberVerificationService {
         return if (!appConfigService.getConfig().twilioVerifyServiceSid.isNullOrBlank()) {
             TwilioPhoneNumberVerificationService(appConfigService, restTemplate)
         } else if (!appConfigService.getConfig().samayeApiKey.isNullOrBlank()) {
-            SamayePhoneNumberVerificationService(phoneOtpRepository, smsService, appConfigService)
+            SamayePhoneNumberVerificationService(otpRepository, smsService, appConfigService)
         } else {
             NoOpPhoneNumberVerificationService()
         }
