@@ -2,32 +2,21 @@ package pitampoudel.komposeauth.user.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
-import jakarta.validation.Valid
 import org.apache.coyote.BadRequestException
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.ResponseBody
-import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.config.UserContextService
-import pitampoudel.komposeauth.core.domain.ApiEndpoints.SEND_EMAIL_OTP
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_EMAIL
-import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_EMAIL_OTP
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.email.EmailVerificationService
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
-import pitampoudel.komposeauth.user.data.SendEmailOtpRequest
-import pitampoudel.komposeauth.user.data.UserResponse
-import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 import pitampoudel.komposeauth.user.service.UserService
 
 @Controller
@@ -36,8 +25,7 @@ class EmailVerifyController(
     private val emailService: EmailService,
     private val userService: UserService,
     private val userContextService: UserContextService,
-    private val appConfigService: AppConfigService,
-    private val emailVerificationService: EmailVerificationService,
+    private val appConfigService: AppConfigService
 ) {
     @Operation(
         summary = "Send verification email (link-based)",
@@ -92,42 +80,5 @@ class EmailVerifyController(
         return RedirectView("${appConfigService.getConfig().websiteUrl}?emailVerified=true")
     }
 
-    @Operation(
-        summary = "Send email OTP",
-        description = "Sends an OTP code to the user's email address."
-    )
-    @PostMapping("/$SEND_EMAIL_OTP")
-    fun sendEmailOtp(
-        request: HttpServletRequest,
-        @RequestBody(required = false)
-        body: SendEmailOtpRequest
-    ): ResponseEntity<MessageResponse> {
-        val targetEmail = body.email
-        val sent = emailVerificationService.initiate(
-            email = targetEmail,
-            baseUrl = findServerUrl(request)
-        )
-        if (!sent) {
-            return ResponseEntity.badRequest().body(MessageResponse("Failed to send OTP"))
-        }
-        return ResponseEntity.ok(MessageResponse("An OTP has just been sent to $targetEmail"))
-    }
 
-    @Operation(
-        summary = "Verify email OTP",
-        description = "Verifies the user's email address using the provided OTP code."
-    )
-    @PostMapping("/$VERIFY_EMAIL_OTP")
-    @ResponseBody
-    fun verifyEmailOtp(
-        @Valid @RequestBody
-        request: VerifyOtpRequest
-    ): UserResponse {
-        val user = userContextService.getUserFromAuthentication()
-        val email = user.email ?: throw ResponseStatusException(
-            HttpStatus.BAD_REQUEST,
-            "User email is not set."
-        )
-        return userService.verifyEmailOtp(user.id, email, request.otp)
-    }
 }

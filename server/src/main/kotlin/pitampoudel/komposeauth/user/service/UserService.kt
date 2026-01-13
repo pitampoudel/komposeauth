@@ -290,7 +290,7 @@ class UserService(
         return result.mapToResponseDto(kycService.isVerified(result.id))
     }
 
-    fun verifyEmailOtp(
+    fun verifyEmail(
         userId: ObjectId,
         email: String,
         otp: String
