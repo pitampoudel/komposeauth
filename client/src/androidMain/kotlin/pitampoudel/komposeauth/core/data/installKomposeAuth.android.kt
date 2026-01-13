@@ -9,6 +9,6 @@ fun HttpClientConfig<*>.installKomposeAuth(
     authServerUrl: String,
     resourceServerUrls: List<String>
 ) {
-    val authPreferences = AuthPreferencesImpl.getInstance(SecureSettingsFactory().create(context))
+    val authPreferences = AuthPreferencesImpl.getInstance()
     installKomposeAuth(authPreferences, authServerUrl, resourceServerUrls)
 }
