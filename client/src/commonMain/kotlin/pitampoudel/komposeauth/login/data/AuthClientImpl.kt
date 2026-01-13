@@ -25,10 +25,8 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGIN_OPTIONS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGOUT
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.ME
-import pitampoudel.komposeauth.core.domain.ApiEndpoints.SEND_EMAIL_OTP
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.SEND_OTP
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.UPDATE_PROFILE
-import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_EMAIL_OTP
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_OTP
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.ResponseType
@@ -39,7 +37,6 @@ import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
 import pitampoudel.komposeauth.login.domain.AuthClient
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.data.ProfileResponse
-import pitampoudel.komposeauth.user.data.SendEmailOtpRequest
 import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.data.VerifyOtpRequest
@@ -91,7 +88,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
     }
 
-    override suspend fun verifyPhoneOtp(req: VerifyOtpRequest): Result<HttpResponse> {
+    override suspend fun verifyOtp(req: VerifyOtpRequest): Result<HttpResponse> {
         return safeApiCall {
             httpClient.post("$authUrl/$VERIFY_OTP") {
                 setBody(req)
@@ -99,25 +96,9 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
     }
 
-    override suspend fun verifyEmailOtp(req: VerifyOtpRequest): Result<HttpResponse> {
-        return safeApiCall {
-            httpClient.post("$authUrl/$VERIFY_EMAIL_OTP") {
-                setBody(req)
-            }.asResource { this }
-        }
-    }
-
-    override suspend fun sendPhoneOtp(request: SendOtpRequest): Result<HttpResponse> {
+    override suspend fun sendOtp(request: SendOtpRequest): Result<HttpResponse> {
         return safeApiCall {
             httpClient.post("$authUrl/$SEND_OTP") {
-                setBody(request)
-            }.asResource { this }
-        }
-    }
-
-    override suspend fun sendEmailOtp(request: SendEmailOtpRequest): Result<HttpResponse> {
-        return safeApiCall {
-            httpClient.post("$authUrl/$SEND_EMAIL_OTP") {
                 setBody(request)
             }.asResource { this }
         }
