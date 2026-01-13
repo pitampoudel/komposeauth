@@ -7,15 +7,14 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
@@ -58,6 +57,7 @@ class UserServiceAdminEdgeCasesTest {
             objectMapper = mock(),
             webAuthnRelyingPartyOperations = mock(),
             roleChangeEmailNotifier = mock(),
+            emailVerificationService = mock()
         )
 
         assertThrows<org.apache.coyote.BadRequestException> {
@@ -81,6 +81,7 @@ class UserServiceAdminEdgeCasesTest {
             objectMapper = mock(),
             webAuthnRelyingPartyOperations = mock(),
             roleChangeEmailNotifier = mock(),
+            emailVerificationService = mock()
         )
 
         assertThrows<UsernameNotFoundException> {
@@ -107,6 +108,7 @@ class UserServiceAdminEdgeCasesTest {
             objectMapper = mock(),
             webAuthnRelyingPartyOperations = mock(),
             roleChangeEmailNotifier = mock(),
+            emailVerificationService = mock()
         )
 
         val result = service.findUsersFlexible(ids = null, q = null, page = -10, size = 9999)

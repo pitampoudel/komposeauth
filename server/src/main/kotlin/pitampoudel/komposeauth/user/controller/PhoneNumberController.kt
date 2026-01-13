@@ -2,10 +2,12 @@ package pitampoudel.komposeauth.user.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.SEND_OTP
@@ -36,6 +38,10 @@ class PhoneNumberController(
         @Valid @RequestBody request: VerifyOtpRequest
     ): UserResponse {
         val user = userContextService.getUserFromAuthentication()
-        return userService.verifyPhoneNumber(user.id, request)
+        val phoneNumber = user.phoneNumber ?: throw ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            "User phone number is not set."
+        )
+        return userService.verifyPhoneNumber(user.id, phoneNumber, request.otp)
     }
 }

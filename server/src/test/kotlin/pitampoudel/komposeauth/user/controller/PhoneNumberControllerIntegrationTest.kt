@@ -31,8 +31,6 @@ class PhoneNumberControllerIntegrationTest {
     @Test
     fun `verify phone number requires authentication`() {
         val request = VerifyOtpRequest(
-            countryCode = null,
-            phoneNumber = "+1234567890",
             otp = "123456"
         )
 
@@ -52,8 +50,6 @@ class PhoneNumberControllerIntegrationTest {
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
         val request = VerifyOtpRequest(
-            countryCode = null,
-            phoneNumber = "+1234567890",
             otp = "000000" // Invalid OTP
         )
 

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.core.data.MessageResponse
@@ -26,7 +27,7 @@ import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.data.SendEmailOtpRequest
 import pitampoudel.komposeauth.user.data.UserResponse
-import pitampoudel.komposeauth.user.data.VerifyEmailOtpRequest
+import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 import pitampoudel.komposeauth.user.service.UserService
 
 @Controller
@@ -117,8 +118,10 @@ class EmailVerifyController(
         description = "Verifies the user's email address using the provided OTP code."
     )
     @PostMapping("/$VERIFY_EMAIL_OTP")
+    @ResponseBody
     fun verifyEmailOtp(
-        @Valid @RequestBody request: VerifyEmailOtpRequest
+        @Valid @RequestBody
+        request: VerifyOtpRequest
     ): UserResponse {
         val user = userContextService.getUserFromAuthentication()
         val email = user.email ?: throw ResponseStatusException(

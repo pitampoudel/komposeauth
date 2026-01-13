@@ -14,16 +14,18 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.NoopEmailTestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.otp.repository.OtpRepository
+import pitampoudel.komposeauth.user.data.SendEmailOtpRequest
 import pitampoudel.komposeauth.user.repository.UserRepository
 import kotlin.time.Duration.Companion.minutes
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Import(TestConfig::class)
+@Import(TestConfig::class, NoopEmailTestConfig::class)
 @AutoConfigureMockMvc
 class EmailVerifyControllerIntegrationTest {
 
@@ -52,6 +54,7 @@ class EmailVerifyControllerIntegrationTest {
         mockMvc.post("/${ApiEndpoints.SEND_EMAIL_OTP}") {
             cookie(cookie)
             contentType = MediaType.APPLICATION_JSON
+            content = json.encodeToString(SendEmailOtpRequest.serializer(), SendEmailOtpRequest(email))
         }.andExpect {
             status { isOk() }
         }
@@ -69,6 +72,7 @@ class EmailVerifyControllerIntegrationTest {
         mockMvc.post("/${ApiEndpoints.SEND_EMAIL_OTP}") {
             cookie(cookie)
             contentType = MediaType.APPLICATION_JSON
+            content = json.encodeToString(SendEmailOtpRequest.serializer(), SendEmailOtpRequest(email))
         }.andExpect {
             status { isOk() }
         }
@@ -93,6 +97,7 @@ class EmailVerifyControllerIntegrationTest {
         mockMvc.post("/${ApiEndpoints.SEND_EMAIL_OTP}") {
             cookie(cookie)
             contentType = MediaType.APPLICATION_JSON
+            content = json.encodeToString(SendEmailOtpRequest.serializer(), SendEmailOtpRequest(email))
         }.andExpect {
             status { isOk() }
         }

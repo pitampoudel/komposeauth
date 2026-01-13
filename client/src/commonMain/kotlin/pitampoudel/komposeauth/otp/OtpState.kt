@@ -15,8 +15,6 @@ data class OtpState(
 ) {
     fun containsError() = codeError != null
     fun asVerifyRequest() = if (containsError() || req == null) null else VerifyOtpRequest(
-        phoneNumber = req.phoneNumber,
-        countryCode = req.countryCode,
         otp = code
     )
 

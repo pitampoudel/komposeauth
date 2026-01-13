@@ -39,7 +39,6 @@ import pitampoudel.komposeauth.user.data.ProfileResponse
 import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.data.UserResponse
-import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import java.net.URI
@@ -270,24 +269,21 @@ class UserService(
 
     fun verifyPhoneNumber(
         userId: ObjectId,
-        @Valid req: VerifyOtpRequest
+        phoneNumber: String,
+        otp: String
     ): UserResponse {
-        val parsedPhoneNumber = req.parsedPhoneNumber() ?: throw ResponseStatusException(
-            HttpStatus.BAD_REQUEST,
-            "Invalid phone number format"
-        )
         val user = userRepository.findById(userId).orElse(null)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
         val verified = phoneNumberVerificationService.verify(
-            parsedPhoneNumber,
-            req.otp
+            phoneNumber,
+            otp
         )
         if (!verified) throw ResponseStatusException(
             HttpStatus.BAD_REQUEST,
             "Invalid or expired OTP"
         )
         val updatedUser = user.copy(
-            phoneNumber = parsedPhoneNumber,
+            phoneNumber = phoneNumber,
             phoneNumberVerified = true,
             updatedAt = Instant.now()
         )
@@ -316,6 +312,7 @@ class UserService(
         val result = userRepository.save(updatedUser)
         return result.mapToResponseDto(kycService.isVerified(result.id))
     }
+
     fun findOrCreateUserByGoogleIdToken(idToken: String): User {
         val payload = validateGoogleIdToken(
             clientIds = listOfNotNull(

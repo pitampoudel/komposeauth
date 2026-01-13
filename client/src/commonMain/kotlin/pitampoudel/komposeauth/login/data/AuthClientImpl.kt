@@ -42,7 +42,6 @@ import pitampoudel.komposeauth.user.data.ProfileResponse
 import pitampoudel.komposeauth.user.data.SendEmailOtpRequest
 import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
-import pitampoudel.komposeauth.user.data.VerifyEmailOtpRequest
 import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 
 internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClient {
@@ -100,7 +99,7 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
     }
 
-    override suspend fun verifyEmailOtp(req: VerifyEmailOtpRequest): Result<HttpResponse> {
+    override suspend fun verifyEmailOtp(req: VerifyOtpRequest): Result<HttpResponse> {
         return safeApiCall {
             httpClient.post("$authUrl/$VERIFY_EMAIL_OTP") {
                 setBody(req)

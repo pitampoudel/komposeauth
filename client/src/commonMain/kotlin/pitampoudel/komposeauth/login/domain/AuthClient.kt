@@ -3,22 +3,21 @@ package pitampoudel.komposeauth.login.domain
 import io.ktor.client.statement.HttpResponse
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.data.CountryResponse
-import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.core.data.OAuth2Response
-import pitampoudel.komposeauth.user.data.ProfileResponse
 import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
-import pitampoudel.komposeauth.user.data.SendOtpRequest
-import pitampoudel.komposeauth.user.data.UpdateProfileRequest
-import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
 import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
+import pitampoudel.komposeauth.user.data.Credential
+import pitampoudel.komposeauth.user.data.ProfileResponse
 import pitampoudel.komposeauth.user.data.SendEmailOtpRequest
-import pitampoudel.komposeauth.user.data.VerifyEmailOtpRequest
+import pitampoudel.komposeauth.user.data.SendOtpRequest
+import pitampoudel.komposeauth.user.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 
 
 internal interface AuthClient {
@@ -39,5 +38,5 @@ internal interface AuthClient {
     suspend fun registerPublicKey(request: RegisterPublicKeyRequest): Result<HttpResponse>
     suspend fun logout(): Result<HttpResponse>
     suspend fun sendEmailOtp(request: SendEmailOtpRequest): Result<HttpResponse>
-    suspend fun verifyEmailOtp(req: VerifyEmailOtpRequest): Result<HttpResponse>
+    suspend fun verifyEmailOtp(req: VerifyOtpRequest): Result<HttpResponse>
 }
