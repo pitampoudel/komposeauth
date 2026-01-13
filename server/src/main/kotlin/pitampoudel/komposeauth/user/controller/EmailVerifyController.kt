@@ -2,39 +2,48 @@ package pitampoudel.komposeauth.user.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.Valid
 import org.apache.coyote.BadRequestException
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.config.UserContextService
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.SEND_EMAIL_OTP
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_EMAIL
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_EMAIL_OTP
 import pitampoudel.komposeauth.core.service.EmailService
+import pitampoudel.komposeauth.core.service.email.EmailVerificationService
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
+import pitampoudel.komposeauth.user.data.SendEmailOtpRequest
+import pitampoudel.komposeauth.user.data.UserResponse
+import pitampoudel.komposeauth.user.data.VerifyEmailOtpRequest
 import pitampoudel.komposeauth.user.service.UserService
 
 @Controller
-@RequestMapping("/$VERIFY_EMAIL")
 class EmailVerifyController(
     private val oneTimeTokenService: OneTimeTokenService,
     private val emailService: EmailService,
     private val userService: UserService,
-    val userContextService: UserContextService,
-    val appConfigService: AppConfigService
+    private val userContextService: UserContextService,
+    private val appConfigService: AppConfigService,
+    private val emailVerificationService: EmailVerificationService,
 ) {
-
     @Operation(
-        summary = "Send verification email",
+        summary = "Send verification email (link-based)",
         description = "Sends an email with a verification link to the currently authenticated user's email address."
     )
     @PostMapping
+    @GetMapping("/$VERIFY_EMAIL")
     fun sendVerificationEmail(request: HttpServletRequest): ResponseEntity<MessageResponse> {
         val user = userContextService.getUserFromAuthentication()
 
@@ -68,10 +77,10 @@ class EmailVerifyController(
     }
 
     @Operation(
-        summary = "Verify email address",
-        description = "Verifies the user's email address using the provided token."
+        summary = "Verify email address (link)",
+        description = "link-based email verification using one-time token."
     )
-    @GetMapping
+    @GetMapping("/$VERIFY_EMAIL")
     fun verifyEmail(@RequestParam("token") token: String): RedirectView {
         val stored = oneTimeTokenService.consume(token, OneTimeToken.Purpose.VERIFY_EMAIL)
         val user = userService.findUser(stored.userId.toHexString())
@@ -80,5 +89,42 @@ class EmailVerifyController(
         userService.emailVerified(user.id)
 
         return RedirectView("${appConfigService.getConfig().websiteUrl}?emailVerified=true")
+    }
+
+    @Operation(
+        summary = "Send email OTP",
+        description = "Sends an OTP code to the user's email address."
+    )
+    @PostMapping("/$SEND_EMAIL_OTP")
+    fun sendEmailOtp(
+        request: HttpServletRequest,
+        @RequestBody(required = false)
+        body: SendEmailOtpRequest
+    ): ResponseEntity<MessageResponse> {
+        val targetEmail = body.email
+        val sent = emailVerificationService.initiate(
+            email = targetEmail,
+            baseUrl = findServerUrl(request)
+        )
+        if (!sent) {
+            return ResponseEntity.badRequest().body(MessageResponse("Failed to send OTP"))
+        }
+        return ResponseEntity.ok(MessageResponse("An OTP has just been sent to $targetEmail"))
+    }
+
+    @Operation(
+        summary = "Verify email OTP",
+        description = "Verifies the user's email address using the provided OTP code."
+    )
+    @PostMapping("/$VERIFY_EMAIL_OTP")
+    fun verifyEmailOtp(
+        @Valid @RequestBody request: VerifyEmailOtpRequest
+    ): UserResponse {
+        val user = userContextService.getUserFromAuthentication()
+        val email = user.email ?: throw ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            "User email is not set."
+        )
+        return userService.verifyEmailOtp(user.id, email, request.otp)
     }
 }
