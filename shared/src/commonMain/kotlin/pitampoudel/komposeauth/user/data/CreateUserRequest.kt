@@ -32,7 +32,7 @@ data class CreateUserRequest(
     }?.fullNumberInE164Format
 
     fun findPrimaryUsername(): String? {
-        return email ?: phoneNumberParsed()
+        return email?.lowercase() ?: phoneNumberParsed()
     }
 
     fun findAlternateUsername(): String? {
