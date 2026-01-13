@@ -25,8 +25,8 @@ class PhoneNumberController(
     @Operation(summary = "Send OTP")
     @PostMapping("/$SEND_OTP")
     fun sendOtp(@Valid @RequestBody request: SendOtpRequest): ResponseEntity<MessageResponse> {
-        return if (userService.sendOtp(request)) {
-            ResponseEntity.ok(MessageResponse("An OTP has just been sent to ${request.phoneNumber}"))
+        return if (userService.sendPhoneOtp(request.username)) {
+            ResponseEntity.ok(MessageResponse("An OTP has just been sent to ${request.username}"))
         } else {
             ResponseEntity.badRequest().body(MessageResponse("Failed to send OTP"))
         }

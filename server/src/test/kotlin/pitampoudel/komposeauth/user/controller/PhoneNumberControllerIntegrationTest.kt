@@ -70,7 +70,7 @@ class PhoneNumberControllerIntegrationTest {
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
         val request = SendOtpRequest(
-            phoneNumber = "invalid-phone"
+            username = "invalid-phone"
         )
 
         mockMvc.post("/${ApiEndpoints.SEND_OTP}") {

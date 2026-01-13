@@ -5,8 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SendOtpRequest(
-    @SerialName("phoneNumber")
-    val phoneNumber: String,
-    @SerialName("countryCode")
-    val countryCode: String? = null
+    @SerialName("username")
+    val username: String
 )

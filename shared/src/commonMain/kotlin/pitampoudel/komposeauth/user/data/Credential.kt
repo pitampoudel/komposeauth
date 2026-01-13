@@ -64,19 +64,10 @@ sealed class Credential {
     @Serializable
     @SerialName("OTP")
     data class OTP(
-        @SerialName("countryCode")
-        val countryCode: String? = null,
-        @SerialName("phoneNumber")
-        val phoneNumber: String,
+        @SerialName("username")
+        val username: String,
         @SerialName("otp")
         val otp: String
-    ) : Credential() {
-        fun parsedPhoneNumber(): String? {
-            return parsePhoneNumber(
-                countryNameCode = countryCode,
-                phoneNumber = phoneNumber
-            )?.fullNumberInE164Format
-        }
-    }
+    ) : Credential()
 
 }

@@ -19,8 +19,7 @@ data class OtpState(
     )
 
     fun asLoginCredential() = if (containsError() || req == null) null else Credential.OTP(
-        phoneNumber = req.phoneNumber,
-        countryCode = req.countryCode,
+        username = req.username,
         otp = code
     )
 

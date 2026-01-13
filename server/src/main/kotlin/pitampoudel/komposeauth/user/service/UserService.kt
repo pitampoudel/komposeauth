@@ -2,7 +2,6 @@ package pitampoudel.komposeauth.user.service
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import jakarta.validation.Valid
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -36,7 +35,6 @@ import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.data.ProfileResponse
-import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.data.UserResponse
 import pitampoudel.komposeauth.user.entity.User
@@ -259,8 +257,8 @@ class UserService(
         } ?: createUser(baseUrl, req)
     }
 
-    fun sendOtp(@Valid req: SendOtpRequest): Boolean {
-        val parsedPhone = parsePhoneNumber(req.countryCode, req.phoneNumber)
+    fun sendPhoneOtp(phoneNumber: String): Boolean {
+        val parsedPhone = parsePhoneNumber(null, phoneNumber)
             ?: throw IllegalArgumentException("Invalid phone number format")
         return phoneNumberVerificationService.initiate(
             phoneNumber = parsedPhone.fullNumberInE164Format
@@ -387,13 +385,10 @@ class UserService(
             }
 
             is Credential.OTP -> {
-                val parsedPhoneNumber =
-                    request.parsedPhoneNumber() ?: throw ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Invalid phone number format"
-                    )
-                if (phoneNumberVerificationService.verify(parsedPhoneNumber, request.otp)) {
-                    findByUserName(parsedPhoneNumber)
+                if (phoneNumberVerificationService.verify(request.username, request.otp)) {
+                    findByUserName(request.username)
+                } else if (emailVerificationService.verify(request.username, request.otp)) {
+                    findByUserName(request.username)
                 } else throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid OTP")
             }
         } ?: throw UsernameNotFoundException("User not found or invalid credentials")
