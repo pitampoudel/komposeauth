@@ -21,7 +21,6 @@ import org.springframework.security.web.webauthn.management.RelyingPartyAuthenti
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
-import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.service.EmailService
@@ -255,14 +254,6 @@ class UserService(
         } ?: req.findAlternateUsername()?.let {
             findByUserName(it)
         } ?: createUser(baseUrl, req)
-    }
-
-    fun sendPhoneOtp(phoneNumber: String): Boolean {
-        val parsedPhone = parsePhoneNumber(null, phoneNumber)
-            ?: throw IllegalArgumentException("Invalid phone number format")
-        return phoneNumberVerificationService.initiate(
-            phoneNumber = parsedPhone.fullNumberInE164Format
-        )
     }
 
     fun verifyPhoneNumber(
