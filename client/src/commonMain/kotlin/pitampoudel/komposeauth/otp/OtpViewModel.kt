@@ -45,7 +45,7 @@ class OtpViewModel internal constructor(
                     }
 
                     state.value.asVerifyRequest()?.let { req ->
-                        when (val res = client.verifyOtp(req)) {
+                        when (val res = client.verifyPhoneOtp(req)) {
                             is Result.Error -> {
                                 _state.update {
                                     it.copy(infoMsg = res.message)
@@ -86,8 +86,7 @@ class OtpViewModel internal constructor(
                     _state.update {
                         it.copy(progress = 0.0F)
                     }
-                    val res = client.sendOtp(req)
-                    when (res) {
+                    when (val res = client.sendPhoneOtp(req)) {
                         is Result.Error -> {
                             _state.update {
                                 it.copy(

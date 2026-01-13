@@ -17,6 +17,8 @@ import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
 import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
+import pitampoudel.komposeauth.user.data.SendEmailOtpRequest
+import pitampoudel.komposeauth.user.data.VerifyEmailOtpRequest
 
 
 internal interface AuthClient {
@@ -25,8 +27,8 @@ internal interface AuthClient {
     suspend fun login(credential: Credential, responseType: ResponseType): Result<HttpResponse>
     suspend fun fetchUserInfo(): Result<ProfileResponse>
     suspend fun deactivate(): Result<HttpResponse>
-    suspend fun verifyOtp(req: VerifyOtpRequest): Result<HttpResponse>
-    suspend fun sendOtp(request: SendOtpRequest): Result<HttpResponse>
+    suspend fun verifyPhoneOtp(req: VerifyOtpRequest): Result<HttpResponse>
+    suspend fun sendPhoneOtp(request: SendOtpRequest): Result<HttpResponse>
     suspend fun fetchMyKyc(): Result<KycResponse?>
     suspend fun submitKycPersonalInfo(body: PersonalInformation): Result<KycResponse>
     suspend fun submitKycDocuments(body: DocumentInformation): Result<KycResponse>
@@ -36,4 +38,6 @@ internal interface AuthClient {
     suspend fun fetchWebAuthnRegistrationOptions(): Result<String>
     suspend fun registerPublicKey(request: RegisterPublicKeyRequest): Result<HttpResponse>
     suspend fun logout(): Result<HttpResponse>
+    suspend fun sendEmailOtp(request: SendEmailOtpRequest): Result<HttpResponse>
+    suspend fun verifyEmailOtp(req: VerifyEmailOtpRequest): Result<HttpResponse>
 }
