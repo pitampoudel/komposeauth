@@ -27,12 +27,19 @@ import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
+import pitampoudel.komposeauth.core.service.email.EmailVerificationService
 import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
-import pitampoudel.komposeauth.user.data.*
+import pitampoudel.komposeauth.user.data.CreateUserRequest
+import pitampoudel.komposeauth.user.data.Credential
+import pitampoudel.komposeauth.user.data.ProfileResponse
+import pitampoudel.komposeauth.user.data.SendOtpRequest
+import pitampoudel.komposeauth.user.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.data.UserResponse
+import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import java.net.URI
@@ -57,6 +64,7 @@ class UserService(
     private val objectMapper: ObjectMapper,
     private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
     private val roleChangeEmailNotifier: RoleChangeEmailNotifier,
+    private val emailVerificationService: EmailVerificationService
 ) {
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
@@ -288,6 +296,26 @@ class UserService(
         return result.mapToResponseDto(kycService.isVerified(result.id))
     }
 
+    fun verifyEmailOtp(
+        userId: ObjectId,
+        email: String,
+        otp: String
+    ): UserResponse {
+        val user = userRepository.findById(userId).orElse(null)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
+        val verified = emailVerificationService.verify(email, otp)
+        if (!verified) throw ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            "Invalid or expired OTP"
+        )
+        val updatedUser = user.copy(
+            email = email,
+            emailVerified = true,
+            updatedAt = Instant.now()
+        )
+        val result = userRepository.save(updatedUser)
+        return result.mapToResponseDto(kycService.isVerified(result.id))
+    }
     fun findOrCreateUserByGoogleIdToken(idToken: String): User {
         val payload = validateGoogleIdToken(
             clientIds = listOfNotNull(
@@ -388,5 +416,6 @@ class UserService(
         val user = userRepository.findById(userId).orElseThrow()
         userRepository.save(user.copy(deactivated = true))
     }
+
 
 }
