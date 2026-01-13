@@ -4,7 +4,7 @@ import pitampoudel.komposeauth.user.data.SendOtpRequest
 
 sealed interface OtpEvent {
     data object DismissInfoMsg : OtpEvent
-    class PhoneNumberChanged(val req: SendOtpRequest) : OtpEvent
+    class RequestChanged(val req: SendOtpRequest) : OtpEvent
     object SendOtp : OtpEvent
     class CodeChanged(val value: String) : OtpEvent
     data object Verify : OtpEvent

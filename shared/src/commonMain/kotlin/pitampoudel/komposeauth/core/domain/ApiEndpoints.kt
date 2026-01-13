@@ -10,7 +10,6 @@ object ApiEndpoints {
     const val UPDATE_PROFILE = "update-profile"
     const val SEND_OTP = "send-otp"
     const val VERIFY_OTP = "verify-otp"
-    const val SEND_EMAIL_OTP = "send-email-otp"
     const val LOGIN_OPTIONS = "login-options"
     const val KYC = "kyc"
     const val KYC_PENDING = "$KYC/pending"

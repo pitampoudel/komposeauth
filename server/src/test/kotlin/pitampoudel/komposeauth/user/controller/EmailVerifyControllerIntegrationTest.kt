@@ -19,7 +19,9 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.otp.repository.OtpRepository
-import pitampoudel.komposeauth.user.data.SendEmailOtpRequest
+import pitampoudel.komposeauth.user.data.SendOtpRequest
+import pitampoudel.komposeauth.user.data.VerifyOtpRequest
+import pitampoudel.komposeauth.user.domain.OtpType
 import pitampoudel.komposeauth.user.repository.UserRepository
 import kotlin.time.Duration.Companion.minutes
 
@@ -51,10 +53,13 @@ class EmailVerifyControllerIntegrationTest {
         TestAuthHelpers.createUser(mockMvc, json, email)
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
-        mockMvc.post("/${ApiEndpoints.SEND_EMAIL_OTP}") {
+        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
             cookie(cookie)
             contentType = MediaType.APPLICATION_JSON
-            content = json.encodeToString(SendEmailOtpRequest.serializer(), SendEmailOtpRequest(email))
+            content = json.encodeToString(
+                SendOtpRequest.serializer(),
+                SendOtpRequest(email, type = OtpType.EMAIL)
+            )
         }.andExpect {
             status { isOk() }
         }
@@ -69,20 +74,26 @@ class EmailVerifyControllerIntegrationTest {
         val userId = TestAuthHelpers.createUser(mockMvc, json, email)
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
-        mockMvc.post("/${ApiEndpoints.SEND_EMAIL_OTP}") {
+        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
             cookie(cookie)
             contentType = MediaType.APPLICATION_JSON
-            content = json.encodeToString(SendEmailOtpRequest.serializer(), SendEmailOtpRequest(email))
+            content = json.encodeToString(
+                SendOtpRequest.serializer(),
+                SendOtpRequest(email, type = OtpType.EMAIL)
+            )
         }.andExpect {
             status { isOk() }
         }
 
         val otp = otpRepository.findByReceiverOrderByCreatedAtDesc(email).first().otp
 
-        mockMvc.post("/${ApiEndpoints.VERIFY_EMAIL_OTP}") {
+        mockMvc.post("/${ApiEndpoints.VERIFY_OTP}") {
             cookie(cookie)
             contentType = MediaType.APPLICATION_JSON
-            content = "{\"otp\":\"$otp\"}"
+            content = json.encodeToString(
+                VerifyOtpRequest.serializer(),
+                VerifyOtpRequest(otp, type = OtpType.EMAIL)
+            )
         }.andExpect {
             status { isOk() }
         }
@@ -94,15 +105,18 @@ class EmailVerifyControllerIntegrationTest {
         val userId = TestAuthHelpers.createUser(mockMvc, json, email)
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
-        mockMvc.post("/${ApiEndpoints.SEND_EMAIL_OTP}") {
+        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
             cookie(cookie)
             contentType = MediaType.APPLICATION_JSON
-            content = json.encodeToString(SendEmailOtpRequest.serializer(), SendEmailOtpRequest(email))
+            content = json.encodeToString(
+                SendOtpRequest.serializer(),
+                SendOtpRequest(email, type = OtpType.EMAIL)
+            )
         }.andExpect {
             status { isOk() }
         }
 
-        mockMvc.post("/${ApiEndpoints.VERIFY_EMAIL_OTP}") {
+        mockMvc.post("/${ApiEndpoints.VERIFY_OTP}") {
             cookie(cookie)
             contentType = MediaType.APPLICATION_JSON
             content = "{\"otp\":\"000000\"}"

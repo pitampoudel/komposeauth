@@ -31,7 +31,8 @@ class PhoneNumberControllerIntegrationTest {
     @Test
     fun `verify phone number requires authentication`() {
         val request = VerifyOtpRequest(
-            otp = "123456"
+            otp = "123456",
+            type = pitampoudel.komposeauth.user.domain.OtpType.PHONE
         )
 
         mockMvc.post("/${ApiEndpoints.VERIFY_OTP}") {
@@ -50,7 +51,8 @@ class PhoneNumberControllerIntegrationTest {
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
         val request = VerifyOtpRequest(
-            otp = "000000" // Invalid OTP
+            otp = "000000", // Invalid OTP
+            type = pitampoudel.komposeauth.user.domain.OtpType.PHONE
         )
 
         mockMvc.post("/${ApiEndpoints.VERIFY_OTP}") {

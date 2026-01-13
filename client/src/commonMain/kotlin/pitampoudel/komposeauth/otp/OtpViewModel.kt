@@ -35,7 +35,8 @@ class OtpViewModel internal constructor(
                     it.copy(code = event.value, codeError = null)
                 }
 
-                OtpEvent.Verify -> {
+                is OtpEvent.Verify -> {
+                    val req = state.value.req ?: return@launch
                     _state.update {
                         it.copy(progress = 0.0F)
                     }
@@ -44,14 +45,13 @@ class OtpViewModel internal constructor(
                         it.copy(codeError = ValidateOtpCode(state.value.code).error())
                     }
 
-                    state.value.asVerifyRequest()?.let { req ->
-                        when (val res = client.verifyPhoneOtp(req)) {
+                    state.value.asVerifyRequest(req.type)?.let { req ->
+                        when (val res = client.verifyOtp(req)) {
                             is Result.Error -> {
                                 _state.update {
                                     it.copy(infoMsg = res.message)
                                 }
                             }
-
                             is Result.Success -> {
                                 uiEventChannel.send(ResultUiEvent.Completed)
                             }
@@ -86,7 +86,7 @@ class OtpViewModel internal constructor(
                     _state.update {
                         it.copy(progress = 0.0F)
                     }
-                    when (val res = client.sendPhoneOtp(req)) {
+                    when (val res = client.sendOtp(req)) {
                         is Result.Error -> {
                             _state.update {
                                 it.copy(
@@ -105,7 +105,7 @@ class OtpViewModel internal constructor(
                     }
                 }
 
-                is OtpEvent.PhoneNumberChanged -> _state.update {
+                is OtpEvent.RequestChanged -> _state.update {
                     it.copy(req = event.req)
                 }
             }

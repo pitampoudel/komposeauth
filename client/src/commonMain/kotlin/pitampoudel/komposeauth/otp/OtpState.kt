@@ -5,6 +5,7 @@ import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.VerifyOtpRequest
+import pitampoudel.komposeauth.user.domain.OtpType
 
 data class OtpState(
     val progress: Float? = null,
@@ -14,9 +15,11 @@ data class OtpState(
     val codeError: GeneralValidationError? = null
 ) {
     fun containsError() = codeError != null
-    fun asVerifyRequest() = if (containsError() || req == null) null else VerifyOtpRequest(
-        otp = code
-    )
+    fun asVerifyRequest(type: OtpType) =
+        if (containsError() || req == null) null else VerifyOtpRequest(
+            otp = code,
+            type = type
+        )
 
     fun asLoginCredential() = if (containsError() || req == null) null else Credential.OTP(
         username = req.username,
