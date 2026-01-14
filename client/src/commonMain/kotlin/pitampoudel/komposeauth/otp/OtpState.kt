@@ -6,11 +6,13 @@ import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 import pitampoudel.komposeauth.user.domain.OtpType
+import kotlin.time.Instant
 
 data class OtpState(
     val progress: Float? = null,
     val infoMsg: InfoMessage? = null,
     val req: SendOtpRequest? = null,
+    val lastSentAt: Instant? = null,
     val code: String = "",
     val codeError: GeneralValidationError? = null
 ) {

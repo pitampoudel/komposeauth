@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pitampoudel.core.domain.Result
+import pitampoudel.core.domain.now
 import pitampoudel.core.presentation.ResultUiEvent
 import pitampoudel.komposeauth.login.domain.AuthClient
 import pitampoudel.komposeauth.login.domain.use_cases.LoginUser
@@ -52,6 +53,7 @@ class OtpViewModel internal constructor(
                                     it.copy(infoMsg = res.message)
                                 }
                             }
+
                             is Result.Success -> {
                                 uiEventChannel.send(ResultUiEvent.Completed)
                             }
@@ -99,7 +101,7 @@ class OtpViewModel internal constructor(
 
                         is Result.Success -> {
                             _state.update {
-                                it.copy(progress = null)
+                                it.copy(progress = null, lastSentAt = now())
                             }
                         }
                     }
