@@ -20,7 +20,8 @@ data class OtpState(
     fun asVerifyRequest(type: OtpType) =
         if (containsError() || req == null) null else VerifyOtpRequest(
             otp = code,
-            type = type
+            type = type,
+            username = req.username
         )
 
     fun asLoginCredential() = if (containsError() || req == null) null else Credential.OTP(
