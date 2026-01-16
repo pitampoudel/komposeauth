@@ -6,8 +6,10 @@ import pitampoudel.komposeauth.user.domain.OtpType
 
 @Serializable
 data class VerifyOtpRequest(
-    @SerialName("otp")
-    val otp: String,
+    @SerialName("username")
+    val username: String,
     @SerialName("type")
-    val type: OtpType
+    val type: OtpType,
+    @SerialName("otp")
+    val otp: String
 )

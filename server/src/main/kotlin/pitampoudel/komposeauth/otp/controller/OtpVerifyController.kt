@@ -3,12 +3,10 @@ package pitampoudel.komposeauth.otp.controller
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.core.config.UserContextService
@@ -45,6 +43,7 @@ class OtpVerifyController(
                     phoneNumber = parsedPhone.fullNumberInE164Format
                 )
             }
+
             OtpType.EMAIL -> emailVerificationService.initiate(
                 email = request.username,
                 baseUrl = findServerUrl(httpServletRequest)
@@ -64,20 +63,10 @@ class OtpVerifyController(
         @RequestBody request: VerifyOtpRequest
     ): UserResponse {
         val user = userContextService.getUserFromAuthentication()
-
-        if (request.type == OtpType.PHONE) {
-            val phoneNumber = user.phoneNumber ?: throw ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "User phone number is not set."
-            )
-            return userService.verifyPhoneNumber(user.id, phoneNumber, request.otp)
+        return if (request.type == OtpType.PHONE) {
+            userService.verifyPhoneNumber(user.id, request.username, request.otp)
         } else {
-            val email = user.email ?: throw ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "User email is not set."
-            )
-
-            return userService.verifyEmail(user.id, email, request.otp)
+            userService.verifyEmail(user.id, request.username, request.otp)
         }
 
     }
