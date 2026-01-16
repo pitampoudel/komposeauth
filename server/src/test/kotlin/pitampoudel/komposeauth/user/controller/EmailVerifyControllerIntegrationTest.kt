@@ -92,7 +92,7 @@ class EmailVerifyControllerIntegrationTest {
             contentType = MediaType.APPLICATION_JSON
             content = json.encodeToString(
                 VerifyOtpRequest.serializer(),
-                VerifyOtpRequest(otp, type = OtpType.EMAIL)
+                VerifyOtpRequest(username = "otp-verify@example.com", otp = otp, type = OtpType.EMAIL)
             )
         }.andExpect {
             status { isOk() }
