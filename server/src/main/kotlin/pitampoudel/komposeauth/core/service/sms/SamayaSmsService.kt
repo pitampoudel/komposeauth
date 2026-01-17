@@ -16,7 +16,7 @@ class SamayaSmsService(
     private val restTemplate: RestTemplate
 ) : SmsService {
     val logger: Logger = LoggerFactory.getLogger(SamayaSmsService::class.java)
-    
+
     @Async("taskExecutor")
     override fun sendSms(phoneNumber: String, message: String): Boolean {
         return try {
