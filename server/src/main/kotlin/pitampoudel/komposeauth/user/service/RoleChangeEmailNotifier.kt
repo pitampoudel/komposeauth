@@ -40,7 +40,7 @@ class RoleChangeEmailNotifier(
             subject = subject,
             template = "email/generic",
             model = mapOf(
-                "recipientName" to target.firstName,
+                "recipientName" to target.firstNameOrUser(),
                 "message" to message,
                 "actionUrl" to websiteUrl.takeIf { it.isNotBlank() },
                 "actionText" to if (websiteUrl.isNotBlank()) "Open $appName" else null,

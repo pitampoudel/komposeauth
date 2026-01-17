@@ -52,7 +52,7 @@ class EmailVerifyController(
             subject = "Verify Your Email",
             template = "email/generic",
             model = mapOf(
-                "recipientName" to user.firstName,
+                "recipientName" to user.firstNameOrUser(),
                 "message" to "Confirm that this is your email address to keep your account secure. This email will expire in 24 hours.",
                 "actionUrl" to link,
                 "actionText" to "Verify Your Email Address",

@@ -141,7 +141,7 @@ class KycService(
                 subject = "Your KYC has been approved",
                 template = "email/generic",
                 model = mapOf(
-                    "recipientName" to user.firstName,
+                    "recipientName" to user.firstNameOrUser(),
                     "message" to "Congratulations! Your KYC has been approved."
                 )
             )
@@ -151,16 +151,16 @@ class KycService(
 
 
     @Transactional
-    fun reject(baseUrl: String,user: User, reason: String?): KycResponse {
+    fun reject(baseUrl: String, user: User, reason: String?): KycResponse {
         val res = updateStatus(user.id, KycResponse.Status.REJECTED)
         user.email?.let { userEmail ->
             emailService.sendHtmlMail(
-                baseUrl=baseUrl,
+                baseUrl = baseUrl,
                 to = userEmail,
                 subject = "Your KYC has been rejected",
                 template = "email/generic",
                 model = mapOf(
-                    "recipientName" to user.firstName,
+                    "recipientName" to user.firstNameOrUser(),
                     "message" to ("We are sorry to inform you that your KYC has been rejected." + (reason?.let { " Reason: $it" } ?: ""))
                 )
             )
