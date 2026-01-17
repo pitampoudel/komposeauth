@@ -35,6 +35,7 @@ data class OAuth2Client(
 ) {
     companion object {
         const val SCOPE_READ_ANY_USER = "user.read.any"
+        const val SCOPE_WRITE_ANY_USER = "user.write.any"
     }
 }
 
