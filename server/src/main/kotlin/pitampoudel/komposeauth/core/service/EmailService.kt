@@ -5,6 +5,7 @@ import jakarta.mail.internet.MimeMessage
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.mail.javamail.MimeMessageHelper
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.thymeleaf.TemplateEngine
 import org.thymeleaf.context.Context
@@ -50,6 +51,7 @@ class EmailService(
         return templateEngine.process(template, context)
     }
 
+    @Async("taskExecutor")
     fun sendHtmlMail(
         baseUrl: String,
         to: String,

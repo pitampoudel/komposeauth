@@ -99,8 +99,13 @@ class UsersController(
         val effectiveSize = size.coerceIn(1, 100)
         val idList = ids?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
         val usersPage = userService.findUsersFlexible(idList, query, page, effectiveSize)
+        
+        // Batch fetch KYC verification status to avoid N+1 queries
+        val userIds = usersPage.content.map { it.id }
+        val verificationMap = kycService.areVerified(userIds)
+        
         val userResponses = usersPage.content.map {
-            it.mapToResponseDto(kycService.isVerified(it.id))
+            it.mapToResponseDto(verificationMap[it.id] ?: false)
         }
         val body = PageResponse(
             items = userResponses,
