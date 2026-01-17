@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
+import org.springframework.scheduling.annotation.Async
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestTemplate
@@ -15,6 +16,8 @@ class SamayaSmsService(
     private val restTemplate: RestTemplate
 ) : SmsService {
     val logger: Logger = LoggerFactory.getLogger(SamayaSmsService::class.java)
+    
+    @Async("taskExecutor")
     override fun sendSms(phoneNumber: String, message: String): Boolean {
         return try {
             val headers = HttpHeaders()

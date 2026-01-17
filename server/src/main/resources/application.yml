@@ -11,9 +11,9 @@ spring:
       max-connection-pool-size: 100
       # Minimum number of connections in the connection pool
       min-connection-pool-size: 10
-      # Maximum time a thread may wait for a connection to become available
-      max-connection-idle-time: 60000
       # Maximum time that a connection can remain idle before being removed
+      max-connection-idle-time: 60000
+      # Maximum lifetime of a connection in the pool (regardless of usage)
       max-connection-life-time: 3600000
   jmx:
     enabled: false
