@@ -46,6 +46,8 @@ import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.time.Instant
 import javax.security.auth.login.AccountLockedException
+import pitampoudel.core.data.parsePhoneNumber
+import pitampoudel.core.domain.isValidEmail
 
 @Service
 class UserService(
@@ -376,11 +378,7 @@ class UserService(
             }
 
             is Credential.OTP -> {
-                if (phoneNumberVerificationService.verify(request.username, request.otp)) {
-                    findByUserName(request.username)
-                } else if (emailVerificationService.verify(request.username, request.otp)) {
-                    findByUserName(request.username)
-                } else throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid OTP")
+                resolveOtpLogin(request.username, request.otp)
             }
         } ?: throw UsernameNotFoundException("User not found or invalid credentials")
 
@@ -400,5 +398,43 @@ class UserService(
         userRepository.save(user.copy(deactivated = true))
     }
 
+    private fun resolveOtpLogin(username: String, otp: String): User {
+        val normalizedEmail = username.lowercase().takeIf { it.isValidEmail() }
+        val normalizedPhone = parsePhoneNumber(null, username)?.fullNumberInE164Format
 
+        if (normalizedPhone != null && phoneNumberVerificationService.verify(normalizedPhone, otp)) {
+            return findOrCreateVerifiedOtpUser(email = null, phoneNumber = normalizedPhone)
+        }
+        if (normalizedEmail != null && emailVerificationService.verify(normalizedEmail, otp)) {
+            return findOrCreateVerifiedOtpUser(email = normalizedEmail, phoneNumber = null)
+        }
+        throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid OTP")
+    }
+
+    private fun findOrCreateVerifiedOtpUser(email: String?, phoneNumber: String?): User {
+        val username =
+            email ?: phoneNumber ?: throw IllegalArgumentException("Either email or phone number is required")
+        val existingUser = findByUserName(username)
+        if (existingUser != null) {
+            val updatedUser = existingUser.copy(
+                email = existingUser.email ?: email,
+                emailVerified = existingUser.emailVerified || email != null,
+                phoneNumber = existingUser.phoneNumber ?: phoneNumber,
+                phoneNumberVerified = existingUser.phoneNumberVerified || phoneNumber != null,
+                updatedAt = Instant.now()
+            )
+            return if (updatedUser == existingUser) existingUser else userRepository.save(updatedUser)
+        }
+
+        val newUser = User(
+            id = ObjectId(),
+            firstName = null,
+            lastName = null,
+            email = email,
+            emailVerified = email != null,
+            phoneNumber = phoneNumber,
+            phoneNumberVerified = phoneNumber != null,
+        )
+        return userRepository.insert(newUser)
+    }
 }
