@@ -1,7 +1,9 @@
 package pitampoudel.komposeauth.jwk.service
 
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Service
+import pitampoudel.komposeauth.core.config.CacheConfig.Companion.JWK_CACHE
 import pitampoudel.komposeauth.core.service.security.CryptoService
 import pitampoudel.komposeauth.jwk.entity.Jwk
 import pitampoudel.komposeauth.jwk.repository.JwkRepository
@@ -17,6 +19,7 @@ class JwkService(
 
     private val defaultKid = "spring-boot-jwk"
 
+    @Cacheable(value = [JWK_CACHE], key = "'keyPair'")
     fun loadOrCreateKeyPair(): KeyPair {
         val existing = jwkRepository.findByKid(defaultKid).orElse(null)
         if (existing != null) {

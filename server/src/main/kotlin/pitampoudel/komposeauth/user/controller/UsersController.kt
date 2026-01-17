@@ -86,7 +86,7 @@ class UsersController(
     @GetMapping("/$USERS")
     @Operation(
         summary = "Get users",
-        description = "Fetch users by optional filters: comma-separated IDs (ids), search query (q). If no filters provided, returns all users with pagination."
+        description = "Fetch users by optional filters: comma-separated IDs (ids), search query (q). If no filters provided, returns all users with pagination. Maximum page size is 100."
     )
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_READ_ANY_USER')")
     fun getUsers(
@@ -95,8 +95,10 @@ class UsersController(
         @RequestParam(required = false, defaultValue = "0") page: Int,
         @RequestParam(required = false, defaultValue = "50") size: Int
     ): ResponseEntity<PageResponse<UserResponse>> {
+        // Enforce maximum page size for performance
+        val effectiveSize = size.coerceIn(1, 100)
         val idList = ids?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
-        val usersPage = userService.findUsersFlexible(idList, query, page, size)
+        val usersPage = userService.findUsersFlexible(idList, query, page, effectiveSize)
         val userResponses = usersPage.content.map {
             it.mapToResponseDto(kycService.isVerified(it.id))
         }

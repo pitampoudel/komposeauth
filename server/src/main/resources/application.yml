@@ -6,6 +6,15 @@ spring:
   data:
     mongodb:
       auto-index-creation: true
+      # Connection pool configuration for better performance
+      # Maximum number of connections in the connection pool
+      max-connection-pool-size: 100
+      # Minimum number of connections in the connection pool
+      min-connection-pool-size: 10
+      # Maximum time a thread may wait for a connection to become available
+      max-connection-idle-time: 60000
+      # Maximum time that a connection can remain idle before being removed
+      max-connection-life-time: 3600000
   jmx:
     enabled: false
 logging:
@@ -15,11 +24,25 @@ logging:
 server:
   port: ${PORT:8080}
   forward-headers-strategy: framework
+  # Enable HTTP/2 for better performance
+  http2:
+    enabled: true
+  # Enable response compression
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
+    min-response-size: 1024
   servlet:
     session:
       httponly: true
       cookie:
         name: KOMPOSEAUTH_SESSION
+  # Connection timeout configuration
+  tomcat:
+    connection-timeout: 20000
+    threads:
+      max: 200
+      min-spare: 10
 
 app:
   base64-encryption-key: ${BASE64_ENCRYPTION_KEY}

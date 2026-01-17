@@ -7,6 +7,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.apache.coyote.BadRequestException
 import org.bson.types.ObjectId
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
@@ -22,6 +24,7 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.core.config.CacheConfig.Companion.USERS_CACHE
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
@@ -60,8 +63,10 @@ class UserService(
     private val objectMapper: ObjectMapper,
     private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
     private val roleChangeEmailNotifier: RoleChangeEmailNotifier,
-    private val emailVerificationService: EmailVerificationService
+    private val emailVerificationService: EmailVerificationService,
+    private val httpClient: HttpClient
 ) {
+    @Cacheable(value = [USERS_CACHE], key = "#id", unless = "#result == null")
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
     }
@@ -71,7 +76,6 @@ class UserService(
         redirectUri: String,
         platform: Platform
     ): User {
-        val client = HttpClient.newHttpClient()
         val form = String.format(
             "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&client_secret=%s",
             URLEncoder.encode(appConfigService.googleClientId(platform), StandardCharsets.UTF_8),
@@ -87,7 +91,7 @@ class UserService(
             .header("Content-Type", "application/x-www-form-urlencoded")
             .POST(HttpRequest.BodyPublishers.ofString(form))
             .build()
-        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+        val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString())
         if (response.statusCode() !in 200..299) {
             throw IllegalStateException("Failed to exchange auth code: HTTP ${response.statusCode()} - ${response.body()}")
         }
@@ -219,6 +223,7 @@ class UserService(
         return newUser
     }
 
+    @CacheEvict(value = [USERS_CACHE], key = "#userId.toHexString()")
     fun updateUser(userId: ObjectId, req: UpdateProfileRequest): ProfileResponse {
         val existingUser = userRepository.findById(userId).orElse(null)
             ?: throw IllegalStateException("User not found")
@@ -240,6 +245,7 @@ class UserService(
         return result.mapToProfileResponseDto(kycService.isVerified(result.id))
     }
 
+    @CacheEvict(value = [USERS_CACHE], key = "#userId.toHexString()")
     fun emailVerified(userId: ObjectId) {
         userRepository.save(
             userRepository.findById(userId).orElseThrow().copy(
@@ -395,6 +401,7 @@ class UserService(
         return userRepository.count()
     }
 
+    @CacheEvict(value = [USERS_CACHE], key = "#userId.toHexString()")
     fun deactivateUser(userId: ObjectId) {
         val user = userRepository.findById(userId).orElseThrow()
         userRepository.save(user.copy(deactivated = true))
