@@ -2,13 +2,14 @@ package pitampoudel.komposeauth.user.controller
 
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
@@ -17,6 +18,11 @@ import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants
 import pitampoudel.komposeauth.core.domain.ResponseType
+import pitampoudel.komposeauth.otp.entity.Otp
+import pitampoudel.komposeauth.otp.repository.OtpRepository
+import pitampoudel.komposeauth.user.repository.UserRepository
+import pitampoudel.komposeauth.user.data.CreateUserRequest
+import pitampoudel.komposeauth.user.service.UserService
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -30,11 +36,32 @@ class ResourceOwnerLoginControllerIntegrationTest {
     @Autowired
     private lateinit var json: Json
 
+    @Autowired
+    private lateinit var otpRepository: OtpRepository
+
+    @Autowired
+    private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var userService: UserService
+
+    private fun createUser(email: String, password: String = "Password1") =
+        userService.createUser(
+            baseUrl = null,
+            req = CreateUserRequest(
+                firstName = "Test",
+                lastName = "User",
+                email = email,
+                password = password,
+                confirmPassword = password
+            )
+        ).id.toHexString()
+
     @Test
     fun `login with valid credentials returns profile as cookie`() {
         val email = "login-cookie@example.com"
         val password = "Password1"
-        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        createUser(email, password)
 
         mockMvc.post("/${ApiEndpoints.LOGIN}") {
             param("responseType", ResponseType.COOKIE.name)
@@ -57,7 +84,7 @@ class ResourceOwnerLoginControllerIntegrationTest {
     fun `login with valid credentials returns tokens as TOKEN response type`() {
         val email = "login-token@example.com"
         val password = "Password1"
-        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        createUser(email, password)
 
         mockMvc.post("/${ApiEndpoints.LOGIN}") {
             param("responseType", ResponseType.TOKEN.name)
@@ -80,7 +107,7 @@ class ResourceOwnerLoginControllerIntegrationTest {
     @Test
     fun `login with invalid password fails`() {
         val email = "login-invalid@example.com"
-        TestAuthHelpers.createUser(mockMvc, json, email, "Password1")
+        createUser(email, "Password1")
 
         mockMvc.post("/${ApiEndpoints.LOGIN}") {
             param("responseType", ResponseType.COOKIE.name)
@@ -112,7 +139,7 @@ class ResourceOwnerLoginControllerIntegrationTest {
     fun `login response includes KYC verification status`() {
         val email = "login-kyc@example.com"
         val password = "Password1"
-        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        createUser(email, password)
 
         mockMvc.post("/${ApiEndpoints.LOGIN}") {
             param("responseType", ResponseType.COOKIE.name)
@@ -134,7 +161,7 @@ class ResourceOwnerLoginControllerIntegrationTest {
     fun `login uses COOKIE response type by default`() {
         val email = "login-default@example.com"
         val password = "Password1"
-        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        createUser(email, password)
 
         mockMvc.post("/${ApiEndpoints.LOGIN}") {
             contentType = MediaType.APPLICATION_JSON
@@ -151,7 +178,7 @@ class ResourceOwnerLoginControllerIntegrationTest {
     @Test
     fun `login with deactivated account fails`() {
         val email = "login-deactivated@example.com"
-        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, TestAuthHelpers.createUser(mockMvc, json, email))
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, createUser(email))
 
         // Deactivate the account
         mockMvc.post("/${ApiEndpoints.DEACTIVATE}") {
@@ -172,5 +199,31 @@ class ResourceOwnerLoginControllerIntegrationTest {
         }.andExpect {
             status { is4xxClientError() }
         }
+    }
+
+    @Test
+    fun `otp login creates new user when username is unknown`() {
+        val email = "otp-login-new@example.com"
+        val otp = "123456"
+        otpRepository.save(Otp(receiver = email, otp = otp))
+
+        mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString<Credential>(
+                Credential.OTP(username = email, otp = otp)
+            )
+        }.andExpect {
+            status { isOk() }
+            cookie { exists(Constants.ACCESS_TOKEN_COOKIE_NAME) }
+            content {
+                jsonPath("$.email") { value(email) }
+                jsonPath("$.emailVerified") { value(true) }
+            }
+        }
+
+        val created = userRepository.findByEmail(email)
+        assertNotNull(created)
+        assertEquals(true, created!!.emailVerified)
     }
 }
