@@ -5,12 +5,10 @@ import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.stereotype.Component
 import pitampoudel.komposeauth.app_config.service.AppConfigService
-import pitampoudel.komposeauth.core.migrations.DbMigrationRunner
 
 @Component
 class StartupRunner(
-    val appConfigService: AppConfigService,
-    private val dbMigrationRunner: DbMigrationRunner
+    val appConfigService: AppConfigService
 ) : ApplicationRunner {
 
     override fun run(args: ApplicationArguments) {
@@ -20,7 +18,5 @@ class StartupRunner(
                 options.dsn = dsn
             }
         }
-        dbMigrationRunner.migrateIfNeeded()
-
     }
 }
