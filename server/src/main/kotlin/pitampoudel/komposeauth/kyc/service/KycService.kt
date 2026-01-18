@@ -31,6 +31,16 @@ class KycService(
         return find(userId)?.status == KycResponse.Status.APPROVED
     }
 
+    /**
+     * Batch check verification status for multiple users to avoid N+1 queries.
+     * Returns a map of userId to verification status.
+     */
+    fun areVerified(userIds: List<ObjectId>): Map<ObjectId, Boolean> {
+        if (userIds.isEmpty()) return emptyMap()
+        val verifications = kycRepo.findAllByUserIdIn(userIds)
+        return verifications.associate { it.userId to (it.status == KycResponse.Status.APPROVED) }
+    }
+
     fun getPending(): List<KycResponse> =
         kycRepo.findAllByStatus(KycResponse.Status.PENDING).map { it.toResponse() }
 

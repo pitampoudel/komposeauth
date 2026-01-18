@@ -8,4 +8,5 @@ import org.springframework.data.mongodb.repository.MongoRepository
 interface KycVerificationRepository : MongoRepository<KycVerification, ObjectId> {
     fun findByUserId(userId: ObjectId): KycVerification?
     fun findAllByStatus(status: KycResponse.Status): List<KycVerification>
+    fun findAllByUserIdIn(userIds: List<ObjectId>): List<KycVerification>
 }
