@@ -99,8 +99,9 @@ class UsersController(
     ): ResponseEntity<PageResponse<UserResponse>> {
         val idList = ids?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
         val usersPage = userService.findUsersFlexible(idList, query, page, size)
-        val userResponses = usersPage.content.map {
-            it.mapToResponseDto(kycService.isVerified(it.id))
+        val verifiedUserIds = kycService.verifiedUserIds(usersPage.content.map { it.id })
+        val userResponses = usersPage.content.map { user ->
+            user.mapToResponseDto(verifiedUserIds.contains(user.id))
         }
         val body = PageResponse(
             items = userResponses,

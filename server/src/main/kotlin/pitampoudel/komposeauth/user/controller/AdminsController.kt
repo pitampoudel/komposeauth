@@ -33,7 +33,10 @@ class AdminsController(
         @RequestParam(required = false, defaultValue = "50") size: Int
     ): ResponseEntity<PageResponse<UserResponse>> {
         val result = userService.listAdmins(page, size)
-        val items = result.content.map { it.mapToResponseDto(kycService.isVerified(it.id)) }
+        val verifiedUserIds = kycService.verifiedUserIds(result.content.map { it.id })
+        val items = result.content.map { user ->
+            user.mapToResponseDto(verifiedUserIds.contains(user.id))
+        }
         return ResponseEntity.ok(
             PageResponse(
                 items = items,

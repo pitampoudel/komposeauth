@@ -31,6 +31,15 @@ class KycService(
         return find(userId)?.status == KycResponse.Status.APPROVED
     }
 
+    fun verifiedUserIds(userIds: Collection<ObjectId>): Set<ObjectId> {
+        if (userIds.isEmpty()) return emptySet()
+        return kycRepo.findAllById(userIds)
+            .asSequence()
+            .filter { it.status == KycResponse.Status.APPROVED }
+            .map { it.userId }
+            .toSet()
+    }
+
     fun getPending(): List<KycResponse> =
         kycRepo.findAllByStatus(KycResponse.Status.PENDING).map { it.toResponse() }
 
