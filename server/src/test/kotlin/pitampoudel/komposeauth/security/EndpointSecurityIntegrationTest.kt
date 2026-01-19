@@ -3,22 +3,20 @@ package pitampoudel.komposeauth.security
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
-import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
-import pitampoudel.komposeauth.user.data.CreateUserRequest
-import pitampoudel.komposeauth.user.data.SendOtpRequest
-import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.user.data.CreateUserRequest
+import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.repository.UserRepository
 
 @SpringBootTest
@@ -121,7 +119,7 @@ class EndpointSecurityIntegrationTest {
     fun `public endpoints are accessible without authentication`() {
 
         // Create user endpoint should be public
-        mockMvc.patch("/${ApiEndpoints.USERS}") {
+        mockMvc.post("/${ApiEndpoints.USERS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             content = json.encodeToString(

@@ -3,21 +3,19 @@ package pitampoudel.komposeauth.validation
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
-import pitampoudel.komposeauth.core.domain.ApiEndpoints
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -63,7 +61,7 @@ class InputValidationIntegrationTest {
             confirmPassword = "Password1"
         )
 
-        mockMvc.patch("/${ApiEndpoints.USERS}") {
+        mockMvc.post("/${ApiEndpoints.USERS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             content = json.encodeToString(CreateUserRequest.serializer(), request)
@@ -82,7 +80,7 @@ class InputValidationIntegrationTest {
             confirmPassword = "Password1"
         )
 
-        mockMvc.patch("/${ApiEndpoints.USERS}") {
+        mockMvc.post("/${ApiEndpoints.USERS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             content = json.encodeToString(CreateUserRequest.serializer(), request)
@@ -125,7 +123,7 @@ class InputValidationIntegrationTest {
 
     @Test
     fun `malformed JSON request returns bad request`() {
-        mockMvc.patch("/${ApiEndpoints.USERS}") {
+        mockMvc.post("/${ApiEndpoints.USERS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             content = "{invalid json}"
@@ -136,7 +134,7 @@ class InputValidationIntegrationTest {
 
     @Test
     fun `missing required fields in request returns bad request`() {
-        mockMvc.patch("/${ApiEndpoints.USERS}") {
+        mockMvc.post("/${ApiEndpoints.USERS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             content = "{\"firstName\": \"Test\"}"

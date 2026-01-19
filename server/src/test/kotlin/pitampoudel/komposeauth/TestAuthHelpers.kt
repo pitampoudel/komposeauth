@@ -7,7 +7,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.bson.types.ObjectId
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.Credential
@@ -31,7 +30,7 @@ object TestAuthHelpers {
      * - JSON string: "..."
      */
     fun createUser(mockMvc: MockMvc, json: Json, email: String, password: String = "Password1"): String {
-        val mvcResult = mockMvc.patch("/${ApiEndpoints.USERS}") {
+        val mvcResult = mockMvc.post("/${ApiEndpoints.USERS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             content = json.encodeToString(

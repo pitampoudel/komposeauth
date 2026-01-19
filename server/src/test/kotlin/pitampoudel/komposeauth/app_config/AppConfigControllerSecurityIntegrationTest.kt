@@ -27,7 +27,7 @@ class AppConfigControllerSecurityIntegrationTest {
     @Test
     fun `GET config is rejected when users exist and no auth and no master key`() {
         // Create a user to ensure countUsers() > 0.
-        TestAuthHelpers.createUser(mockMvc, json, "config-test@example.com", password = "Password1")
+        TestAuthHelpers.createUser(mockMvc, json, "config-test-1@example.com", password = "Password1")
 
         mockMvc.get("/config")
             .andExpect {
@@ -38,7 +38,7 @@ class AppConfigControllerSecurityIntegrationTest {
     @Test
     fun `GET config is allowed with valid master key even when users exist`() {
         // Create a user to ensure countUsers() > 0.
-        TestAuthHelpers.createUser(mockMvc, json, "config-test@example.com", password = "Password1")
+        TestAuthHelpers.createUser(mockMvc, json, "config-test-2@example.com", password = "Password1")
         val queryKey = TestConfig.testKey
 
         mockMvc.get("/config") {
