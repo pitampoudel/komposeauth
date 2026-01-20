@@ -64,6 +64,8 @@ data class AppConfig(
     var emailFooterText: String? = null,
 
     var sentryDsn: String? = null,
+    @field:URL(message = "Slack webhook must be a valid URL")
+    var slackWebhookUrl: String? = null,
     // Third-party SMS provider (Samaye) API key
     var samayeApiKey: String? = null,
 
@@ -105,6 +107,7 @@ data class AppConfig(
         if (supportEmail.isNullOrBlank()) supportEmail = null
         if (emailFooterText.isNullOrBlank()) emailFooterText = null
         if (sentryDsn.isNullOrBlank()) sentryDsn = null
+        if (slackWebhookUrl.isNullOrBlank()) slackWebhookUrl = null
         if (samayeApiKey.isNullOrBlank()) samayeApiKey = null
         return this
     }
