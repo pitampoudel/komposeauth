@@ -15,6 +15,9 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
@@ -23,7 +26,7 @@ import kotlin.test.assertTrue
 
 @SpringBootTest(properties = ["spring.main.allow-bean-definition-overriding=true"])
 @ActiveProfiles("test")
-@Import(TestConfig::class,KycFlowTestOverrides::class)
+@Import(TestConfig::class, KycFlowTestOverrides::class)
 @AutoConfigureMockMvc
 class KycFlowIntegrationTest {
 
@@ -109,15 +112,16 @@ class KycFlowIntegrationTest {
             }
         )
 
-        mockMvc.post("/${ApiEndpoints.KYC_DOCUMENTS}") {
+        val mvcResult = mockMvc.post("/${ApiEndpoints.KYC_DOCUMENTS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             cookie(userCookie)
             content = documentsBody
-        }.andExpect {
-            status { isOk() }
-            jsonPath("$.status") { value("PENDING") }
-        }
+        }.andReturn()
+
+        mockMvc.perform(asyncDispatch(mvcResult))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("PENDING"))
 
         // Step 3: admin sees it in pending list.
         val pendingBodyBefore = mockMvc.get("/${ApiEndpoints.KYC_PENDING}") {
