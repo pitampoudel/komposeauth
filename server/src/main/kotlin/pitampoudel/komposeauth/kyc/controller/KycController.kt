@@ -18,6 +18,7 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_ADDRESS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_DOCUMENTS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_PENDING
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_PERSONAL_INFO
+import pitampoudel.komposeauth.core.service.SlackNotifier
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
@@ -33,6 +34,7 @@ class KycController(
     private val userContextService: UserContextService,
     private val kycService: KycService,
     private val emailService: EmailService,
+    private val slackNotifier: SlackNotifier
 ) {
     @Operation(
         summary = "Get KYC information for current user",
@@ -78,7 +80,7 @@ class KycController(
         description = "Submits or updates the Document details for the currently authenticated user."
     )
     @PostMapping("/$KYC_DOCUMENTS")
-    fun submitDocumentDetails(
+    suspend fun submitDocumentDetails(
         @Validated @RequestBody data: DocumentInformation,
         request: HttpServletRequest
     ): ResponseEntity<KycResponse> {
@@ -96,6 +98,7 @@ class KycController(
                 )
             )
         }
+        slackNotifier.send("KYC documents submitted by ${user.fullName} (${user.id})")
         return ResponseEntity.ok(result)
     }
 
