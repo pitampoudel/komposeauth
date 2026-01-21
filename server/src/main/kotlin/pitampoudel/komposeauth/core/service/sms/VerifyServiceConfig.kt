@@ -13,12 +13,11 @@ class VerifyServiceConfig {
         appConfigService: AppConfigService,
         restTemplate: RestTemplate,
         otpRepository: OtpRepository,
-        smsService: SmsService
     ): PhoneNumberVerificationService {
         return if (!appConfigService.getConfig().twilioVerifyServiceSid.isNullOrBlank()) {
             TwilioPhoneNumberVerificationService(appConfigService, restTemplate)
         } else if (!appConfigService.getConfig().samayeApiKey.isNullOrBlank()) {
-            SamayePhoneNumberVerificationService(otpRepository, smsService, appConfigService)
+            SamayePhoneNumberVerificationService(otpRepository, appConfigService, restTemplate)
         } else {
             NoOpPhoneNumberVerificationService()
         }

@@ -4,6 +4,7 @@ import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.otp.entity.Otp
 import pitampoudel.komposeauth.otp.repository.OtpRepository
 import org.springframework.http.HttpStatus
+import org.springframework.web.client.RestTemplate
 import org.springframework.web.server.ResponseStatusException
 import java.time.Duration
 import java.time.Instant
@@ -11,9 +12,10 @@ import kotlin.random.Random
 
 class SamayePhoneNumberVerificationService(
     private val otpRepository: OtpRepository,
-    private val smsService: SmsService,
-    private val appConfigService: AppConfigService
+    private val appConfigService: AppConfigService,
+    val restTemplate: RestTemplate
 ) : PhoneNumberVerificationService {
+
 
     override fun initiate(phoneNumber: String): Boolean {
         val resendCooldown = Duration.ofSeconds(60)
@@ -32,7 +34,13 @@ class SamayePhoneNumberVerificationService(
                 otp = otp
             )
         )
-        return smsService.sendSms(phoneNumber, "Your OTP for ${appConfigService.getConfig().name} is $otp")
+        if (appConfigService.getConfig().samayeApiKey.isNullOrBlank()) {
+            return false
+        }
+        return SamayaSmsService(appConfigService, restTemplate).sendSms(
+            phoneNumber,
+            "Your OTP for ${appConfigService.getConfig().name} is $otp"
+        )
     }
 
     override fun verify(phoneNumber: String, code: String): Boolean {
