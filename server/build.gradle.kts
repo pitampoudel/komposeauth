@@ -14,6 +14,7 @@ configurations.all {
 
 dependencies {
     //noinspection UseTomlInstead
+    implementation("org.springframework.boot:spring-boot-starter-restclient")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-mongodb")
