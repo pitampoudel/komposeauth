@@ -9,7 +9,7 @@
         fieldset { border: 1px solid #24314f; border-radius: 8px; margin-bottom: 18px; }
         legend { padding: 0 8px; color: #c9d1ff; }
         label { display: block; font-size: 14px; color: #b9c2e3; margin: 10px 0 6px; }
-        input[type=text], input[type=url], input[type=password], input[type=number], textarea {
+        input[type=text], input[type=url], input[type=password], input[type=number], textarea, select {
             width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid #24314f; background: #0d1328; color: #e6e6e6; display: block;
         }
         textarea { min-height: 96px; resize: vertical; }
@@ -162,7 +162,18 @@
     </fieldset>
 
     <fieldset>
-        <legend>Twilio</legend>
+        <legend>SMS Provider</legend>
+        <label for="smsProvider">SMS Provider</label>
+        <select id="smsProvider" name="smsProvider" onchange="toggleSmsFields()">
+            <option value="" th:selected="${config.smsProvider == null || config.smsProvider == ''}">None</option>
+            <option value="twilio" th:selected="${config.smsProvider == 'twilio'}">Twilio</option>
+            <option value="samaye" th:selected="${config.smsProvider == 'samaye'}">Samaye</option>
+        </select>
+        <div class="note">Select your preferred SMS provider for phone verification.</div>
+    </fieldset>
+
+    <fieldset id="twilioFields" style="display: none;">
+        <legend>Twilio Configuration</legend>
         <div class="row">
             <div>
                 <label for="twilioAccountSid">Account SID</label>
@@ -187,6 +198,12 @@
                        th:value="${config.twilioVerifyServiceSid}">
             </div>
         </div>
+    </fieldset>
+
+    <fieldset id="samayeFields" style="display: none;">
+        <legend>Samaye Configuration</legend>
+        <label for="samayeApiKey">Samaye API Key</label>
+        <input id="samayeApiKey" name="samayeApiKey" type="text" th:value="${config.samayeApiKey}">
     </fieldset>
 
     <fieldset>
@@ -218,14 +235,25 @@
         <input id="slackWebhookUrl" name="slackWebhookUrl" type="url" th:value="${config.slackWebhookUrl}"
                placeholder="https://hooks.slack.com/services/xxx/yyy/zzz">
 
-        <label for="samayeApiKey">Samaye API Key</label>
-        <input id="samayeApiKey" name="samayeApiKey" type="text" th:value="${config.samayeApiKey}">
-
     </fieldset>
 
     <div class="actions">
         <button class="btn" type="submit">Save and Finish</button>
     </div>
 </form>
+
+<script>
+    function toggleSmsFields() {
+        const provider = document.getElementById('smsProvider').value;
+        const twilioFields = document.getElementById('twilioFields');
+        const samayeFields = document.getElementById('samayeFields');
+        
+        twilioFields.style.display = provider === 'twilio' ? 'block' : 'none';
+        samayeFields.style.display = provider === 'samaye' ? 'block' : 'none';
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', toggleSmsFields);
+</script>
 </body>
 </html>

@@ -48,6 +48,9 @@ data class AppConfig(
     var allowedAndroidSha256List: String? = null,
     var corsAllowedOriginList: String? = null,
 
+    // SMS Provider Configuration
+    var smsProvider: String? = null, // "twilio", "samaye", or null for none
+
     var twilioAccountSid: String? = null,
     var twilioAuthToken: String? = null,
     var twilioFromNumber: String? = null,
@@ -93,6 +96,7 @@ data class AppConfig(
         if (googleAuthDesktopClientSecret.isNullOrBlank()) googleAuthDesktopClientSecret = null
         if (allowedAndroidSha256List.isNullOrBlank()) allowedAndroidSha256List = null
         if (corsAllowedOriginList.isNullOrBlank()) corsAllowedOriginList = null
+        if (smsProvider.isNullOrBlank()) smsProvider = null
         if (twilioAccountSid.isNullOrBlank()) twilioAccountSid = null
         if (twilioAuthToken.isNullOrBlank()) twilioAuthToken = null
         if (twilioFromNumber.isNullOrBlank()) twilioFromNumber = null
