@@ -17,4 +17,3 @@ rootProject.name = "komposeauth"
 include(":shared")
 include(":client")
 include(":server")
-include(":demoApp")
