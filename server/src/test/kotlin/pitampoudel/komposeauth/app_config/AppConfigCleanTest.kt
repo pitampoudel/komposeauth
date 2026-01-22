@@ -29,5 +29,32 @@ class AppConfigCleanTest {
         assertNull(cleaned.smtpUsername)
         assertEquals(587, cleaned.smtpPort)
     }
+
+    @Test
+    fun `clean normalizes blank smsProvider to null`() {
+        val config = AppConfig(
+            smsProvider = "  ",
+            twilioAccountSid = "AC123",
+            samayeApiKey = "key123"
+        )
+
+        val cleaned = config.clean()
+
+        assertNull(cleaned.smsProvider)
+        assertEquals("AC123", cleaned.twilioAccountSid)
+        assertEquals("key123", cleaned.samayeApiKey)
+    }
+
+    @Test
+    fun `clean preserves valid smsProvider values`() {
+        val twilioConfig = AppConfig(smsProvider = "twilio")
+        assertEquals("twilio", twilioConfig.clean().smsProvider)
+
+        val samayeConfig = AppConfig(smsProvider = "samaye")
+        assertEquals("samaye", samayeConfig.clean().smsProvider)
+
+        val emptyConfig = AppConfig(smsProvider = "")
+        assertNull(emptyConfig.clean().smsProvider)
+    }
 }
 

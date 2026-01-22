@@ -14,12 +14,24 @@ class VerifyServiceConfig {
         restTemplate: RestTemplate,
         otpRepository: OtpRepository,
     ): PhoneNumberVerificationService {
-        return if (!appConfigService.getConfig().twilioVerifyServiceSid.isNullOrBlank()) {
-            TwilioPhoneNumberVerificationService(appConfigService, restTemplate)
-        } else if (!appConfigService.getConfig().samayeApiKey.isNullOrBlank()) {
-            SamayePhoneNumberVerificationService(otpRepository, appConfigService, restTemplate)
-        } else {
-            NoOpPhoneNumberVerificationService()
+        val config = appConfigService.getConfig()
+        return when (config.smsProvider?.lowercase()) {
+            "twilio" -> {
+                TwilioPhoneNumberVerificationService(
+                    appConfigService = appConfigService,
+                    restTemplate = restTemplate
+                )
+            }
+
+            "samaye" -> {
+                SamayePhoneNumberVerificationService(
+                    otpRepository = otpRepository,
+                    appConfigService = appConfigService,
+                    restTemplate = restTemplate
+                )
+            }
+
+            else -> NoOpPhoneNumberVerificationService()
         }
     }
 }
