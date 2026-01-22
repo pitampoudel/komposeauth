@@ -1,8 +1,11 @@
 package pitampoudel.komposeauth.core.service.sms
 
-import io.mockk.every
-import io.mockk.mockk
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.Mock
+import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.whenever
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
@@ -10,19 +13,33 @@ import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.otp.repository.OtpRepository
 import kotlin.test.assertTrue
 
+@ExtendWith(MockitoExtension::class)
 class VerifyServiceConfigTest {
 
-    private val mockAppConfigProvider = mockk<AppConfigProvider>()
-    private val appConfigService = AppConfigService(mockAppConfigProvider)
-    private val restTemplate = mockk<RestTemplate>()
-    private val otpRepository = mockk<OtpRepository>()
+    @Mock
+    private lateinit var mockAppConfigProvider: AppConfigProvider
+
+    @Mock
+    private lateinit var restTemplate: RestTemplate
+
+    @Mock
+    private lateinit var otpRepository: OtpRepository
+
+    private lateinit var appConfigService: AppConfigService
     private val config = VerifyServiceConfig()
+
+    @BeforeEach
+    fun setUp() {
+        appConfigService = AppConfigService(mockAppConfigProvider)
+    }
 
     @Test
     fun `verifyService returns TwilioPhoneNumberVerificationService when smsProvider is twilio`() {
-        every { mockAppConfigProvider.get() } returns AppConfig(
-            smsProvider = "twilio",
-            twilioVerifyServiceSid = "VA123456"
+        whenever(mockAppConfigProvider.get()).thenReturn(
+            AppConfig(
+                smsProvider = "twilio",
+                twilioVerifyServiceSid = "VA123456"
+            )
         )
 
         val service = config.verifyService(appConfigService, restTemplate, otpRepository)
@@ -32,9 +49,11 @@ class VerifyServiceConfigTest {
 
     @Test
     fun `verifyService returns SamayePhoneNumberVerificationService when smsProvider is samaye`() {
-        every { mockAppConfigProvider.get() } returns AppConfig(
-            smsProvider = "samaye",
-            samayeApiKey = "key123"
+        whenever(mockAppConfigProvider.get()).thenReturn(
+            AppConfig(
+                smsProvider = "samaye",
+                samayeApiKey = "key123"
+            )
         )
 
         val service = config.verifyService(appConfigService, restTemplate, otpRepository)
@@ -44,10 +63,12 @@ class VerifyServiceConfigTest {
 
     @Test
     fun `verifyService returns NoOpPhoneNumberVerificationService when smsProvider is null`() {
-        every { mockAppConfigProvider.get() } returns AppConfig(
-            smsProvider = null,
-            twilioVerifyServiceSid = "VA123456",
-            samayeApiKey = "key123"
+        whenever(mockAppConfigProvider.get()).thenReturn(
+            AppConfig(
+                smsProvider = null,
+                twilioVerifyServiceSid = "VA123456",
+                samayeApiKey = "key123"
+            )
         )
 
         val service = config.verifyService(appConfigService, restTemplate, otpRepository)
@@ -57,10 +78,12 @@ class VerifyServiceConfigTest {
 
     @Test
     fun `verifyService returns NoOpPhoneNumberVerificationService when smsProvider is empty`() {
-        every { mockAppConfigProvider.get() } returns AppConfig(
-            smsProvider = "",
-            twilioVerifyServiceSid = "VA123456",
-            samayeApiKey = "key123"
+        whenever(mockAppConfigProvider.get()).thenReturn(
+            AppConfig(
+                smsProvider = "",
+                twilioVerifyServiceSid = "VA123456",
+                samayeApiKey = "key123"
+            )
         )
 
         val service = config.verifyService(appConfigService, restTemplate, otpRepository)
@@ -70,9 +93,11 @@ class VerifyServiceConfigTest {
 
     @Test
     fun `verifyService returns NoOpPhoneNumberVerificationService when twilio selected but credentials missing`() {
-        every { mockAppConfigProvider.get() } returns AppConfig(
-            smsProvider = "twilio",
-            twilioVerifyServiceSid = null
+        whenever(mockAppConfigProvider.get()).thenReturn(
+            AppConfig(
+                smsProvider = "twilio",
+                twilioVerifyServiceSid = null
+            )
         )
 
         val service = config.verifyService(appConfigService, restTemplate, otpRepository)
@@ -82,9 +107,11 @@ class VerifyServiceConfigTest {
 
     @Test
     fun `verifyService returns NoOpPhoneNumberVerificationService when samaye selected but credentials missing`() {
-        every { mockAppConfigProvider.get() } returns AppConfig(
-            smsProvider = "samaye",
-            samayeApiKey = null
+        whenever(mockAppConfigProvider.get()).thenReturn(
+            AppConfig(
+                smsProvider = "samaye",
+                samayeApiKey = null
+            )
         )
 
         val service = config.verifyService(appConfigService, restTemplate, otpRepository)
@@ -94,9 +121,11 @@ class VerifyServiceConfigTest {
 
     @Test
     fun `verifyService is case insensitive for provider name`() {
-        every { mockAppConfigProvider.get() } returns AppConfig(
-            smsProvider = "TWILIO",
-            twilioVerifyServiceSid = "VA123456"
+        whenever(mockAppConfigProvider.get()).thenReturn(
+            AppConfig(
+                smsProvider = "TWILIO",
+                twilioVerifyServiceSid = "VA123456"
+            )
         )
 
         val service = config.verifyService(appConfigService, restTemplate, otpRepository)
@@ -106,10 +135,12 @@ class VerifyServiceConfigTest {
 
     @Test
     fun `verifyService returns NoOpPhoneNumberVerificationService for unknown provider`() {
-        every { mockAppConfigProvider.get() } returns AppConfig(
-            smsProvider = "unknown",
-            twilioVerifyServiceSid = "VA123456",
-            samayeApiKey = "key123"
+        whenever(mockAppConfigProvider.get()).thenReturn(
+            AppConfig(
+                smsProvider = "unknown",
+                twilioVerifyServiceSid = "VA123456",
+                samayeApiKey = "key123"
+            )
         )
 
         val service = config.verifyService(appConfigService, restTemplate, otpRepository)
