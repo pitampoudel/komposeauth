@@ -15,6 +15,8 @@ import pitampoudel.komposeauth.kyc.dto.toResponse
 import pitampoudel.komposeauth.kyc.entity.KycVerification
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.user.entity.User
+import pitampoudel.komposeauth.user.repository.UserRepository
+import java.time.Instant
 import kotlinx.datetime.toJavaLocalDate
 
 
@@ -22,7 +24,8 @@ import kotlinx.datetime.toJavaLocalDate
 class KycService(
     private val kycRepo: KycVerificationRepository,
     private val storageService: StorageService,
-    val emailService: EmailService
+    val emailService: EmailService,
+    private val userRepository: UserRepository
 ) {
 
     fun find(userId: ObjectId): KycResponse? = kycRepo.findByUserId(userId)?.toResponse()
@@ -142,15 +145,27 @@ class KycService(
 
     @Transactional
     fun approve(baseUrl: String, user: User): KycResponse {
+        val enrichedUser = user.takeIf { it.firstName != null && it.lastName != null } ?: run {
+            val kyc = kycRepo.findById(user.id).orElse(null)
+            if (kyc != null) {
+                val updated = user.copy(
+                    firstName = user.firstName ?: kyc.firstName,
+                    lastName = user.lastName ?: kyc.lastName,
+                    updatedAt = Instant.now()
+                )
+                if (updated != user) userRepository.save(updated) else user
+            } else user
+        }
+
         val res = updateStatus(user.id, KycResponse.Status.APPROVED)
-        user.email?.let {
+        enrichedUser.email?.let {
             emailService.sendHtmlMail(
                 baseUrl = baseUrl,
                 to = it,
                 subject = "Your KYC has been approved",
                 template = "email/generic",
                 model = mapOf(
-                    "recipientName" to user.firstNameOrUser(),
+                    "recipientName" to enrichedUser.firstNameOrUser(),
                     "message" to "Congratulations! Your KYC has been approved."
                 )
             )

@@ -23,6 +23,7 @@ import pitampoudel.komposeauth.kyc.entity.KycVerification
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.entity.User
+import pitampoudel.komposeauth.user.repository.UserRepository
 import java.time.LocalDate
 import java.util.Optional
 import kotlin.test.assertEquals
@@ -50,7 +51,8 @@ class KycServiceTest {
         val repo = mock<KycVerificationRepository>()
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
-        val service = KycService(repo, storage, email)
+        val userRepo = mock<UserRepository>()
+        val service = KycService(repo, storage, email, userRepo)
 
         val userId = ObjectId.get()
 
@@ -66,7 +68,8 @@ class KycServiceTest {
         val repo = mock<KycVerificationRepository>()
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
-        val service = KycService(repo, storage, email)
+        val userRepo = mock<UserRepository>()
+        val service = KycService(repo, storage, email, userRepo)
 
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(null)
@@ -100,7 +103,8 @@ class KycServiceTest {
         val repo = mock<KycVerificationRepository>()
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
-        val service = KycService(repo, storage, email)
+        val userRepo = mock<UserRepository>()
+        val service = KycService(repo, storage, email, userRepo)
 
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(null)
@@ -123,7 +127,8 @@ class KycServiceTest {
         val repo = mock<KycVerificationRepository>()
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
-        val service = KycService(repo, storage, email)
+        val userRepo = mock<UserRepository>()
+        val service = KycService(repo, storage, email, userRepo)
 
         val userId = ObjectId.get()
         val existing = baseKyc(userId, status = KycResponse.Status.DRAFT)
@@ -164,7 +169,8 @@ class KycServiceTest {
         val repo = mock<KycVerificationRepository>()
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
-        val service = KycService(repo, storage, email)
+        val userRepo = mock<UserRepository>()
+        val service = KycService(repo, storage, email, userRepo)
 
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(baseKyc(userId, status = KycResponse.Status.PENDING))
@@ -192,7 +198,8 @@ class KycServiceTest {
         val repo = mock<KycVerificationRepository>()
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
-        val service = KycService(repo, storage, email)
+        val userRepo = mock<UserRepository>()
+        val service = KycService(repo, storage, email, userRepo)
 
         val userId = ObjectId.get()
         val existing = baseKyc(userId, status = KycResponse.Status.PENDING)
@@ -222,5 +229,43 @@ class KycServiceTest {
         assertNotNull(message)
         assertEquals(true, message.contains("Reason: Blurry photo"))
     }
-}
 
+    @Test
+    fun `approve copies missing user names from kyc and uses them in email`() {
+        val repo = mock<KycVerificationRepository>()
+        val storage = mock<StorageService>()
+        val email = mock<EmailService>()
+        val userRepo = mock<UserRepository>()
+        val service = KycService(repo, storage, email, userRepo)
+
+        val userId = ObjectId.get()
+        val kyc = baseKyc(userId, status = KycResponse.Status.PENDING)
+        whenever(repo.findById(userId)).thenReturn(Optional.of(kyc))
+        whenever(repo.save(any())).thenAnswer { it.arguments[0] as KycVerification }
+        val savedUser = argumentCaptor<User>()
+        whenever(userRepo.save(savedUser.capture())).thenAnswer { it.arguments[0] as User }
+
+        val user = User(
+            id = userId,
+            firstName = null,
+            lastName = null,
+            email = "missing@example.com",
+            phoneNumber = "+10000000000",
+        )
+
+        val modelCaptor = argumentCaptor<Map<String, Any>>()
+        service.approve(baseUrl = "http://localhost", user = user)
+
+        assertEquals(kyc.firstName, savedUser.firstValue.firstName)
+        assertEquals(kyc.lastName, savedUser.firstValue.lastName)
+
+        verify(email).sendHtmlMail(
+            baseUrl = any(),
+            to = eq("missing@example.com"),
+            subject = any(),
+            template = any(),
+            model = modelCaptor.capture()
+        )
+        assertEquals(kyc.firstName, modelCaptor.firstValue["recipientName"])
+    }
+}
