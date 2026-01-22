@@ -17,15 +17,20 @@ class VerifyServiceConfig {
         val config = appConfigService.getConfig()
         return when (config.smsProvider?.lowercase()) {
             "twilio" -> {
-                TwilioPhoneNumberVerificationService(appConfigService, restTemplate)
-            }
-            "samaye" -> {
-                SamayePhoneNumberVerificationService(
-                    otpRepository,
-                    appConfigService,
-                    restTemplate
+                TwilioPhoneNumberVerificationService(
+                    appConfigService = appConfigService,
+                    restTemplate = restTemplate
                 )
             }
+
+            "samaye" -> {
+                SamayePhoneNumberVerificationService(
+                    otpRepository = otpRepository,
+                    appConfigService = appConfigService,
+                    restTemplate = restTemplate
+                )
+            }
+
             else -> NoOpPhoneNumberVerificationService()
         }
     }
