@@ -2,8 +2,10 @@ package pitampoudel.core.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.js.JsExport
 
 @Serializable
+@JsExport
 data class PageResponse<T>(
     @SerialName("items")
     val items: List<T>,

@@ -2,7 +2,9 @@ package pitampoudel.core.domain
 
 import io.ktor.http.HttpStatusCode
 import pitampoudel.core.presentation.InfoMessage
+import kotlin.js.JsExport
 
+@JsExport
 sealed class Result<out T> {
     data class Success<out T>(val data: T) : Result<T>()
     open class Error(open val message: InfoMessage.Error) : Result<Nothing>() {
