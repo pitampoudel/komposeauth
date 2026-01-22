@@ -2,11 +2,10 @@ package pitampoudel.komposeauth.organization
 
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.config.canEditOrganization
 import pitampoudel.komposeauth.organization.entity.Organization
