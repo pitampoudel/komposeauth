@@ -13,9 +13,10 @@ import kotlin.random.Random
 class SparrowPhoneNumberVerificationService(
     private val otpRepository: OtpRepository,
     private val appConfigService: AppConfigService,
-    val restTemplate: RestTemplate
+    private val restTemplate: RestTemplate
 ) : PhoneNumberVerificationService {
 
+    private val sparrowSmsService by lazy { SparrowSmsService(appConfigService, restTemplate) }
 
     override fun initiate(phoneNumber: String): Boolean {
         val resendCooldown = Duration.ofSeconds(60)
@@ -37,7 +38,7 @@ class SparrowPhoneNumberVerificationService(
         if (appConfigService.getConfig().sparrowApiToken.isNullOrBlank()) {
             return false
         }
-        return SparrowSmsService(appConfigService, restTemplate).sendSms(
+        return sparrowSmsService.sendSms(
             phoneNumber,
             "Your OTP for ${appConfigService.getConfig().name} is $otp"
         )
