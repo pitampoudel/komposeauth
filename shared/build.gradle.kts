@@ -3,47 +3,47 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    // alias(libs.plugins.android.kotlin.multiplatform.library)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.kotlinx.serialization)
 }
 
 kotlin {
-    // androidLibrary {
-    //     namespace = "komposeauth.shared"
-    //     compileSdk = libs.versions.android.compileSdk.get().toInt()
-    //     minSdk = libs.versions.android.minSdk.get().toInt()
-    // 
-    //     withJava() // enable java compilation support
-    //     withHostTestBuilder {}.configure {}
-    //     withDeviceTestBuilder {
-    //         sourceSetTreeName = "test"
-    //     }
-    // 
-    //     compilations.configureEach {
-    //         compileTaskProvider.configure {
-    //             compilerOptions {
-    //                 jvmTarget.set(JvmTarget.JVM_11)
-    //             }
-    //         }
-    //     }
-    // }
-    // iosArm64()
-    // iosSimulatorArm64()
+    androidLibrary {
+        namespace = "komposeauth.shared"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
+
+        withJava() // enable java compilation support
+        withHostTestBuilder {}.configure {}
+        withDeviceTestBuilder {
+            sourceSetTreeName = "test"
+        }
+
+        compilations.configureEach {
+            compileTaskProvider.configure {
+                compilerOptions {
+                    jvmTarget.set(JvmTarget.JVM_11)
+                }
+            }
+        }
+    }
+    iosArm64()
+    iosSimulatorArm64()
     jvm()
 
-    // js {
-    //     browser()
-    //     nodejs {
-    //         binaries.library()
-    //     }
-    //     generateTypeScriptDefinitions()
-    // }
-    //
-    // @OptIn(ExperimentalWasmDsl::class)
-    // wasmJs {
-    //     browser()
-    // }
+    js {
+        browser()
+        nodejs {
+            binaries.library()
+        }
+        generateTypeScriptDefinitions()
+    }
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+    }
     sourceSets.all {
         languageSettings.optIn("kotlin.time.ExperimentalTime")
     }
@@ -52,14 +52,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(libs.kotlinx.datetime)
-                // Re-add libphonenumber with exclusions
-                implementation("io.github.luca992.libphonenumber-kotlin:libphonenumber:0.1.9") {
-                    // Exclude Compose Desktop dependencies
-                    exclude(group = "org.jetbrains.compose.runtime", module = "runtime")
-                    exclude(group = "org.jetbrains.compose.foundation", module = "foundation")
-                    exclude(group = "org.jetbrains.compose.ui", module = "ui")
-                    exclude(group = "org.jetbrains.compose.components")
-                }
+                implementation(libs.libphonenumber.kotlin)
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.serialization.kotlinx.json)
                 api(libs.kermit)
