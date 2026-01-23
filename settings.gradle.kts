@@ -15,5 +15,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "komposeauth"
 include(":shared")
-// include(":client")
+include(":client")
 include(":server")
