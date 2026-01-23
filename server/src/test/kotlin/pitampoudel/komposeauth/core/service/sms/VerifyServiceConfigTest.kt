@@ -11,6 +11,11 @@ import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.otp.repository.OtpRepository
+import pitampoudel.komposeauth.otp.service.NoOpPhoneNumberVerificationService
+import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
+import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationServiceImpl
+import pitampoudel.komposeauth.otp.service.TwilioPhoneNumberVerificationService
+import pitampoudel.komposeauth.otp.service.VerifyServiceConfig
 import kotlin.test.assertTrue
 
 @ExtendWith(MockitoExtension::class)
@@ -58,11 +63,11 @@ class VerifyServiceConfigTest {
 
         val service = config.verifyService(appConfigService, restTemplate, otpRepository)
 
-        assertTrue(service is SamayePhoneNumberVerificationService)
+        assertTrue(service is PhoneNumberVerificationServiceImpl)
     }
 
     @Test
-    fun `verifyService returns SparrowPhoneNumberVerificationService when smsProvider is sparrow`() {
+    fun `verifyService returns PhoneNumberVerificationServiceImpl when smsProvider is sparrow`() {
         whenever(mockAppConfigProvider.get()).thenReturn(
             AppConfig(
                 smsProvider = "sparrow",
@@ -72,7 +77,7 @@ class VerifyServiceConfigTest {
 
         val service = config.verifyService(appConfigService, restTemplate, otpRepository)
 
-        assertTrue(service is SparrowPhoneNumberVerificationService)
+        assertTrue(service is PhoneNumberVerificationServiceImpl)
     }
 
     @Test

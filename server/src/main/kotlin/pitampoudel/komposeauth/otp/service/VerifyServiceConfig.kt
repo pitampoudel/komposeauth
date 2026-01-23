@@ -1,9 +1,11 @@
-package pitampoudel.komposeauth.core.service.sms
+package pitampoudel.komposeauth.otp.service
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.core.service.sms.SamayaSmsService
+import pitampoudel.komposeauth.core.service.sms.SparrowSmsService
 import pitampoudel.komposeauth.otp.repository.OtpRepository
 
 @Configuration
@@ -29,20 +31,26 @@ class VerifyServiceConfig {
             "samaye" -> if (config.samayeApiKey.isNullOrBlank()) {
                 NoOpPhoneNumberVerificationService()
             } else {
-                SamayePhoneNumberVerificationService(
+                PhoneNumberVerificationServiceImpl(
                     otpRepository = otpRepository,
                     appConfigService = appConfigService,
-                    restTemplate = restTemplate
+                    smsService = SamayaSmsService(
+                        appConfigService = appConfigService,
+                        restTemplate = restTemplate
+                    )
                 )
             }
 
             "sparrow" -> if (config.sparrowApiToken.isNullOrBlank()) {
                 NoOpPhoneNumberVerificationService()
             } else {
-                SparrowPhoneNumberVerificationService(
+                PhoneNumberVerificationServiceImpl(
                     otpRepository = otpRepository,
                     appConfigService = appConfigService,
-                    restTemplate = restTemplate
+                    smsService = SparrowSmsService(
+                        appConfigService = appConfigService,
+                        restTemplate = restTemplate
+                    )
                 )
             }
 

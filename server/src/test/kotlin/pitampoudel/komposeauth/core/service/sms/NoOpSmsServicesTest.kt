@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.core.service.sms
 
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
+import pitampoudel.komposeauth.otp.service.NoOpPhoneNumberVerificationService
 
 
 class NoOpPhoneNumberVerificationServiceTest {

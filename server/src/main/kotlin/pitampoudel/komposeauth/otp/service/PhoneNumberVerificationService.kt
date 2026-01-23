@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.service.sms
+package pitampoudel.komposeauth.otp.service
 
 interface PhoneNumberVerificationService {
     fun initiate(phoneNumber: String): Boolean

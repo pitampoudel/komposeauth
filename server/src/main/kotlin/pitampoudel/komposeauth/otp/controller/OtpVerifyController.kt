@@ -12,7 +12,7 @@ import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
-import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService
+import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.UserResponse

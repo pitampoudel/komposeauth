@@ -1,22 +1,20 @@
-package pitampoudel.komposeauth.core.service.sms
+package pitampoudel.komposeauth.otp.service
 
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.otp.entity.Otp
 import pitampoudel.komposeauth.otp.repository.OtpRepository
 import org.springframework.http.HttpStatus
-import org.springframework.web.client.RestTemplate
 import org.springframework.web.server.ResponseStatusException
+import pitampoudel.komposeauth.core.service.sms.SmsService
 import java.time.Duration
 import java.time.Instant
 import kotlin.random.Random
 
-class SparrowPhoneNumberVerificationService(
+class PhoneNumberVerificationServiceImpl(
+    private val smsService: SmsService,
     private val otpRepository: OtpRepository,
-    private val appConfigService: AppConfigService,
-    private val restTemplate: RestTemplate
+    private val appConfigService: AppConfigService
 ) : PhoneNumberVerificationService {
-
-    private val sparrowSmsService by lazy { SparrowSmsService(appConfigService, restTemplate) }
 
     override fun initiate(phoneNumber: String): Boolean {
         val resendCooldown = Duration.ofSeconds(60)
@@ -35,12 +33,12 @@ class SparrowPhoneNumberVerificationService(
                 otp = otp
             )
         )
-        if (appConfigService.getConfig().sparrowApiToken.isNullOrBlank()) {
+        if (appConfigService.getConfig().samayeApiKey.isNullOrBlank()) {
             return false
         }
-        return sparrowSmsService.sendSms(
-            phoneNumber,
-            "Your OTP for ${appConfigService.getConfig().name} is $otp"
+        return smsService.sendSms(
+            phoneNumber = phoneNumber,
+            message = "Your OTP for ${appConfigService.getConfig().name} is $otp"
         )
     }
 

@@ -26,7 +26,7 @@ import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
-import pitampoudel.komposeauth.core.service.sms.PhoneNumberVerificationService
+import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken

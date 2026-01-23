@@ -13,9 +13,9 @@ import pitampoudel.komposeauth.app_config.service.AppConfigService
 class SamayaSmsService(
     private val appConfigService: AppConfigService,
     private val restTemplate: RestTemplate
-) {
+) : SmsService {
     val logger: Logger = LoggerFactory.getLogger(SamayaSmsService::class.java)
-    fun sendSms(phoneNumber: String, message: String): Boolean {
+    override fun sendSms(phoneNumber: String, message: String): Boolean {
         return try {
             val headers = HttpHeaders()
             headers.contentType = MediaType.APPLICATION_FORM_URLENCODED

@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.service.sms
+package pitampoudel.komposeauth.otp.service
 
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
