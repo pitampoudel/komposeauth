@@ -49,7 +49,7 @@ data class AppConfig(
     var corsAllowedOriginList: String? = null,
 
     // SMS Provider Configuration
-    var smsProvider: String? = null, // "twilio", "samaye", or null for none
+    var smsProvider: String? = null, // "twilio", "samaye", "sparrow", or null for none
 
     var twilioAccountSid: String? = null,
     var twilioAuthToken: String? = null,
@@ -71,6 +71,10 @@ data class AppConfig(
     var slackWebhookUrl: String? = null,
     // Third-party SMS provider (Samaye) API key
     var samayeApiKey: String? = null,
+
+    // Third-party SMS provider (Sparrow) API key
+    var sparrowApiToken: String? = null,
+    var sparrowFromNumber: String? = null,
 
     @CreatedDate
     val createdAt: Instant = Instant.now(),
@@ -113,6 +117,8 @@ data class AppConfig(
         if (sentryDsn.isNullOrBlank()) sentryDsn = null
         if (slackWebhookUrl.isNullOrBlank()) slackWebhookUrl = null
         if (samayeApiKey.isNullOrBlank()) samayeApiKey = null
+        if (sparrowApiToken.isNullOrBlank()) sparrowApiToken = null
+        if (sparrowFromNumber.isNullOrBlank()) sparrowFromNumber = null
         return this
     }
 

@@ -3,7 +3,6 @@ import org.gradle.plugins.signing.Sign
 
 plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library) apply false
-    alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.vanniktech.mavenPublish) apply false
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
