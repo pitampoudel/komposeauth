@@ -36,6 +36,16 @@ class VerifyServiceConfig {
                 )
             }
 
+            "sparrow" -> if (config.sparrowApiToken.isNullOrBlank()) {
+                NoOpPhoneNumberVerificationService()
+            } else {
+                SparrowPhoneNumberVerificationService(
+                    otpRepository = otpRepository,
+                    appConfigService = appConfigService,
+                    restTemplate = restTemplate
+                )
+            }
+
             else -> NoOpPhoneNumberVerificationService()
         }
     }

@@ -62,6 +62,20 @@ class VerifyServiceConfigTest {
     }
 
     @Test
+    fun `verifyService returns SparrowPhoneNumberVerificationService when smsProvider is sparrow`() {
+        whenever(mockAppConfigProvider.get()).thenReturn(
+            AppConfig(
+                smsProvider = "sparrow",
+                sparrowApiToken = "token123"
+            )
+        )
+
+        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+
+        assertTrue(service is SparrowPhoneNumberVerificationService)
+    }
+
+    @Test
     fun `verifyService returns NoOpPhoneNumberVerificationService when smsProvider is null`() {
         whenever(mockAppConfigProvider.get()).thenReturn(
             AppConfig(
@@ -111,6 +125,20 @@ class VerifyServiceConfigTest {
             AppConfig(
                 smsProvider = "samaye",
                 samayeApiKey = null
+            )
+        )
+
+        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+
+        assertTrue(service is NoOpPhoneNumberVerificationService)
+    }
+
+    @Test
+    fun `verifyService returns NoOpPhoneNumberVerificationService when sparrow selected but credentials missing`() {
+        whenever(mockAppConfigProvider.get()).thenReturn(
+            AppConfig(
+                smsProvider = "sparrow",
+                sparrowApiToken = null
             )
         )
 
