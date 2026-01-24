@@ -1,9 +1,9 @@
 package pitampoudel.core.data
 
-import io.ktor.util.decodeBase64Bytes
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import pitampoudel.core.domain.KmpFile
+import kotlin.io.encoding.Base64
 
 @Serializable
 data class EncodedData(
@@ -15,7 +15,7 @@ data class EncodedData(
     val name: String
 ) {
     fun toKmpFile() = KmpFile(
-        byteArray = base64EncodedData.decodeBase64Bytes(),
+        byteArray = Base64.decode(base64EncodedData),
         mimeType = mimeType,
         name = name
     )

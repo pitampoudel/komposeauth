@@ -1,11 +1,11 @@
 package pitampoudel.komposeauth.core.data
 
-import io.ktor.util.decodeBase64Bytes
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import pitampoudel.core.domain.now
+import kotlin.io.encoding.Base64
 
 object JwtUtils {
     fun isJwtTokenExpired(refreshToken: String): Boolean {
@@ -46,7 +46,7 @@ object JwtUtils {
                 val pad = (4 - s.length % 4) % 4
                 s + "=".repeat(pad)
             }
-        val bytes = base64.decodeBase64Bytes()
+        val bytes = Base64.decode(base64)
         return bytes.decodeToString()
     }
 

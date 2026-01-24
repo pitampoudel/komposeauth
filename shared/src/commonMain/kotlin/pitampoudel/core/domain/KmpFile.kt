@@ -2,6 +2,7 @@ package pitampoudel.core.domain
 
 import io.ktor.util.encodeBase64
 import pitampoudel.core.data.EncodedData
+import kotlin.io.encoding.Base64
 
 data class KmpFile(val byteArray: ByteArray, val mimeType: String, val name: String) {
     fun extension() =
@@ -21,7 +22,7 @@ data class KmpFile(val byteArray: ByteArray, val mimeType: String, val name: Str
     }
 
     fun toEncodedData() = EncodedData(
-        base64EncodedData = byteArray.encodeBase64(),
+        base64EncodedData = Base64.encode(byteArray),
         mimeType = mimeType,
         name = name
     )
