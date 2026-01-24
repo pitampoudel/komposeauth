@@ -62,8 +62,8 @@ subprojects {
 }
 
 val tag: String? = System.getenv("GITHUB_REF_NAME")
-val versionFromTag = tag?.takeIf { it.startsWith("v") }?.removePrefix("v")
-version = versionFromTag ?: "1.0.0-SNAPSHOT"
+val versionFromTag = tag?.takeIf { it.startsWith("v") }?.removePrefix("v") ?: "1.0.0-SNAPSHOT"
+version = versionFromTag
 allprojects {
-    version = versionFromTag ?: "1.0.0-SNAPSHOT"
+    version = versionFromTag
 }
