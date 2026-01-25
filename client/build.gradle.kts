@@ -42,17 +42,14 @@ kotlin {
     wasmJs {
         browser()
     }
-    sourceSets.all {
-        languageSettings.optIn("kotlin.time.ExperimentalTime")
-    }
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(project(":shared"))
                 // koin
-                api(project.dependencies.platform(libs.koin.bom))
+                implementation(project.dependencies.platform(libs.koin.bom))
                 implementation(libs.koin.core)
-                api(libs.koin.compose.viewmodel)
+                implementation(libs.koin.compose.viewmodel)
 
                 // ktor client
                 api(libs.ktor.client.core)

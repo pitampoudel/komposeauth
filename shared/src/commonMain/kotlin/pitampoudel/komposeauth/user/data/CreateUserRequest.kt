@@ -59,7 +59,6 @@ data class CreateUserRequest(
     }
 
     private fun String.isValidPhoneNumber(): Boolean {
-        // Basic phone number validation
-        return this.length > 9 && this.all { it.isDigit() || it == '+' || it == '(' || it == ')' || it == '-' || it == ' ' }
+        return parsePhoneNumber(countryNameCode, this) != null
     }
 }
