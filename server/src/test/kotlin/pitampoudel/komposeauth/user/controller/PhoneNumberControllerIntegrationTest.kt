@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
@@ -84,6 +85,47 @@ class PhoneNumberControllerIntegrationTest {
             content = json.encodeToString(SendOtpRequest.serializer(), request)
         }.andExpect {
             status { isBadRequest() }
+        }
+    }
+
+    @Test
+    fun `send phone otp forbids sending to another user`() {
+        val ownerEmail = "phone-owner@example.com"
+        val otherPhone = "+9779812345678"
+
+        TestAuthHelpers.createUser(mockMvc, json, ownerEmail)
+        val ownerCookie = TestAuthHelpers.loginCookie(mockMvc, json, ownerEmail)
+
+        // Create another user with the target phone number
+        mockMvc.post("/${ApiEndpoints.USERS}") {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString(
+                CreateUserRequest.serializer(),
+                CreateUserRequest(
+                    firstName = "Other",
+                    lastName = "User",
+                    phoneNumber = otherPhone,
+                    countryNameCode = "NP",
+                    password = "Password1",
+                    confirmPassword = "Password1"
+                )
+            )
+        }.andExpect {
+            status { isOk() }
+        }
+
+        val request = SendOtpRequest(
+            username = otherPhone
+        )
+
+        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            cookie(ownerCookie)
+            content = json.encodeToString(SendOtpRequest.serializer(), request)
+        }.andExpect {
+            status { isForbidden() }
         }
     }
 }

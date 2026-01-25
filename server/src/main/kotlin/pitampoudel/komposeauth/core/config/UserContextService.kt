@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.core.config
 
+import org.springframework.security.authentication.AnonymousAuthenticationToken
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.service.UserService
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -35,7 +36,12 @@ class UserContextService(val userService: UserService) {
             else -> throw IllegalStateException("Unsupported authentication type: ${authentication?.javaClass?.name}")
         }
     }
+
+    fun authenticatedUserOrNull(): User? {
+        return runCatching { getUserFromAuthentication() }.getOrNull()
+    }
 }
+
 fun User.isAdmin() = roles.contains("ADMIN")
 
 fun canEditOrganization(organization: Organization, user: User): Boolean {

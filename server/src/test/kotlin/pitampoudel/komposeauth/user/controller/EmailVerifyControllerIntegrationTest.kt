@@ -69,6 +69,27 @@ class EmailVerifyControllerIntegrationTest {
     }
 
     @Test
+    fun `sendEmailOtp forbids sending to another user`() {
+        val ownerEmail = "owner@example.com"
+        val otherEmail = "other@example.com"
+
+        TestAuthHelpers.createUser(mockMvc, json, ownerEmail)
+        TestAuthHelpers.createUser(mockMvc, json, otherEmail)
+        val ownerCookie = TestAuthHelpers.loginCookie(mockMvc, json, ownerEmail)
+
+        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
+            cookie(ownerCookie)
+            contentType = MediaType.APPLICATION_JSON
+            content = json.encodeToString(
+                SendOtpRequest.serializer(),
+                SendOtpRequest(otherEmail, type = OtpType.EMAIL)
+            )
+        }.andExpect {
+            status { isForbidden() }
+        }
+    }
+
+    @Test
     fun `verifyEmailOtp succeeds with valid otp`() {
         val email = "otp-verify@example.com"
         val userId = TestAuthHelpers.createUser(mockMvc, json, email)
