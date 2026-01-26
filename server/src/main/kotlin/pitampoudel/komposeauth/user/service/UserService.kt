@@ -249,7 +249,7 @@ class UserService(
         return userRepository.save(updatedUser)
     }
 
-    private fun markEmailVerified(user: User, email: String): User {
+    fun markEmailVerified(user: User, email: String): User {
         if (user.emailVerified && user.email == email) return user
         val updatedUser = user.copy(
             email = email,

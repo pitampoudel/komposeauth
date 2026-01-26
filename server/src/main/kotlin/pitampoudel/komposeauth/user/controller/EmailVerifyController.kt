@@ -75,7 +75,7 @@ class EmailVerifyController(
         val user = userService.findUser(stored.userId.toHexString())
             ?: throw BadRequestException("User not found")
 
-        userService.emailVerified(user.id)
+        userService.markEmailVerified(user, user.email!!)
 
         return RedirectView("${appConfigService.getConfig().websiteUrl}?emailVerified=true")
     }

@@ -142,7 +142,7 @@ class UserServiceCoreTest {
             )
         )
 
-        userService.emailVerified(user.id)
+        userService.markEmailVerified(user, user.email!!)
 
         val updated = userRepository.findById(user.id).orElseThrow()
         assertTrue(updated.emailVerified)
