@@ -24,7 +24,7 @@ class SparrowSmsService(
             val entity = HttpEntity(formData, headers)
 
             val response = restTemplate.postForObject(
-                "https://sms.sparrowsms.com/api/v2/sms",
+                "https://api.sparrowsms.com/v2/sms",
                 entity,
                 String::class.java
             )
