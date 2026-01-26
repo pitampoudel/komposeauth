@@ -77,6 +77,7 @@ class OtpViewModel internal constructor(
                                 it.copy(infoMsg = msg)
                             }
                         }
+                        uiEventChannel.send(ResultUiEvent.Completed)
                     }
                     _state.update {
                         it.copy(progress = null)
