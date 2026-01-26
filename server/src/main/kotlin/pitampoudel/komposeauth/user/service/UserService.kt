@@ -21,21 +21,19 @@ import org.springframework.security.web.webauthn.management.RelyingPartyAuthenti
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
+import pitampoudel.core.data.parsePhoneNumber
+import pitampoudel.core.domain.isValidEmail
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
-import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
-import pitampoudel.komposeauth.user.data.CreateUserRequest
-import pitampoudel.komposeauth.user.data.Credential
-import pitampoudel.komposeauth.user.data.ProfileResponse
-import pitampoudel.komposeauth.user.data.UpdateProfileRequest
-import pitampoudel.komposeauth.user.data.UserResponse
+import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
+import pitampoudel.komposeauth.user.data.*
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import java.net.URI
@@ -46,8 +44,6 @@ import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.time.Instant
 import javax.security.auth.login.AccountLockedException
-import pitampoudel.core.data.parsePhoneNumber
-import pitampoudel.core.domain.isValidEmail
 
 @Service
 class UserService(
@@ -242,12 +238,25 @@ class UserService(
         return result.mapToProfileResponseDto(kycService.isVerified(result.id))
     }
 
-    fun emailVerified(userId: ObjectId) {
-        userRepository.save(
-            userRepository.findById(userId).orElseThrow().copy(
-                emailVerified = true
-            )
+
+    private fun markPhoneNumberVerified(user: User, phoneNumber: String): User {
+        if (user.phoneNumberVerified && user.phoneNumber == phoneNumber) return user
+        val updatedUser = user.copy(
+            phoneNumber = phoneNumber,
+            phoneNumberVerified = true,
+            updatedAt = Instant.now()
         )
+        return userRepository.save(updatedUser)
+    }
+
+    private fun markEmailVerified(user: User, email: String): User {
+        if (user.emailVerified && user.email == email) return user
+        val updatedUser = user.copy(
+            email = email,
+            emailVerified = true,
+            updatedAt = Instant.now()
+        )
+        return userRepository.save(updatedUser)
     }
 
     fun findOrCreateUser(baseUrl: String?, req: CreateUserRequest): User {
@@ -323,7 +332,7 @@ class UserService(
         )
 
         if (payload["email_verified"] as? Boolean == true && !user.emailVerified) {
-            emailVerified(user.id)
+            markEmailVerified(user, payload["email"] as String)
             return findUser(user.id.toHexString()) ?: user
         }
         return user
@@ -403,10 +412,12 @@ class UserService(
         val normalizedPhone = parsePhoneNumber(null, username)?.fullNumberInE164Format
 
         if (normalizedPhone != null && phoneNumberVerificationService.verify(normalizedPhone, otp)) {
-            return findOrCreateVerifiedOtpUser(email = null, phoneNumber = normalizedPhone)
+            val user = findOrCreateVerifiedOtpUser(email = null, phoneNumber = normalizedPhone)
+            return markPhoneNumberVerified(user, normalizedPhone)
         }
         if (normalizedEmail != null && emailVerificationService.verify(normalizedEmail, otp)) {
-            return findOrCreateVerifiedOtpUser(email = normalizedEmail, phoneNumber = null)
+            val user = findOrCreateVerifiedOtpUser(email = normalizedEmail, phoneNumber = null)
+            return markEmailVerified(user, normalizedEmail)
         }
         throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid OTP")
     }
