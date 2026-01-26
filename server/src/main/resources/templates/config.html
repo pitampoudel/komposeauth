@@ -5,19 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Setup</title>
     <style>
-        body { font-family: system-ui, Arial, sans-serif; background: #0b1020; color: #e6e6e6; }
-        fieldset { border: 1px solid #24314f; border-radius: 8px; margin-bottom: 18px; }
-        legend { padding: 0 8px; color: #c9d1ff; }
-        label { display: block; font-size: 14px; color: #b9c2e3; margin: 10px 0 6px; }
-        input[type=text], input[type=url], input[type=password], input[type=number], textarea, select {
-            width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid #24314f; background: #0d1328; color: #e6e6e6; display: block;
+        body {
+            font-family: system-ui, Arial, sans-serif;
+            background: #0b1020;
+            color: #e6e6e6;
         }
-        textarea { min-height: 96px; resize: vertical; }
-        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        .actions { margin-top: 18px; display: flex; gap: 10px; }
-        .btn { background: #4f67ff; color: white; border: none; border-radius: 8px; padding: 10px 16px; cursor: pointer; }
-        .note { font-size: 12px; color: #93a1c9; }
-        .warn { color: #ffb86b; }
+
+        fieldset {
+            border: 1px solid #24314f;
+            border-radius: 8px;
+            margin-bottom: 18px;
+        }
+
+        legend {
+            padding: 0 8px;
+            color: #c9d1ff;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: #b9c2e3;
+            margin: 10px 0 6px;
+        }
+
+        input[type=text], input[type=url], input[type=password], input[type=number], textarea, select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #24314f;
+            background: #0d1328;
+            color: #e6e6e6;
+            display: block;
+        }
+
+        textarea {
+            min-height: 96px;
+            resize: vertical;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: #4f67ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            cursor: pointer;
+        }
+
+        .note {
+            font-size: 12px;
+            color: #93a1c9;
+        }
+
+        .warn {
+            color: #ffb86b;
+        }
     </style>
 </head>
 <body>
@@ -168,6 +224,7 @@
             <option value="" th:selected="${config.smsProvider == null || config.smsProvider == ''}">None</option>
             <option value="twilio" th:selected="${config.smsProvider == 'twilio'}">Twilio</option>
             <option value="samaye" th:selected="${config.smsProvider == 'samaye'}">Samaye</option>
+            <option value="sparrow" th:selected="${config.smsProvider == 'sparrow'}">Sparrow</option>
         </select>
         <div class="note">Select your preferred SMS provider for phone verification.</div>
     </fieldset>
@@ -247,11 +304,11 @@
         const provider = document.getElementById('smsProvider').value;
         const twilioFields = document.getElementById('twilioFields');
         const samayeFields = document.getElementById('samayeFields');
-        
+
         twilioFields.style.display = provider === 'twilio' ? 'block' : 'none';
         samayeFields.style.display = provider === 'samaye' ? 'block' : 'none';
     }
-    
+
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', toggleSmsFields);
 </script>
