@@ -53,10 +53,6 @@ class KycService(
     ): KycResponse {
         val existing = kycRepo.findByUserId(userId)
 
-        if (existing != null && (existing.country != data.country || existing.nationality != data.nationality)) {
-            throw BadRequestException("KYC already submitted with different country or nationality; cannot resubmit")
-        }
-
         val newKycData = existing?.copy(
             country = data.country,
             nationality = data.nationality,
