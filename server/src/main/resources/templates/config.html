@@ -263,6 +263,17 @@
         <input id="samayeApiKey" name="samayeApiKey" type="text" th:value="${config.samayeApiKey}">
     </fieldset>
 
+    <fieldset id="sparrowFields" style="display: none;">
+        <legend>Sparrow Configuration</legend>
+        <label for="sparrowApiToken">Sparrow API Token</label>
+        <input id="sparrowApiToken" name="sparrowApiToken" type="text" th:value="${config.sparrowApiToken}">
+
+        <label for="sparrowFromNumber">Sparrow From Number</label>
+        <input id="sparrowFromNumber" name="sparrowFromNumber" type="text" th:value="${config.sparrowFromNumber}">
+
+
+    </fieldset>
+
     <fieldset>
         <legend>Access Control</legend>
 
@@ -304,9 +315,11 @@
         const provider = document.getElementById('smsProvider').value;
         const twilioFields = document.getElementById('twilioFields');
         const samayeFields = document.getElementById('samayeFields');
+        const sparrowFields = document.getElementById('sparrowFields');
 
         twilioFields.style.display = provider === 'twilio' ? 'block' : 'none';
         samayeFields.style.display = provider === 'samaye' ? 'block' : 'none';
+        sparrowFields.style.display = provider === 'sparrow' ? 'block' : 'none';
     }
 
     // Initialize on page load
