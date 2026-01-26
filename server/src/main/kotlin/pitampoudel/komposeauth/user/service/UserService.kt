@@ -238,17 +238,6 @@ class UserService(
         return result.mapToProfileResponseDto(kycService.isVerified(result.id))
     }
 
-
-    private fun markPhoneNumberVerified(user: User, phoneNumber: String): User {
-        if (user.phoneNumberVerified && user.phoneNumber == phoneNumber) return user
-        val updatedUser = user.copy(
-            phoneNumber = phoneNumber,
-            phoneNumberVerified = true,
-            updatedAt = Instant.now()
-        )
-        return userRepository.save(updatedUser)
-    }
-
     fun markEmailVerified(user: User, email: String): User {
         if (user.emailVerified && user.email == email) return user
         val updatedUser = user.copy(
@@ -412,12 +401,10 @@ class UserService(
         val normalizedPhone = parsePhoneNumber(null, username)?.fullNumberInE164Format
 
         if (normalizedPhone != null && phoneNumberVerificationService.verify(normalizedPhone, otp)) {
-            val user = findOrCreateVerifiedOtpUser(email = null, phoneNumber = normalizedPhone)
-            return markPhoneNumberVerified(user, normalizedPhone)
+            return findOrCreateVerifiedOtpUser(email = null, phoneNumber = normalizedPhone)
         }
         if (normalizedEmail != null && emailVerificationService.verify(normalizedEmail, otp)) {
-            val user = findOrCreateVerifiedOtpUser(email = normalizedEmail, phoneNumber = null)
-            return markEmailVerified(user, normalizedEmail)
+            return findOrCreateVerifiedOtpUser(email = normalizedEmail, phoneNumber = null)
         }
         throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid OTP")
     }
