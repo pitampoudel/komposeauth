@@ -1,11 +1,11 @@
 package pitampoudel.komposeauth.otp.service
 
-import pitampoudel.komposeauth.app_config.service.AppConfigService
-import pitampoudel.komposeauth.otp.entity.Otp
-import pitampoudel.komposeauth.otp.repository.OtpRepository
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.sms.SmsService
+import pitampoudel.komposeauth.otp.entity.Otp
+import pitampoudel.komposeauth.otp.repository.OtpRepository
 import java.time.Duration
 import java.time.Instant
 import kotlin.random.Random
@@ -16,7 +16,7 @@ class PhoneNumberVerificationServiceImpl(
     private val appConfigService: AppConfigService
 ) : PhoneNumberVerificationService {
 
-    override fun initiate(phoneNumber: String): Boolean {
+    override fun initiate(phoneNumber: String) {
         val resendCooldown = Duration.ofSeconds(60)
         val now = Instant.now()
         val recentOtp = otpRepository.findByReceiverOrderByCreatedAtDesc(phoneNumber).firstOrNull()
@@ -33,7 +33,7 @@ class PhoneNumberVerificationServiceImpl(
                 otp = otp
             )
         )
-        return smsService.sendSms(
+        smsService.sendSms(
             phoneNumber = phoneNumber,
             message = "Your OTP for ${appConfigService.getConfig().name} is $otp"
         )

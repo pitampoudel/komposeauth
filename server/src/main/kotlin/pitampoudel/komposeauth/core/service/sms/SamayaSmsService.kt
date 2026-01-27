@@ -15,28 +15,22 @@ class SamayaSmsService(
     private val restTemplate: RestTemplate
 ) : SmsService {
     val logger: Logger = LoggerFactory.getLogger(SamayaSmsService::class.java)
-    override fun sendSms(phoneNumber: String, message: String): Boolean {
-        return try {
-            val headers = HttpHeaders()
-            headers.contentType = MediaType.APPLICATION_FORM_URLENCODED
+    override fun sendSms(phoneNumber: String, message: String) {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_FORM_URLENCODED
 
-            val formData = buildFormData(phoneNumber, message)
-            val entity = HttpEntity(formData, headers)
+        val formData = buildFormData(phoneNumber, message)
+        val entity = HttpEntity(formData, headers)
 
-            val response = restTemplate.postForObject(
-                "https://samayasms.com.np/smsapi/index.php",
-                entity,
-                String::class.java
-            )
+        val response = restTemplate.postForObject(
+            "https://samayasms.com.np/smsapi/index.php",
+            entity,
+            String::class.java
+        )
 
-            logger.debug("SMS: $message To: $phoneNumber")
+        logger.debug("SMS: $message To: $phoneNumber")
 
-            logger.debug("SMS API Response: $response")
-            true
-        } catch (e: Exception) {
-            logger.debug("SMS sending failed: ${e.message}")
-            false
-        }
+        logger.debug("SMS API Response: $response")
     }
 
     private fun buildFormData(phoneNumber: String, message: String): MultiValueMap<String, String> {

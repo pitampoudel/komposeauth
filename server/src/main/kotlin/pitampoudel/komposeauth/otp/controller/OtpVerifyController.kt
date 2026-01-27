@@ -39,7 +39,7 @@ class OtpVerifyController(
     ): ResponseEntity<MessageResponse> {
 
         val authenticatedUser = userContextService.authenticatedUserOrNull()
-        val sent = when (request.type) {
+        when (request.type) {
             OtpType.PHONE -> {
                 val parsedPhone = parsePhoneNumber(null, request.username)
                     ?: throw IllegalArgumentException("Invalid phone number format")
@@ -57,9 +57,6 @@ class OtpVerifyController(
                     baseUrl = findServerUrl(httpServletRequest)
                 )
             }
-        }
-        if (!sent) {
-            return ResponseEntity.badRequest().body(MessageResponse("Failed to send OTP"))
         }
         return ResponseEntity.ok(MessageResponse("An OTP has just been sent to ${request.username}"))
 

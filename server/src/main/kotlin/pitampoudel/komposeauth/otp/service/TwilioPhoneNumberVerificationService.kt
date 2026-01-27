@@ -8,7 +8,7 @@ import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import java.nio.charset.StandardCharsets
-import java.util.Base64
+import java.util.*
 
 class TwilioPhoneNumberVerificationService(
     private val appConfigService: AppConfigService,
@@ -25,20 +25,14 @@ class TwilioPhoneNumberVerificationService(
         return headers
     }
 
-    override fun initiate(phoneNumber: String): Boolean {
+    override fun initiate(phoneNumber: String) {
         val verifySid = appConfigService.getConfig().twilioVerifyServiceSid
-        return try {
-            val url = "https://verify.twilio.com/v2/Services/$verifySid/Verifications"
-            val formData: MultiValueMap<String, String> = LinkedMultiValueMap()
-            formData.add("To", phoneNumber)
-            formData.add("Channel", "sms")
-            val entity = HttpEntity(formData, basicHeaders())
-            restTemplate.postForObject(url, entity, String::class.java)
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
+        val url = "https://verify.twilio.com/v2/Services/$verifySid/Verifications"
+        val formData: MultiValueMap<String, String> = LinkedMultiValueMap()
+        formData.add("To", phoneNumber)
+        formData.add("Channel", "sms")
+        val entity = HttpEntity(formData, basicHeaders())
+        restTemplate.postForObject(url, entity, String::class.java)
     }
 
 
