@@ -5,19 +5,14 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import pitampoudel.komposeauth.core.config.UserContextService
-import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_ADDRESS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_DOCUMENTS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_PENDING
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_PERSONAL_INFO
+import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.SlackNotifier
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
@@ -98,7 +93,7 @@ class KycController(
                 )
             )
         }
-        slackNotifier.send("KYC documents submitted by ${user.fullName} (${user.id})")
+        slackNotifier.send("📝 KYC documents submitted by ${user.fullName}")
         return ResponseEntity.ok(result)
     }
 
@@ -111,12 +106,18 @@ class KycController(
     fun approve(
         @PathVariable id: String,
         request: HttpServletRequest
-    ): ResponseEntity<KycResponse> = ResponseEntity.ok(
-        kycService.approve(
+    ): ResponseEntity<KycResponse> {
+        val admin = userContextService.getUserFromAuthentication()
+        val targetUser = userService.findUser(id) ?: throw AccountNotFoundException("User not found")
+        val response = kycService.approve(
             baseUrl = findServerUrl(request),
-            userService.findUser(id) ?: throw AccountNotFoundException("User not found")
+            user = targetUser
         )
-    )
+        slackNotifier.send(
+            "✅ KYC approved by ${admin.fullName} for ${targetUser.fullName}"
+        )
+        return ResponseEntity.ok(response)
+    }
 
     @Operation(
         summary = "Reject KYC",
@@ -128,11 +129,18 @@ class KycController(
         httpServletRequest: HttpServletRequest,
         @PathVariable id: String,
         @RequestParam(required = false) reason: String?
-    ): ResponseEntity<KycResponse> = ResponseEntity.ok(
-        kycService.reject(
+    ): ResponseEntity<KycResponse> {
+        val admin = userContextService.getUserFromAuthentication()
+        val targetUser = userService.findUser(id) ?: throw AccountNotFoundException("User not found")
+        val response = kycService.reject(
             baseUrl = findServerUrl(httpServletRequest),
-            user = userService.findUser(id) ?: throw AccountNotFoundException("User not found"),
+            user = targetUser,
             reason = reason
         )
-    )
+        val reasonSuffix = reason?.takeIf { it.isNotBlank() }?.let { " Reason: $it" } ?: ""
+        slackNotifier.send(
+            "⛔ KYC rejected by ${admin.fullName} for ${targetUser.fullName}. `$reasonSuffix`"
+        )
+        return ResponseEntity.ok(response)
+    }
 }
