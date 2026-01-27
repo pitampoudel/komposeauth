@@ -18,64 +18,18 @@ import platform.AuthenticationServices.ASAuthorizationScopeFullName
 import platform.Foundation.NSError
 import platform.Foundation.base64EncodedStringWithOptions
 import platform.UIKit.UIApplication
+import platform.UIKit.UISceneActivationStateForegroundActive
 import platform.UIKit.UIWindow
+import platform.UIKit.UIWindowScene
 import platform.darwin.NSObject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 @Composable
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
-    val retriever = remember {
-        object : NSObject(), ASAuthorizationControllerDelegateProtocol,
-            ASAuthorizationControllerPresentationContextProvidingProtocol {
-            private var onResult: (Result<Credential>) -> Unit = {}
-            suspend fun getCredential(): Result<Credential> {
-                return suspendCoroutine { continuation ->
-                    onResult = { result ->
-                        continuation.resume(result)
-                    }
-                    val appleIDProvider = ASAuthorizationAppleIDProvider()
-                    val request = appleIDProvider.createRequest()
-                    request.requestedScopes =
-                        listOf(ASAuthorizationScopeFullName, ASAuthorizationScopeEmail)
-
-                    val authorizationController = ASAuthorizationController(listOf(request))
-                    authorizationController.delegate = this
-                    authorizationController.presentationContextProvider = this
-                    authorizationController.performRequests()
-                }
-            }
-
-            override fun authorizationController(
-                controller: ASAuthorizationController,
-                didCompleteWithAuthorization: ASAuthorization
-            ) {
-                val appleIDCredential =
-                    didCompleteWithAuthorization.credential as? ASAuthorizationAppleIDCredential
-                if (appleIDCredential != null) {
-                    val idToken =
-                        appleIDCredential.identityToken?.base64EncodedStringWithOptions(0u) ?: ""
-                    onResult(Result.Success(Credential.AppleId(idToken)))
-                } else {
-                    onResult(Result.Error("Apple ID credential is null"))
-                }
-            }
-
-            override fun authorizationController(
-                controller: ASAuthorizationController,
-                didCompleteWithError: NSError
-            ) {
-                onResult(Result.Error(didCompleteWithError.localizedDescription))
-            }
-
-            override fun presentationAnchorForAuthorizationController(controller: ASAuthorizationController): UIWindow {
-                return UIApplication.sharedApplication.windows.first() as UIWindow
-            }
-        }
-    }
     return object : KmpCredentialManager {
         override suspend fun getCredential(options: LoginOptionsResponse): Result<Credential> {
-            return retriever.getCredential()
+            return AppleSignInHelper().getCredential()
         }
 
         override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
@@ -83,4 +37,64 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
         }
     }
 }
+
+class AppleSignInHelper : NSObject(),
+    ASAuthorizationControllerDelegateProtocol,
+    ASAuthorizationControllerPresentationContextProvidingProtocol {
+
+    private var onResult: (Result<Credential>) -> Unit = {}
+
+    // Keep controller strongly too (helps debugging)
+    private var authController: ASAuthorizationController? = null
+
+    suspend fun getCredential(): Result<Credential> = suspendCoroutine { cont ->
+        onResult = { r ->
+            authController = null
+            cont.resume(r)
+        }
+
+        val provider = ASAuthorizationAppleIDProvider()
+        val request = provider.createRequest()
+        request.requestedScopes = listOf(ASAuthorizationScopeFullName, ASAuthorizationScopeEmail)
+
+        val controller = ASAuthorizationController(listOf(request))
+        authController = controller
+        controller.delegate = this
+        controller.presentationContextProvider = this
+        controller.performRequests()
+    }
+
+    override fun authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithAuthorization: ASAuthorization
+    ) {
+        val cred = didCompleteWithAuthorization.credential as? ASAuthorizationAppleIDCredential
+        if (cred == null) {
+            onResult(Result.Error("Apple ID credential is null"))
+            return
+        }
+        val idToken = cred.identityToken?.base64EncodedStringWithOptions(0u).orEmpty()
+        onResult(Result.Success(Credential.AppleId(idToken)))
+    }
+
+    override fun authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithError: NSError
+    ) {
+        onResult(Result.Error("Apple auth failed: code=${didCompleteWithError.code}, ${didCompleteWithError.localizedDescription}"))
+    }
+
+    override fun presentationAnchorForAuthorizationController(
+        controller: ASAuthorizationController
+    ): UIWindow {
+        val app = UIApplication.sharedApplication
+        val key = app.keyWindow
+        if (key != null) return key
+
+        // Fallback (older iOS / edge cases)
+        return (app.windows.firstOrNull() ?: error("No UIWindow available")) as UIWindow
+    }
+
+}
+
 
