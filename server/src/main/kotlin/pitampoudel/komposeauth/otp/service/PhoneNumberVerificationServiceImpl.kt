@@ -33,9 +33,6 @@ class PhoneNumberVerificationServiceImpl(
                 otp = otp
             )
         )
-        if (appConfigService.getConfig().samayeApiKey.isNullOrBlank()) {
-            return false
-        }
         return smsService.sendSms(
             phoneNumber = phoneNumber,
             message = "Your OTP for ${appConfigService.getConfig().name} is $otp"

@@ -34,7 +34,7 @@ class SparrowSmsService(
             logger.debug("SMS API Response: $response")
             true
         } catch (e: Exception) {
-            logger.debug("SMS sending failed: ${e.message}")
+            e.printStackTrace()
             false
         }
     }
