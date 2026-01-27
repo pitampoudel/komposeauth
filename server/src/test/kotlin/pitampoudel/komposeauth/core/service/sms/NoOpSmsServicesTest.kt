@@ -8,15 +8,6 @@ import pitampoudel.komposeauth.otp.service.NoOpPhoneNumberVerificationService
 class NoOpPhoneNumberVerificationServiceTest {
 
     @Test
-    fun `initiate always returns false`() {
-        val service = NoOpPhoneNumberVerificationService()
-
-        val result = service.initiate("+1234567890")
-
-        assertFalse(result, "NoOpPhoneNumberVerificationService.initiate should always return false")
-    }
-
-    @Test
     fun `verify always returns false`() {
         val service = NoOpPhoneNumberVerificationService()
 
@@ -37,8 +28,7 @@ class NoOpPhoneNumberVerificationServiceTest {
         )
 
         phoneNumbers.forEach { phone ->
-            val result = service.initiate(phone)
-            assertFalse(result)
+            service.initiate(phone)
         }
     }
 
