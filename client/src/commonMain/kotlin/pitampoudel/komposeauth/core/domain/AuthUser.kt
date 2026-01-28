@@ -8,17 +8,17 @@ data class AuthUser(
     @SerialName("authorities")
     val authorities: List<String>,
     @SerialName("email")
-    val email: String,
+    val email: String? = null,
     @SerialName("familyName")
     val familyName: String? = null,
     @SerialName("givenName")
-    val givenName: String?,
+    val givenName: String? = null ,
     @SerialName("kycVerified")
     val kycVerified: Boolean,
     @SerialName("phoneNumberVerified")
     val phoneNumberVerified: Boolean,
     @SerialName("picture")
-    val picture: String,
+    val picture: String? = null,
     @SerialName("sub")
     val sub: String
 ) {

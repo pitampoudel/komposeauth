@@ -32,6 +32,7 @@ internal class AuthStateHandler(
                 try {
                     json.decodeFromString<AuthUser>(string)
                 } catch (ex: SerializationException) {
+                    ex.printStackTrace()
                     authPreferences.clear()
                     null
                 }
