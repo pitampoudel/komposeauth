@@ -1,12 +1,11 @@
 package pitampoudel.komposeauth.login.presentation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.user.data.Credential
-import pitampoudel.komposeauth.core.data.LoginOptionsResponse
+import co.touchlab.kermit.Logger
 import kotlinx.serialization.json.JsonObject
-import pitampoudel.komposeauth.login.presentation.KmpCredentialManager
+import pitampoudel.core.domain.Result
+import pitampoudel.komposeauth.core.data.LoginOptionsResponse
+import pitampoudel.komposeauth.user.data.Credential
 import platform.AuthenticationServices.ASAuthorization
 import platform.AuthenticationServices.ASAuthorizationAppleIDCredential
 import platform.AuthenticationServices.ASAuthorizationAppleIDProvider
@@ -18,9 +17,7 @@ import platform.AuthenticationServices.ASAuthorizationScopeFullName
 import platform.Foundation.NSError
 import platform.Foundation.base64EncodedStringWithOptions
 import platform.UIKit.UIApplication
-import platform.UIKit.UISceneActivationStateForegroundActive
 import platform.UIKit.UIWindow
-import platform.UIKit.UIWindowScene
 import platform.darwin.NSObject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -50,6 +47,7 @@ class AppleSignInHelper : NSObject(),
     suspend fun getCredential(): Result<Credential> = suspendCoroutine { cont ->
         onResult = { r ->
             authController = null
+            Logger.v("Apple sign in result received")
             cont.resume(r)
         }
 

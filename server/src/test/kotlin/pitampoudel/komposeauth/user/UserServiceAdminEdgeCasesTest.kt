@@ -57,7 +57,8 @@ class UserServiceAdminEdgeCasesTest {
             objectMapper = mock(),
             webAuthnRelyingPartyOperations = mock(),
             roleChangeEmailNotifier = mock(),
-            emailVerificationService = mock()
+            emailVerificationService = mock(),
+            appleTokenValidator = mock()
         )
 
         assertThrows<org.apache.coyote.BadRequestException> {
@@ -81,7 +82,9 @@ class UserServiceAdminEdgeCasesTest {
             objectMapper = mock(),
             webAuthnRelyingPartyOperations = mock(),
             roleChangeEmailNotifier = mock(),
-            emailVerificationService = mock()
+            emailVerificationService = mock(),
+            appleTokenValidator = mock()
+
         )
 
         assertThrows<UsernameNotFoundException> {
@@ -108,7 +111,8 @@ class UserServiceAdminEdgeCasesTest {
             objectMapper = mock(),
             webAuthnRelyingPartyOperations = mock(),
             roleChangeEmailNotifier = mock(),
-            emailVerificationService = mock()
+            emailVerificationService = mock(),
+            appleTokenValidator = mock()
         )
 
         val result = service.findUsersFlexible(ids = null, q = null, page = -10, size = 9999)
