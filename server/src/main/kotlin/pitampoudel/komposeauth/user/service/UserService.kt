@@ -33,7 +33,11 @@ import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
-import pitampoudel.komposeauth.user.data.*
+import pitampoudel.komposeauth.user.data.CreateUserRequest
+import pitampoudel.komposeauth.user.data.Credential
+import pitampoudel.komposeauth.user.data.ProfileResponse
+import pitampoudel.komposeauth.user.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.data.UserResponse
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import java.net.URI
@@ -58,7 +62,8 @@ class UserService(
     private val objectMapper: ObjectMapper,
     private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
     private val roleChangeEmailNotifier: RoleChangeEmailNotifier,
-    private val emailVerificationService: EmailVerificationService
+    private val emailVerificationService: EmailVerificationService,
+    private val appleTokenValidator: AppleTokenValidator
 ) {
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
@@ -327,6 +332,31 @@ class UserService(
         return user
     }
 
+    private fun findOrCreateUserByAppleIdToken(idToken: String): User {
+        val claims = appleTokenValidator.validate(
+            idToken = idToken,
+            clientId = appConfigService.getConfig().appleAuthClientId
+                ?: throw IllegalStateException("Apple client id not configured")
+        )
+        val email = claims.getStringClaim("email")
+
+        val user = findOrCreateUser(
+            baseUrl = null,
+            CreateUserRequest(
+                email = email,
+                firstName = null,
+                lastName = null,
+                photoUrl = null
+            )
+        )
+
+        if (claims.getBooleanClaim("email_verified") && !user.emailVerified) {
+            markEmailVerified(user, email)
+            return findUser(user.id.toHexString()) ?: user
+        }
+        return user
+    }
+
     fun resolveUserFromCredential(
         request: Credential,
         loadPublicKeyCredentialRequestOptions: () -> PublicKeyCredentialRequestOptions?
@@ -354,7 +384,7 @@ class UserService(
                 )
             }
 
-            is Credential.AppleId -> throw UnsupportedOperationException("AppleId authentication is not supported yet.")
+            is Credential.AppleId -> findOrCreateUserByAppleIdToken(request.idToken)
             is Credential.PublicKey -> {
                 val json = objectMapper.readValue(
                     request.authenticationResponseJson,
@@ -400,7 +430,11 @@ class UserService(
         val normalizedEmail = username.lowercase().takeIf { it.isValidEmail() }
         val normalizedPhone = parsePhoneNumber(null, username)?.fullNumberInE164Format
 
-        if (normalizedPhone != null && phoneNumberVerificationService.verify(normalizedPhone, otp)) {
+        if (normalizedPhone != null && phoneNumberVerificationService.verify(
+                phoneNumber = normalizedPhone,
+                code = otp
+            )
+        ) {
             return findOrCreateVerifiedOtpUser(email = null, phoneNumber = normalizedPhone)
         }
         if (normalizedEmail != null && emailVerificationService.verify(normalizedEmail, otp)) {
@@ -410,8 +444,8 @@ class UserService(
     }
 
     private fun findOrCreateVerifiedOtpUser(email: String?, phoneNumber: String?): User {
-        val username =
-            email ?: phoneNumber ?: throw IllegalArgumentException("Either email or phone number is required")
+        val username = email ?: phoneNumber
+        ?: throw IllegalArgumentException("Either email or phone number is required")
         val existingUser = findByUserName(username)
         if (existingUser != null) {
             val updatedUser = existingUser.copy(
@@ -421,7 +455,9 @@ class UserService(
                 phoneNumberVerified = existingUser.phoneNumberVerified || phoneNumber != null,
                 updatedAt = Instant.now()
             )
-            return if (updatedUser == existingUser) existingUser else userRepository.save(updatedUser)
+            return if (updatedUser == existingUser) existingUser else userRepository.save(
+                updatedUser
+            )
         }
 
         val newUser = User(

@@ -44,6 +44,7 @@ data class AppConfig(
     var googleAuthClientSecret: String? = null,
     var googleAuthDesktopClientId: String? = null,
     var googleAuthDesktopClientSecret: String? = null,
+    var appleAuthClientId: String? = null,
 
     var allowedAndroidSha256List: String? = null,
     var corsAllowedOriginList: String? = null,
@@ -98,6 +99,7 @@ data class AppConfig(
         if (googleAuthClientSecret.isNullOrBlank()) googleAuthClientSecret = null
         if (googleAuthDesktopClientId.isNullOrBlank()) googleAuthDesktopClientId = null
         if (googleAuthDesktopClientSecret.isNullOrBlank()) googleAuthDesktopClientSecret = null
+        if (appleAuthClientId.isNullOrBlank()) appleAuthClientId = null
         if (allowedAndroidSha256List.isNullOrBlank()) allowedAndroidSha256List = null
         if (corsAllowedOriginList.isNullOrBlank()) corsAllowedOriginList = null
         if (smsProvider.isNullOrBlank()) smsProvider = null
