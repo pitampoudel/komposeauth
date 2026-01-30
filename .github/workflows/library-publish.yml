@@ -6,7 +6,7 @@ on:
     branches:
       - main
   release:
-    types: [published]
+    types: [ published ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -40,3 +40,6 @@ jobs:
 
       - name: Publish to GitHub Packages
         run: ./gradlew publish
+        env:
+          GITHUB_ACTOR: ${{ github.repository_owner }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
