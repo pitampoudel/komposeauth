@@ -7,27 +7,21 @@ import kotlinx.serialization.json.JsonObject
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.user.data.Credential
-import platform.AuthenticationServices.ASAuthorization
-import platform.AuthenticationServices.ASAuthorizationAppleIDCredential
-import platform.AuthenticationServices.ASAuthorizationAppleIDProvider
-import platform.AuthenticationServices.ASAuthorizationController
-import platform.AuthenticationServices.ASAuthorizationControllerDelegateProtocol
-import platform.AuthenticationServices.ASAuthorizationControllerPresentationContextProvidingProtocol
-import platform.AuthenticationServices.ASAuthorizationScopeEmail
-import platform.AuthenticationServices.ASAuthorizationScopeFullName
+import platform.AuthenticationServices.*
 import platform.Foundation.NSError
 import platform.Foundation.base64EncodedStringWithOptions
 import platform.UIKit.UIApplication
 import platform.UIKit.UIWindow
 import platform.darwin.NSObject
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 @Composable
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
+    val appleHelper = AppleSignInHelper()
+
     return object : KmpCredentialManager {
         override suspend fun getCredential(options: LoginOptionsResponse): Result<Credential> {
-            return AppleSignInHelper().getCredential()
+            return appleHelper.getCredential()
         }
 
         override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
