@@ -14,6 +14,10 @@ import platform.UIKit.UIApplication
 import platform.UIKit.UIWindow
 import platform.darwin.NSObject
 import kotlin.coroutines.resume
+import platform.Foundation.NSString
+import platform.Foundation.NSUTF8StringEncoding
+import platform.Foundation.create
+import platform.Foundation.lowercaseString
 
 @Composable
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
@@ -39,7 +43,7 @@ class AppleSignInHelper : NSObject(),
     // Keep controller strongly too (helps debugging)
     private var authController: ASAuthorizationController? = null
 
-    suspend fun getCredential(): Result<Credential> = suspendCancellableCoroutine  { cont ->
+    suspend fun getCredential(): Result<Credential> = suspendCancellableCoroutine { cont ->
         Logger.d("Starting Apple sign in flow")
         onResult = { r ->
             authController = null
@@ -68,7 +72,11 @@ class AppleSignInHelper : NSObject(),
             onResult(Result.Error("Apple ID credential is null"))
             return
         }
-        val idToken = cred.identityToken?.base64EncodedStringWithOptions(0u).orEmpty()
+        val idToken = cred.identityToken?.let { data ->
+            val str = NSString.create(data = data, encoding = NSUTF8StringEncoding)
+            str as String?
+        }.orEmpty()
+
         onResult(Result.Success(Credential.AppleId(idToken)))
     }
 
