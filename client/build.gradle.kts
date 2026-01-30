@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
-    id("maven-publish")
+    alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.kotlinx.serialization)
 }
 
@@ -129,7 +129,16 @@ kotlin {
     }
 }
 
-publishing {
+mavenPublishing {
+    coordinates(
+        groupId = project.group.toString(),
+        artifactId = "komposeauth-client",
+        version = project.version.toString()
+    )
+    pom {
+        name.set("komposeauth client")
+        description.set("Client library for komposeauth")
+    }
     repositories {
         maven {
             name = "GitHubPackages"

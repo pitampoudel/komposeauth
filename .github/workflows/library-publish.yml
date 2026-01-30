@@ -12,9 +12,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+  ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+  ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
+
 jobs:
   publish:
-    name: Publish to GitHub Packages
+    name: Publish
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -43,3 +50,12 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.repository_owner }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish non-release build to MavenCentral
+        if: github.event_name != 'release'
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository
+
+      - name: Publish release to MavenCentral
+        if: github.event_name == 'release'
+        run: ./gradlew publishAndReleaseToMavenCentral
+

@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.android.kotlin.multiplatform.library)
-    id("maven-publish")
+    alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.kotlinx.serialization)
 }
 
@@ -63,7 +63,16 @@ kotlin {
     }
 }
 
-publishing {
+mavenPublishing {
+    coordinates(
+        groupId = project.group.toString(),
+        artifactId = "komposeauth-shared",
+        version = project.version.toString()
+    )
+    pom {
+        name.set("komposeauth Shared")
+        description.set("Shared module for the komposeauth library")
+    }
     repositories {
         maven {
             name = "GitHubPackages"
