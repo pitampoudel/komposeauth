@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.login.presentation
 
 import androidx.compose.runtime.Composable
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.JsonObject
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
@@ -44,7 +45,7 @@ class AppleSignInHelper : NSObject(),
     // Keep controller strongly too (helps debugging)
     private var authController: ASAuthorizationController? = null
 
-    suspend fun getCredential(): Result<Credential> = suspendCoroutine { cont ->
+    suspend fun getCredential(): Result<Credential> = suspendCancellableCoroutine  { cont ->
         Logger.d("Starting Apple sign in flow")
         onResult = { r ->
             authController = null
