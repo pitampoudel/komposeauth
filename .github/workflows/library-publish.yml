@@ -63,15 +63,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Publish non-release build to GitHub Packages
-        if: github.event_name != 'release'
         run: ./gradlew publishAllPublicationsToGithubRepository
-        env:
-          GITHUB_ACTOR: ${{ github.repository_owner }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish release to GitHub Packages
-        if: github.event_name == 'release'
-        run: ./gradlew publishAndReleaseToGithub
         env:
           GITHUB_ACTOR: ${{ github.repository_owner }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
