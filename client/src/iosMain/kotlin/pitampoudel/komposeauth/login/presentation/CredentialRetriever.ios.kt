@@ -45,6 +45,7 @@ class AppleSignInHelper : NSObject(),
     private var authController: ASAuthorizationController? = null
 
     suspend fun getCredential(): Result<Credential> = suspendCoroutine { cont ->
+        Logger.d("Starting Apple sign in flow")
         onResult = { r ->
             authController = null
             Logger.v("Apple sign in result received")
@@ -66,6 +67,7 @@ class AppleSignInHelper : NSObject(),
         controller: ASAuthorizationController,
         didCompleteWithAuthorization: ASAuthorization
     ) {
+        Logger.d("Apple sign in completed successfully")
         val cred = didCompleteWithAuthorization.credential as? ASAuthorizationAppleIDCredential
         if (cred == null) {
             onResult(Result.Error("Apple ID credential is null"))
@@ -79,6 +81,7 @@ class AppleSignInHelper : NSObject(),
         controller: ASAuthorizationController,
         didCompleteWithError: NSError
     ) {
+        Logger.e("Apple sign in failed: code=${didCompleteWithError.code}, ${didCompleteWithError.localizedDescription}")
         onResult(Result.Error("Apple auth failed: code=${didCompleteWithError.code}, ${didCompleteWithError.localizedDescription}"))
     }
 
