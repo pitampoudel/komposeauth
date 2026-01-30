@@ -45,11 +45,16 @@ jobs:
       - name: Run tests
         run: ./gradlew clean :client:check --no-daemon
 
-      - name: Publish to GitHub Packages
-        run: ./gradlew publish
+      - name: Publish non-release build to GitHub Packages
+        if: github.event_name != 'release'
+        run: ./gradlew publishAllPublicationsToGithubRepository
         env:
           GITHUB_ACTOR: ${{ github.repository_owner }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish release to GitHub Packages
+        if: github.event_name == 'release'
+        run: ./gradlew publishAndReleaseToGithub
 
       - name: Publish non-release build to MavenCentral
         if: github.event_name != 'release'
