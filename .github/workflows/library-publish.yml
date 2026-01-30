@@ -20,12 +20,9 @@ env:
   ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
 
 jobs:
-  publish:
-    name: Publish
+  test:
+    name: Run tests
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -45,6 +42,26 @@ jobs:
       - name: Run tests
         run: ./gradlew clean :client:check --no-daemon
 
+  publish-to-github:
+    name: Publish to GitHub Packages
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Publish non-release build to GitHub Packages
         if: github.event_name != 'release'
         run: ./gradlew publishAllPublicationsToGithubRepository
@@ -55,6 +72,26 @@ jobs:
       - name: Publish release to GitHub Packages
         if: github.event_name == 'release'
         run: ./gradlew publishAndReleaseToGithub
+        env:
+          GITHUB_ACTOR: ${{ github.repository_owner }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-to-maven-central:
+    name: Publish to MavenCentral
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Publish non-release build to MavenCentral
         if: github.event_name != 'release'
@@ -63,4 +100,3 @@ jobs:
       - name: Publish release to MavenCentral
         if: github.event_name == 'release'
         run: ./gradlew publishAndReleaseToMavenCentral
-
