@@ -198,6 +198,7 @@ class ProfileViewModel internal constructor(
                                 _state.update {
                                     it.copy(editingState = ProfileState.EditingState())
                                 }
+                                authStateHandler.updateCurrentUser()
                                 uiEventChannel.send(ResultUiEvent.Completed)
                             }
                         }
