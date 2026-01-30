@@ -139,14 +139,4 @@ mavenPublishing {
         name.set("komposeauth client")
         description.set("Client library for komposeauth")
     }
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/pitampoudel/komposeauth")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
-    }
 }
