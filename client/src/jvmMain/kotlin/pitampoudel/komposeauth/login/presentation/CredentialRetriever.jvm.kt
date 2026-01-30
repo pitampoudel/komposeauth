@@ -9,7 +9,6 @@ import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.login.OAuthUtils.buildAuthUrl
 import pitampoudel.komposeauth.login.OAuthUtils.listenForCode
-import pitampoudel.komposeauth.login.presentation.KmpCredentialManager
 import java.awt.Desktop
 import java.net.ServerSocket
 import java.net.URI
@@ -18,21 +17,26 @@ import java.net.URI
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
     return remember {
         object : KmpCredentialManager {
-            override suspend fun getCredential(options: LoginOptionsResponse): Result<Credential> {
-                val googleAuthClientId = options.googleClientId ?: return Result.Error(
-                    "Google client id not found"
-                )
-                val port = ServerSocket(0).use { it.localPort }
-                val redirectUri = "http://127.0.0.1:$port/callback"
-                val authUri = buildAuthUrl(googleAuthClientId, redirectUri)
-                Desktop.getDesktop().browse(URI(authUri))
-                val code = listenForCode(port)
-                val credential = Credential.AuthCode(
-                    code = code,
-                    redirectUri = redirectUri,
-                    platform = Platform.DESKTOP
-                )
-                return Result.Success(credential)
+            override suspend fun getCredential(credentialType: CredentialType, options: LoginOptionsResponse): Result<Credential> {
+                return when (credentialType) {
+                    CredentialType.GOOGLE, CredentialType.ANY -> {
+                        val googleAuthClientId = options.googleClientId ?: return Result.Error(
+                            "Google client id not found"
+                        )
+                        val port = ServerSocket(0).use { it.localPort }
+                        val redirectUri = "http://12-7.0.0.1:$port/callback"
+                        val authUri = buildAuthUrl(googleAuthClientId, redirectUri)
+                        Desktop.getDesktop().browse(URI(authUri))
+                        val code = listenForCode(port)
+                        val credential = Credential.AuthCode(
+                            code = code,
+                            redirectUri = redirectUri,
+                            platform = Platform.DESKTOP
+                        )
+                        Result.Success(credential)
+                    }
+                    CredentialType.APPLE -> Result.Error("iOS Sign In is not supported on Desktop")
+                }
             }
 
             override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {

@@ -17,7 +17,6 @@ import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.core.domain.Platform
-import pitampoudel.komposeauth.login.presentation.KmpCredentialManager
 import kotlin.coroutines.resume
 import kotlin.js.Promise
 import kotlin.random.Random
@@ -112,19 +111,24 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
         val koin = getKoin()
         val settings = koin.get<ObservableSettings>()
         object : KmpCredentialManager {
-            override suspend fun getCredential(options: LoginOptionsResponse): Result<Credential> {
-                val state = "state-${Random.nextInt()}"
-                val redirectUri = window.location.origin
-                settings.putString("oauth_state", state)
-                val googleClientId = options.googleClientId
-                    ?: return Result.Error("Google client id is not provided")
-                val authUrl = buildGoogleAuthUrl(
-                    clientId = googleClientId,
-                    redirectUri = redirectUri,
-                    state = state
-                )
+            override suspend fun getCredential(credentialType: CredentialType, options: LoginOptionsResponse): Result<Credential> {
+                return when (credentialType) {
+                    CredentialType.GOOGLE, CredentialType.ANY -> {
+                        val state = "state-${Random.nextInt()}"
+                        val redirectUri = window.location.origin
+                        settings.putString("oauth_state", state)
+                        val googleClientId = options.googleClientId
+                            ?: return Result.Error("Google client id is not provided")
+                        val authUrl = buildGoogleAuthUrl(
+                            clientId = googleClientId,
+                            redirectUri = redirectUri,
+                            state = state
+                        )
 
-                return openAuthPopupAndWait(authUrl)
+                        openAuthPopupAndWait(authUrl)
+                    }
+                    CredentialType.APPLE -> Result.Error("iOS Sign In is not supported on Web")
+                }
             }
 
             override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {

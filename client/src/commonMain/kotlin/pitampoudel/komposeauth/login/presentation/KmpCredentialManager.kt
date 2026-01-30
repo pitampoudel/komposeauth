@@ -6,8 +6,14 @@ import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 
+enum class CredentialType {
+    ANY,
+    APPLE,
+    GOOGLE
+}
+
 interface KmpCredentialManager {
-    suspend fun getCredential(options: LoginOptionsResponse): Result<Credential>
+    suspend fun getCredential(credentialType: CredentialType, options: LoginOptionsResponse): Result<Credential>
     suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject>
 }
 

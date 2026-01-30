@@ -9,7 +9,6 @@ import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.user.data.Credential
 import platform.AuthenticationServices.*
 import platform.Foundation.NSError
-import platform.Foundation.base64EncodedStringWithOptions
 import platform.UIKit.UIApplication
 import platform.UIKit.UIWindow
 import platform.darwin.NSObject
@@ -17,15 +16,17 @@ import kotlin.coroutines.resume
 import platform.Foundation.NSString
 import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.create
-import platform.Foundation.lowercaseString
 
 @Composable
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
     val appleHelper = AppleSignInHelper()
 
     return object : KmpCredentialManager {
-        override suspend fun getCredential(options: LoginOptionsResponse): Result<Credential> {
-            return appleHelper.getCredential()
+        override suspend fun getCredential(credentialType: CredentialType, options: LoginOptionsResponse): Result<Credential> {
+            return when (credentialType) {
+                CredentialType.APPLE, CredentialType.ANY -> appleHelper.getCredential()
+                CredentialType.GOOGLE -> Result.Error("Google Sign In is not supported on iOS yet")
+            }
         }
 
         override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
@@ -100,5 +101,3 @@ class AppleSignInHelper : NSObject(),
     }
 
 }
-
-

@@ -5,7 +5,6 @@ import android.os.Build
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CreatePublicKeyCredentialRequest
 import androidx.credentials.CreatePublicKeyCredentialResponse
@@ -27,8 +26,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import pitampoudel.core.domain.Result
-import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
+import pitampoudel.komposeauth.user.data.Credential
 
 @Composable
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
@@ -111,7 +110,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                 }
             }
 
-            override suspend fun getCredential(options: LoginOptionsResponse): Result<Credential> {
+            override suspend fun getCredential(credentialType: CredentialType, options: LoginOptionsResponse): Result<Credential> {
                 val googleAuthClientId = options.googleClientId
                 val publicKeyOption = options.publicKeyAuthOptionsJson?.let {
                     GetPublicKeyCredentialOption(requestJson = it)
@@ -123,10 +122,12 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                         .build()
                 }
 
-                val options: List<CredentialOption> = listOfNotNull(
-                    googleIdOption,
-                    publicKeyOption
-                )
+                val options: List<CredentialOption> = when (credentialType) {
+                    CredentialType.GOOGLE -> listOfNotNull(googleIdOption)
+                    CredentialType.ANY -> listOfNotNull(googleIdOption, publicKeyOption)
+                    CredentialType.APPLE -> emptyList() // Should not happen on Android
+                }
+
                 if (options.isEmpty()) {
                     return Result.Error("No credential options available")
                 }
