@@ -14,8 +14,14 @@ class AppleTokenValidator {
     private val applePublicKeyUrl = "https://appleid.apple.com/auth/keys"
 
     fun validate(idToken: String, clientId: String): JWTClaimsSet {
-        val signedJwt = SignedJWT.parse(idToken)
-
+        val signedJwt = try {
+            SignedJWT.parse(idToken.trim())
+        } catch (e: ParseException) {
+            throw IllegalArgumentException(
+                "Invalid Apple ID token $idToken. (expected JWT: header.payload.signature)",
+                e
+            )
+        }
         val jwkSet = JWKSet.load(URL(applePublicKeyUrl))
         val jwk = jwkSet.getKeyByKeyId(signedJwt.header.keyID)
             ?: throw IllegalArgumentException("Could not find matching public key")
