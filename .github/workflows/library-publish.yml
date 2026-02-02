@@ -62,7 +62,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Publish non-release build to GitHub Packages
+      - name: Publish to GitHub Packages
         run: ./gradlew publishAllPublicationsToGithubRepository
         env:
           GITHUB_ACTOR: ${{ github.repository_owner }}
