@@ -4,6 +4,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.window.ComposeUIViewController
+import platform.Foundation.ISOCountryCodes
 import platform.Foundation.NSLocale
 import platform.Foundation.NSLocaleCountryCode
 import platform.Foundation.currentLocale
@@ -48,13 +49,9 @@ private fun topViewController(): UIViewController? {
 }
 
 private fun getCountries(): List<Country> {
-    val currentLocale = NSLocale.currentLocale
-    return (NSLocale.availableLocaleIdentifiers as List<String>).mapNotNull { identifier ->
-        val locale = NSLocale(identifier)
-        val countryCode = locale.objectForKey(NSLocaleCountryCode) as? String
-        countryCode?.let {
-            val countryName = currentLocale.displayNameForKey(NSLocaleCountryCode, it) ?: it
-            Country(name = countryName, code = it)
-        }
-    }.distinctBy { it.code }.sortedBy { it.name }
+    val current = NSLocale.currentLocale()
+    return (NSLocale.ISOCountryCodes as List<String>).map { countryCode ->
+        val countryName = current.displayNameForKey(NSLocaleCountryCode, countryCode) ?: countryCode
+        Country(name = countryName, code = countryCode)
+    }.sortedBy { it.name }
 }
