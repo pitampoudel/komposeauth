@@ -2,6 +2,7 @@ package pitampoudel.core.presentation.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
@@ -36,14 +37,13 @@ private class IosFilePicker(
 ) : FilePicker {
 
     override fun launch() {
-        val types = input.ifEmpty { listOf(UTTypeData.identifier) }
+        val contentTypes = input.mapNotNull { UTType.typeWithIdentifier(it) }.ifEmpty { listOf(UTTypeData) }
 
         val picker = UIDocumentPickerViewController(
-            documentTypes = types,
-            inMode = UIDocumentPickerMode.UIDocumentPickerModeImport
+            forOpeningContentTypes = contentTypes,
+            asCopy = true
         ).apply {
             allowsMultipleSelection = (selectionMode == SelectionMode.MULTIPLE)
-            this.delegate = delegate
         }
 
         val controller = UIApplication.sharedApplication.keyWindow?.rootViewController
@@ -69,7 +69,7 @@ private class FilePickerDelegate(
         // No-op
     }
 
-    @OptIn(ExperimentalForeignApi::class)
+    @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
     private fun toKmpFile(url: NSURL): KmpFile {
         val fileName = url.lastPathComponent ?: "unknown"
         val data = NSData.create(contentsOfURL = url)
