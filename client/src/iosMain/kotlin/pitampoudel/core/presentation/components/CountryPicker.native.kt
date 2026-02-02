@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.window.ComposeUIViewController
 import platform.Foundation.NSLocale
 import platform.Foundation.NSLocaleCountryCode
+import platform.Foundation.currentLocale
 import platform.UIKit.UIApplication
 import platform.UIKit.UIViewController
 import platform.UIKit.UIWindow
@@ -47,10 +48,13 @@ private fun topViewController(): UIViewController? {
 }
 
 private fun getCountries(): List<Country> {
-    val currentLocale = NSLocale.currentLocale()
-    return NSLocale.ISOCountryCodes.map { code ->
-        val countryCode = code as String
-        val countryName = (currentLocale as NSLocale).displayNameForKey(NSLocaleCountryCode, countryCode) ?: countryCode
-        Country(name = countryName, code = countryCode)
-    }.sortedBy { it.name }
+    val currentLocale = NSLocale.currentLocale
+    return (NSLocale.availableLocaleIdentifiers as List<String>).mapNotNull { identifier ->
+        val locale = NSLocale(identifier)
+        val countryCode = locale.objectForKey(NSLocaleCountryCode) as? String
+        countryCode?.let {
+            val countryName = currentLocale.displayNameForKey(NSLocaleCountryCode, it) ?: it
+            Country(name = countryName, code = it)
+        }
+    }.distinctBy { it.code }.sortedBy { it.name }
 }
