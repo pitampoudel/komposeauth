@@ -79,7 +79,6 @@ class UsersController(
         description = "Fetch a single user by their ID"
     )
     @Parameter(name = "id", description = "User ID", required = true)
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_READ_ANY_USER')")
     fun getUserById(@PathVariable id: String): ResponseEntity<UserResponse> {
         val user = userService.findUser(id) ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(user.mapToResponseDto(kycService.isVerified(user.id)))
