@@ -13,15 +13,22 @@ class SlackNotifier(
 ) {
     private val log = LoggerFactory.getLogger(SlackNotifier::class.java)
     fun send(text: String) {
-        val url = appConfigService.getConfig().slackWebhookUrl ?: run {
-            log.debug("Slack webhook URL not configured; skipping notification")
+        val config = appConfigService.getConfig()
+        val botToken = config.slackBotToken?.takeIf { it.isNotBlank() } ?: run {
+            log.debug("Slack bot token not configured; skipping notification")
             return
         }
+        val channelId = config.slackChannelId?.takeIf { it.isNotBlank() } ?: run {
+            log.debug("Slack channel ID not configured; skipping notification")
+            return
+        }
+
         runCatching {
             restClient.post()
-                .uri(url)
+                .uri("https://slack.com/api/chat.postMessage")
+                .header("Authorization", "Bearer $botToken")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(mapOf("text" to text))
+                .body(mapOf("channel" to channelId, "text" to text))
                 .retrieve()
                 .toBodilessEntity()
         }.onFailure { throwable ->

@@ -304,9 +304,13 @@
         <label for="sentryDsn">Sentry DSN</label>
         <input id="sentryDsn" name="sentryDsn" type="url" th:value="${config.sentryDsn}">
 
-        <label for="slackWebhookUrl">Slack Webhook URL</label>
-        <input id="slackWebhookUrl" name="slackWebhookUrl" type="url" th:value="${config.slackWebhookUrl}"
-               placeholder="https://hooks.slack.com/services/xxx/yyy/zzz">
+        <label for="slackBotToken">Slack Bot Token</label>
+        <input id="slackBotToken" name="slackBotToken" type="text" th:value="${config.slackBotToken}"
+               placeholder="xoxb-...">
+
+        <label for="slackChannelId">Slack Channel ID</label>
+        <input id="slackChannelId" name="slackChannelId" type="text" th:value="${config.slackChannelId}"
+               placeholder="C0123456789">
 
     </fieldset>
 
