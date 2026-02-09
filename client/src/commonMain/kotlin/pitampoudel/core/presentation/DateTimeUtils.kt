@@ -5,27 +5,27 @@ import kotlin.time.Duration.Companion.minutes
 
 /**
  * Converts a past elapsed duration into a relative "time ago" string.
- * Example outputs: "just now", "1 min ago", "2 hrs ago", "5 days ago".
+ * Example outputs: "just now", "1 min", "2 hrs", "5 days".
  * Set [short] to true for compact output like "1d", "3hrs", "5mins".
  */
-fun Duration.toTimeAgoString(short: Boolean = false): String {
+fun Duration.asString(short: Boolean = false): String {
     val d = this.absoluteValue
     val nowText = if (short) "now" else "just now"
     if (d < 10.minutes) return nowText
 
     val days = d.inWholeDays
-    if (days >= 1) return formatAgo(days, "day", short)
+    if (days >= 1) return asString(days, "day", short)
 
     val hours = d.inWholeHours
-    if (hours >= 1) return formatAgo(hours, "hr", short)
+    if (hours >= 1) return asString(hours, "hr", short)
 
     val mins = d.inWholeMinutes
-    if (mins >= 1) return formatAgo(mins, "min", short)
+    if (mins >= 1) return asString(mins, "min", short)
 
     return nowText
 }
 
-private fun formatAgo(value: Long, unit: String, short: Boolean): String {
+private fun asString(value: Long, unit: String, short: Boolean): String {
     if (short) {
         return when (unit) {
             "day" -> "${value}d"
@@ -39,5 +39,5 @@ private fun formatAgo(value: Long, unit: String, short: Boolean): String {
         "hr" -> if (value == 1L) "hr" else "hrs"
         else -> if (value == 1L) unit else "${unit}s"
     }
-    return "$value $plural ago"
+    return "$value $plural"
 }
