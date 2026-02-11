@@ -124,4 +124,70 @@ class UserServiceAdminEdgeCasesTest {
         assertEquals(0, pageableCaptor.firstValue.pageNumber)
         assertEquals(200, pageableCaptor.firstValue.pageSize)
     }
+
+    @Test
+    fun `findUsersFlexible uses regex-based case-insensitive search with trimmed query`() {
+        val userRepo = mock<UserRepository>()
+        val emptyPage: Page<User> = PageImpl(emptyList())
+        whenever(userRepo.searchUsersCaseInsensitive(org.mockito.kotlin.any(), org.mockito.kotlin.any())).thenReturn(emptyPage)
+
+        val service = UserService(
+            userRepository = userRepo,
+            passwordEncoder = mock(),
+            phoneNumberVerificationService = mock(),
+            appConfigService = mock(),
+            emailService = mock(),
+            oneTimeTokenService = mock(),
+            kycService = mock(),
+            storageService = mock(),
+            objectMapper = mock(),
+            webAuthnRelyingPartyOperations = mock(),
+            roleChangeEmailNotifier = mock(),
+            emailVerificationService = mock(),
+            appleTokenValidator = mock()
+        )
+
+        service.findUsersFlexible(ids = null, q = "  MixedCase  ", page = 1, size = 25)
+
+        val regexCaptor = argumentCaptor<String>()
+        val pageableCaptor = argumentCaptor<Pageable>()
+        verify(userRepo).searchUsersCaseInsensitive(regexCaptor.capture(), pageableCaptor.capture())
+        assertEquals(".*MixedCase.*", regexCaptor.firstValue)
+        assertEquals(25, pageableCaptor.firstValue.pageSize)
+        assertEquals(1, pageableCaptor.firstValue.pageNumber)
+    }
+
+    @Test
+    fun `findUsersFlexible searches by full name when query has multiple parts`() {
+        val userRepo = mock<UserRepository>()
+        val emptyPage: Page<User> = PageImpl(emptyList())
+        whenever(userRepo.searchUsersByFullNameCaseInsensitive(org.mockito.kotlin.any(), org.mockito.kotlin.any(), org.mockito.kotlin.any())).thenReturn(emptyPage)
+
+        val service = UserService(
+            userRepository = userRepo,
+            passwordEncoder = mock(),
+            phoneNumberVerificationService = mock(),
+            appConfigService = mock(),
+            emailService = mock(),
+            oneTimeTokenService = mock(),
+            kycService = mock(),
+            storageService = mock(),
+            objectMapper = mock(),
+            webAuthnRelyingPartyOperations = mock(),
+            roleChangeEmailNotifier = mock(),
+            emailVerificationService = mock(),
+            appleTokenValidator = mock()
+        )
+
+        service.findUsersFlexible(ids = null, q = "John    Doe", page = 2, size = 15)
+
+        val firstRegexCaptor = argumentCaptor<String>()
+        val lastRegexCaptor = argumentCaptor<String>()
+        val pageableCaptor = argumentCaptor<Pageable>()
+        verify(userRepo).searchUsersByFullNameCaseInsensitive(firstRegexCaptor.capture(), lastRegexCaptor.capture(), pageableCaptor.capture())
+        assertEquals(".*John.*", firstRegexCaptor.firstValue)
+        assertEquals(".*Doe.*", lastRegexCaptor.firstValue)
+        assertEquals(15, pageableCaptor.firstValue.pageSize)
+        assertEquals(2, pageableCaptor.firstValue.pageNumber)
+    }
 }

@@ -19,6 +19,11 @@ interface UserRepository : MongoRepository<User, ObjectId> {
     fun findByRolesContaining(role: String, pageable: Pageable): Page<User>
     fun countByRolesContaining(role: String): Long
 
+    @Query(
+        value = $$"{ $or: [ { 'firstName': { $regex: ?0, $options: 'i' } }, { 'lastName': { $regex: ?0, $options: 'i' } }, { 'email': { $regex: ?0, $options: 'i' } }, { 'phoneNumber': { $regex: ?0, $options: 'i' } } ] }"
+    )
+    fun searchUsersCaseInsensitive(regex: String, pageable: Pageable): Page<User>
+
     // Search across common fields with pagination support
     fun findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPhoneNumberContainingIgnoreCase(
         firstName: String,
