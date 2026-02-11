@@ -11,8 +11,6 @@ import kotlin.jvm.optionals.getOrNull
 
 @Repository
 interface UserRepository : MongoRepository<User, ObjectId> {
-    @Query($$"{ phoneNumber: { $exists: true }}")
-    fun findAllHavingPhoneNumber(): List<User>
     fun findByEmail(email: String): User?
     fun findByPhoneNumber(phoneNumber: String): User?
     fun findByIdIn(ids: List<ObjectId>): List<User>
@@ -22,14 +20,25 @@ interface UserRepository : MongoRepository<User, ObjectId> {
     @Query(
         value = $$"{ $or: [ { 'firstName': { $regex: ?0, $options: 'i' } }, { 'lastName': { $regex: ?0, $options: 'i' } }, { 'email': { $regex: ?0, $options: 'i' } }, { 'phoneNumber': { $regex: ?0, $options: 'i' } } ] }"
     )
-    fun searchUsersCaseInsensitive(regex: String, pageable: Pageable): Page<User>
+    fun search(regex: String, pageable: Pageable): Page<User>
 
-    // Search across common fields with pagination support
-    fun findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPhoneNumberContainingIgnoreCase(
-        firstName: String,
-        lastName: String,
-        email: String,
-        phoneNumber: String,
+    @Query(value = $$"""{
+            $or: [
+              { 'firstName': { $regex: ?0, $options: 'i' } },
+              { 'firstName': { $regex: ?1, $options: 'i' } },
+              { 'lastName':  { $regex: ?0, $options: 'i' } },
+              { 'lastName':  { $regex: ?1, $options: 'i' } },
+              { 'email':     { $regex: ?0, $options: 'i' } },
+              { 'email':     { $regex: ?1, $options: 'i' } },
+              { 'phoneNumber': { $regex: ?0, $options: 'i' } },
+              { 'phoneNumber': { $regex: ?1, $options: 'i' } }
+            ]
+          }
+          """
+    )
+    fun search(
+        firstRegex: String,
+        lastRegex: String,
         pageable: Pageable
     ): Page<User>
 

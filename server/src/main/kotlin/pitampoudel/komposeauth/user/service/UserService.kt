@@ -47,7 +47,6 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.time.Instant
-import java.util.regex.Pattern
 import javax.security.auth.login.AccountLockedException
 
 @Service
@@ -185,8 +184,17 @@ class UserService(
 
         val query = q?.trim()
         if (!query.isNullOrEmpty()) {
-            val regex = ".*${Pattern.quote(query)}.*"
-            return userRepository.searchUsersCaseInsensitive(regex, pageable)
+            val nameParts = query.split("\\s+".toRegex()).filter { it.isNotEmpty() }
+            if (nameParts.size >= 2) {
+                val firstPart = nameParts.dropLast(1).joinToString(" ")
+                val lastPart = nameParts.last()
+                val firstRegex = ".*${firstPart}.*"
+                val lastRegex = ".*${lastPart}.*"
+                return userRepository.search(firstRegex, lastRegex, pageable)
+            }
+
+            val regex = ".*${query}.*"
+            return userRepository.search(regex, pageable)
         }
 
         return userRepository.findAll(pageable)
