@@ -184,17 +184,10 @@ class UserService(
 
         val query = q?.trim()
         if (!query.isNullOrEmpty()) {
-            val nameParts = query.split("\\s+".toRegex()).filter { it.isNotEmpty() }
-            if (nameParts.size >= 2) {
-                val firstPart = nameParts.dropLast(1).joinToString(" ")
-                val lastPart = nameParts.last()
-                val firstRegex = ".*${firstPart}.*"
-                val lastRegex = ".*${lastPart}.*"
-                return userRepository.search(firstRegex, lastRegex, pageable)
+            val tokens = query.split("\\s+".toRegex()).filter { it.isNotEmpty() }
+            if (tokens.isNotEmpty()) {
+                return userRepository.search(tokens, pageable)
             }
-
-            val regex = ".*${query}.*"
-            return userRepository.search(regex, pageable)
         }
 
         return userRepository.findAll(pageable)
