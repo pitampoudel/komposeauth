@@ -2,117 +2,237 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body style="margin:0; padding:0; background-color:#f4f4f4;">
 
+<!-- Preheader (hidden preview text in inboxes) -->
+<div th:if="${preheader}"
+     th:text="${preheader}"
+     style="display:none; font-size:1px; color:#f4f4f4; line-height:1px; max-height:0px; max-width:0px; opacity:0; overflow:hidden;">
+    Preview text
+</div>
+
 <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4;">
     <tr>
         <td align="center">
 
             <!-- Main container -->
             <table width="600" cellpadding="0" cellspacing="0"
-                   style="background-color:#ffffff; margin:40px 0; border-radius:10px; overflow:hidden;">
+                   style="background-color:#ffffff; margin:40px 0; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
 
-                <!-- Header -->
+                <!-- Header with Logo / Brand -->
                 <tr>
-                    <td align="center" style="background-color:#6ccef3; padding:30px 20px;">
-                        <h1 style="margin:0; font-size:24px; color:#ffffff; font-family:Arial,Helvetica,sans-serif;"
-                            th:text="${subject}">
-                            Email Subject
-                        </h1>
-                    </td>
-                </tr>
-
-                <!-- Illustration -->
-                <tr th:if="${illustration}">
-                    <td align="center" style="padding:20px;">
-                        <img th:src="${illustration}" alt="Illustration"
-                             style="max-width:100%; height:auto; display:block;">
-                    </td>
-                </tr>
-
-                <!-- Content -->
-                <tr>
-                    <td align="center"
-                        style="padding:20px; font-family:Arial,Helvetica,sans-serif; color:#333333; line-height:1.6;">
-                        <p th:utext="${message}" style="margin:0 0 15px 0;">
-                            Email message content goes here.
-                        </p>
-
-                        <p th:if="${actionMessage}" style="margin:15px 0;">
-                            <strong th:text="${actionMessage}">Action message</strong>
-                        </p>
-
-                        <!-- Button -->
-                        <a th:if="${actionUrl != null and actionText != null}"
-                           th:href="${actionUrl}"
-                           th:text="${actionText}"
-                           style="
-                 display:inline-block;
-                 margin:20px 0;
-                 padding:12px 25px;
-                 background-color:#3c6b99;
-                 color:#ffffff;
-                 text-decoration:none;
-                 font-weight:bold;
-                 border-radius:5px;
-                 font-family:Arial,Helvetica,sans-serif;
-               ">
-                            Action Button
-                        </a>
+                    <td align="center" style="padding:30px 20px; background-color:#ffffff;">
+                        <img th:if="${logoUrl}"
+                             th:src="${logoUrl}"
+                             alt="Logo"
+                             style="max-width:150px; height:auto; display:block;">
+                        <div th:if="${logoUrl == null and appName}"
+                             style="font-family:Arial,Helvetica,sans-serif; font-size:20px; font-weight:700; color:#333333;">
+                            <span th:text="${appName}">Your Brand</span>
+                        </div>
                     </td>
                 </tr>
 
                 <!-- Divider -->
                 <tr>
-                    <td style="padding:0 20px;">
-                        <hr style="border:0; border-top:1px solid #dddddd;">
+                    <td style="padding:0;">
+                        <hr style="border:0; border-top:2px solid #F0F0F0; margin:0;">
                     </td>
                 </tr>
 
-                <!-- Social icons -->
+                <!-- Content -->
                 <tr>
-                    <td align="center" style="padding:20px;">
+                    <td style="padding:40px 30px; font-family:Arial,Helvetica,sans-serif; color:#333333;">
+
+                        <!-- Title -->
+                        <h1 style="margin:0 0 16px 0; font-size:24px; color:#333333; font-weight:600;">
+                            <span th:text="${title}">Notification</span>
+                        </h1>
+
+                        <!-- Optional subtitle -->
+                        <p th:if="${subtitle}"
+                           style="margin:0 0 20px 0; font-size:16px; line-height:1.6; color:#555555;">
+                            <span th:text="${subtitle}">Short supporting message goes here.</span>
+                        </p>
+
+                        <!-- Greeting -->
+                        <p th:if="${recipientName}" style="margin:0 0 16px 0; font-size:16px; line-height:1.6;">
+                            Hi <span th:text="${recipientName}">there</span>,
+                        </p>
+
+                        <!-- Main message (HTML allowed) -->
+                        <div th:if="${message}"
+                             th:text="${message}"
+                             style="margin:0 0 24px 0; font-size:16px; line-height:1.6; color:#555555;">
+                            Your message content goes here.
+                        </div>
+
+                        <!-- Optional illustration -->
+                        <div th:if="${illustrationUrl}" style="margin:0 0 24px 0; text-align:center;">
+                            <img th:src="${illustrationUrl}" alt="Illustration"
+                                 style="max-width:100%; height:auto; display:inline-block;">
+                        </div>
+
+                        <!-- Optional code block (OTP / reset code / verification code) -->
+                        <table width="100%" cellpadding="0" cellspacing="0" th:if="${code}">
+                            <tr>
+                                <td align="center" style="padding:10px 0 0 0;">
+                                    <p th:if="${codeLabel}"
+                                       style="margin:0 0 10px 0; font-size:14px; color:#666666; text-align:center;">
+                                        <span th:text="${codeLabel}">Your code</span>
+                                    </p>
+                                    <div style="display:inline-block; background-color:#f8f9fa; border:2px dashed #DEE2E6;  border-radius:8px; padding:18px 34px;">
+                                    <span th:text="${code}" style="
+                                        font-size:28px;
+                                        font-weight:700;
+                                        letter-spacing:6px;
+                                        color:#333333;
+                                        font-family:'Courier New',Courier,monospace;">
+                                      123456
+                                    </span>
+                                    </div>
+
+                                    <p th:if="${expiryText}"
+                                       style="margin:12px 0 0 0; font-size:13px; color:#dc3545; text-align:center;">
+                                        <span th:text="${expiryText}">This code will expire in 10 minutes.</span>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Primary action button -->
+                        <table width="100%" cellpadding="0" cellspacing="0"
+                               th:if="${actionUrl != null and actionText != null}">
+                            <tr>
+                                <td align="center" style="padding:24px 0 10px 0;">
+                                    <a th:href="${actionUrl}"
+                                       th:text="${actionText}"
+                                       style="
+                                       display:inline-block;
+                                       padding:14px 30px;
+                                       background-color:#3c6b99;
+                                       color:#ffffff;
+                                       text-decoration:none;
+                                       font-weight:600;
+                                       border-radius:6px;
+                                       font-family:Arial,Helvetica,sans-serif;
+                                       font-size:16px; ">
+                                        View / Continue
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Optional details list/table (useful for KYC alerts, login alerts, transactions, etc.) -->
+                        <table width="100%" cellpadding="0" cellspacing="0"
+                               th:if="${details != null and !#lists.isEmpty(details)}"
+                               style="margin-top:24px; border:1px solid #E9ECEF; border-radius:8px; overflow:hidden;">
+                            <tr style="background-color:#f8f9fa;">
+                                <td style="padding:12px 14px; font-size:14px; font-weight:600; color:#333333;">
+                                    Details
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 14px;">
+                                    <table width="100%" cellpadding="0" cellspacing="0"
+                                           style="font-family:Arial,Helvetica,sans-serif;">
+                                        <tr th:each="d : ${details}">
+                                            <td style="padding:8px 0; font-size:13px; color:#666666; width:40%; vertical-align:top;">
+                                                <span th:text="${d.key}">Key</span>
+                                            </td>
+                                            <td style="padding:8px 0; font-size:13px; color:#333333; vertical-align:top;">
+                                                <span th:text="${d.value}">Value</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Optional alert box (security tip / warning / KYC reminder / etc.) -->
+                        <div th:if="${alertHtml}"
+                             style="margin-top:24px; padding:15px; background-color:#fff3cd; border-left:4px solid #FFC107; border-radius:4px;">
+                            <p th:if="${alertTitle}"
+                               style="margin:0 0 6px 0; font-size:13px; color:#856404; font-weight:700;">
+                                <span th:text="${alertTitle}">Important</span>
+                            </p>
+                            <div th:utext="${alertHtml}"
+                                 style="margin:0; font-size:13px; color:#856404; line-height:1.5;">
+                                Never share codes or passwords with anyone.
+                            </div>
+                        </div>
+
+                    </td>
+                </tr>
+
+                <!-- Divider -->
+                <tr>
+                    <td style="padding:0;">
+                        <hr style="border:0; border-top:1px solid #E9ECEF; margin:0;">
+                    </td>
+                </tr>
+
+                <!-- Help section -->
+                <tr>
+                    <td style="padding:20px 30px; font-family:Arial,Helvetica,sans-serif;">
+                        <p th:if="${helpText}" style="margin:0 0 10px 0; font-size:14px; color:#666666;">
+                            <span th:text="${helpText}">If you didn’t request this, you can ignore this email.</span>
+                        </p>
+
+                        <p th:if="${supportEmail}" style="margin:0; font-size:14px; color:#666666;">
+                            Need help? Contact us at
+                            <a th:href="'mailto:' + ${supportEmail}"
+                               th:text="${supportEmail}"
+                               style="color:#3c6b99; text-decoration:none;">
+                                support@example.com
+                            </a>
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Social icons (optional) -->
+                <tr th:if="${!#strings.isEmpty(facebookUrl) or !#strings.isEmpty(instagramUrl) or !#strings.isEmpty(tiktokUrl) or !#strings.isEmpty(youtubeUrl) or !#strings.isEmpty(linkedinUrl)}">
+                    <td align="center" style="padding:20px; background-color:#f8f9fa;">
                         <table cellpadding="0" cellspacing="0">
                             <tr>
-
-                                <td th:if="${youtubeUrl}" style="padding:0 6px;">
-                                    <a th:href="${youtubeUrl}">
-                                        <img src="https://img.icons8.com/ios-filled/50/ffffff/youtube-play.png"
-                                             width="20" height="20"
-                                             style="background-color:#6ccef3; padding:10px; border-radius:50%; display:block;">
-                                    </a>
-                                </td>
-
-                                <td th:if="${tiktokUrl}" style="padding:0 6px;">
-                                    <a th:href="${tiktokUrl}">
-                                        <img src="https://img.icons8.com/ios-filled/50/ffffff/tiktok.png"
-                                             width="20" height="20"
-                                             style="background-color:#6ccef3; padding:10px; border-radius:50%; display:block;">
-                                    </a>
-                                </td>
-
-                                <td th:if="${facebookUrl}" style="padding:0 6px;">
+                                <td th:if="${!#strings.isEmpty(facebookUrl)}" style="padding:0 6px;">
                                     <a th:href="${facebookUrl}">
                                         <img src="https://img.icons8.com/ios-filled/50/ffffff/facebook-new.png"
                                              width="20" height="20"
-                                             style="background-color:#6ccef3; padding:10px; border-radius:50%; display:block;">
+                                             alt="Facebook"
+                                             style="background-color:#1877F2; padding:8px; border-radius:50%; display:block;">
                                     </a>
                                 </td>
-
-                                <td th:if="${linkedinUrl}" style="padding:0 6px;">
-                                    <a th:href="${linkedinUrl}">
-                                        <img src="https://img.icons8.com/ios-filled/50/ffffff/linkedin.png"
-                                             width="20" height="20"
-                                             style="background-color:#6ccef3; padding:10px; border-radius:50%; display:block;">
-                                    </a>
-                                </td>
-
-                                <td th:if="${instagramUrl}" style="padding:0 6px;">
+                                <td th:if="${!#strings.isEmpty(instagramUrl)}" style="padding:0 6px;">
                                     <a th:href="${instagramUrl}">
                                         <img src="https://img.icons8.com/ios-filled/50/ffffff/instagram-new.png"
                                              width="20" height="20"
-                                             style="background-color:#6ccef3; padding:10px; border-radius:50%; display:block;">
+                                             alt="Instagram"
+                                             style="background-color:#E4405F; padding:8px; border-radius:50%; display:block;">
                                     </a>
                                 </td>
-
+                                <td th:if="${!#strings.isEmpty(tiktokUrl)}" style="padding:0 6px;">
+                                    <a th:href="${tiktokUrl}">
+                                        <img src="https://img.icons8.com/ios-filled/50/ffffff/tiktok.png"
+                                             width="20" height="20"
+                                             alt="TikTok"
+                                             style="background-color:#000000; padding:8px; border-radius:50%; display:block;">
+                                    </a>
+                                </td>
+                                <td th:if="${!#strings.isEmpty(youtubeUrl)}" style="padding:0 6px;">
+                                    <a th:href="${youtubeUrl}">
+                                        <img src="https://img.icons8.com/ios-filled/50/ffffff/youtube-play.png"
+                                             width="20" height="20"
+                                             alt="YouTube"
+                                             style="background-color:#FF0000; padding:8px; border-radius:50%; display:block;">
+                                    </a>
+                                </td>
+                                <td th:if="${!#strings.isEmpty(linkedinUrl)}" style="padding:0 6px;">
+                                    <a th:href="${linkedinUrl}">
+                                        <img src="https://img.icons8.com/ios-filled/50/ffffff/linkedin.png"
+                                             width="20" height="20"
+                                             alt="LinkedIn"
+                                             style="background-color:#0A66C2; padding:8px; border-radius:50%; display:block;">
+                                    </a>
+                                </td>
                             </tr>
                         </table>
                     </td>
@@ -121,14 +241,22 @@
                 <!-- Footer -->
                 <tr>
                     <td align="center"
-                        style="padding:15px 20px; font-size:12px; color:#999999; font-family:Arial,Helvetica,sans-serif;">
-                        <img th:if="${logoUrl}"
-                             th:src="${logoUrl}"
-                             alt="Logo"
-                             width="50"
-                             style="display:block; margin:0 auto;">
+                        style="padding:20px 30px; font-size:12px; color:#999999; font-family:Arial,Helvetica,sans-serif; background-color:#f8f9fa;">
+                        <p style="margin:0 0 8px 0;">
+                            &copy; <span th:text="${#dates.year(#dates.createNow())}">2026</span>
+                            <span th:text="${appName != null ? appName : 'Your Brand'}">Your Brand</span>. All
+                            rights reserved.
+                        </p>
+
+                        <p style="margin:0;">
+                            <a th:if="${!#strings.isEmpty(privacyUrl)}" th:href="${privacyUrl}"
+                               style="color:#999999; text-decoration:none;">Privacy Policy</a>
+                            <span th:if="${!#strings.isEmpty(privacyUrl) and !#strings.isEmpty(termsUrl)}" style="padding:0 6px;">•</span>
+                            <a th:if="${!#strings.isEmpty(termsUrl)}" th:href="${termsUrl}" style="color:#999999; text-decoration:none;">Terms</a>
+                        </p>
                     </td>
                 </tr>
+
             </table>
         </td>
     </tr>
@@ -136,3 +264,4 @@
 
 </body>
 </html>
+
