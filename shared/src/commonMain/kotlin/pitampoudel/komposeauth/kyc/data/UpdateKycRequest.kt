@@ -3,6 +3,7 @@ package pitampoudel.komposeauth.kyc.data
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import pitampoudel.core.data.EncodedData
+import pitampoudel.core.domain.validators.ValidateAlphabeticName
 import pitampoudel.komposeauth.core.data.AddressInformation
 import pitampoudel.komposeauth.kyc.domain.DocumentType
 
@@ -18,7 +19,21 @@ data class PersonalInformation(
     val fatherName: String?,
     val grandFatherName: String?,
     val maritalStatus: KycResponse.MaritalStatus?
-)
+) {
+    init {
+        require(ValidateAlphabeticName.invoke(firstName).isSuccess())
+        require(ValidateAlphabeticName.invoke(lastName).isSuccess())
+        middleName?.let {
+            require(ValidateAlphabeticName.invoke(it, allowBlank = true).isSuccess())
+        }
+        fatherName?.let {
+            require(ValidateAlphabeticName.invoke(it, allowBlank = true).isSuccess())
+        }
+        grandFatherName?.let {
+            require(ValidateAlphabeticName.invoke(it, allowBlank = true).isSuccess())
+        }
+    }
+}
 
 
 @Serializable

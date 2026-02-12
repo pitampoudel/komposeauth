@@ -6,13 +6,8 @@ object ValidateAlphabeticName {
     )
     private val whitespaceRegex = Regex("\\s+")
 
-    fun sanitize(value: String): String = value.trim().replace(whitespaceRegex, " ")
+    private fun sanitize(value: String): String = value.trim().replace(whitespaceRegex, " ")
 
-    fun isValid(value: String, allowBlank: Boolean = false): Boolean {
-        val normalized = sanitize(value)
-        if (normalized.isEmpty()) return allowBlank
-        return nameRegex.matches(normalized)
-    }
 
     operator fun invoke(value: String, allowBlank: Boolean = false): ValidationResult {
         val normalized = sanitize(value)
