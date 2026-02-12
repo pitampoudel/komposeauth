@@ -34,6 +34,7 @@
     <string name="invalid_url">अमान्य URL</string>
     <string name="invalid_email">अमान्य इमेल</string>
     <string name="invalid_phone_number">अमान्य फोन नम्बर</string>
+    <string name="invalid_name">अमान्य नाम</string>
     <string name="passwords_dont_match">पासवर्डहरू मेल खाँदैनन्</string>
     <string name="validation_error_password_requirement">पासवर्ड कम्तीमा ८ अक्षर/अङ्कको हुनुपर्छ र अक्षर, अङ्क तथा विशेष चिन्हहरू समावेश हुन सक्छन्</string>
 </resources>

@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.core.presentation
 
 import io.github.pitampoudel.client.generated.resources.Res
 import io.github.pitampoudel.client.generated.resources.invalid_email
+import io.github.pitampoudel.client.generated.resources.invalid_name
 import io.github.pitampoudel.client.generated.resources.invalid_phone_number
 import io.github.pitampoudel.client.generated.resources.invalid_url
 import io.github.pitampoudel.client.generated.resources.must_be_selected
@@ -14,6 +15,7 @@ import io.github.pitampoudel.client.generated.resources.validation_error_passwor
 import org.jetbrains.compose.resources.StringResource
 import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_INVALID_EMAIL
+import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_INVALID_NAME
 import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_INVALID_PHONE_NUMBER
 import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_INVALID_URL
 import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_MUST_BE_SELECTED
@@ -34,5 +36,6 @@ fun GeneralValidationError.toStringRes(): StringResource {
         VALIDATION_ERROR_MUST_NOT_BE_EMPTY -> Res.string.must_not_be_empty
         GeneralValidationError.VALIDATION_ERROR_TOO_LONG -> Res.string.too_long
         GeneralValidationError.VALIDATION_ERROR_PASSWORD_REQUIREMENT -> Res.string.validation_error_password_requirement
+        GeneralValidationError.VALIDATION_ERROR_INVALID_NAME -> Res.string.invalid_name
     }
 }
