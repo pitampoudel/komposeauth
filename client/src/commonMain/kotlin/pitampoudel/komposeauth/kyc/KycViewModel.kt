@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pitampoudel.core.domain.Result
+import pitampoudel.core.domain.validators.ValidateAlphabeticName
 import pitampoudel.core.domain.validators.ValidateNotBlank
 import pitampoudel.core.domain.validators.ValidateNotNull
 import pitampoudel.core.domain.validators.ValidationResult
@@ -389,12 +390,13 @@ class KycViewModel internal constructor(
 
         val countryValidation = ValidateNotBlank(_state.value.personalInfo.country)
         val nationalityValidation = ValidateNotBlank(_state.value.personalInfo.nationality)
-        val firstNameValidation = ValidateNotBlank(_state.value.personalInfo.firstName)
-        val lastNameValidation = ValidateNotBlank(_state.value.personalInfo.lastName)
+        val firstNameValidation = ValidateAlphabeticName(_state.value.personalInfo.firstName)
+        val middleNameValidation = ValidateAlphabeticName(_state.value.personalInfo.middleName, allowBlank = true)
+        val lastNameValidation = ValidateAlphabeticName(_state.value.personalInfo.lastName)
         val dateOfBirthValidation = ValidateNotNull(_state.value.personalInfo.dateOfBirth)
         val genderValidation = ValidateNotNull(_state.value.personalInfo.gender)
-        val fatherNameValidation = ValidateNotBlank(_state.value.personalInfo.fatherName)
-        val grandFatherNameValidation = ValidateNotBlank(_state.value.personalInfo.grandFatherName)
+        val fatherNameValidation = ValidateAlphabeticName(_state.value.personalInfo.fatherName)
+        val grandFatherNameValidation = ValidateAlphabeticName(_state.value.personalInfo.grandFatherName)
         val maritalStatusValidation = ValidateNotNull(_state.value.personalInfo.maritalStatus)
 
 
@@ -404,6 +406,7 @@ class KycViewModel internal constructor(
                     countryError = countryValidation.error(),
                     nationalityError = nationalityValidation.error(),
                     firstNameError = firstNameValidation.error(),
+                    middleNameError = middleNameValidation.error(),
                     lastNameError = lastNameValidation.error(),
                     dateOfBirthError = dateOfBirthValidation.error(),
                     genderError = genderValidation.error(),
