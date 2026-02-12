@@ -44,7 +44,7 @@
 
                         <!-- Title -->
                         <h1 style="margin:0 0 16px 0; font-size:24px; color:#333333; font-weight:600;">
-                            <span th:text="${title}">Notification</span>
+                            <span th:text="${subject}">Notification</span>
                         </h1>
 
                         <!-- Optional subtitle -->
@@ -120,6 +120,11 @@
                                 </td>
                             </tr>
                         </table>
+
+                        <!-- Optional action helper text -->
+                        <p th:if="${actionMessage}" style="margin:4px 0 16px 0; font-size:13px; color:#666666; text-align:center;">
+                            <span th:text="${actionMessage}">Follow the link above to continue.</span>
+                        </p>
 
                         <!-- Optional details list/table (useful for KYC alerts, login alerts, transactions, etc.) -->
                         <table width="100%" cellpadding="0" cellspacing="0"
