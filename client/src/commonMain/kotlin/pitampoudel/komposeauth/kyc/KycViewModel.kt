@@ -10,6 +10,7 @@ import pitampoudel.core.domain.Result
 import pitampoudel.core.domain.validators.ValidateAlphabeticName
 import pitampoudel.core.domain.validators.ValidateNotBlank
 import pitampoudel.core.domain.validators.ValidateNotNull
+import pitampoudel.core.domain.validators.ValidateDateNotInFuture
 import pitampoudel.core.domain.validators.ValidationResult
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.login.domain.AuthClient
@@ -393,7 +394,7 @@ class KycViewModel internal constructor(
         val firstNameValidation = ValidateAlphabeticName(_state.value.personalInfo.firstName)
         val middleNameValidation = ValidateAlphabeticName(_state.value.personalInfo.middleName, allowBlank = true)
         val lastNameValidation = ValidateAlphabeticName(_state.value.personalInfo.lastName)
-        val dateOfBirthValidation = ValidateNotNull(_state.value.personalInfo.dateOfBirth)
+        val dateOfBirthValidation = ValidateDateNotInFuture(_state.value.personalInfo.dateOfBirth)
         val genderValidation = ValidateNotNull(_state.value.personalInfo.gender)
         val fatherNameValidation = ValidateAlphabeticName(_state.value.personalInfo.fatherName)
         val grandFatherNameValidation = ValidateAlphabeticName(_state.value.personalInfo.grandFatherName)

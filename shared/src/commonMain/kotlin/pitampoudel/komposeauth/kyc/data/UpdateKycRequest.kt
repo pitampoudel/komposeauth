@@ -4,6 +4,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import pitampoudel.core.data.EncodedData
 import pitampoudel.core.domain.validators.ValidateAlphabeticName
+import pitampoudel.core.domain.validators.ValidateDateNotInFuture
 import pitampoudel.komposeauth.core.data.AddressInformation
 import pitampoudel.komposeauth.kyc.domain.DocumentType
 
@@ -32,6 +33,7 @@ data class PersonalInformation(
         grandFatherName?.let {
             require(ValidateAlphabeticName.invoke(it, allowBlank = true).isSuccess())
         }
+        require(ValidateDateNotInFuture(dateOfBirth).isSuccess())
     }
 }
 

@@ -12,6 +12,7 @@ import io.github.pitampoudel.client.generated.resources.passwords_dont_match
 import io.github.pitampoudel.client.generated.resources.too_long
 import io.github.pitampoudel.client.generated.resources.too_short
 import io.github.pitampoudel.client.generated.resources.validation_error_password_requirement
+import io.github.pitampoudel.client.generated.resources.date_cannot_be_in_future
 import org.jetbrains.compose.resources.StringResource
 import pitampoudel.core.domain.validators.GeneralValidationError
 import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_INVALID_EMAIL
@@ -23,6 +24,7 @@ import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERRO
 import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_MUST_NOT_BE_EMPTY
 import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_PASSWORDS_DONT_MATCH
 import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_TOO_SHORT
+import pitampoudel.core.domain.validators.GeneralValidationError.VALIDATION_ERROR_DATE_IN_FUTURE
 
 fun GeneralValidationError.toStringRes(): StringResource {
     return when (this) {
@@ -37,5 +39,6 @@ fun GeneralValidationError.toStringRes(): StringResource {
         GeneralValidationError.VALIDATION_ERROR_TOO_LONG -> Res.string.too_long
         GeneralValidationError.VALIDATION_ERROR_PASSWORD_REQUIREMENT -> Res.string.validation_error_password_requirement
         GeneralValidationError.VALIDATION_ERROR_INVALID_NAME -> Res.string.invalid_name
+        VALIDATION_ERROR_DATE_IN_FUTURE -> Res.string.date_cannot_be_in_future
     }
 }
