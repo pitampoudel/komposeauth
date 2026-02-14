@@ -66,7 +66,7 @@ fun CreateClientRequest.toEntity(): OAuth2Client {
         clientUri = this.clientUri,
         logoUri = this.logoUri,
         scopes = scopes,
-        requireAuthorizationConsent = true,
+        requireAuthorizationConsent = false,
         createdAt = Instant.now(),
         updatedAt = Instant.now()
     )
