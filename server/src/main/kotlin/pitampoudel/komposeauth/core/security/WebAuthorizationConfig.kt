@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configurers.oauth2.ser
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator
 import org.springframework.security.crypto.keygen.StringKeyGenerator
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -47,7 +48,7 @@ import javax.security.auth.login.AccountNotFoundException
 @EnableWebSecurity
 class WebAuthorizationConfig() {
     @Bean
-    fun passwordEncoder(): PasswordEncoder = LegacyAwarePasswordEncoder()
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
     fun restTemplate(): RestTemplate = RestTemplate()
