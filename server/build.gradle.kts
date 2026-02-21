@@ -60,6 +60,9 @@ dependencies {
 
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.1.0")
 
+
+    implementation("org.jspecify:jspecify:0.3.0")
+
 }
 
 dependencyManagement {
