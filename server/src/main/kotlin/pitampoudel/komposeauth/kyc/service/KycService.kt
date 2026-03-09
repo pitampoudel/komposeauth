@@ -220,8 +220,10 @@ class KycService(
             return storageService.upload("kyc/${userId.toHexString()}/$label", bytes.detectMimeType(), bytes)
         }
 
-        val documentFront = data.documentPhoto.lastOrNull { it.claimedDocType.contains("front", ignoreCase = true) }?.photo
-        val documentBack = data.documentPhoto.lastOrNull { it.claimedDocType.contains("back", ignoreCase = true) }?.photo
+        val documentFront =
+            data.documentPhoto.lastOrNull { it.claimedDocType.contains("front", ignoreCase = true) }?.photo
+        val documentBack =
+            data.documentPhoto.lastOrNull { it.claimedDocType.contains("back", ignoreCase = true) }?.photo
 
         if (detectedDocType == null || data.userPhoto.isBlank() || documentFront == null || documentBack == null) {
             throw BadRequestException("Document detection failed")
@@ -231,7 +233,6 @@ class KycService(
         val documentFrontUrl = uploadBase64Photo("front", documentFront)
         val documentBackUrl = uploadBase64Photo("back", documentBack)
 
-        val updatedStatus = if (data.isVerified) KycResponse.Status.APPROVED else existingKyc.status
 
         val updated = existingKyc.copy(
             nationality = data.nationality,
@@ -243,32 +244,11 @@ class KycService(
             documentExpiryDate = null,
             documentIssuedPlace = null,
             selfieUrl = selfieUrl,
-            status = updatedStatus
+            status = KycResponse.Status.PENDING
         )
 
         val saved = kycRepo.save(updated)
-        if (updatedStatus == KycResponse.Status.APPROVED) {
-            val user = userRepository.findById(userId).orElse(null)
-            if (user != null) {
-                val enrichedUser = user.copy(
-                    firstName = user.firstName ?: saved.firstName,
-                    lastName = user.lastName ?: saved.lastName,
-                    updatedAt = Instant.now()
-                ).let { if (it != user) userRepository.save(it) else user }
-                enrichedUser.email?.let {
-                    emailService.sendHtmlMail(
-                        baseUrl = baseUrl,
-                        to = it,
-                        subject = "Your KYC has been approved",
-                        template = "email/generic",
-                        model = mapOf(
-                            "recipientName" to enrichedUser.firstNameOrUser(),
-                            "message" to "Congratulations! Your KYC has been approved."
-                        )
-                    )
-                }
-            }
-        }
+
         return saved.toResponse()
     }
 
