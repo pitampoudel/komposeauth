@@ -209,7 +209,9 @@ data class ThirdFactorModel(
         @SerialName("photo")
         val photo: String,
         @SerialName("reason")
-        val reason: String
+        val reason: String,
+        @SerialName("original_photo")
+        val originalPhoto: String? = null
     )
 
     @Serializable
