@@ -11,6 +11,7 @@ import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
 import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
+import pitampoudel.komposeauth.kyc.dto.ThirdFactorModel
 import pitampoudel.komposeauth.kyc.dto.toResponse
 import pitampoudel.komposeauth.kyc.entity.KycVerification
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
@@ -186,6 +187,29 @@ class KycService(
             )
         }
         return res
+    }
+
+    @Transactional
+    fun submitThirdFactorVerification(data: ThirdFactorModel): KycResponse {
+        val userId = runCatching { ObjectId(data.identifier) }.getOrElse {
+            throw BadRequestException("Invalid user identifier: ${data.identifier}")
+        }
+        val existing = kycRepo.findByUserId(userId)
+            ?: throw BadRequestException("KYC record not found for user")
+
+        val gender = when (data.gender.lowercase()) {
+            "male" -> KycResponse.Gender.MALE
+            "female" -> KycResponse.Gender.FEMALE
+            else -> KycResponse.Gender.OTHER
+        }
+
+        val updated = existing.copy(
+            nationality = data.nationality.ifBlank { existing.nationality },
+            gender = gender,
+            documentNumber = data.documentNumber.ifBlank { existing.documentNumber },
+            // todo map all other data as well
+        )
+        return kycRepo.save(updated).toResponse()
     }
 
     private fun updateStatus(
