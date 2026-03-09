@@ -19,6 +19,7 @@ import org.springframework.web.cors.CorsConfigurationSource
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 
 @Configuration
@@ -111,7 +112,8 @@ class WebSecurityConfig {
                         "/reset-password",
                         "/countries.json",
                         "/.well-known/**",
-                        "/setup"
+                        "/setup",
+                        "/$THIRD_FACTOR_KYC",
                     ).permitAll()
                     .requestMatchers(
                         "/v3/api-docs/**",

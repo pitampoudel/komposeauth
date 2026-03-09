@@ -12,6 +12,7 @@ object ApiEndpoints {
     const val VERIFY_OTP = "verify-otp"
     const val LOGIN_OPTIONS = "login-options"
     const val KYC = "kyc"
+    const val THIRD_FACTOR_KYC = "third-factor-kyc"
     const val KYC_PENDING = "$KYC/pending"
     const val KYC_PERSONAL_INFO = "$KYC/personal-info"
     const val KYC_DOCUMENTS = "$KYC/documents"

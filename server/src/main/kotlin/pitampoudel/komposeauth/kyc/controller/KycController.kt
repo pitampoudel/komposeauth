@@ -2,6 +2,8 @@ package pitampoudel.komposeauth.kyc.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
@@ -80,7 +82,9 @@ class KycController(
         request: HttpServletRequest
     ): ResponseEntity<KycResponse> {
         val user = userContextService.getUserFromAuthentication()
-        val result = kycService.submitDocumentDetails(user.id, data)
+        val result = withContext(Dispatchers.IO) {
+            kycService.submitDocumentDetails(user.id, data)
+        }
         user.email?.let {
             emailService.sendHtmlMail(
                 baseUrl = findServerUrl(request),
