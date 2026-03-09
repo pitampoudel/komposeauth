@@ -4,14 +4,13 @@ import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Controller
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
-import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
@@ -22,7 +21,7 @@ import pitampoudel.komposeauth.kyc.dto.ThirdFactorModel
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.service.UserService
 
-@Controller
+@RestController
 class ThirdFactorKycController(
     val userService: UserService,
     private val kycService: KycService,
@@ -36,7 +35,7 @@ class ThirdFactorKycController(
         description = "Generates a third-factor KYC URL for the currently authenticated user."
     )
     @GetMapping("/$THIRD_FACTOR_KYC")
-    fun generateUrl(httpServletRequest: HttpServletRequest): RedirectView {
+    fun generateUrl(httpServletRequest: HttpServletRequest): ThirdFactorKycUrlResponse {
         val user = userContextService.getUserFromAuthentication()
         val secretKey = appConfigService.getConfig().thirdFactorSecretKey
             ?: error("Third-factor secret key is not configured")
@@ -66,7 +65,7 @@ class ThirdFactorKycController(
             .retrieve()
             .body<ThirdFactorKycUrlResponse>()
             ?: error("Third-factor KYC URL response was empty")
-        return RedirectView(response.url)
+        return response
     }
 
     @PostMapping("/$THIRD_FACTOR_KYC")
