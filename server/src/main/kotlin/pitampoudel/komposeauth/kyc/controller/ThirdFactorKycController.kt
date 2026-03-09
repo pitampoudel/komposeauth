@@ -38,30 +38,27 @@ class ThirdFactorKycController(
             ?: error("Third-factor secret key is not configured")
         val token = appConfigService.getConfig().thirdFactorToken
             ?: error("Third-factor token is not configured")
-        val thirdFactorUrl = appConfigService.getConfig().thirdFactorUrl?.takeIf { it.isNotBlank() }
+        val thirdFactorUrl = appConfigService.getConfig().thirdFactorUrl
             ?: error("Third-factor URL is not configured")
+        val generatedJwt = jwtTokenService.generateHs256Token(
+            secretKey = secretKey,
+            subject = user.id.toHexString(),
+            issuer = findServerUrl(httpServletRequest),
+            claims = mapOf(
+                "name" to user.fullName,
+                "token" to token,
+                "identifier" to user.id.toHexString(),
+                "label" to "",
+                "secondary_label" to "",
+                "callback" to findServerUrl(httpServletRequest) + "/$THIRD_FACTOR_KYC",
+                "is_sdk" to "true"
+            )
+        )
         val response = restClient.post()
             .uri("$thirdFactorUrl/tfauth/get-kyc-url/")
             .header("Authorization", "Bearer $token")
             .contentType(MediaType.APPLICATION_JSON)
-            .body(
-                mapOf(
-                    "jwt" to jwtTokenService.generateHs256Token(
-                        secretKey = secretKey,
-                        subject = user.id.toHexString(),
-                        issuer = findServerUrl(httpServletRequest),
-                        claims = mapOf(
-                            "name" to user.fullName,
-                            "token" to token,
-                            "identifier" to user.id.toHexString(),
-                            "label" to "",
-                            "secondary_label" to "",
-                            "callback" to findServerUrl(httpServletRequest) + "/$THIRD_FACTOR_KYC",
-                            "is_sdk" to "true"
-                        )
-                    )
-                )
-            )
+            .body(mapOf("jwt_token" to generatedJwt))
             .retrieve()
             .body<ThirdFactorKycUrlResponse>()
             ?: error("Third-factor KYC URL response was empty")
