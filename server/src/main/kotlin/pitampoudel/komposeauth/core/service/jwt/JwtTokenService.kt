@@ -7,10 +7,12 @@ import org.springframework.security.oauth2.jose.jws.MacAlgorithm
 import org.springframework.security.oauth2.jwt.JwsHeader
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.util.*
+import javax.crypto.spec.SecretKeySpec
 
 
 @Service
@@ -46,6 +48,14 @@ class JwtTokenService {
                 claimsSet
             )
         ).tokenValue
+    }
+
+    fun verifyHs256Token(token: String, secretKey: String) {
+        val secretBytes = resolveHs256Secret(secretKey)
+        val decoder = NimbusJwtDecoder
+            .withSecretKey(SecretKeySpec(secretBytes, "HmacSHA256"))
+            .build()
+        decoder.decode(token)
     }
 
     private fun resolveHs256Secret(secretKey: String): ByteArray {
