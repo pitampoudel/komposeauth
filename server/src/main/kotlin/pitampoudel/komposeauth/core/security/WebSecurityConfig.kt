@@ -5,6 +5,7 @@ import jakarta.servlet.DispatcherType
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
+import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseCookie
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
@@ -112,9 +113,9 @@ class WebSecurityConfig {
                         "/reset-password",
                         "/countries.json",
                         "/.well-known/**",
-                        "/setup",
-                        "/$THIRD_FACTOR_KYC",
+                        "/setup"
                     ).permitAll()
+                    .requestMatchers(HttpMethod.POST, "/$THIRD_FACTOR_KYC").permitAll()
                     .requestMatchers(
                         "/v3/api-docs/**",
                         "/swagger-ui.html",
