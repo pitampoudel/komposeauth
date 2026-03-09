@@ -280,6 +280,22 @@
     </fieldset>
 
     <fieldset>
+        <legend>Third-Factor KYC</legend>
+        <div class="row">
+            <div>
+                <label for="thirdFactorSecretKey">Secret Key</label>
+                <input id="thirdFactorSecretKey" name="thirdFactorSecretKey" type="text"
+                       th:value="${config.thirdFactorSecretKey}">
+            </div>
+            <div>
+                <label for="thirdFactorToken">Token</label>
+                <input id="thirdFactorToken" name="thirdFactorToken" type="text"
+                       th:value="${config.thirdFactorToken}">
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
         <legend>Access Control</legend>
 
         <label for="allowedAndroidSha256List">Allowed Android SHA 256 List</label>
