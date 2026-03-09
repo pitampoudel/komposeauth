@@ -195,10 +195,15 @@ class KycService(
 
     @Transactional
     fun submitThirdFactorVerification(baseUrl: String, data: ThirdFactorModel): KycResponse {
+
         val userId = runCatching { ObjectId(data.identifier) }.getOrElse {
             throw BadRequestException("Invalid user identifier: ${data.identifier}")
         }
         val existingKyc = kycRepo.findByUserId(userId) ?: throw BadRequestException("KYC not found")
+
+        if (existingKyc.status in KycResponse.Status.submitted()) {
+            throw BadRequestException("KYC already submitted; cannot resubmit")
+        }
 
         val detectedDocType = data.documentDetectionLog.lastOrNull { it.isVerified }?.claimedDocType?.let {
             when {
@@ -230,10 +235,13 @@ class KycService(
 
         val updated = existingKyc.copy(
             nationality = data.nationality,
-            documentNumber = data.documentNumber,
             documentType = detectedDocType,
+            documentNumber = data.documentNumber,
             documentFrontUrl = documentFrontUrl,
             documentBackUrl = documentBackUrl,
+            documentIssuedDate = null,
+            documentExpiryDate = null,
+            documentIssuedPlace = null,
             selfieUrl = selfieUrl,
             status = updatedStatus
         )
