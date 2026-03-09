@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.kyc.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
+import org.apache.coyote.BadRequestException
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
@@ -18,6 +19,7 @@ import pitampoudel.komposeauth.core.service.jwt.JwtTokenService
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.dto.ThirdFactorModel
+import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.service.UserService
 
@@ -28,6 +30,7 @@ class ThirdFactorKycController(
     val appConfigService: AppConfigService,
     val jwtTokenService: JwtTokenService,
     val userContextService: UserContextService,
+    val kycRepo: KycVerificationRepository,
     val restClient: RestClient
 ) {
     @Operation(
@@ -43,6 +46,11 @@ class ThirdFactorKycController(
             ?: error("Third-factor token is not configured")
         val thirdFactorUrl = appConfigService.getConfig().thirdFactorUrl
             ?: error("Third-factor URL is not configured")
+        val existingKyc = kycRepo.findByUserId(user.id) ?: throw BadRequestException("KYC not found")
+
+        if (existingKyc.status in KycResponse.Status.submitted()) {
+            throw BadRequestException("KYC already submitted; cannot resubmit")
+        }
         val generatedJwt = jwtTokenService.generateHs256Token(
             secretKey = secretKey,
             subject = user.id.toHexString(),
