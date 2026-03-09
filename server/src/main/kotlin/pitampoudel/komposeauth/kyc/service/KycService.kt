@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import pitampoudel.core.data.EncodedData
 import pitampoudel.komposeauth.core.service.EmailService
+import pitampoudel.komposeauth.core.service.SlackNotifier
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
@@ -29,7 +30,8 @@ class KycService(
     private val kycRepo: KycVerificationRepository,
     private val storageService: StorageService,
     val emailService: EmailService,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val slackNotifier: SlackNotifier
 ) {
 
     fun find(userId: ObjectId): KycResponse? = kycRepo.findByUserId(userId)?.toResponse()
@@ -246,9 +248,9 @@ class KycService(
             selfieUrl = selfieUrl,
             status = KycResponse.Status.PENDING
         )
-
         val saved = kycRepo.save(updated)
-
+        val user = userRepository.findById(userId).orElse(null)
+        slackNotifier.send("📝 KYC documents submitted by ${user.fullName}")
         return saved.toResponse()
     }
 

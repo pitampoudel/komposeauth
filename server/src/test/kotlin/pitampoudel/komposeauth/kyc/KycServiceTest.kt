@@ -14,6 +14,7 @@ import org.mockito.kotlin.whenever
 import pitampoudel.core.data.EncodedData
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
+import pitampoudel.komposeauth.core.service.SlackNotifier
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
@@ -52,7 +53,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo)
+        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
 
@@ -69,7 +70,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo)
+        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(null)
@@ -104,7 +105,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo)
+        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(null)
@@ -128,7 +129,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo)
+        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         val existing = baseKyc(userId, status = KycResponse.Status.DRAFT)
@@ -170,7 +171,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo)
+        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(baseKyc(userId, status = KycResponse.Status.PENDING))
@@ -199,7 +200,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo)
+        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         val existing = baseKyc(userId, status = KycResponse.Status.PENDING)
@@ -236,7 +237,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo)
+        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         val kyc = baseKyc(userId, status = KycResponse.Status.PENDING)
