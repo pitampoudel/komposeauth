@@ -197,17 +197,9 @@ class KycService(
         val existing = kycRepo.findByUserId(userId)
             ?: throw BadRequestException("KYC record not found for user")
 
-        val gender = when (data.gender.lowercase()) {
-            "male" -> KycResponse.Gender.MALE
-            "female" -> KycResponse.Gender.FEMALE
-            else -> KycResponse.Gender.OTHER
-        }
-
+        // TODO check usefull information on third factor model, take usefull information and update user kyc
         val updated = existing.copy(
-            nationality = data.nationality.ifBlank { existing.nationality },
-            gender = gender,
-            documentNumber = data.documentNumber.ifBlank { existing.documentNumber },
-            // todo map all other data as well
+
         )
         return kycRepo.save(updated).toResponse()
     }
