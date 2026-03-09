@@ -78,6 +78,8 @@ data class AppConfig(
     var sparrowFromNumber: String? = null,
 
     // Third-factor KYC
+    @field:URL(message = "Third-factor URL must be a valid URL")
+    var thirdFactorUrl: String? = null,
     var thirdFactorSecretKey: String? = null,
     var thirdFactorToken: String? = null,
 
@@ -126,6 +128,7 @@ data class AppConfig(
         if (samayeApiKey.isNullOrBlank()) samayeApiKey = null
         if (sparrowApiToken.isNullOrBlank()) sparrowApiToken = null
         if (sparrowFromNumber.isNullOrBlank()) sparrowFromNumber = null
+        if (thirdFactorUrl.isNullOrBlank()) thirdFactorUrl = null
         if (thirdFactorSecretKey.isNullOrBlank()) thirdFactorSecretKey = null
         if (thirdFactorToken.isNullOrBlank()) thirdFactorToken = null
         return this
