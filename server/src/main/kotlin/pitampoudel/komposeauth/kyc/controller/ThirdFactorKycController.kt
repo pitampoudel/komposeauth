@@ -1,13 +1,14 @@
 package pitampoudel.komposeauth.kyc.controller
 
+import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Controller
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
 import org.springframework.web.servlet.view.RedirectView
@@ -21,7 +22,7 @@ import pitampoudel.komposeauth.kyc.dto.ThirdFactorModel
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.service.UserService
 
-@RestController
+@Controller
 class ThirdFactorKycController(
     val userService: UserService,
     private val kycService: KycService,
@@ -30,7 +31,10 @@ class ThirdFactorKycController(
     val userContextService: UserContextService,
     val restClient: RestClient
 ) {
-
+    @Operation(
+        summary = "Generate third-factor KYC URL",
+        description = "Generates a third-factor KYC URL for the currently authenticated user."
+    )
     @GetMapping("/$THIRD_FACTOR_KYC")
     fun generateUrl(httpServletRequest: HttpServletRequest): RedirectView {
         val user = userContextService.getUserFromAuthentication()
