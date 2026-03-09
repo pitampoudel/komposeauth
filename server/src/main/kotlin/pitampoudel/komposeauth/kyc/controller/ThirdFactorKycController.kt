@@ -56,6 +56,7 @@ class ThirdFactorKycController(
         )
         val response = restClient.post()
             .uri("$thirdFactorUrl/tfauth/get-kyc-url/")
+            .header("Authorization", "Bearer $token")
             .contentType(MediaType.APPLICATION_JSON)
             .body(mapOf("jwt" to jwt))
             .retrieve()
