@@ -18,7 +18,10 @@ import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import java.time.Instant
+import java.util.Base64
 import kotlinx.datetime.toJavaLocalDate
+import pitampoudel.komposeauth.core.utils.detectMimeType
+import pitampoudel.komposeauth.kyc.domain.DocumentType
 
 
 @Service
@@ -182,7 +185,8 @@ class KycService(
                 template = "email/generic",
                 model = mapOf(
                     "recipientName" to user.firstNameOrUser(),
-                    "message" to ("We are sorry to inform you that your KYC has been rejected." + (reason?.let { " Reason: $it" } ?: ""))
+                    "message" to ("We are sorry to inform you that your KYC has been rejected." + (reason?.let { " Reason: $it" }
+                        ?: ""))
                 )
             )
         }
@@ -190,19 +194,76 @@ class KycService(
     }
 
     @Transactional
-    fun submitThirdFactorVerification(data: ThirdFactorModel): KycResponse {
+    fun submitThirdFactorVerification(baseUrl: String, data: ThirdFactorModel): KycResponse {
         val userId = runCatching { ObjectId(data.identifier) }.getOrElse {
             throw BadRequestException("Invalid user identifier: ${data.identifier}")
         }
-        val existing = kycRepo.findByUserId(userId)
-            ?: throw BadRequestException("KYC record not found for user")
+        val existingKyc = kycRepo.findByUserId(userId) ?: throw BadRequestException("KYC not found")
 
-        // TODO check usefull information on third factor model, take usefull information and update user kyc
-        val updated = existing.copy(
+        val detectedDocType = data.documentDetectionLog.lastOrNull { it.isVerified }?.claimedDocType?.let {
+            when {
+                it.contains("citizenship", ignoreCase = true) -> DocumentType.CITIZENSHIP
+                it.contains("passport", ignoreCase = true) -> DocumentType.PASSPORT
+                it.contains("national", ignoreCase = true) -> DocumentType.NATIONAL_ID
+                else -> null
+            }
+        }
 
+        fun uploadBase64Photo(label: String, base64: String): String? {
+            val raw = base64.substringAfter("base64,").trim().takeIf { it.isNotBlank() } ?: return null
+            val bytes = runCatching { Base64.getDecoder().decode(raw) }.getOrNull() ?: return null
+            return storageService.upload("kyc/${userId.toHexString()}/$label", bytes.detectMimeType(), bytes)
+        }
+
+        val documentFront = data.documentPhoto.lastOrNull { it.claimedDocType.contains("front", ignoreCase = true) }?.photo
+        val documentBack = data.documentPhoto.lastOrNull { it.claimedDocType.contains("back", ignoreCase = true) }?.photo
+
+        if (detectedDocType == null || data.userPhoto.isBlank() || documentFront == null || documentBack == null) {
+            throw BadRequestException("Document detection failed")
+        }
+
+        val selfieUrl = uploadBase64Photo("selfie", data.userPhoto)
+        val documentFrontUrl = uploadBase64Photo("front", documentFront)
+        val documentBackUrl = uploadBase64Photo("back", documentBack)
+
+        val updatedStatus = if (data.isVerified) KycResponse.Status.APPROVED else existingKyc.status
+
+        val updated = existingKyc.copy(
+            nationality = data.nationality,
+            documentNumber = data.documentNumber,
+            documentType = detectedDocType,
+            documentFrontUrl = documentFrontUrl,
+            documentBackUrl = documentBackUrl,
+            selfieUrl = selfieUrl,
+            status = updatedStatus
         )
-        return kycRepo.save(updated).toResponse()
+
+        val saved = kycRepo.save(updated)
+        if (updatedStatus == KycResponse.Status.APPROVED) {
+            val user = userRepository.findById(userId).orElse(null)
+            if (user != null) {
+                val enrichedUser = user.copy(
+                    firstName = user.firstName ?: saved.firstName,
+                    lastName = user.lastName ?: saved.lastName,
+                    updatedAt = Instant.now()
+                ).let { if (it != user) userRepository.save(it) else user }
+                enrichedUser.email?.let {
+                    emailService.sendHtmlMail(
+                        baseUrl = baseUrl,
+                        to = it,
+                        subject = "Your KYC has been approved",
+                        template = "email/generic",
+                        model = mapOf(
+                            "recipientName" to enrichedUser.firstNameOrUser(),
+                            "message" to "Congratulations! Your KYC has been approved."
+                        )
+                    )
+                }
+            }
+        }
+        return saved.toResponse()
     }
+
 
     private fun updateStatus(
         kycId: ObjectId,

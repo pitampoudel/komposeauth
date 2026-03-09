@@ -70,11 +70,14 @@ class ThirdFactorKycController(
     }
 
     @PostMapping("/$THIRD_FACTOR_KYC")
-    fun submit(@Validated @RequestBody data: ThirdFactorModel): ResponseEntity<KycResponse> {
+    fun submit(
+        httpServletRequest: HttpServletRequest,
+        @Validated @RequestBody data: ThirdFactorModel
+    ): ResponseEntity<KycResponse> {
         val secretKey = appConfigService.getConfig().thirdFactorSecretKey
             ?: error("Third-factor secret key is not configured")
         jwtTokenService.verifyHs256Token(data.jwt, secretKey)
-        return ResponseEntity.ok(kycService.submitThirdFactorVerification(data))
+        return ResponseEntity.ok(kycService.submitThirdFactorVerification(findServerUrl(httpServletRequest), data))
     }
 
     data class ThirdFactorKycUrlResponse(
