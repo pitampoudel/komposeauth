@@ -77,6 +77,10 @@ data class AppConfig(
     var sparrowApiToken: String? = null,
     var sparrowFromNumber: String? = null,
 
+    // Third-factor KYC
+    var thirdFactorSecretKey: String? = null,
+    var thirdFactorToken: String? = null,
+
     @CreatedDate
     val createdAt: Instant = Instant.now(),
     @LastModifiedDate
@@ -122,6 +126,8 @@ data class AppConfig(
         if (samayeApiKey.isNullOrBlank()) samayeApiKey = null
         if (sparrowApiToken.isNullOrBlank()) sparrowApiToken = null
         if (sparrowFromNumber.isNullOrBlank()) sparrowFromNumber = null
+        if (thirdFactorSecretKey.isNullOrBlank()) thirdFactorSecretKey = null
+        if (thirdFactorToken.isNullOrBlank()) thirdFactorToken = null
         return this
     }
 

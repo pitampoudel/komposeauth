@@ -44,6 +44,8 @@ class AppConfigProvider(
             twilioAuthToken = src.twilioAuthToken?.let { crypto.encrypt(it) },
             smtpPassword = src.smtpPassword?.let { crypto.encrypt(it) },
             samayeApiKey = src.samayeApiKey?.let { crypto.encrypt(it) },
+            thirdFactorSecretKey = src.thirdFactorSecretKey?.let { crypto.encrypt(it) },
+            thirdFactorToken = src.thirdFactorToken?.let { crypto.encrypt(it) },
         )
     }
 
@@ -55,7 +57,9 @@ class AppConfigProvider(
             },
             twilioAuthToken = src.twilioAuthToken?.let { crypto.decrypt(it) },
             smtpPassword = src.smtpPassword?.let { crypto.decrypt(it) },
-            samayeApiKey = src.samayeApiKey?.let { crypto.decrypt(it) }
+            samayeApiKey = src.samayeApiKey?.let { crypto.decrypt(it) },
+            thirdFactorSecretKey = src.thirdFactorSecretKey?.let { crypto.decrypt(it) },
+            thirdFactorToken = src.thirdFactorToken?.let { crypto.decrypt(it) },
         )
     }
 }
