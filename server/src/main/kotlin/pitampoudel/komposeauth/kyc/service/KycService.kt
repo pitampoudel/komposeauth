@@ -237,7 +237,6 @@ class KycService(
 
 
         val updated = existingKyc.copy(
-            nationality = data.nationality,
             documentType = detectedDocType,
             documentNumber = data.documentNumber,
             documentFrontUrl = documentFrontUrl,
