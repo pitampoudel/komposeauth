@@ -16,6 +16,8 @@ data class ThirdFactorModel(
     val bypassed: Int,
     @SerialName("completed_at")
     val completedAt: String,
+    @SerialName("documentDetectionLog")
+    val documentDetectionLog: List<DocumentDetectionLog>,
     @SerialName("documentDetectionSuccess")
     val documentDetectionSuccess: Boolean,
     @SerialName("document_number")
@@ -67,7 +69,29 @@ data class ThirdFactorModel(
     @SerialName("userPhoto")
     val userPhoto: String
 ) {
-
+    @Serializable
+    data class DocumentDetectionLog(
+        @SerialName("claimed_doc_type")
+        val claimedDocType: String,
+        @SerialName("created_at")
+        val createdAt: String,
+        @SerialName("detected_doc_type")
+        val detectedDocType: String,
+        @SerialName("document_number")
+        val documentNumber: String,
+        @SerialName("is_verified")
+        val isVerified: Boolean,
+        @SerialName("nationality")
+        val nationality: String,
+        @SerialName("original_photo")
+        val originalPhoto: String,
+        @SerialName("percentage_match")
+        val percentageMatch: Double? = null,
+        @SerialName("photo")
+        val photo: String?,
+        @SerialName("reason")
+        val reason: String
+    )
 
     @Serializable
     data class DocumentPhoto(
