@@ -187,7 +187,7 @@ data class ThirdFactorModel(
         @SerialName("percentage_match")
         val percentageMatch: Double? = null,
         @SerialName("photo")
-        val photo: String,
+        val photo: String?,
         @SerialName("reason")
         val reason: String
     )
