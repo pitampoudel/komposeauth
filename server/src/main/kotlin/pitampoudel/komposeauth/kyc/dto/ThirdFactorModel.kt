@@ -5,35 +5,16 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 
-// Note: The photo, original_photo, userPhoto, and gesture_photo fields contain the full Base64 string of the respective images.
 @Serializable
 data class ThirdFactorModel(
-    @SerialName("age")
-    val age: Int,
-    @SerialName("allow_force_next")
-    val allowForceNext: Int,
-    @SerialName("bypassed")
-    val bypassed: Int,
-    @SerialName("completed_at")
-    val completedAt: String,
     @SerialName("documentDetectionLog")
     val documentDetectionLog: List<DocumentDetectionLog>,
-    @SerialName("documentDetectionSuccess")
-    val documentDetectionSuccess: Boolean,
     @SerialName("document_number")
     val documentNumber: String,
     @SerialName("documentPhoto")
     val documentPhoto: List<DocumentPhoto>,
-    @SerialName("document_uplaod_retries")
-    val documentUplaodRetries: Int,
     @SerialName("expires_at")
     val expiresAt: String,
-    @SerialName("face_detection_retries")
-    val faceDetectionRetries: Int,
-    @SerialName("faceDetectionSuccess")
-    val faceDetectionSuccess: Boolean,
-    @SerialName("forced_next")
-    val forcedNext: Boolean,
     @SerialName("gender")
     val gender: String,
     @SerialName("gesture_challenge")
@@ -42,8 +23,6 @@ data class ThirdFactorModel(
     val gesturePhoto: String,
     @SerialName("gestureSuccess")
     val gestureSuccess: Boolean,
-    @SerialName("gesture_verification_retries")
-    val gestureVerificationRetries: Int,
     @SerialName("identifier")
     val identifier: String,
     @SerialName("in_progress")
@@ -52,14 +31,10 @@ data class ThirdFactorModel(
     val isVerified: Boolean,
     @SerialName("jwt")
     val jwt: String,
-    @SerialName("label")
-    val label: String,
     @SerialName("nationality")
     val nationality: String,
     @SerialName("percentage_match")
     val percentageMatch: Double,
-    @SerialName("secondary_label")
-    val secondaryLabel: String,
     @SerialName("session")
     val session: String,
     @SerialName("signature")
