@@ -5,100 +5,100 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
-  Sample payload
-  {
-  "documentDetectionLog": [
-  {
-  "created_at": "2026-01-27 10:43:26.644142+00:00",
-  "is_verified": true,
-  "nationality": "nepali",
-  "document_number": "11111111",
-  "photo": "<BASE64_STRING_OF_SCANNED_DOC>",
-  "original_photo": "<BASE64_STRING_OF_ORIGINAL_FRAME>",
-  "claimed_doc_type": "citizenship-back",
-  "detected_doc_type": "citizenship-back",
-  "reason": "Valid Type"
-  },
-  {
-  "created_at": "2026-01-27 10:43:27.201931+00:00",
-  "is_verified": true,
-  "nationality": "nepali",
-  "document_number": "11111111",
-  "photo": "<BASE64_STRING>",
-  "original_photo": "<BASE64_STRING>",
-  "percentage_match": 64.7401,
-  "claimed_doc_type": "citizenship-front",
-  "detected_doc_type": "citizenship-front",
-  "reason": "Valid"
-  }
-  ],
-  "documentPhoto": [
-  {
-  "created_at": "2026-01-27 10:43:26.644142+00:00",
-  "is_verified": true,
-  "nationality": "nepali",
-  "document_number": "11111111",
-  "photo": "<BASE64_STRING>",
-  "claimed_doc_type": "citizenship-back",
-  "detected_doc_type": "citizenship-back",
-  "reason": "Valid Type"
-  }
-  ],
-  "gestureDetectionLog": [
-  {
-  "created_at": "2026-01-27 10:43:10.255518+00:00",
-  "is_verified": true,
-  "challenged_gesture": "Thumb_Down",
-  "detected_gesture": "Thumb_Down",
-  "percentage_match": 80.8998,
-  "photo": "<BASE64_STRING_OF_GESTURE>",
-  "reason": "Valid",
-  "is_passive_live": true,
-  "passive_score": 99.998
-  }
-  ],
-  "faceDetectionLog": [
-  {
-  "created_at": "2026-01-27 10:42:58.538744+00:00",
-  "is_verified": false,
-  "photo": "<BASE64_STRING_OF_FACE>",
-  "age": "-1",
-  "gender": "N/A",
-  "reason": "Face Occluded or Blurry.",
-  "force_next": true
-  }
-  ],
-  "nationality": "nepali",
-  "completed_at": "2026-01-27T10:43:27.882837+00:00",
-  "bypassed": 1,
-  "document_uplaod_retries": 2,
-  "session": "F7bgp2I",
-  "faceDetectionSuccess": false,
-  "document_number": "11111111",
-  "gestureSuccess": true,
-  "gender": "N/A",
-  "documentDetectionSuccess": true,
-  "in_progress": 0,
-  "age": -1,
-  "expires_at": "2026-01-29T18:24:26.141586+00:00",
-  "userPhoto": "<BASE64_STRING_OF_USER>",
-  "gesture_photo": "<BASE64_STRING>",
-  "gesture_challenge": [
-  "Thumb_Down"
-  ],
-  "percentage_match": 64.7401,
-  "face_detection_retries": 1,
-  "allow_force_next": 1,
-  "started_at": "2026-01-27T10:42:46.141586+00:00",
-  "gesture_verification_retries": 1,
-  "label": "Jane User",
-  "secondary_label": "jane",
-  "identifier": "1715",
-  "jwt": "<JWT_TOKEN>",
-  "is_verified": true,
-  "forced_next": false,
-  "signature": "<SIGNATURE>"
-  }
+Sample payload
+{
+"documentDetectionLog": [
+{
+"created_at": "2026-01-27 10:43:26.644142+00:00",
+"is_verified": true,
+"nationality": "nepali",
+"document_number": "11111111",
+"photo": "<BASE64_STRING_OF_SCANNED_DOC>",
+"original_photo": "<BASE64_STRING_OF_ORIGINAL_FRAME>",
+"claimed_doc_type": "citizenship-back",
+"detected_doc_type": "citizenship-back",
+"reason": "Valid Type"
+},
+{
+"created_at": "2026-01-27 10:43:27.201931+00:00",
+"is_verified": true,
+"nationality": "nepali",
+"document_number": "11111111",
+"photo": "<BASE64_STRING>",
+"original_photo": "<BASE64_STRING>",
+"percentage_match": 64.7401,
+"claimed_doc_type": "citizenship-front",
+"detected_doc_type": "citizenship-front",
+"reason": "Valid"
+}
+],
+"documentPhoto": [
+{
+"created_at": "2026-01-27 10:43:26.644142+00:00",
+"is_verified": true,
+"nationality": "nepali",
+"document_number": "11111111",
+"photo": "<BASE64_STRING>",
+"claimed_doc_type": "citizenship-back",
+"detected_doc_type": "citizenship-back",
+"reason": "Valid Type"
+}
+],
+"gestureDetectionLog": [
+{
+"created_at": "2026-01-27 10:43:10.255518+00:00",
+"is_verified": true,
+"challenged_gesture": "Thumb_Down",
+"detected_gesture": "Thumb_Down",
+"percentage_match": 80.8998,
+"photo": "<BASE64_STRING_OF_GESTURE>",
+"reason": "Valid",
+"is_passive_live": true,
+"passive_score": 99.998
+}
+],
+"faceDetectionLog": [
+{
+"created_at": "2026-01-27 10:42:58.538744+00:00",
+"is_verified": false,
+"photo": "<BASE64_STRING_OF_FACE>",
+"age": "-1",
+"gender": "N/A",
+"reason": "Face Occluded or Blurry.",
+"force_next": true
+}
+],
+"nationality": "nepali",
+"completed_at": "2026-01-27T10:43:27.882837+00:00",
+"bypassed": 1,
+"document_uplaod_retries": 2,
+"session": "F7bgp2I",
+"faceDetectionSuccess": false,
+"document_number": "11111111",
+"gestureSuccess": true,
+"gender": "N/A",
+"documentDetectionSuccess": true,
+"in_progress": 0,
+"age": -1,
+"expires_at": "2026-01-29T18:24:26.141586+00:00",
+"userPhoto": "<BASE64_STRING_OF_USER>",
+"gesture_photo": "<BASE64_STRING>",
+"gesture_challenge": [
+"Thumb_Down"
+],
+"percentage_match": 64.7401,
+"face_detection_retries": 1,
+"allow_force_next": 1,
+"started_at": "2026-01-27T10:42:46.141586+00:00",
+"gesture_verification_retries": 1,
+"label": "Jane User",
+"secondary_label": "jane",
+"identifier": "1715",
+"jwt": "<JWT_TOKEN>",
+"is_verified": true,
+"forced_next": false,
+"signature": "<SIGNATURE>"
+}
  */
 // Note: The photo, original_photo, userPhoto, and gesture_photo fields contain the full Base64 string of the respective images.
 @Serializable
@@ -211,7 +211,9 @@ data class ThirdFactorModel(
         @SerialName("reason")
         val reason: String,
         @SerialName("original_photo")
-        val originalPhoto: String? = null
+        val originalPhoto: String? = null,
+        @SerialName("percentage_match")
+        val percentageMatch: Double? = null
     )
 
     @Serializable
