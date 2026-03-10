@@ -16,6 +16,7 @@ class SerializationConfig {
     @Bean
     fun kotlinxJson(): Json = Json {
         classDiscriminator = "type"
+        ignoreUnknownKeys = true
     }
 
     @Bean

@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletRequest
 import org.apache.coyote.BadRequestException
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -79,7 +78,7 @@ class ThirdFactorKycController(
     @PostMapping("/$THIRD_FACTOR_KYC")
     fun submit(
         httpServletRequest: HttpServletRequest,
-        @Validated @RequestBody data: ThirdFactorModel
+        @RequestBody data: ThirdFactorModel
     ): ResponseEntity<KycResponse> {
         val secretKey = appConfigService.getConfig().thirdFactorSecretKey
             ?: error("Third-factor secret key is not configured")

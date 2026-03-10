@@ -16,8 +16,6 @@ data class ThirdFactorModel(
     val bypassed: Int,
     @SerialName("completed_at")
     val completedAt: String,
-    @SerialName("documentDetectionLog")
-    val documentDetectionLog: List<DocumentDetectionLog>,
     @SerialName("documentDetectionSuccess")
     val documentDetectionSuccess: Boolean,
     @SerialName("document_number")
@@ -28,8 +26,6 @@ data class ThirdFactorModel(
     val documentUplaodRetries: Int,
     @SerialName("expires_at")
     val expiresAt: String,
-    @SerialName("faceDetectionLog")
-    val faceDetectionLog: List<FaceDetectionLog>,
     @SerialName("face_detection_retries")
     val faceDetectionRetries: Int,
     @SerialName("faceDetectionSuccess")
@@ -40,8 +36,6 @@ data class ThirdFactorModel(
     val gender: String,
     @SerialName("gesture_challenge")
     val gestureChallenge: List<String>,
-    @SerialName("gestureDetectionLog")
-    val gestureDetectionLog: List<GestureDetectionLog>,
     @SerialName("gesture_photo")
     val gesturePhoto: String,
     @SerialName("gestureSuccess")
@@ -73,29 +67,7 @@ data class ThirdFactorModel(
     @SerialName("userPhoto")
     val userPhoto: String
 ) {
-    @Serializable
-    data class DocumentDetectionLog(
-        @SerialName("claimed_doc_type")
-        val claimedDocType: String,
-        @SerialName("created_at")
-        val createdAt: String,
-        @SerialName("detected_doc_type")
-        val detectedDocType: String,
-        @SerialName("document_number")
-        val documentNumber: String,
-        @SerialName("is_verified")
-        val isVerified: Boolean,
-        @SerialName("nationality")
-        val nationality: String,
-        @SerialName("original_photo")
-        val originalPhoto: String,
-        @SerialName("percentage_match")
-        val percentageMatch: Double? = null,
-        @SerialName("photo")
-        val photo: String?,
-        @SerialName("reason")
-        val reason: String
-    )
+
 
     @Serializable
     data class DocumentPhoto(
@@ -121,43 +93,5 @@ data class ThirdFactorModel(
         val percentageMatch: Double? = null
     )
 
-    @Serializable
-    data class FaceDetectionLog(
-        @SerialName("age")
-        val age: Int,
-        @SerialName("created_at")
-        val createdAt: String,
-        @SerialName("force_next")
-        val forceNext: Boolean,
-        @SerialName("gender")
-        val gender: String,
-        @SerialName("is_verified")
-        val isVerified: Boolean,
-        @SerialName("photo")
-        val photo: String,
-        @SerialName("reason")
-        val reason: String
-    )
 
-    @Serializable
-    data class GestureDetectionLog(
-        @SerialName("challenged_gesture")
-        val challengedGesture: String,
-        @SerialName("created_at")
-        val createdAt: String,
-        @SerialName("detected_gesture")
-        val detectedGesture: String,
-        @SerialName("is_passive_live")
-        val isPassiveLive: Boolean,
-        @SerialName("is_verified")
-        val isVerified: Boolean,
-        @SerialName("passive_score")
-        val passiveScore: Double,
-        @SerialName("percentage_match")
-        val percentageMatch: Double,
-        @SerialName("photo")
-        val photo: String,
-        @SerialName("reason")
-        val reason: String
-    )
 }
