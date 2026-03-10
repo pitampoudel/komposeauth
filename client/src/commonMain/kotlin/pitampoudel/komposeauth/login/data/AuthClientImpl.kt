@@ -26,6 +26,7 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGIN_OPTIONS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGOUT
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.ME
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.SEND_OTP
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.UPDATE_PROFILE
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_OTP
 import pitampoudel.komposeauth.core.domain.Platform
@@ -33,6 +34,7 @@ import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
+import pitampoudel.komposeauth.kyc.data.UrlResponse
 import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
 import pitampoudel.komposeauth.login.domain.AuthClient
 import pitampoudel.komposeauth.user.data.Credential
@@ -136,6 +138,12 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
             httpClient.post("$authUrl/$KYC_ADDRESS") {
                 setBody(body)
             }.asResource { body<KycResponse>() }
+        }
+    }
+
+    override suspend fun fetchThirdFactorKycUrl(): Result<UrlResponse> {
+        return safeApiCall {
+            httpClient.get("$authUrl/$THIRD_FACTOR_KYC").asResource { body<UrlResponse>() }
         }
     }
 

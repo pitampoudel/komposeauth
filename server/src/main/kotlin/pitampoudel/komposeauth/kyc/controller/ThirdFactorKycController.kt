@@ -17,6 +17,7 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
 import pitampoudel.komposeauth.core.service.jwt.JwtTokenService
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.data.KycResponse
+import pitampoudel.komposeauth.kyc.data.UrlResponse
 import pitampoudel.komposeauth.kyc.dto.ThirdFactorModel
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.kyc.service.KycService
@@ -37,7 +38,7 @@ class ThirdFactorKycController(
         description = "Generates a third-factor KYC URL for the currently authenticated user."
     )
     @GetMapping("/$THIRD_FACTOR_KYC")
-    fun generateUrl(httpServletRequest: HttpServletRequest): ThirdFactorKycUrlResponse {
+    fun generateUrl(httpServletRequest: HttpServletRequest): UrlResponse {
         val user = userContextService.getUserFromAuthentication()
         val secretKey = appConfigService.getConfig().thirdFactorSecretKey
             ?: error("Third-factor secret key is not configured")
@@ -70,7 +71,7 @@ class ThirdFactorKycController(
             .contentType(MediaType.APPLICATION_JSON)
             .body(mapOf("jwt_token" to generatedJwt))
             .retrieve()
-            .body<ThirdFactorKycUrlResponse>()
+            .body<UrlResponse>()
             ?: error("Third-factor KYC URL response was empty")
         return response
     }
@@ -86,8 +87,5 @@ class ThirdFactorKycController(
         return ResponseEntity.ok(kycService.submitThirdFactorVerification(findServerUrl(httpServletRequest), data))
     }
 
-    data class ThirdFactorKycUrlResponse(
-        val url: String
-    )
 
 }

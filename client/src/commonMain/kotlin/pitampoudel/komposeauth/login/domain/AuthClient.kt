@@ -11,6 +11,7 @@ import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
+import pitampoudel.komposeauth.kyc.data.UrlResponse
 import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.data.ProfileResponse
@@ -31,6 +32,7 @@ internal interface AuthClient {
     suspend fun submitKycPersonalInfo(body: PersonalInformation): Result<KycResponse>
     suspend fun submitKycDocuments(body: DocumentInformation): Result<KycResponse>
     suspend fun submitKycAddressDetails(body: UpdateAddressDetailsRequest): Result<KycResponse>
+    suspend fun fetchThirdFactorKycUrl(): Result<UrlResponse>
     suspend fun fetchCountries(): Result<List<CountryResponse>>
     suspend fun updateProfile(request: UpdateProfileRequest): Result<ProfileResponse>
     suspend fun fetchWebAuthnRegistrationOptions(): Result<String>
