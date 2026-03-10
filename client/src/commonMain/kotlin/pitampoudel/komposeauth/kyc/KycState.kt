@@ -162,6 +162,7 @@ data class KycState(
     val currentPage: Int? = 1,
     val personalInfo: PersonalInformationState = PersonalInformationState(),
     val documentInfo: DocumentInformationState = DocumentInformationState(),
+    val thirdFactorKycUrl: String? = null,
     val permanentAddress: AddressState = AddressState(),
     val currentAddress: AddressState = AddressState(),
     val currentAddressSameAsPermanent: Boolean = false,

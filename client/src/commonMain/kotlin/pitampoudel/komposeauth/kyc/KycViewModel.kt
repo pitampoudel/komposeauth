@@ -310,6 +310,11 @@ class KycViewModel internal constructor(
                     )
                 }
 
+                is KycEvent.RequestThirdFactorUrl -> fetchThirdFactorKycUrl()
+                is KycEvent.ThirdFactorUrlConsumed -> _state.update {
+                    it.copy(thirdFactorKycUrl = null)
+                }
+
                 is KycEvent.SaveAndContinue -> when (state.value.currentPage) {
                     1 -> submitPersonalInfo()
                     2 -> submitAddressDetails()
@@ -419,8 +424,7 @@ class KycViewModel internal constructor(
         }
 
         if (!_state.value.personalInfo.hasError()) {
-            val res = client.submitKycPersonalInfo(_state.value.personalInfo.toRequest())
-            when (res) {
+            when (val res = client.submitKycPersonalInfo(_state.value.personalInfo.toRequest())) {
                 is Result.Error -> _state.update { it.copy(infoMsg = res.message) }
                 is Result.Success -> {
                     refillAll(res.data)
@@ -524,8 +528,7 @@ class KycViewModel internal constructor(
 
         if (!_state.value.documentInfo.hasError()) {
             val req = _state.value.documentInfo.toRequest()
-            val res = client.submitKycDocuments(req)
-            when (res) {
+            when (val res = client.submitKycDocuments(req)) {
                 is Result.Error -> _state.update { it.copy(infoMsg = res.message) }
                 is Result.Success -> {
                     refillAll(res.data)
@@ -538,5 +541,30 @@ class KycViewModel internal constructor(
             }
         }
         _state.update { it.copy(progress = null) }
+    }
+
+    private suspend fun fetchThirdFactorKycUrl() {
+        _state.update {
+            it.copy(
+                progress = 0.0F,
+                thirdFactorKycUrl = null
+            )
+        }
+
+        when (val res = client.fetchThirdFactorKycUrl()) {
+            is Result.Error -> _state.update {
+                it.copy(
+                    infoMsg = res.message,
+                    progress = null,
+                )
+            }
+
+            is Result.Success -> _state.update {
+                it.copy(
+                    thirdFactorKycUrl = res.data.url,
+                    progress = null,
+                )
+            }
+        }
     }
 }
