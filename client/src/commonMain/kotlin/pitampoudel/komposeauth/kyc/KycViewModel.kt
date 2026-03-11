@@ -545,24 +545,19 @@ class KycViewModel internal constructor(
 
     private suspend fun fetchThirdFactorKycUrl() {
         _state.update {
-            it.copy(
-                progress = 0.0F,
-                thirdFactorKycUrl = null
-            )
+            it.copy(thirdFactorKycUrl = null)
         }
 
         when (val res = client.fetchThirdFactorKycUrl()) {
             is Result.Error -> _state.update {
                 it.copy(
-                    infoMsg = res.message,
-                    progress = null,
+                    infoMsg = res.message
                 )
             }
 
             is Result.Success -> _state.update {
                 it.copy(
-                    thirdFactorKycUrl = res.data.url,
-                    progress = null,
+                    thirdFactorKycUrl = res.data.url
                 )
             }
         }
