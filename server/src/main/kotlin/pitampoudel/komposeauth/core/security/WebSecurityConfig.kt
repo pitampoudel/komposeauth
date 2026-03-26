@@ -38,7 +38,7 @@ class WebSecurityConfig {
             } else {
                 configuration.allowedOrigins = origins
             }
-            configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            configuration.allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
             configuration.allowedHeaders = listOf("*")
             configuration.allowCredentials = true
             configuration
