@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -17,6 +18,7 @@ import pitampoudel.core.data.MessageResponse
 import pitampoudel.core.data.PageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.DELETE_ACCOUNT
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.ME
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.STATS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.USERS
@@ -134,6 +136,17 @@ class UsersController(
         val user = userContextService.getUserFromAuthentication()
         userService.deactivateUser(user.id)
         return ResponseEntity.ok(MessageResponse("User account deactivated successfully"))
+    }
+
+    @DeleteMapping("/$DELETE_ACCOUNT")
+    @Operation(
+        summary = "Delete account",
+        description = "Permanently deletes the currently authenticated user's account and related data."
+    )
+    fun deleteAccount(): ResponseEntity<MessageResponse> {
+        val user = userContextService.getUserFromAuthentication()
+        userService.deleteUser(user.id)
+        return ResponseEntity.ok(MessageResponse("User account deleted successfully"))
     }
 
     @PostMapping("/${ApiEndpoints.UPDATE_PROFILE}")

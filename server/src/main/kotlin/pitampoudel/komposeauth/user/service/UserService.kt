@@ -30,9 +30,12 @@ import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.kyc.service.KycService
+import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
+import pitampoudel.komposeauth.one_time_token.repository.OneTimeTokenRepository
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
+import pitampoudel.komposeauth.organization.repository.OrganizationRepository
 import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.data.ProfileResponse
@@ -40,6 +43,8 @@ import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.data.UserResponse
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
+import pitampoudel.komposeauth.webauthn.repository.PublicKeyCredentialRepository
+import pitampoudel.komposeauth.webauthn.repository.PublicKeyUserRepository
 import java.net.URI
 import java.net.URLEncoder
 import java.net.http.HttpClient
@@ -58,6 +63,11 @@ class UserService(
     val emailService: EmailService,
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
+    private val kycVerificationRepository: KycVerificationRepository,
+    private val publicKeyUserRepository: PublicKeyUserRepository,
+    private val publicKeyCredentialRepository: PublicKeyCredentialRepository,
+    private val organizationRepository: OrganizationRepository,
+    private val oneTimeTokenRepository: OneTimeTokenRepository,
     val storageService: StorageService,
     private val objectMapper: ObjectMapper,
     private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
@@ -422,6 +432,42 @@ class UserService(
     fun deactivateUser(userId: ObjectId) {
         val user = userRepository.findById(userId).orElseThrow()
         userRepository.save(user.copy(deactivated = true))
+    }
+
+    fun deleteUser(userId: ObjectId) {
+        val user = userRepository.findById(userId).orElseThrow()
+
+        kycVerificationRepository.findByUserId(user.id)?.let { kyc ->
+            listOfNotNull(
+                kyc.documentFrontUrl,
+                kyc.documentBackUrl,
+                kyc.selfieUrl
+            ).forEach {
+                storageService.delete(it)
+            }
+            kycVerificationRepository.deleteById(user.id)
+        }
+
+        // TODO Review
+        publicKeyCredentialRepository.deleteAllByUserId(user.id)
+        publicKeyUserRepository.findByUserId(user.id)?.let { publicKeyUser ->
+            publicKeyCredentialRepository.deleteAllByPublicKeyUserId(publicKeyUser.userHandle)
+            publicKeyUserRepository.deleteById(publicKeyUser.id)
+        }
+
+        organizationRepository.findAllByUserIdsContains(user.id).forEach { organization ->
+            organizationRepository.save(
+                organization.copy(
+                    userIds = organization.userIds.filterNot { id -> id == user.id }
+                )
+            )
+
+            // todo if org has no users, delete it
+        }
+
+        user.picture?.let { storageService.delete(it) }
+
+        userRepository.deleteById(user.id)
     }
 
     private fun resolveOtpLogin(username: String, otp: String): User {
