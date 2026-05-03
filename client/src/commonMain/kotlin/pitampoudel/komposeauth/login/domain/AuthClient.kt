@@ -25,7 +25,7 @@ internal interface AuthClient {
     suspend fun login(credential: Credential): Result<OAuth2Response>
     suspend fun login(credential: Credential, responseType: ResponseType): Result<HttpResponse>
     suspend fun fetchUserInfo(): Result<ProfileResponse>
-    suspend fun deactivate(): Result<HttpResponse>
+    suspend fun delete(): Result<HttpResponse>
     suspend fun verifyOtp(req: VerifyOtpRequest): Result<HttpResponse>
     suspend fun sendOtp(request: SendOtpRequest): Result<HttpResponse>
     suspend fun fetchMyKyc(): Result<KycResponse?>

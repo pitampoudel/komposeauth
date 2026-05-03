@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.auth.authProvider
 import io.ktor.client.plugins.auth.providers.BearerAuthProvider
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -16,7 +17,7 @@ import pitampoudel.komposeauth.core.data.CountryResponse
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
-import pitampoudel.komposeauth.core.domain.ApiEndpoints.DEACTIVATE
+import pitampoudel.komposeauth.core.domain.ApiEndpoints.DELETE_ACCOUNT
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_ADDRESS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_DOCUMENTS
@@ -84,9 +85,9 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
         }
     }
 
-    override suspend fun deactivate(): Result<HttpResponse> {
+    override suspend fun delete(): Result<HttpResponse> {
         return safeApiCall {
-            httpClient.post("$authUrl/$DEACTIVATE").asResource { this }
+            httpClient.delete("$authUrl/$DELETE_ACCOUNT").asResource { this }
         }
     }
 

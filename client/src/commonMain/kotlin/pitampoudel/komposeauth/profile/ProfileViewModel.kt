@@ -105,13 +105,13 @@ class ProfileViewModel internal constructor(
 
                 }
 
-                is ProfileEvent.Deactivate -> {
+                is ProfileEvent.Delete -> {
                     if (event.confirmed) {
                         _state.update {
                             it.copy(progress = 0.0F)
                         }
 
-                        when (val res = client.deactivate()) {
+                        when (val res = client.delete()) {
                             is Result.Error -> {
                                 _state.update {
                                     it.copy(infoMsg = res.message, progress = null)
