@@ -75,6 +75,15 @@ class EndpointSecurityIntegrationTest {
     }
 
     @Test
+    fun `delete account requires authentication`() {
+        mockMvc.delete("/${ApiEndpoints.DELETE_ACCOUNT}") {
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isUnauthorized() }
+        }
+    }
+
+    @Test
     fun `list admins requires ADMIN role`() {
         val userId = TestAuthHelpers.createUser(mockMvc, json, "regular-user-admins@example.com")
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, "regular-user-admins@example.com")

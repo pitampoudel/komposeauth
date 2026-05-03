@@ -3,20 +3,20 @@ package pitampoudel.komposeauth.user.controller
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
-import pitampoudel.komposeauth.core.domain.ApiEndpoints
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -81,6 +81,30 @@ class UsersControllerIntegrationTest {
             status { isOk() }
             content {
                 jsonPath("$.message") { value("User account deactivated successfully") }
+            }
+        }
+
+        mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString(Credential.serializer(), Credential.UsernamePassword(username = email, password = "Password1"))
+        }.andExpect {
+            status { isForbidden() }
+        }
+    }
+
+    @Test
+    fun `delete account succeeds and prevents login`() {
+        val email = "delete-user@example.com"
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, TestAuthHelpers.createUser(mockMvc, json, email))
+
+        mockMvc.delete("/${ApiEndpoints.DELETE_ACCOUNT}") {
+            accept = MediaType.APPLICATION_JSON
+            cookie(cookie)
+        }.andExpect {
+            status { isOk() }
+            content {
+                jsonPath("$.message") { value("User account deleted successfully") }
             }
         }
 

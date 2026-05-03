@@ -1,18 +1,13 @@
 package pitampoudel.komposeauth.user.service
 
 import org.bson.types.ObjectId
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
@@ -226,5 +221,24 @@ class UserServiceCoreTest {
 
         val updated = userRepository.findById(user.id).orElseThrow()
         assertTrue(updated.deactivated)
+    }
+
+    @Test
+    fun `delete removes user from repository`() {
+        val user = userRepository.save(
+            User(
+                id = ObjectId.get(),
+                firstName = "Delete",
+                lastName = "Test",
+                email = "delete-service-test@example.com",
+                passwordHash = passwordEncoder.encode("Password1"),
+                roles = emptyList(),
+                phoneNumber = null
+            )
+        )
+
+        userService.deleteUser(user.id)
+
+        assertFalse(userRepository.existsById(user.id))
     }
 }

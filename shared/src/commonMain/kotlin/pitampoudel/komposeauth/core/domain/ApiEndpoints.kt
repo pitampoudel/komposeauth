@@ -7,6 +7,7 @@ object ApiEndpoints {
     const val STATS = "stats"
     const val ME = "me"
     const val DEACTIVATE = "deactivate"
+    const val DELETE_ACCOUNT = "delete-account"
     const val UPDATE_PROFILE = "update-profile"
     const val SEND_OTP = "send-otp"
     const val VERIFY_OTP = "verify-otp"
