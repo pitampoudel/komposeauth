@@ -448,8 +448,8 @@ class UserService(
             kycVerificationRepository.deleteById(user.id)
         }
 
-        // TODO Review
         publicKeyCredentialRepository.deleteAllByUserId(user.id)
+
         publicKeyUserRepository.findByUserId(user.id)?.let { publicKeyUser ->
             publicKeyCredentialRepository.deleteAllByPublicKeyUserId(publicKeyUser.userHandle)
             publicKeyUserRepository.deleteById(publicKeyUser.id)
