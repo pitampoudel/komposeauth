@@ -125,6 +125,34 @@ class EndpointSecurityIntegrationTest {
     }
 
     @Test
+    fun `deactivate any user requires ADMIN role`() {
+        val targetUserId = TestAuthHelpers.createUser(mockMvc, json, "target-user-deactivate-security@example.com")
+        val regularUserId = TestAuthHelpers.createUser(mockMvc, json, "regular-user-deactivate-security@example.com")
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, "regular-user-deactivate-security@example.com")
+
+        mockMvc.post("/${ApiEndpoints.USERS}/$targetUserId/${ApiEndpoints.DEACTIVATE}") {
+            accept = MediaType.APPLICATION_JSON
+            cookie(cookie)
+        }.andExpect {
+            status { isForbidden() }
+        }
+    }
+
+    @Test
+    fun `delete any user requires ADMIN role`() {
+        val targetUserId = TestAuthHelpers.createUser(mockMvc, json, "target-user-delete-security@example.com")
+        val regularUserId = TestAuthHelpers.createUser(mockMvc, json, "regular-user-delete-security@example.com")
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, "regular-user-delete-security@example.com")
+
+        mockMvc.delete("/${ApiEndpoints.USERS}/$targetUserId") {
+            accept = MediaType.APPLICATION_JSON
+            cookie(cookie)
+        }.andExpect {
+            status { isForbidden() }
+        }
+    }
+
+    @Test
     fun `public endpoints are accessible without authentication`() {
 
         // Create user endpoint should be public

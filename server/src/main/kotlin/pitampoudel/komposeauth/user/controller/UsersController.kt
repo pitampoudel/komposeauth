@@ -138,6 +138,18 @@ class UsersController(
         return ResponseEntity.ok(MessageResponse("User account deactivated successfully"))
     }
 
+    @PostMapping("/$USERS/{id}/${ApiEndpoints.DEACTIVATE}")
+    @Operation(
+        summary = "Deactivate user account",
+        description = "Deactivates any user account by ID. Admin-only."
+    )
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_WRITE_ANY_USER')")
+    fun deactivateUser(@PathVariable id: String): ResponseEntity<MessageResponse> {
+        val user = userService.findUser(id) ?: return ResponseEntity.notFound().build()
+        userService.deactivateUser(user.id)
+        return ResponseEntity.ok(MessageResponse("User account deactivated successfully"))
+    }
+
     @DeleteMapping("/$DELETE_ACCOUNT")
     @Operation(
         summary = "Delete account",
@@ -145,6 +157,18 @@ class UsersController(
     )
     fun deleteAccount(): ResponseEntity<MessageResponse> {
         val user = userContextService.getUserFromAuthentication()
+        userService.deleteUser(user.id)
+        return ResponseEntity.ok(MessageResponse("User account deleted successfully"))
+    }
+
+    @DeleteMapping("/$USERS/{id}")
+    @Operation(
+        summary = "Delete user account",
+        description = "Permanently deletes any user account by ID and related data. Admin-only."
+    )
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_WRITE_ANY_USER')")
+    fun deleteUser(@PathVariable id: String): ResponseEntity<MessageResponse> {
+        val user = userService.findUser(id) ?: return ResponseEntity.notFound().build()
         userService.deleteUser(user.id)
         return ResponseEntity.ok(MessageResponse("User account deleted successfully"))
     }

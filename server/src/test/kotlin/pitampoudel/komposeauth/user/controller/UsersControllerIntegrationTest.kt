@@ -17,6 +17,7 @@ import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.repository.UserRepository
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -29,6 +30,9 @@ class UsersControllerIntegrationTest {
 
     @Autowired
     private lateinit var json: Json
+
+    @Autowired
+    private lateinit var userRepository: UserRepository
 
     @Test
     fun `update profile succeeds for authenticated user`() {
@@ -112,6 +116,66 @@ class UsersControllerIntegrationTest {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             content = json.encodeToString(Credential.serializer(), Credential.UsernamePassword(username = email, password = "Password1"))
+        }.andExpect {
+            status { isForbidden() }
+        }
+    }
+
+    @Test
+    fun `admin can deactivate any user`() {
+        val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(
+            mockMvc,
+            json,
+            userRepository,
+            "admin-deactivate-any-user@example.com"
+        )
+        val targetEmail = "deactivate-target@example.com"
+        val targetUserId = TestAuthHelpers.createUser(mockMvc, json, targetEmail)
+
+        mockMvc.post("/${ApiEndpoints.USERS}/$targetUserId/${ApiEndpoints.DEACTIVATE}") {
+            accept = MediaType.APPLICATION_JSON
+            cookie(adminCookie)
+        }.andExpect {
+            status { isOk() }
+            content {
+                jsonPath("$.message") { value("User account deactivated successfully") }
+            }
+        }
+
+        mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString(Credential.serializer(), Credential.UsernamePassword(username = targetEmail, password = "Password1"))
+        }.andExpect {
+            status { isForbidden() }
+        }
+    }
+
+    @Test
+    fun `admin can delete any user`() {
+        val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(
+            mockMvc,
+            json,
+            userRepository,
+            "admin-delete-any-user@example.com"
+        )
+        val targetEmail = "delete-target@example.com"
+        val targetUserId = TestAuthHelpers.createUser(mockMvc, json, targetEmail)
+
+        mockMvc.delete("/${ApiEndpoints.USERS}/$targetUserId") {
+            accept = MediaType.APPLICATION_JSON
+            cookie(adminCookie)
+        }.andExpect {
+            status { isOk() }
+            content {
+                jsonPath("$.message") { value("User account deleted successfully") }
+            }
+        }
+
+        mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString(Credential.serializer(), Credential.UsernamePassword(username = targetEmail, password = "Password1"))
         }.andExpect {
             status { isForbidden() }
         }

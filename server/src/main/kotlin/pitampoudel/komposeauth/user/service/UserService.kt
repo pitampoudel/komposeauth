@@ -462,7 +462,7 @@ class UserService(
                 )
             )
 
-            // todo if org has no users, delete it
+            // todo if org has no users and not being used delete it
         }
 
         user.picture?.let { storageService.delete(it) }
