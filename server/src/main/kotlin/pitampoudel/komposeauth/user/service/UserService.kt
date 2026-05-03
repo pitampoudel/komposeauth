@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.webauthn.api.AuthenticatorAssertionResponse
@@ -387,8 +388,8 @@ class UserService(
                     request.refreshToken,
                     purpose = OneTimeToken.Purpose.REFRESH_TOKEN
                 )
-                findUser(token.userId.toHexString()) ?: throw UsernameNotFoundException(
-                    "User not found"
+                findUser(token.userId.toHexString()) ?: throw AccessDeniedException(
+                    "Invalid credentials"
                 )
             }
 
@@ -416,7 +417,7 @@ class UserService(
             is Credential.OTP -> {
                 resolveOtpLogin(request.username, request.otp)
             }
-        } ?: throw UsernameNotFoundException("User not found or invalid credentials")
+        } ?: throw AccessDeniedException("Invalid credentials")
 
         if (user.deactivated) {
             throw AccountLockedException("User account is deactivated")
