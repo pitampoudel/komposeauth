@@ -62,6 +62,7 @@ class ThirdFactorKycController(
                 "label" to "",
                 "secondary_label" to "",
                 "callback" to findServerUrl(httpServletRequest) + "/$THIRD_FACTOR_KYC",
+                "return_url" to appConfigService.getConfig().websiteUrl.orEmpty(),
                 "is_sdk" to "true"
             )
         )
