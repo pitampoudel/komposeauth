@@ -12,7 +12,6 @@ data class ProfileState(
     val progress: Float? = null,
     val infoMsg: InfoMessage? = null,
     val profile: ProfileResponse? = null,
-    val askingDeactivateConfirmation: Boolean = false,
     val editingState: EditingState = EditingState(),
     val webAuthnRegistrationOptions: String? = null,
     val organizationsRes: Result<List<OrganizationResponse>>? = null

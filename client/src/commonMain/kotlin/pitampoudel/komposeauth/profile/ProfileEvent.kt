@@ -8,8 +8,6 @@ sealed interface ProfileEvent {
     data class RegisterPublicKey(val credential: RegisterPublicKeyRequest.PublicKeyCredential) : ProfileEvent
     data class InfoMsgChanged(val msg: InfoMessage?) : ProfileEvent
     data object LogOut : ProfileEvent
-    data class Delete(val confirmed: Boolean) : ProfileEvent
-    data object DismissDeactivateConfirmation : ProfileEvent
     sealed interface EditEvent : ProfileEvent {
         data class GivenNameChanged(val value: String) : EditEvent
         data class FamilyNameChanged(val value: String) : EditEvent

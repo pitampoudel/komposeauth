@@ -105,42 +105,6 @@ class ProfileViewModel internal constructor(
 
                 }
 
-                is ProfileEvent.Delete -> {
-                    if (event.confirmed) {
-                        _state.update {
-                            it.copy(progress = 0.0F)
-                        }
-
-                        when (val res = client.delete()) {
-                            is Result.Error -> {
-                                _state.update {
-                                    it.copy(infoMsg = res.message, progress = null)
-                                }
-                            }
-
-                            is Result.Success<*> -> {
-                                _state.update {
-                                    it.copy(progress = null, askingDeactivateConfirmation = false)
-                                }
-                                authStateHandler.logout()
-                            }
-                        }
-
-
-                    } else {
-                        _state.update {
-                            it.copy(askingDeactivateConfirmation = true)
-                        }
-                    }
-
-                }
-
-                ProfileEvent.DismissDeactivateConfirmation -> {
-                    _state.update {
-                        it.copy(askingDeactivateConfirmation = false)
-                    }
-                }
-
                 ProfileEvent.LogOut -> authStateHandler.logout()
 
                 is ProfileEvent.EditEvent.GivenNameChanged -> _state.update {

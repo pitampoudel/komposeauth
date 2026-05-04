@@ -1,15 +1,11 @@
 package pitampoudel.komposeauth.login.data
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.auth.authProvider
-import io.ktor.client.plugins.auth.providers.BearerAuthProvider
-import io.ktor.client.request.delete
-import io.ktor.client.request.get
-import io.ktor.client.request.parameter
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.plugins.auth.*
+import io.ktor.client.plugins.auth.providers.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import pitampoudel.core.data.asResource
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.Result
@@ -17,7 +13,6 @@ import pitampoudel.komposeauth.core.data.CountryResponse
 import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
-import pitampoudel.komposeauth.core.domain.ApiEndpoints.DELETE_ACCOUNT
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_ADDRESS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_DOCUMENTS
@@ -32,17 +27,9 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.UPDATE_PROFILE
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_OTP
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.ResponseType
-import pitampoudel.komposeauth.kyc.data.DocumentInformation
-import pitampoudel.komposeauth.kyc.data.KycResponse
-import pitampoudel.komposeauth.kyc.data.PersonalInformation
-import pitampoudel.komposeauth.kyc.data.UrlResponse
-import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
+import pitampoudel.komposeauth.kyc.data.*
 import pitampoudel.komposeauth.login.domain.AuthClient
-import pitampoudel.komposeauth.user.data.Credential
-import pitampoudel.komposeauth.user.data.ProfileResponse
-import pitampoudel.komposeauth.user.data.SendOtpRequest
-import pitampoudel.komposeauth.user.data.UpdateProfileRequest
-import pitampoudel.komposeauth.user.data.VerifyOtpRequest
+import pitampoudel.komposeauth.user.data.*
 
 internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClient {
 
@@ -82,12 +69,6 @@ internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) :
     override suspend fun fetchUserInfo(): Result<ProfileResponse> {
         return safeApiCall {
             httpClient.get("$authUrl/$ME").asResource { body() }
-        }
-    }
-
-    override suspend fun delete(): Result<HttpResponse> {
-        return safeApiCall {
-            httpClient.delete("$authUrl/$DELETE_ACCOUNT").asResource { this }
         }
     }
 
