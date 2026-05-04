@@ -73,53 +73,7 @@ class UsersControllerIntegrationTest {
         }
     }
 
-    @Test
-    fun `deactivate account succeeds and prevents login`() {
-        val email = "deactivate-user@example.com"
-        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, TestAuthHelpers.createUser(mockMvc, json, email))
 
-        mockMvc.post("/${ApiEndpoints.DEACTIVATE}") {
-            accept = MediaType.APPLICATION_JSON
-            cookie(cookie)
-        }.andExpect {
-            status { isOk() }
-            content {
-                jsonPath("$.message") { value("User account deactivated successfully") }
-            }
-        }
-
-        mockMvc.post("/${ApiEndpoints.LOGIN}") {
-            contentType = MediaType.APPLICATION_JSON
-            accept = MediaType.APPLICATION_JSON
-            content = json.encodeToString(Credential.serializer(), Credential.UsernamePassword(username = email, password = "Password1"))
-        }.andExpect {
-            status { isForbidden() }
-        }
-    }
-
-    @Test
-    fun `delete account succeeds and prevents login`() {
-        val email = "delete-user@example.com"
-        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, TestAuthHelpers.createUser(mockMvc, json, email))
-
-        mockMvc.delete("/${ApiEndpoints.DELETE_ACCOUNT}") {
-            accept = MediaType.APPLICATION_JSON
-            cookie(cookie)
-        }.andExpect {
-            status { isOk() }
-            content {
-                jsonPath("$.message") { value("User account deleted successfully") }
-            }
-        }
-
-        mockMvc.post("/${ApiEndpoints.LOGIN}") {
-            contentType = MediaType.APPLICATION_JSON
-            accept = MediaType.APPLICATION_JSON
-            content = json.encodeToString(Credential.serializer(), Credential.UsernamePassword(username = email, password = "Password1"))
-        }.andExpect {
-            status { isForbidden() }
-        }
-    }
 
     @Test
     fun `admin can deactivate any user`() {

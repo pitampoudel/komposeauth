@@ -6,34 +6,26 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.core.data.PageResponse
 import pitampoudel.komposeauth.core.config.UserContextService
+import pitampoudel.komposeauth.core.data.StatsResponse
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
-import pitampoudel.komposeauth.core.domain.ApiEndpoints.DELETE_ACCOUNT
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.ME
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.STATS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.USERS
-import pitampoudel.komposeauth.user.data.CreateUserRequest
-import pitampoudel.komposeauth.user.data.ProfileResponse
-import pitampoudel.komposeauth.core.data.StatsResponse
-import pitampoudel.komposeauth.user.data.UpdateProfileRequest
-import pitampoudel.komposeauth.user.data.UserResponse
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client.Companion.SCOPE_READ_ANY_USER
 import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client.Companion.SCOPE_WRITE_ANY_USER
+import pitampoudel.komposeauth.user.data.CreateUserRequest
+import pitampoudel.komposeauth.user.data.ProfileResponse
+import pitampoudel.komposeauth.user.data.UpdateProfileRequest
+import pitampoudel.komposeauth.user.data.UserResponse
+import pitampoudel.komposeauth.user.service.UserService
 import pitampoudel.komposeauth.user.service.mapToProfileResponseDto
 import pitampoudel.komposeauth.user.service.mapToResponseDto
-import pitampoudel.komposeauth.user.service.UserService
 
 
 @RestController
@@ -127,17 +119,6 @@ class UsersController(
         return ResponseEntity.ok(userInfo)
     }
 
-    @PostMapping("/${ApiEndpoints.DEACTIVATE}")
-    @Operation(
-        summary = "Deactivate account",
-        description = "Deactivates the currently authenticated user's account."
-    )
-    fun deactivate(): ResponseEntity<MessageResponse> {
-        val user = userContextService.getUserFromAuthentication()
-        userService.deactivateUser(user.id)
-        return ResponseEntity.ok(MessageResponse("User account deactivated successfully"))
-    }
-
     @PostMapping("/$USERS/{id}/${ApiEndpoints.DEACTIVATE}")
     @Operation(
         summary = "Deactivate user account",
@@ -148,17 +129,6 @@ class UsersController(
         val user = userService.findUser(id) ?: return ResponseEntity.notFound().build()
         userService.deactivateUser(user.id)
         return ResponseEntity.ok(MessageResponse("User account deactivated successfully"))
-    }
-
-    @DeleteMapping("/$DELETE_ACCOUNT")
-    @Operation(
-        summary = "Delete account",
-        description = "Permanently deletes the currently authenticated user's account and related data."
-    )
-    fun deleteAccount(): ResponseEntity<MessageResponse> {
-        val user = userContextService.getUserFromAuthentication()
-        userService.deleteUser(user.id)
-        return ResponseEntity.ok(MessageResponse("User account deleted successfully"))
     }
 
     @DeleteMapping("/$USERS/{id}")
