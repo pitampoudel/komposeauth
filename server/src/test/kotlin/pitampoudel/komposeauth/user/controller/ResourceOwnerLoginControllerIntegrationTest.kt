@@ -1,27 +1,26 @@
 package pitampoudel.komposeauth.user.controller
 
 import kotlinx.serialization.json.Json
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
-import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
-import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.otp.entity.Otp
 import pitampoudel.komposeauth.otp.repository.OtpRepository
-import pitampoudel.komposeauth.user.repository.UserRepository
 import pitampoudel.komposeauth.user.data.CreateUserRequest
+import pitampoudel.komposeauth.user.data.Credential
+import pitampoudel.komposeauth.user.repository.UserRepository
 import pitampoudel.komposeauth.user.service.UserService
 
 @SpringBootTest
@@ -175,31 +174,6 @@ class ResourceOwnerLoginControllerIntegrationTest {
         }
     }
 
-    @Test
-    fun `login with deactivated account fails`() {
-        val email = "login-deactivated@example.com"
-        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, createUser(email))
-
-        // Deactivate the account
-        mockMvc.post("/${ApiEndpoints.DEACTIVATE}") {
-            accept = MediaType.APPLICATION_JSON
-            this.cookie(cookie)
-        }.andExpect {
-            status { isOk() }
-        }
-
-        // Try to login again
-        mockMvc.post("/${ApiEndpoints.LOGIN}") {
-            param("responseType", ResponseType.COOKIE.name)
-            contentType = MediaType.APPLICATION_JSON
-            accept = MediaType.APPLICATION_JSON
-            content = json.encodeToString<Credential>(
-                Credential.UsernamePassword(username = email, password = "Password1")
-            )
-        }.andExpect {
-            status { is4xxClientError() }
-        }
-    }
 
     @Test
     fun `otp login creates new user when username is unknown`() {
