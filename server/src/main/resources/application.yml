@@ -8,6 +8,10 @@ spring:
       auto-index-creation: true
   jmx:
     enabled: false
+  web:
+    error:
+      whitelabel:
+        enabled: false
 logging:
   level:
     root: ERROR
