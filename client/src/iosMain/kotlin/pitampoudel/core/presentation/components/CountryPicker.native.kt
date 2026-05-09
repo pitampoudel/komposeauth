@@ -3,11 +3,13 @@ package pitampoudel.core.presentation.components
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.window.ComposeUIViewController
 import platform.Foundation.ISOCountryCodes
 import platform.Foundation.NSLocale
 import platform.Foundation.NSLocaleCountryCode
 import platform.Foundation.currentLocale
+import platform.Foundation.countryCode
 import platform.UIKit.UIApplication
 import platform.UIKit.UIViewController
 import platform.UIKit.UIWindow
@@ -17,6 +19,13 @@ actual fun CountryPicker(
     countryNameCode: String,
     onCountryNameCodeChanged: (String) -> Unit
 ) {
+    LaunchedEffect(countryNameCode) {
+        if (countryNameCode.isBlank()) {
+            val defaultCountryCode = NSLocale.currentLocale().countryCode ?: "US"
+            onCountryNameCodeChanged(defaultCountryCode)
+        }
+    }
+
     TextButton(onClick = {
         val dismiss: () -> Unit = {
             topViewController()?.dismissViewControllerAnimated(true, null)
