@@ -10,8 +10,10 @@ spring:
     enabled: false
   web:
     error:
-      whitelabel:
-        enabled: false
+      include-exception: true
+      include-message: always
+      include-stacktrace: always
+      include-binding-errors: always
 logging:
   level:
     root: ERROR

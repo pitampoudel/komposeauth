@@ -19,15 +19,16 @@ class RegisteredOAuth2ClientRepository(val repository: OAuth2ClientRepository) :
         // Clients are managed through the admin API
     }
 
-    override fun findById(id: String): RegisteredClient {
-        val client = repository.findById(id).orElseThrow { IllegalArgumentException("No client found with id: $id") }
-        return client.toRegisteredClient()
+    override fun findById(id: String): RegisteredClient? {
+        return repository.findById(id)
+            .map { it.toRegisteredClient() }
+            .orElse(null)
     }
 
-    override fun findByClientId(clientId: String): RegisteredClient {
-        val client = repository.findById(clientId)
-            .orElseThrow { IllegalArgumentException("No client found with clientId: $clientId") }
-        return client.toRegisteredClient()
+    override fun findByClientId(clientId: String): RegisteredClient? {
+        return repository.findById(clientId)
+            .map { it.toRegisteredClient() }
+            .orElse(null)
     }
 
 
