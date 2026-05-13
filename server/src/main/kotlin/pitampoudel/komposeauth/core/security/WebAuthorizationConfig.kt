@@ -178,6 +178,7 @@ class WebAuthorizationConfig() {
         }
 
         return http.securityMatcher(authorizationServerConfigurer.endpointsMatcher)
+            .cors { }
             .with(authorizationServerConfigurer) { authorizationServer ->
                 authorizationServer.oidc {
                     it.userInfoEndpoint { userInfo ->
