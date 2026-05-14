@@ -40,6 +40,8 @@ class AppConfigController(
                 property.javaField?.isAnnotationPresent(URL::class.java) == true -> "url"
                 property.javaField?.isAnnotationPresent(Email::class.java) == true -> "email"
                 else -> when (property.name) {
+                    "corsAllowedOriginList" -> "textarea"
+                    "allowedAndroidSha256List" -> "textarea"
                     "smsProvider" -> "select"
                     else -> "text"
                 }
