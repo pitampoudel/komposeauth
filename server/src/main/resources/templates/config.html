@@ -18,18 +18,6 @@
             padding: 32px 16px;
         }
 
-        .container {
-            max-width: 720px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 12px;
-            padding: 28px;
-        }
-
         h1 {
             margin: 0;
             font-size: 24px;
@@ -45,7 +33,28 @@
         }
 
         .config-field {
-            margin-bottom: 20px;
+            margin-bottom: 0;
+        }
+
+        .field-group {
+            margin-top: 26px;
+        }
+
+        .field-group:first-child {
+            margin-top: 0;
+        }
+
+        .field-group-title {
+            margin: 0 0 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .group-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px 14px;
         }
 
         label {
@@ -112,12 +121,12 @@
         }
 
         @media (max-width: 640px) {
-            .card {
-                padding: 20px;
-            }
-
             body {
                 padding: 20px 12px;
+            }
+
+            .group-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -125,42 +134,47 @@
 <body>
 
 <div class="container">
-    <div class="card">
-        <h1>Configuration</h1>
-        <p class="subtitle">Manage your application settings</p>
+    <h1>Configuration</h1>
+    <p class="subtitle">Manage your application settings</p>
 
-        <form method="post">
-            <div th:each="field : ${fields}" class="config-field">
-                <label th:for="${field.name}" th:text="${field.label}"></label>
+    <form method="post">
+        <div th:each="group : ${fieldGroups}" class="field-group">
+            <h2 th:if="${group.title != null}" class="field-group-title" th:text="${group.title}"></h2>
 
-                <textarea th:if="${field.inputType == 'textarea'}"
-                          th:id="${field.name}"
-                          th:name="${field.name}"
-                          th:text="${field.value}">
-                </textarea>
+            <div class="group-grid">
+                <div th:each="field : ${group.fields}" class="config-field"
+                     th:classappend="${field.inputType == 'textarea'} ? ' full-width' : ''">
+                    <label th:for="${field.name}" th:text="${field.label}"></label>
 
-                <select th:if="${field.inputType == 'select'}"
-                        th:id="${field.name}"
-                        th:name="${field.name}">
-                    <option th:each="option : ${field.options}"
-                            th:value="${option.value}"
-                            th:text="${option.label}"
-                            th:selected="${option.value == (field.value ?: '')}">
-                    </option>
-                </select>
+                    <textarea th:if="${field.inputType == 'textarea'}"
+                              th:id="${field.name}"
+                              th:name="${field.name}"
+                              th:text="${field.value}">
+                        </textarea>
 
-                <input th:if="${field.inputType != 'textarea' and field.inputType != 'select'}"
-                       th:id="${field.name}"
-                       th:name="${field.name}"
-                       th:type="${field.inputType}"
-                       th:value="${field.value}">
+                    <select th:if="${field.inputType == 'select'}"
+                            th:id="${field.name}"
+                            th:name="${field.name}">
+                        <option th:each="option : ${field.options}"
+                                th:value="${option.value}"
+                                th:text="${option.label}"
+                                th:selected="${option.value == (field.value ?: '')}">
+                        </option>
+                    </select>
+
+                    <input th:if="${field.inputType != 'textarea' and field.inputType != 'select'}"
+                           th:id="${field.name}"
+                           th:name="${field.name}"
+                           th:type="${field.inputType}"
+                           th:value="${field.value}">
+                </div>
             </div>
+        </div>
 
-            <div class="actions">
-                <button class="btn" type="submit">Save</button>
-            </div>
-        </form>
-    </div>
+        <div class="actions">
+            <button class="btn" type="submit">Save</button>
+        </div>
+    </form>
 </div>
 
 </body>

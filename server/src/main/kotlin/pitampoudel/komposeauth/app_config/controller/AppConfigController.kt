@@ -18,24 +18,92 @@ import kotlin.reflect.jvm.javaField
 class AppConfigController(
     private val appConfigProvider: AppConfigProvider
 ) {
-    fun fields(value: AppConfig) = buildFields(
+    fun fieldGroups(value: AppConfig) = buildFieldGroups(
         klass = AppConfig::class,
         value = value,
         excludedFieldNames = setOf("id", "createdAt", "updatedAt"),
+        groups = listOf(
+            Group(
+                title = "Branding",
+                members = listOf("name", "logoUrl", "brandColor", "websiteUrl")
+            ),
+            Group(
+                title = "Social Links",
+                members = listOf(
+                    "facebookLink",
+                    "instagramLink",
+                    "tiktokLink",
+                    "linkedinLink",
+                    "youtubeLink",
+                    "privacyLink"
+                )
+            ),
+            Group(
+                title = "Support & Platform",
+                members = listOf("supportEmail", "rpId", "gcpProjectId", "gcpBucketName")
+            ),
+            Group(
+                title = "OAuth",
+                members = listOf(
+                    "googleAuthClientId",
+                    "googleAuthClientSecret",
+                    "googleAuthDesktopClientId",
+                    "googleAuthDesktopClientSecret",
+                    "appleAuthClientId"
+                )
+            ),
+            Group(
+                title = "Security",
+                members = listOf("allowedAndroidSha256List", "corsAllowedOriginList")
+            ),
+            Group(
+                title = "SMS Provider",
+                members = listOf(
+                    "smsProvider",
+                    "twilioAccountSid",
+                    "twilioAuthToken",
+                    "twilioFromNumber",
+                    "twilioVerifyServiceSid",
+                    "samayeApiKey",
+                    "sparrowApiToken",
+                    "sparrowFromNumber"
+                )
+            ),
+            Group(
+                title = "SMTP",
+                members = listOf(
+                    "smtpHost",
+                    "smtpPort",
+                    "smtpUsername",
+                    "smtpPassword",
+                    "smtpFromEmail",
+                    "smtpFromName",
+                    "emailFooterText"
+                )
+            ),
+            Group(
+                title = "Monitoring & Alerts",
+                members = listOf("sentryDsn", "slackBotToken", "slackChannelId")
+            ),
+            Group(
+                title = "Third-factor KYC",
+                members = listOf("thirdFactorUrl", "thirdFactorSecretKey", "thirdFactorToken")
+            )
+        ),
         optionsFor = {
             when (it.name) {
                 "smsProvider" -> listOf(
-                    ConfigField.SelectOption("", "None"),
-                    ConfigField.SelectOption("twilio", "Twilio"),
-                    ConfigField.SelectOption("samaye", "Samaye"),
-                    ConfigField.SelectOption("sparrow", "Sparrow")
+                    ConfigFieldGroup.ConfigField.SelectOption("", "None"),
+                    ConfigFieldGroup.ConfigField.SelectOption("twilio", "Twilio"),
+                    ConfigFieldGroup.ConfigField.SelectOption("samaye", "Samaye"),
+                    ConfigFieldGroup.ConfigField.SelectOption("sparrow", "Sparrow")
                 )
 
                 else -> null
             }
         },
         inputTypeFor = { property ->
-            return@buildFields when {
+            return@buildFieldGroups when {
                 property.returnType.classifier == Int::class -> "number"
                 property.javaField?.isAnnotationPresent(URL::class.java) == true -> "url"
                 property.javaField?.isAnnotationPresent(Email::class.java) == true -> "email"
@@ -62,7 +130,7 @@ class AppConfigController(
     ): String {
         val config = appConfigProvider.get()
         model.addAttribute("config", config)
-        model.addAttribute("fields", fields(config))
+        model.addAttribute("fieldGroups", fieldGroups(config))
         return "config"
     }
 
@@ -75,7 +143,7 @@ class AppConfigController(
     ): String {
         val config = appConfigProvider.save(form)
         model.addAttribute("config", config)
-        model.addAttribute("fields", fields(config))
+        model.addAttribute("fieldGroups", fieldGroups(config))
         return "config"
     }
 }

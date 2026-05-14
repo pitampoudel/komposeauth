@@ -5,13 +5,60 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 
-fun <T : Any> buildFields(
+data class Group(
+    val title: String,
+    val members: List<String>
+)
+
+fun <T : Any> buildFieldGroups(
+    klass: KClass<T>,
+    value: T,
+    excludedFieldNames: Set<String>,
+    groups: List<Group>,
+    inputTypeFor: (KProperty1<T, *>) -> String,
+    optionsFor: (KProperty1<T, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>?,
+): List<ConfigFieldGroup> {
+    val fields = buildFields(
+        klass = klass,
+        value = value,
+        excludedFieldNames = excludedFieldNames,
+        inputTypeFor = inputTypeFor,
+        optionsFor = optionsFor
+    )
+    if (groups.isEmpty()) return listOf(ConfigFieldGroup(fields = fields))
+
+    val fieldByName = fields.associateBy { it.name }
+    val usedFieldNames = mutableSetOf<String>()
+
+    val grouped = groups.map { definition ->
+        val groupedFields = definition.members.mapNotNull { fieldName ->
+            fieldByName[fieldName]?.also { usedFieldNames += fieldName }
+        }
+        ConfigFieldGroup(
+            title = definition.title,
+            fields = groupedFields
+        )
+
+    }.toMutableList()
+
+    val remainingFields = fields.filter { it.name !in usedFieldNames }
+    if (remainingFields.isNotEmpty()) {
+        grouped += ConfigFieldGroup(
+            title = "Other",
+            fields = remainingFields
+        )
+    }
+    return grouped
+}
+
+
+private fun <T : Any> buildFields(
     klass: KClass<T>,
     value: T,
     excludedFieldNames: Set<String>,
     inputTypeFor: (KProperty1<T, *>) -> String,
-    optionsFor: (KProperty1<T, *>) -> List<ConfigField.SelectOption>?,
-): List<ConfigField> {
+    optionsFor: (KProperty1<T, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>?,
+): List<ConfigFieldGroup.ConfigField> {
     val declarationOrder = klass.java.declaredFields
         .mapIndexed { index, field -> field.name to index }
         .toMap()
@@ -20,7 +67,7 @@ fun <T : Any> buildFields(
         .filter { it.name !in excludedFieldNames }
         .sortedBy { declarationOrder[it.name] ?: Int.MAX_VALUE }
         .map { property ->
-            ConfigField(
+            ConfigFieldGroup.ConfigField(
                 name = property.name,
                 label = property.name,
                 inputType = inputTypeFor(property),
@@ -30,17 +77,21 @@ fun <T : Any> buildFields(
         }
 }
 
-
-data class ConfigField(
-    val name: String,
-    val label: String,
-    val inputType: String,
-    val value: Any?,
-    val options: List<SelectOption> = emptyList()
+data class ConfigFieldGroup(
+    val title: String? = null,
+    val fields: List<ConfigField>
 ) {
-    data class SelectOption(
-        val value: String,
-        val label: String
-    )
+    data class ConfigField(
+        val name: String,
+        val label: String,
+        val inputType: String,
+        val value: Any?,
+        val options: List<SelectOption> = emptyList()
+    ) {
+        data class SelectOption(
+            val value: String,
+            val label: String
+        )
+    }
 }
 
