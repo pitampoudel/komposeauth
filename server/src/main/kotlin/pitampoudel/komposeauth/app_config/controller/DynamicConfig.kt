@@ -6,6 +6,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
+import kotlin.reflect.jvm.jvmErasure
 
 
 data class Group(
@@ -15,11 +16,11 @@ data class Group(
 
 fun <T : Any> buildFieldGroups(
     schema: KClass<T>,
-    inputTypeFor: ((KProperty1<T, *>) -> String?)? = null,
+    inputTypeFor: ((KProperty1<out Any, *>) -> String?)? = null,
     value: T? = null,
     excludedFieldNames: Set<String> = setOf(),
     groups: List<Group> = emptyList(),
-    optionsFor: (KProperty1<T, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>? = { null },
+    optionsFor: ((KProperty1<out Any, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>?)? = null,
 ): List<ConfigFieldGroup> {
     val fields = buildFields(
         klass = schema,
@@ -55,13 +56,23 @@ fun <T : Any> buildFieldGroups(
 }
 
 
+private fun inferInputType(property: KProperty1<*, *>): String {
+    return when {
+        property.returnType.classifier == Int::class -> "number"
+        property.javaField?.isAnnotationPresent(URL::class.java) == true -> "url"
+        property.javaField?.isAnnotationPresent(Email::class.java) == true -> "email"
+        else -> "text"
+    }
+}
+
 private fun <T : Any> buildFields(
     klass: KClass<T>,
     value: T?,
     excludedFieldNames: Set<String>,
-    inputTypeFor: ((KProperty1<T, *>) -> String?)?,
-    optionsFor: (KProperty1<T, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>?,
+    inputTypeFor: ((KProperty1<out Any, *>) -> String?)?,
+    optionsFor: ((KProperty1<out Any, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>?)? = null,
 ): List<ConfigFieldGroup.ConfigField> {
+    // Preserve declaration order of the top-level schema
     val declarationOrder = klass.java.declaredFields
         .mapIndexed { index, field -> field.name to index }
         .toMap()
@@ -69,21 +80,40 @@ private fun <T : Any> buildFields(
     return klass.memberProperties
         .filter { it.name !in excludedFieldNames }
         .sortedBy { declarationOrder[it.name] ?: Int.MAX_VALUE }
-        .map { property ->
-            ConfigFieldGroup.ConfigField(
-                name = property.name,
-                label = property.name,
-                inputType = inputTypeFor?.invoke(property) ?: when {
-                    property.returnType.classifier == Int::class -> "number"
-                    property.javaField?.isAnnotationPresent(URL::class.java) == true -> "url"
-                    property.javaField?.isAnnotationPresent(Email::class.java) == true -> "email"
-                    else -> when (property.name) {
-                        else -> "text"
+        .flatMap { property ->
+            val nestedClass = property.returnType.jvmErasure
+
+            if (nestedClass.isData) {
+                // Nested data class: expand its members as dot-notated fields
+                val nestedValue = value?.let { property.getter.call(it) }
+                val nestedDeclarationOrder = nestedClass.java.declaredFields
+                    .mapIndexed { index, field -> field.name to index }
+                    .toMap()
+
+                nestedClass.memberProperties
+                    .filter { it.name !in excludedFieldNames }
+                    .sortedBy { nestedDeclarationOrder[it.name] ?: Int.MAX_VALUE }
+                    .map { member ->
+                        ConfigFieldGroup.ConfigField(
+                            name = "${property.name}.${member.name}",
+                            label = "${property.name}.${member.name}",
+                            inputType = inputTypeFor?.invoke(member) ?: inferInputType(member),
+                            value = nestedValue?.let { member.getter.call(it) },
+                            options = optionsFor?.invoke(member).orEmpty()
+                        )
                     }
-                },
-                value = value?.let { property.get(it) },
-                options = optionsFor(property).orEmpty()
-            )
+            } else {
+                // Primitive / non-data-class property: emit directly
+                listOf(
+                    ConfigFieldGroup.ConfigField(
+                        name = property.name,
+                        label = property.name,
+                        inputType = inputTypeFor?.invoke(property) ?: inferInputType(property),
+                        value = value?.let { property.getter.call(it) },
+                        options = optionsFor?.invoke(property).orEmpty()
+                    )
+                )
+            }
         }
 }
 
