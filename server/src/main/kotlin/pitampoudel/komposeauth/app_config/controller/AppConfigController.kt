@@ -19,7 +19,7 @@ class AppConfigController(
     private val appConfigProvider: AppConfigProvider
 ) {
     fun fieldGroups(value: AppConfig) = buildFieldGroups(
-        klass = AppConfig::class,
+        schema = AppConfig::class,
         value = value,
         excludedFieldNames = setOf("id", "createdAt", "updatedAt"),
         groups = listOf(
@@ -103,16 +103,11 @@ class AppConfigController(
             }
         },
         inputTypeFor = { property ->
-            return@buildFieldGroups when {
-                property.returnType.classifier == Int::class -> "number"
-                property.javaField?.isAnnotationPresent(URL::class.java) == true -> "url"
-                property.javaField?.isAnnotationPresent(Email::class.java) == true -> "email"
-                else -> when (property.name) {
-                    "corsAllowedOriginList" -> "textarea"
-                    "allowedAndroidSha256List" -> "textarea"
-                    "smsProvider" -> "select"
-                    else -> "text"
-                }
+            when (property.name) {
+                "corsAllowedOriginList" -> "textarea"
+                "allowedAndroidSha256List" -> "textarea"
+                "smsProvider" -> "select"
+                else -> null
             }
         }
     )

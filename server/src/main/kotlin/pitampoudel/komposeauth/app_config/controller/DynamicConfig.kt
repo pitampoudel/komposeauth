@@ -1,8 +1,11 @@
 package pitampoudel.komposeauth.app_config.controller
 
+import jakarta.validation.constraints.Email
+import org.hibernate.validator.constraints.URL
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.javaField
 
 
 data class Group(
@@ -11,15 +14,15 @@ data class Group(
 )
 
 fun <T : Any> buildFieldGroups(
-    klass: KClass<T>,
-    value: T,
-    excludedFieldNames: Set<String>,
-    groups: List<Group>,
-    inputTypeFor: (KProperty1<T, *>) -> String,
-    optionsFor: (KProperty1<T, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>?,
+    schema: KClass<T>,
+    inputTypeFor: ((KProperty1<T, *>) -> String?)? = null,
+    value: T? = null,
+    excludedFieldNames: Set<String> = setOf(),
+    groups: List<Group> = emptyList(),
+    optionsFor: (KProperty1<T, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>? = { null },
 ): List<ConfigFieldGroup> {
     val fields = buildFields(
-        klass = klass,
+        klass = schema,
         value = value,
         excludedFieldNames = excludedFieldNames,
         inputTypeFor = inputTypeFor,
@@ -54,9 +57,9 @@ fun <T : Any> buildFieldGroups(
 
 private fun <T : Any> buildFields(
     klass: KClass<T>,
-    value: T,
+    value: T?,
     excludedFieldNames: Set<String>,
-    inputTypeFor: (KProperty1<T, *>) -> String,
+    inputTypeFor: ((KProperty1<T, *>) -> String?)?,
     optionsFor: (KProperty1<T, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>?,
 ): List<ConfigFieldGroup.ConfigField> {
     val declarationOrder = klass.java.declaredFields
@@ -70,8 +73,15 @@ private fun <T : Any> buildFields(
             ConfigFieldGroup.ConfigField(
                 name = property.name,
                 label = property.name,
-                inputType = inputTypeFor(property),
-                value = property.get(value),
+                inputType = inputTypeFor?.invoke(property) ?: when {
+                    property.returnType.classifier == Int::class -> "number"
+                    property.javaField?.isAnnotationPresent(URL::class.java) == true -> "url"
+                    property.javaField?.isAnnotationPresent(Email::class.java) == true -> "email"
+                    else -> when (property.name) {
+                        else -> "text"
+                    }
+                },
+                value = value?.let { property.get(it) },
                 options = optionsFor(property).orEmpty()
             )
         }
