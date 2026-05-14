@@ -23,8 +23,8 @@ fun <T : Any> buildFieldGroups(
     optionsFor: ((KProperty1<out Any, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>?)? = null,
 ): List<ConfigFieldGroup> {
     val fieldGroups = buildFieldGroups(
-        klass = schema,
-        value = value,
+        objectClass = schema,
+        objectValue = value,
         excludedFieldNames = excludedFieldNames,
         inputTypeFor = inputTypeFor,
         optionsFor = optionsFor
@@ -69,18 +69,19 @@ private fun inferInputType(property: KProperty1<*, *>): String {
 }
 
 private fun <T : Any> buildFieldGroups(
-    klass: KClass<T>,
-    value: T?,
+    objectClass: KClass<T>,
+    objectValue: T?,
     excludedFieldNames: Set<String>,
     inputTypeFor: ((KProperty1<out Any, *>) -> String?)?,
     optionsFor: ((KProperty1<out Any, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>?)? = null,
 ): List<ConfigFieldGroup> {
     // Preserve declaration order of the top-level schema
-    val declarationOrder = klass.java.declaredFields
+    val declarationOrder = objectClass.java.declaredFields
         .mapIndexed { index, field -> field.name to index }
         .toMap()
 
-    return klass.memberProperties
+    return objectClass.memberProperties
+        .asSequence()
         .filter { it.name !in excludedFieldNames }
         .sortedBy { declarationOrder[it.name] ?: Int.MAX_VALUE }
         .map { property ->
@@ -88,7 +89,7 @@ private fun <T : Any> buildFieldGroups(
 
             if (nestedClass.isData) {
                 // Nested data class: expand its members as dot-notated fields
-                val nestedValue = value?.let { property.getter.call(it) }
+                val nestedValue = objectValue?.let { property.getter.call(it) }
                 val nestedDeclarationOrder = nestedClass.java.declaredFields
                     .mapIndexed { index, field -> field.name to index }
                     .toMap()
@@ -117,13 +118,16 @@ private fun <T : Any> buildFieldGroups(
                             name = property.name,
                             label = property.name,
                             inputType = inputTypeFor?.invoke(property) ?: inferInputType(property),
-                            value = value?.let { property.getter.call(it) },
+                            value = objectValue?.let { property.getter.call(it) },
                             options = optionsFor?.invoke(property).orEmpty()
                         )
                     )
                 )
             }
+        }.groupBy { it.title }.map { entry ->
+            ConfigFieldGroup(title = entry.key, fields = entry.value.flatMap { it.fields })
         }
+        .toList()
 }
 
 data class ConfigFieldGroup(
