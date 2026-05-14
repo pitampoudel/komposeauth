@@ -3,356 +3,165 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Setup</title>
+    <title>Configuration</title>
+
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: system-ui, Arial, sans-serif;
-            background: #0b1020;
-            color: #e6e6e6;
+            margin: 0;
+            font-family: Inter, system-ui, Arial, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 32px 16px;
         }
 
-        fieldset {
-            border: 1px solid #24314f;
-            border-radius: 8px;
-            margin-bottom: 18px;
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
         }
 
-        legend {
-            padding: 0 8px;
-            color: #c9d1ff;
+        .card {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 28px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .subtitle {
+            margin-top: 6px;
+            margin-bottom: 28px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .config-field {
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
+            margin-bottom: 8px;
             font-size: 14px;
-            color: #b9c2e3;
-            margin: 10px 0 6px;
+            font-weight: 500;
+            color: #cbd5e1;
         }
 
-        input[type=text], input[type=url], input[type=password], input[type=number], textarea, select {
+        input[type=text],
+        input[type=email],
+        input[type=url],
+        input[type=password],
+        input[type=number],
+        textarea,
+        select {
             width: 100%;
-            box-sizing: border-box;
-            padding: 10px 12px;
+            padding: 11px 12px;
+            font-size: 14px;
             border-radius: 8px;
-            border: 1px solid #24314f;
-            background: #0d1328;
-            color: #e6e6e6;
-            display: block;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #e2e8f0;
+            outline: none;
+            transition: border-color 0.15s ease;
         }
 
         textarea {
-            min-height: 96px;
+            min-height: 110px;
             resize: vertical;
         }
 
-        .row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #6366f1;
         }
 
         .actions {
-            margin-top: 18px;
+            margin-top: 28px;
             display: flex;
-            gap: 10px;
+            justify-content: flex-end;
         }
 
         .btn {
-            background: #4f67ff;
-            color: white;
+            padding: 10px 18px;
             border: none;
             border-radius: 8px;
-            padding: 10px 16px;
+            background: #4f46e5;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
+            transition: background 0.15s ease;
         }
 
-        .note {
-            font-size: 12px;
-            color: #93a1c9;
+        .btn:hover {
+            background: #4338ca;
         }
 
-        .warn {
-            color: #ffb86b;
+        .btn:active {
+            background: #3730a3;
+        }
+
+        @media (max-width: 640px) {
+            .card {
+                padding: 20px;
+            }
+
+            body {
+                padding: 20px 12px;
+            }
         }
     </style>
 </head>
 <body>
-<form method="post">
-    <fieldset>
-        <legend>Branding & Base</legend>
-        <label for="name">App Name</label>
-        <input id="name" name="name" type="text" th:value="${config.name}" placeholder="My App">
 
-        <label for="rpId">Relying Party ID</label>
-        <input id="rpId" name="rpId" type="text" th:value="${config.rpId}"
-               placeholder="example.com">
+<div class="container">
+    <div class="card">
+        <h1>Configuration</h1>
+        <p class="subtitle">Manage your application settings</p>
 
-        <label for="logoUrl">Logo URL</label>
-        <input id="logoUrl" name="logoUrl" type="url" th:value="${config.logoUrl}"
-               placeholder="https://example.com/logo.png">
+        <form method="post">
+            <div th:each="field : ${fields}" class="config-field">
+                <label th:for="${field.name}" th:text="${field.label}"></label>
 
-        <label for="websiteUrl">Website URL</label>
-        <input id="websiteUrl" name="websiteUrl" type="url" th:value="${config.websiteUrl}"
-               placeholder="https://example.com">
+                <textarea th:if="${field.inputType == 'textarea'}"
+                          th:id="${field.name}"
+                          th:name="${field.name}"
+                          th:text="${field.value}">
+                </textarea>
 
-        <label for="brandColor">Brand Color</label>
-        <input id="brandColor" name="brandColor" type="text" th:value="${config.brandColor}"
-               placeholder="#4F46E5">
-        <div class="note">Hex color used in emails and UI accents.</div>
+                <select th:if="${field.inputType == 'select'}"
+                        th:id="${field.name}"
+                        th:name="${field.name}">
+                    <option th:each="option : ${field.options}"
+                            th:value="${option.value}"
+                            th:text="${option.label}"
+                            th:selected="${option.value == (field.value ?: '')}">
+                    </option>
+                </select>
 
-        <label for="supportEmail">Support Email</label>
-        <input id="supportEmail" name="supportEmail" type="text" th:value="${config.supportEmail}"
-               placeholder="support@example.com">
-        <div class="note">Shown in email footer. If empty, falls back to SMTP From or
-            support@your-domain
-        </div>
-
-        <label for="emailFooterText">Email Footer Text</label>
-        <input id="emailFooterText" name="emailFooterText" type="text"
-               th:value="${config.emailFooterText}"
-               placeholder="© My App. All rights reserved.">
-    </fieldset>
-
-    <fieldset>
-        <legend>Social Media Links</legend>
-        <div class="row">
-            <div>
-                <label for="facebookLink">Facebook Link</label>
-                <input id="facebookLink" name="facebookLink" type="url" th:value="${config.facebookLink}"
-                       placeholder="https://facebook.com/yourpage">
+                <input th:if="${field.inputType != 'textarea' and field.inputType != 'select'}"
+                       th:id="${field.name}"
+                       th:name="${field.name}"
+                       th:type="${field.inputType}"
+                       th:value="${field.value}">
             </div>
-            <div>
-                <label for="instagramLink">Instagram Link</label>
-                <input id="instagramLink" name="instagramLink" type="url" th:value="${config.instagramLink}"
-                       placeholder="https://instagram.com/yourprofile">
+
+            <div class="actions">
+                <button class="btn" type="submit">Save</button>
             </div>
-        </div>
-        <div class="row">
-            <div>
-                <label for="tiktokLink">TikTok Link</label>
-                <input id="tiktokLink" name="tiktokLink" type="url" th:value="${config.tiktokLink}"
-                       placeholder="https://tiktok.com/@yourprofile">
-            </div>
-            <div>
-                <label for="linkedinLink">LinkedIn Link</label>
-                <input id="linkedinLink" name="linkedinLink" type="url" th:value="${config.linkedinLink}"
-                       placeholder="https://linkedin.com/company/yourcompany">
-            </div>
-        </div>
-        <div class="row">
-            <div>
-                <label for="youtubeLink">YouTube Link</label>
-                <input id="youtubeLink" name="youtubeLink" type="url" th:value="${config.youtubeLink}"
-                       placeholder="https://youtube.com/@yourchannel">
-            </div>
-            <div>
-                <label for="privacyLink">Privacy Policy Link</label>
-                <input id="privacyLink" name="privacyLink" type="url" th:value="${config.privacyLink}"
-                       placeholder="https://example.com/privacy">
-            </div>
-        </div>
-    </fieldset>
-
-    <fieldset>
-        <legend>Google OAuth</legend>
-        <div class="row">
-            <div>
-                <label for="googleAuthClientId">Web Client ID</label>
-                <input id="googleAuthClientId" name="googleAuthClientId" type="text"
-                       th:value="${config.googleAuthClientId}">
-            </div>
-            <div>
-                <label for="googleAuthClientSecret">Web Client Secret</label>
-                <input id="googleAuthClientSecret" name="googleAuthClientSecret" type="text"
-                       th:value="${config.googleAuthClientSecret}">
-            </div>
-        </div>
-        <div class="row">
-            <div>
-                <label for="googleAuthDesktopClientId">Desktop Client ID</label>
-                <input id="googleAuthDesktopClientId" name="googleAuthDesktopClientId" type="text"
-                       th:value="${config.googleAuthDesktopClientId}">
-            </div>
-            <div>
-                <label for="googleAuthDesktopClientSecret">Desktop Client Secret</label>
-                <input id="googleAuthDesktopClientSecret" type="text"
-                       name="googleAuthDesktopClientSecret"
-                       th:value="${config.googleAuthDesktopClientSecret}">
-            </div>
-            <div>
-                <label for="appleAuthClientId">Apple Client ID</label>
-                <input id="appleAuthClientId" name="appleAuthClientId" type="text"
-                       th:value="${config.appleAuthClientId}"/>
-            </div>
-        </div>
-    </fieldset>
-
-    <fieldset>
-        <legend>SMTP</legend>
-        <div class="row">
-            <div>
-                <label for="smtpHost">SMTP Host</label>
-                <input id="smtpHost" name="smtpHost" type="text" th:value="${config.smtpHost}"
-                       placeholder="smtp.gmail.com">
-            </div>
-            <div>
-                <label for="smtpPort">SMTP Port</label>
-                <input id="smtpPort" name="smtpPort" type="number" min="1" max="65535"
-                       th:value="${config.smtpPort}" placeholder="587">
-            </div>
-        </div>
-        <div class="row">
-            <div>
-                <label for="smtpUsername">SMTP Username</label>
-                <input id="smtpUsername" name="smtpUsername" type="text"
-                       th:value="${config.smtpUsername}">
-            </div>
-            <div>
-                <label for="smtpPassword">SMTP Password</label>
-                <input id="smtpPassword" name="smtpPassword" type="text"
-                       th:value="${config.smtpPassword}">
-            </div>
-        </div>
-        <label for="smtpFromEmail">SMTP From Email</label>
-        <input id="smtpFromEmail" name="smtpFromEmail" type="text"
-               th:value="${config.smtpFromEmail}" placeholder="no-reply@example.com">
-
-        <label for="smtpFromName">SMTP From Name</label>
-        <input id="smtpFromName" name="smtpFromName" type="text"
-               th:value="${config.smtpFromName}" placeholder="My App">
-    </fieldset>
-
-    <fieldset>
-        <legend>SMS Provider</legend>
-        <label for="smsProvider">SMS Provider</label>
-        <select id="smsProvider" name="smsProvider" onchange="toggleSmsFields()">
-            <option value="" th:selected="${config.smsProvider == null || config.smsProvider == ''}">None</option>
-            <option value="twilio" th:selected="${config.smsProvider == 'twilio'}">Twilio</option>
-            <option value="samaye" th:selected="${config.smsProvider == 'samaye'}">Samaye</option>
-            <option value="sparrow" th:selected="${config.smsProvider == 'sparrow'}">Sparrow</option>
-        </select>
-        <div class="note">Select your preferred SMS provider for phone verification.</div>
-    </fieldset>
-
-    <fieldset id="twilioFields" style="display: none;">
-        <legend>Twilio Configuration</legend>
-        <div class="row">
-            <div>
-                <label for="twilioAccountSid">Account SID</label>
-                <input id="twilioAccountSid" name="twilioAccountSid" type="text"
-                       th:value="${config.twilioAccountSid}">
-            </div>
-            <div>
-                <label for="twilioAuthToken">Auth Token</label>
-                <input id="twilioAuthToken" name="twilioAuthToken" type="text"
-                       th:value="${config.twilioAuthToken}">
-            </div>
-        </div>
-        <div class="row">
-            <div>
-                <label for="twilioFromNumber">From Number</label>
-                <input id="twilioFromNumber" name="twilioFromNumber" type="text"
-                       th:value="${config.twilioFromNumber}">
-            </div>
-            <div>
-                <label for="twilioVerifyServiceSid">Verify Service SID</label>
-                <input id="twilioVerifyServiceSid" name="twilioVerifyServiceSid" type="text"
-                       th:value="${config.twilioVerifyServiceSid}">
-            </div>
-        </div>
-    </fieldset>
-
-    <fieldset id="samayeFields" style="display: none;">
-        <legend>Samaye Configuration</legend>
-        <label for="samayeApiKey">Samaye API Key</label>
-        <input id="samayeApiKey" name="samayeApiKey" type="text" th:value="${config.samayeApiKey}">
-    </fieldset>
-
-    <fieldset id="sparrowFields" style="display: none;">
-        <legend>Sparrow Configuration</legend>
-        <label for="sparrowApiToken">Sparrow API Token</label>
-        <input id="sparrowApiToken" name="sparrowApiToken" type="text" th:value="${config.sparrowApiToken}">
-
-        <label for="sparrowFromNumber">Sparrow From Number</label>
-        <input id="sparrowFromNumber" name="sparrowFromNumber" type="text" th:value="${config.sparrowFromNumber}">
-
-
-    </fieldset>
-
-    <fieldset>
-        <legend>Third-Factor KYC</legend>
-        <label for="thirdFactorUrl">Third-Factor URL</label>
-        <input id="thirdFactorUrl" name="thirdFactorUrl" type="url"
-               th:value="${config.thirdFactorUrl}"
-               placeholder="https://example.thirdfactor.ai">
-        <div class="row">
-            <div>
-                <label for="thirdFactorSecretKey">Secret Key</label>
-                <input id="thirdFactorSecretKey" name="thirdFactorSecretKey" type="text"
-                       th:value="${config.thirdFactorSecretKey}">
-            </div>
-            <div>
-                <label for="thirdFactorToken">Token</label>
-                <input id="thirdFactorToken" name="thirdFactorToken" type="text"
-                       th:value="${config.thirdFactorToken}">
-            </div>
-        </div>
-    </fieldset>
-
-    <fieldset>
-        <legend>Access Control</legend>
-
-        <label for="allowedAndroidSha256List">Allowed Android SHA 256 List</label>
-        <textarea id="allowedAndroidSha256List" name="allowedAndroidSha256List"
-                  th:text="${config.allowedAndroidSha256List}"></textarea>
-
-        <label for="corsAllowedOriginList">CORS Allowed Origin List</label>
-        <textarea id="corsAllowedOriginList" name="corsAllowedOriginList"
-                  th:text="${config.corsAllowedOriginList}"></textarea>
-    </fieldset>
-
-    <fieldset>
-        <legend>Other</legend>
-        <label for="gcpBucketName">GCP Bucket Name</label>
-        <input id="gcpBucketName" name="gcpBucketName" type="text"
-               th:value="${config.gcpBucketName}">
-
-        <label for="gcpProjectId">GCP Project ID</label>
-        <input id="gcpProjectId" name="gcpProjectId" type="text"
-               th:value="${config.gcpProjectId}">
-
-        <label for="sentryDsn">Sentry DSN</label>
-        <input id="sentryDsn" name="sentryDsn" type="url" th:value="${config.sentryDsn}">
-
-        <label for="slackBotToken">Slack Bot Token</label>
-        <input id="slackBotToken" name="slackBotToken" type="text" th:value="${config.slackBotToken}"
-               placeholder="xoxb-...">
-
-        <label for="slackChannelId">Slack Channel ID</label>
-        <input id="slackChannelId" name="slackChannelId" type="text" th:value="${config.slackChannelId}"
-               placeholder="C0123456789">
-
-    </fieldset>
-
-    <div class="actions">
-        <button class="btn" type="submit">Save and Finish</button>
+        </form>
     </div>
-</form>
+</div>
 
-<script>
-    function toggleSmsFields() {
-        const provider = document.getElementById('smsProvider').value;
-        const twilioFields = document.getElementById('twilioFields');
-        const samayeFields = document.getElementById('samayeFields');
-        const sparrowFields = document.getElementById('sparrowFields');
-
-        twilioFields.style.display = provider === 'twilio' ? 'block' : 'none';
-        samayeFields.style.display = provider === 'samaye' ? 'block' : 'none';
-        sparrowFields.style.display = provider === 'sparrow' ? 'block' : 'none';
-    }
-
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', toggleSmsFields);
-</script>
 </body>
 </html>
