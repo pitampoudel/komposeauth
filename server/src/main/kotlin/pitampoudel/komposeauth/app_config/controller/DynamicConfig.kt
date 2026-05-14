@@ -19,40 +19,43 @@ fun <T : Any> buildFieldGroups(
     inputTypeFor: ((KProperty1<out Any, *>) -> String?)? = null,
     value: T? = null,
     excludedFieldNames: Set<String> = setOf(),
-    groups: List<Group> = emptyList(),
+    preferredGroups: List<Group> = emptyList(),
     optionsFor: ((KProperty1<out Any, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>?)? = null,
 ): List<ConfigFieldGroup> {
-    val fields = buildFields(
+    val fieldGroups = buildFieldGroups(
         klass = schema,
         value = value,
         excludedFieldNames = excludedFieldNames,
         inputTypeFor = inputTypeFor,
         optionsFor = optionsFor
     )
-    if (groups.isEmpty()) return listOf(ConfigFieldGroup(fields = fields))
+    if (preferredGroups.isEmpty()) return fieldGroups
 
-    val fieldByName = fields.associateBy { it.name }
+    // Track which field names have been placed into a user-defined group (globally)
     val usedFieldNames = mutableSetOf<String>()
 
-    val grouped = groups.map { definition ->
-        val groupedFields = definition.members.mapNotNull { fieldName ->
-            fieldByName[fieldName]?.also { usedFieldNames += fieldName }
+    return fieldGroups.flatMap { classGroup ->
+        val fieldByName = classGroup.fields.associateBy { it.name }
+
+        // Apply user-defined groups within this class group
+        val userDefinedGroups = preferredGroups.map { definition ->
+            val matchedFields = definition.members.mapNotNull { fieldName ->
+                fieldByName[fieldName]?.also { usedFieldNames += fieldName }
+            }
+            ConfigFieldGroup(title = definition.title, fields = matchedFields)
+        }.toMutableList()
+
+        // Fields in this class group not assigned to any user-defined group
+        val remainingFields = classGroup.fields.filter { it.name !in usedFieldNames }
+        if (remainingFields.isNotEmpty()) {
+            // Preserve the original class group title for ungrouped remainder
+            userDefinedGroups += ConfigFieldGroup(
+                title = classGroup.title,
+                fields = remainingFields
+            )
         }
-        ConfigFieldGroup(
-            title = definition.title,
-            fields = groupedFields
-        )
-
-    }.toMutableList()
-
-    val remainingFields = fields.filter { it.name !in usedFieldNames }
-    if (remainingFields.isNotEmpty()) {
-        grouped += ConfigFieldGroup(
-            title = "Other",
-            fields = remainingFields
-        )
-    }
-    return grouped
+        userDefinedGroups
+    }.filter { it.fields.isNotEmpty() }
 }
 
 
@@ -65,13 +68,13 @@ private fun inferInputType(property: KProperty1<*, *>): String {
     }
 }
 
-private fun <T : Any> buildFields(
+private fun <T : Any> buildFieldGroups(
     klass: KClass<T>,
     value: T?,
     excludedFieldNames: Set<String>,
     inputTypeFor: ((KProperty1<out Any, *>) -> String?)?,
     optionsFor: ((KProperty1<out Any, *>) -> List<ConfigFieldGroup.ConfigField.SelectOption>?)? = null,
-): List<ConfigFieldGroup.ConfigField> {
+): List<ConfigFieldGroup> {
     // Preserve declaration order of the top-level schema
     val declarationOrder = klass.java.declaredFields
         .mapIndexed { index, field -> field.name to index }
@@ -80,7 +83,7 @@ private fun <T : Any> buildFields(
     return klass.memberProperties
         .filter { it.name !in excludedFieldNames }
         .sortedBy { declarationOrder[it.name] ?: Int.MAX_VALUE }
-        .flatMap { property ->
+        .map { property ->
             val nestedClass = property.returnType.jvmErasure
 
             if (nestedClass.isData) {
@@ -90,27 +93,33 @@ private fun <T : Any> buildFields(
                     .mapIndexed { index, field -> field.name to index }
                     .toMap()
 
-                nestedClass.memberProperties
-                    .filter { it.name !in excludedFieldNames }
-                    .sortedBy { nestedDeclarationOrder[it.name] ?: Int.MAX_VALUE }
-                    .map { member ->
-                        ConfigFieldGroup.ConfigField(
-                            name = "${property.name}.${member.name}",
-                            label = "${property.name}.${member.name}",
-                            inputType = inputTypeFor?.invoke(member) ?: inferInputType(member),
-                            value = nestedValue?.let { member.getter.call(it) },
-                            options = optionsFor?.invoke(member).orEmpty()
-                        )
-                    }
+                ConfigFieldGroup(
+                    title = property.name,
+                    nestedClass.memberProperties
+                        .filter { it.name !in excludedFieldNames }
+                        .sortedBy { nestedDeclarationOrder[it.name] ?: Int.MAX_VALUE }
+                        .map { member ->
+                            ConfigFieldGroup.ConfigField(
+                                name = "${property.name}.${member.name}",
+                                label = "${property.name}.${member.name}",
+                                inputType = inputTypeFor?.invoke(member) ?: inferInputType(member),
+                                value = nestedValue?.let { member.getter.call(it) },
+                                options = optionsFor?.invoke(member).orEmpty()
+                            )
+                        }
+                )
             } else {
                 // Primitive / non-data-class property: emit directly
-                listOf(
-                    ConfigFieldGroup.ConfigField(
-                        name = property.name,
-                        label = property.name,
-                        inputType = inputTypeFor?.invoke(property) ?: inferInputType(property),
-                        value = value?.let { property.getter.call(it) },
-                        options = optionsFor?.invoke(property).orEmpty()
+                ConfigFieldGroup(
+                    title = null,
+                    listOf(
+                        ConfigFieldGroup.ConfigField(
+                            name = property.name,
+                            label = property.name,
+                            inputType = inputTypeFor?.invoke(property) ?: inferInputType(property),
+                            value = value?.let { property.getter.call(it) },
+                            options = optionsFor?.invoke(property).orEmpty()
+                        )
                     )
                 )
             }
