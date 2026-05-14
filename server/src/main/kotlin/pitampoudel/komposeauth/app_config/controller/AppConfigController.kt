@@ -22,7 +22,7 @@ class AppConfigController(
         schema = AppConfig::class,
         value = value,
         excludedFieldNames = setOf("id", "createdAt", "updatedAt"),
-        groups = listOf(
+        preferredGroups = listOf(
             Group(
                 title = "Branding",
                 members = listOf("name", "logoUrl", "brandColor", "websiteUrl")
