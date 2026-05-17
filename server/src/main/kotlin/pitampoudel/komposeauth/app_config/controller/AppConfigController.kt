@@ -1,9 +1,7 @@
 package pitampoudel.komposeauth.app_config.controller
 
 import io.swagger.v3.oas.annotations.Operation
-import jakarta.validation.constraints.Email
-import org.hibernate.validator.constraints.URL
-import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -12,11 +10,16 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
-import kotlin.reflect.jvm.javaField
+import pitampoudel.komposeauth.app_config.service.MasterKeyValidator
+import pitampoudel.komposeauth.core.config.UserContextService
+import pitampoudel.komposeauth.user.service.UserService
 
 @Controller
 class AppConfigController(
-    private val appConfigProvider: AppConfigProvider
+    private val appConfigProvider: AppConfigProvider,
+    private val userService: UserService,
+    private val masterKeyValidator: MasterKeyValidator,
+    val userContextService: UserContextService
 ) {
     fun fieldGroups(value: AppConfig) = buildFieldGroups(
         schema = AppConfig::class,
@@ -117,12 +120,12 @@ class AppConfigController(
     @Operation(
         summary = "web page to configure this app"
     )
-    @PreAuthorize("@userService.countUsers() == 0 or hasAuthority('ROLE_SUPER_ADMIN') or @masterKeyValidator.isValid(#key)")
-    fun setupForm(
+    fun form(
         model: Model,
         @RequestParam("key", required = false)
-        key: String?,
+        key: String?
     ): String {
+        enforceConfigAccessOrRedirect(key = key)?.let { return it }
         val config = appConfigProvider.get()
         model.addAttribute("config", config)
         model.addAttribute("fieldGroups", fieldGroups(config))
@@ -130,15 +133,29 @@ class AppConfigController(
     }
 
     @PostMapping("/config")
-    @PreAuthorize("@userService.countUsers() == 0 or hasAuthority('ROLE_SUPER_ADMIN') or @masterKeyValidator.isValid(#key)")
     fun submit(
         @RequestParam("key", required = false) key: String?,
         @ModelAttribute form: AppConfig,
         model: Model
     ): String {
+        enforceConfigAccessOrRedirect(key = key)?.let { return it }
         val config = appConfigProvider.save(form)
         model.addAttribute("config", config)
         model.addAttribute("fieldGroups", fieldGroups(config))
         return "config"
+    }
+
+    private fun enforceConfigAccessOrRedirect(key: String?): String? {
+        if (userService.countUsers() == 0L || masterKeyValidator.isValid(key)) {
+            return null
+        }
+        val user = userContextService.authenticatedUserOrNull()
+        if (user != null) {
+            if (!user.roles.any { it == "SUPER_ADMIN" }) {
+                throw AccessDeniedException("Only super admins can access configuration.")
+            }
+            return null
+        }
+        return "redirect:/login"
     }
 }

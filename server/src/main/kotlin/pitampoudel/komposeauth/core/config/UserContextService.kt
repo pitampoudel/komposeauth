@@ -1,14 +1,13 @@
 package pitampoudel.komposeauth.core.config
 
-import org.springframework.security.authentication.AnonymousAuthenticationToken
-import pitampoudel.komposeauth.user.entity.User
-import pitampoudel.komposeauth.user.service.UserService
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.stereotype.Service
 import pitampoudel.komposeauth.organization.entity.Organization
+import pitampoudel.komposeauth.user.entity.User
+import pitampoudel.komposeauth.user.service.UserService
 
 @Service
 class UserContextService(val userService: UserService) {
