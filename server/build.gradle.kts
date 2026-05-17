@@ -40,6 +40,9 @@ dependencies {
 
     implementation(project(":shared"))
 
+    // sessions
+    implementation("org.mongodb:mongodb-spring-session:4.0.0")
+
     // coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.10.2")
 
