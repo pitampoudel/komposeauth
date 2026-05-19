@@ -6,25 +6,28 @@ import jakarta.servlet.http.HttpServletResponse
 import kotlinx.serialization.json.Json
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
-import pitampoudel.komposeauth.user.data.Credential
-import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.service.KycService
-import pitampoudel.komposeauth.user.service.mapToProfileResponseDto
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
+import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.service.UserService
+import pitampoudel.komposeauth.user.service.mapToProfileResponseDto
 import java.time.Instant
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
@@ -37,8 +40,8 @@ class ResourceOwnerLoginController(
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
     private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
-    val appConfigService: AppConfigService,
-    private val jwtEncoder: JwtEncoder
+    private val jwtEncoder: JwtEncoder,
+    private val securityContextRepository: HttpSessionSecurityContextRepository
 ) {
 
     @PostMapping("/${ApiEndpoints.LOGIN}")
@@ -89,10 +92,8 @@ class ResourceOwnerLoginController(
         }
 
         val claims = builder.build()
-
         val accessToken = jwtEncoder.encode(JwtEncoderParameters.from(claims)).tokenValue
         val refreshToken = oneTimeTokenService.generateRefreshToken(user.id)
-
         when (responseType) {
             ResponseType.TOKEN -> {
                 return ResponseEntity.ok(
@@ -116,6 +117,17 @@ class ResourceOwnerLoginController(
                     .maxAge((1.days - 1.minutes).toJavaDuration())
                     .build()
                 httpServletResponse.addHeader("Set-Cookie", cookie.toString())
+            }
+
+            ResponseType.SESSION -> {
+                val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
+                val appAuth = UsernamePasswordAuthenticationToken(user.id.toHexString(), null, authorities)
+                SecurityContextHolder.getContext().authentication = appAuth
+                securityContextRepository.saveContext(
+                    SecurityContextHolder.getContext(),
+                    httpServletRequest,
+                    httpServletResponse
+                )
             }
         }
         return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.isVerified(user.id)))
