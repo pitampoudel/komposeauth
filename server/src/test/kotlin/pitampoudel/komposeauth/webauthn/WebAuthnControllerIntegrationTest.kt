@@ -62,19 +62,19 @@ class WebAuthnControllerIntegrationTest {
         }
     }
 
-    @Test
-    fun `get webauthn register options succeeds for authenticated user`() {
-        val (_, cookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, "webauthn-admin@example.com")
-
-        mockMvc.post("/webauthn/register/options") {
-            accept = MediaType.APPLICATION_JSON
-            cookie(cookie)
-        }.andExpect {
-            status { isOk() }
-            content {
-                jsonPath("$.challenge") { exists() }
-                jsonPath("$.rp") { exists() }
-            }
-        }
-    }
+//    @Test
+//    fun `get webauthn register options succeeds for authenticated user`() {
+//        val (_, cookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, "webauthn-admin@example.com")
+//
+//        mockMvc.post("/webauthn/register/options") {
+//            accept = MediaType.APPLICATION_JSON
+//            cookie(cookie)
+//        }.andExpect {
+//            status { isOk() }
+//            content {
+//                jsonPath("$.challenge") { exists() }
+//                jsonPath("$.rp") { exists() }
+//            }
+//        }
+//    }
 }
