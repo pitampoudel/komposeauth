@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>OAuth2 Clients</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, system-ui, Arial, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 32px 16px;
+        }
+
+        .container {
+            max-width: 1120px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .subtitle {
+            margin-top: 6px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .panel {
+            background: #1e293b;
+            border: 1px solid #1e3a5f;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 18px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .panel-title {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+
+        input[type=text],
+        input[type=url],
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #e2e8f0;
+            outline: none;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: #6366f1;
+        }
+
+        textarea {
+            min-height: 82px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            margin-top: 16px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #4f46e5;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: #4338ca;
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #3f5269;
+        }
+
+        .btn-danger {
+            background: #991b1b;
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background: #7f1d1d;
+        }
+
+        .status {
+            margin-top: 14px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .status.success {
+            display: block;
+            background: #052e16;
+            border: 1px solid #166534;
+            color: #bbf7d0;
+        }
+
+        .status.error {
+            display: block;
+            background: #450a0a;
+            border: 1px solid #991b1b;
+            color: #fecaca;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 840px;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid #334155;
+            padding: 10px 8px;
+            vertical-align: top;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        dialog {
+            border: 1px solid #1e3a5f;
+            border-radius: 12px;
+            background: #1e293b;
+            color: #e2e8f0;
+            width: min(820px, calc(100% - 24px));
+            padding: 0;
+        }
+
+        dialog::backdrop {
+            background: rgba(2, 6, 23, 0.75);
+        }
+
+        .dialog-body {
+            padding: 20px;
+        }
+
+        .dialog-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .close-btn {
+            padding: 0 8px;
+            min-width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #cbd5e1;
+            font-size: 20px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            border-color: #475569;
+            color: #ffffff;
+        }
+
+        @media (max-width: 760px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: span 1;
+            }
+
+            .panel-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>OAuth2 Clients</h1>
+    <p class="subtitle">Create, edit, and remove client applications.</p>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h2 class="panel-title">Registered Clients</h2>
+            <button class="btn btn-primary" type="button" id="newClientBtn">New Client</button>
+        </div>
+        <div id="status" class="status"></div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Client ID</th>
+                    <th>Client Secret</th>
+                    <th>Redirect URIs</th>
+                    <th>Scopes</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="clientsBody"></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<dialog id="clientDialog">
+    <form id="clientForm" class="dialog-body">
+        <div class="dialog-header">
+            <h2 class="panel-title" id="formTitle">Create Client</h2>
+            <button class="close-btn" id="closeDialogBtn" type="button" aria-label="Close dialog">&times;</button>
+        </div>
+
+        <div class="form-grid">
+            <div>
+                <label for="clientName">Client name</label>
+                <input id="clientName" type="text" required/>
+            </div>
+            <div>
+                <label for="clientSecret">Client secret (leave blank to auto-generate)</label>
+                <input id="clientSecret" type="text"/>
+            </div>
+            <div class="full-width">
+                <label for="redirectUris">Redirect URIs (comma or newline separated)</label>
+                <textarea id="redirectUris"></textarea>
+            </div>
+            <div class="full-width">
+                <label for="scopes">Scopes (comma or newline separated)</label>
+                <textarea id="scopes"></textarea>
+            </div>
+            <div>
+                <label for="clientUri">Client URI</label>
+                <input id="clientUri" type="url"/>
+            </div>
+            <div>
+                <label for="logoUri">Logo URI</label>
+                <input id="logoUri" type="url"/>
+            </div>
+        </div>
+
+        <div id="dialogStatus" class="status"></div>
+        <div class="form-actions">
+            <button class="btn btn-secondary" type="button" id="cancelBtn">Cancel</button>
+            <button class="btn btn-primary" type="submit" id="submitBtn">Create Client</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+    const API_BASE = "/oauth2/clients";
+    const defaultScopes = "openid\nprofile\nemail\noffline_access\nuser.read.any";
+    const clientsBody = document.getElementById("clientsBody");
+    const newClientBtn = document.getElementById("newClientBtn");
+    const clientDialog = document.getElementById("clientDialog");
+    const clientForm = document.getElementById("clientForm");
+    const statusEl = document.getElementById("status");
+    const dialogStatusEl = document.getElementById("dialogStatus");
+    const formTitle = document.getElementById("formTitle");
+    const submitBtn = document.getElementById("submitBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const closeDialogBtn = document.getElementById("closeDialogBtn");
+    const formState = {
+        editingClientId: null,
+        mode: "create"
+    };
+
+    function parseSetInput(value) {
+        const values = value
+            .split(/[\n,]/)
+            .map(item => item.trim())
+            .filter(item => item.length > 0);
+        return [...new Set(values)];
+    }
+
+    function setStatus(target, type, text) {
+        target.className = `status ${type}`;
+        target.textContent = text;
+    }
+
+    function clearStatus(target) {
+        target.className = "status";
+        target.textContent = "";
+    }
+
+    function resetFormFields() {
+        document.getElementById("clientName").value = "";
+        document.getElementById("clientSecret").value = "";
+        document.getElementById("redirectUris").value = "";
+        document.getElementById("scopes").value = defaultScopes;
+        document.getElementById("clientUri").value = "";
+        document.getElementById("logoUri").value = "";
+    }
+
+    function openCreateDialog() {
+        formState.editingClientId = null;
+        formState.mode = "create";
+        formTitle.textContent = "Create Client";
+        submitBtn.textContent = "Create Client";
+        resetFormFields();
+        clearStatus(dialogStatusEl);
+        if (!clientDialog.open) {
+            clientDialog.showModal();
+        }
+    }
+
+    function openEditDialog(client) {
+        formState.editingClientId = client.clientId;
+        formState.mode = "edit";
+        formTitle.textContent = `Edit Client: ${client.clientName}`;
+        submitBtn.textContent = "Save Changes";
+        document.getElementById("clientName").value = client.clientName || "";
+        document.getElementById("clientSecret").value = "";
+        document.getElementById("redirectUris").value = (client.redirectUris || []).join("\n");
+        document.getElementById("scopes").value = (client.scopes || []).join("\n");
+        document.getElementById("clientUri").value = client.clientUri || "";
+        document.getElementById("logoUri").value = client.logoUri || "";
+        clearStatus(dialogStatusEl);
+        if (!clientDialog.open) {
+            clientDialog.showModal();
+        }
+    }
+
+    function closeDialog() {
+        if (clientDialog.open) {
+            clientDialog.close();
+        }
+        formState.editingClientId = null;
+        formState.mode = "create";
+        clearStatus(dialogStatusEl);
+        resetFormFields();
+    }
+
+    function buildPayload() {
+        const payload = {
+            clientName: document.getElementById("clientName").value.trim(),
+            clientSecret: document.getElementById("clientSecret").value.trim() || null,
+            redirectUris: parseSetInput(document.getElementById("redirectUris").value),
+            scopes: parseSetInput(document.getElementById("scopes").value),
+            clientUri: document.getElementById("clientUri").value.trim() || null,
+            logoUri: document.getElementById("logoUri").value.trim() || null
+        };
+        if (formState.mode === "edit" && formState.editingClientId) {
+            payload.clientId = formState.editingClientId;
+        }
+        return payload;
+    }
+
+    function createCell(text, className) {
+        const cell = document.createElement("td");
+        if (className) {
+            cell.classList.add(className);
+        }
+        cell.textContent = text;
+        return cell;
+    }
+
+    function renderClients(clients) {
+        clientsBody.innerHTML = "";
+        for (const client of clients) {
+            const row = document.createElement("tr");
+            row.appendChild(createCell(client.clientName || ""));
+            row.appendChild(createCell(client.clientId || "", "code"));
+            row.appendChild(createCell(client.clientSecret || "", "code"));
+            row.appendChild(createCell((client.redirectUris || []).join(", ")));
+            row.appendChild(createCell((client.scopes || []).join(", ")));
+
+            const actionsCell = document.createElement("td");
+            const actions = document.createElement("div");
+            actions.className = "actions";
+
+            const editBtn = document.createElement("button");
+            editBtn.type = "button";
+            editBtn.className = "btn btn-secondary";
+            editBtn.textContent = "Edit";
+            editBtn.addEventListener("click", () => openEditDialog(client));
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.type = "button";
+            deleteBtn.className = "btn btn-danger";
+            deleteBtn.textContent = "Delete";
+            deleteBtn.addEventListener("click", async () => {
+                if (!confirm(`Delete client ${client.clientName}?`)) {
+                    return;
+                }
+                try {
+                    const response = await fetch(`${API_BASE}/${encodeURIComponent(client.clientId)}`, {
+                        method: "DELETE",
+                        headers: {"Accept": "application/json"},
+                        credentials: "same-origin"
+                    });
+                    if (!response.ok) {
+                        throw new Error("Unable to delete client");
+                    }
+                    setStatus(statusEl, "success", "Client deleted");
+                    if (formState.editingClientId === client.clientId) {
+                        closeDialog();
+                    }
+                    await loadClients();
+                } catch (e) {
+                    setStatus(statusEl, "error", "Failed to delete client");
+                }
+            });
+
+            actions.appendChild(editBtn);
+            actions.appendChild(deleteBtn);
+            actionsCell.appendChild(actions);
+            row.appendChild(actionsCell);
+            clientsBody.appendChild(row);
+        }
+    }
+
+    async function loadClients() {
+        try {
+            const response = await fetch(API_BASE, {
+                headers: {"Accept": "application/json"},
+                credentials: "same-origin"
+            });
+            if (!response.ok) {
+                throw new Error("Unable to fetch clients");
+            }
+            const clients = await response.json();
+            renderClients(clients);
+        } catch (e) {
+            setStatus(statusEl, "error", "Failed to load OAuth2 clients");
+        }
+    }
+
+    clientForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearStatus(dialogStatusEl);
+
+        const payload = buildPayload();
+
+        const isEdit = formState.mode === "edit" && !!formState.editingClientId;
+
+        try {
+            const response = await fetch(API_BASE, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                credentials: "same-origin",
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error("Unable to save client");
+            }
+
+            setStatus(statusEl, "success", isEdit ? "Client updated" : "Client created");
+            closeDialog();
+            await loadClients();
+        } catch (e) {
+            setStatus(dialogStatusEl, "error", "Failed to save client");
+        }
+    });
+
+    newClientBtn.addEventListener("click", openCreateDialog);
+    cancelBtn.addEventListener("click", closeDialog);
+    closeDialogBtn.addEventListener("click", closeDialog);
+
+    resetFormFields();
+    loadClients();
+</script>
+</body>
+</html>

@@ -8,10 +8,11 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
 
@@ -52,6 +53,20 @@ class Oauth2ClientsControllerSecurityIntegrationTest {
             accept = MediaType.APPLICATION_JSON
             cookie(cookie)
             content = json.encodeToString(request)
+        }.andExpect {
+            status { isForbidden() }
+        }
+
+        mockMvc.delete("/${ApiEndpoints.OAUTH2_CLIENTS}/demo-client") {
+            accept = MediaType.APPLICATION_JSON
+            cookie(cookie)
+        }.andExpect {
+            status { isForbidden() }
+        }
+
+        mockMvc.get("/oauth2/clients/dashboard") {
+            accept = MediaType.TEXT_HTML
+            cookie(cookie)
         }.andExpect {
             status { isForbidden() }
         }

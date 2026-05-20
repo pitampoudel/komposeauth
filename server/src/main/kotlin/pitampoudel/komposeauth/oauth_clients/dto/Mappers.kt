@@ -1,12 +1,12 @@
 package pitampoudel.komposeauth.oauth_clients.dto
 
-import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client
 import org.bson.types.ObjectId
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings
+import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -47,24 +47,23 @@ fun CreateClientRequest.toEntity(): OAuth2Client {
     val id = clientId?.let { ObjectId(it) } ?: ObjectId()
     val secret = clientSecret ?: (UUID.randomUUID().toString().replace("-", "") +
             UUID.randomUUID().toString().replace("-", ""))
-    val authenticationMethods: Set<ClientAuthenticationMethod> = setOf(
-        ClientAuthenticationMethod.CLIENT_SECRET_POST,
-        ClientAuthenticationMethod.NONE
-    )
-    val grantTypes: Set<AuthorizationGrantType> = setOf(
-        AuthorizationGrantType.AUTHORIZATION_CODE,
-        AuthorizationGrantType.REFRESH_TOKEN,
-        AuthorizationGrantType.CLIENT_CREDENTIALS
-    )
+
     return OAuth2Client(
         clientId = id.toHexString(),
         clientSecret = secret,
-        clientName = this.clientName,
-        clientAuthenticationMethods = authenticationMethods,
-        authorizationGrantTypes = grantTypes,
-        redirectUris = this.redirectUris,
-        clientUri = this.clientUri,
-        logoUri = this.logoUri,
+        clientName = clientName,
+        clientAuthenticationMethods = setOf(
+            ClientAuthenticationMethod.CLIENT_SECRET_POST,
+            ClientAuthenticationMethod.NONE
+        ),
+        authorizationGrantTypes = setOf(
+            AuthorizationGrantType.AUTHORIZATION_CODE,
+            AuthorizationGrantType.REFRESH_TOKEN,
+            AuthorizationGrantType.CLIENT_CREDENTIALS
+        ),
+        redirectUris = redirectUris,
+        clientUri = clientUri,
+        logoUri = logoUri,
         scopes = scopes,
         requireAuthorizationConsent = false,
         createdAt = Instant.now(),
@@ -74,11 +73,12 @@ fun CreateClientRequest.toEntity(): OAuth2Client {
 
 fun OAuth2Client.toClientRegistrationResponse(): OAuth2ClientResponse {
     return OAuth2ClientResponse(
+        clientName = clientName,
         clientId = clientId,
         clientSecret = clientSecret,
-        clientName = clientName,
         redirectUris = redirectUris,
-        grantTypes = authorizationGrantTypes,
+        clientUri = clientUri,
+        logoUri = logoUri,
         scopes = scopes
     )
 }

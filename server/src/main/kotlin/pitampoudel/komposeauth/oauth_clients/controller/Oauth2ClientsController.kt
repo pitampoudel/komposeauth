@@ -1,13 +1,12 @@
 package pitampoudel.komposeauth.oauth_clients.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
+import org.springframework.web.server.ResponseStatusException
+import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.OAUTH2_CLIENTS
 import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
 import pitampoudel.komposeauth.oauth_clients.dto.OAuth2ClientResponse
@@ -36,8 +35,8 @@ class Oauth2ClientsController(
     }
 
     @Operation(
-        summary = "Create OAuth2 client",
-        description = "Registers a new OAuth2 client."
+        summary = "Save OAuth2 client",
+        description = "Registers a new OAuth2 client or updates existing"
     )
     @PostMapping
     fun createClient(@RequestBody request: CreateClientRequest): ResponseEntity<OAuth2ClientResponse> {
@@ -46,5 +45,16 @@ class Oauth2ClientsController(
         return ResponseEntity.ok(obj.toClientRegistrationResponse())
     }
 
-
+    @Operation(
+        summary = "Delete OAuth2 client",
+        description = "Deletes a registered OAuth2 client."
+    )
+    @DeleteMapping("/{clientId}")
+    fun deleteClient(@PathVariable clientId: String): ResponseEntity<MessageResponse> {
+        if (!oauth2ClientRepository.existsById(clientId)) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, "OAuth2 client not found")
+        }
+        oauth2ClientRepository.deleteById(clientId)
+        return ResponseEntity.ok(MessageResponse("OAuth2 client deleted"))
+    }
 }
