@@ -22,6 +22,7 @@ import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.utils.configureDomain
 
 @Configuration
 @EnableWebSecurity
@@ -52,7 +53,8 @@ class WebSecurityConfig {
         jwtAuthenticationConverter: JwtAuthenticationConverter,
         objectMapper: ObjectMapper,
         bearerTokenResolver: BearerTokenResolver,
-        loginSuccessHandler: OAuth2LoginSuccessHandler
+        loginSuccessHandler: OAuth2LoginSuccessHandler,
+        appConfigService: AppConfigService
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -67,6 +69,7 @@ class WebSecurityConfig {
                             .path("/")
                             .sameSite(if (request.isSecure) "None" else "Lax")
                             .maxAge(0)
+                            .configureDomain(appConfigService)
                             .build()
                         response.addHeader("Set-Cookie", clearCookie.toString())
                         response.contentType = MediaType.APPLICATION_JSON_VALUE

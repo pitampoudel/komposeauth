@@ -18,10 +18,12 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.domain.ResponseType
+import pitampoudel.komposeauth.core.utils.configureDomain
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
@@ -39,6 +41,7 @@ class ResourceOwnerLoginController(
     val userService: UserService,
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
+    val appConfigService: AppConfigService,
     private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
     private val jwtEncoder: JwtEncoder,
     private val securityContextRepository: HttpSessionSecurityContextRepository
@@ -115,6 +118,7 @@ class ResourceOwnerLoginController(
                     .path("/")
                     .sameSite(if (httpServletRequest.isSecure) "None" else "Lax")
                     .maxAge((1.days - 1.minutes).toJavaDuration())
+                    .configureDomain(appConfigService)
                     .build()
                 httpServletResponse.addHeader("Set-Cookie", cookie.toString())
             }
