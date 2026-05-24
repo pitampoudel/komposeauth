@@ -25,13 +25,15 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.SEND_OTP
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.UPDATE_PROFILE
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.VERIFY_OTP
+import pitampoudel.komposeauth.core.domain.Config
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.kyc.data.*
 import pitampoudel.komposeauth.login.domain.AuthClient
 import pitampoudel.komposeauth.user.data.*
 
-internal class AuthClientImpl(val httpClient: HttpClient, val authUrl: String) : AuthClient {
+internal class AuthClientImpl(val httpClient: HttpClient) : AuthClient {
+    val authUrl: String? get() = Config.authServerUrl
 
     override suspend fun fetchLoginConfig(platform: Platform): Result<LoginOptionsResponse> {
         return safeApiCall {

@@ -1,23 +1,21 @@
 package pitampoudel.komposeauth.organization.data
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.delete
-import io.ktor.client.request.get
-import io.ktor.client.request.parameter
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.core.data.asResource
 import pitampoudel.core.data.safeApiCall
 import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.Config
 import pitampoudel.komposeauth.organization.domain.OrganizationsClient
 
 internal class OrganizationsClientImpl(
-    private val httpClient: HttpClient,
-    val baseUrl: String
+    private val httpClient: HttpClient
 ) : OrganizationsClient {
+    val baseUrl: String? get() = Config.authServerUrl
+
     override suspend fun createOrUpdate(
         request: CreateOrUpdateOrganizationRequest,
     ): Result<MessageResponse> {
