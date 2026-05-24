@@ -22,7 +22,7 @@ fun HttpClientConfig<JsClientEngineConfig>.installKomposeAuth(
 
 @OptIn(ExperimentalWasmJsInterop::class)
 fun HttpClientConfig<JsClientEngineConfig>.installKomposeAuth(
-    authServerUrl: Flow<String>,
+    authServerUrl: Flow<String?>,
     resourceServerUrls: List<String>,
     scope: CoroutineScope
 ) {

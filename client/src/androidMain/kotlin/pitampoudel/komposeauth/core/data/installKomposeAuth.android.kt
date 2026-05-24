@@ -28,7 +28,7 @@ fun HttpClientConfig<*>.installKomposeAuth(
 
 fun HttpClientConfig<*>.installKomposeAuth(
     context: Context,
-    authServerUrl: Flow<String>,
+    authServerUrl: Flow<String?>,
     resourceServerUrls: List<String>,
     scope: CoroutineScope
 ) {

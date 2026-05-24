@@ -41,7 +41,7 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
 
 internal fun HttpClientConfig<*>.installKomposeAuth(
     authPreferences: AuthPreferences,
-    authServerUrl: Flow<String>,
+    authServerUrl: Flow<String?>,
     resourceServerUrls: List<String>,
     scope: CoroutineScope
 ) {
