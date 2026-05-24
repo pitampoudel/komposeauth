@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
@@ -39,6 +40,7 @@ class ResourceOwnerLoginController(
     val userService: UserService,
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
+    val appConfigService: AppConfigService,
     private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
     private val jwtEncoder: JwtEncoder,
     private val securityContextRepository: HttpSessionSecurityContextRepository
@@ -109,13 +111,19 @@ class ResourceOwnerLoginController(
             }
 
             ResponseType.COOKIE -> {
-                val cookie = ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, accessToken)
+                val cookieBuilder = ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, accessToken)
                     .httpOnly(true)
                     .secure(httpServletRequest.isSecure)
                     .path("/")
                     .sameSite(if (httpServletRequest.isSecure) "None" else "Lax")
                     .maxAge((1.days - 1.minutes).toJavaDuration())
-                    .build()
+                
+                val rpId = appConfigService.rpId()
+                if (!rpId.isNullOrBlank()) {
+                    cookieBuilder.domain("*.$rpId")
+                }
+                
+                val cookie = cookieBuilder.build()
                 httpServletResponse.addHeader("Set-Cookie", cookie.toString())
             }
 

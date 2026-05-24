@@ -52,7 +52,8 @@ class WebSecurityConfig {
         jwtAuthenticationConverter: JwtAuthenticationConverter,
         objectMapper: ObjectMapper,
         bearerTokenResolver: BearerTokenResolver,
-        loginSuccessHandler: OAuth2LoginSuccessHandler
+        loginSuccessHandler: OAuth2LoginSuccessHandler,
+        appConfigService: AppConfigService
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -61,13 +62,19 @@ class WebSecurityConfig {
                 logout
                     .logoutUrl("/${ApiEndpoints.LOGOUT}")
                     .logoutSuccessHandler { request, response, _ ->
-                        val clearCookie = ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, "")
+                        val cookieBuilder = ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, "")
                             .httpOnly(true)
                             .secure(request.isSecure)
                             .path("/")
                             .sameSite(if (request.isSecure) "None" else "Lax")
                             .maxAge(0)
-                            .build()
+                        
+                        val rpId = appConfigService.rpId()
+                        if (!rpId.isNullOrBlank()) {
+                            cookieBuilder.domain("*.$rpId")
+                        }
+                        
+                        val clearCookie = cookieBuilder.build()
                         response.addHeader("Set-Cookie", clearCookie.toString())
                         response.contentType = MediaType.APPLICATION_JSON_VALUE
                         response.writer.write(
