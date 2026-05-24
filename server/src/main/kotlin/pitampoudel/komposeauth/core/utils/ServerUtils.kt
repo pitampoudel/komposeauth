@@ -42,8 +42,12 @@ fun ResponseCookie.Builder.configureDomain(appConfigService: AppConfigService): 
 /**
  * Validates that rpId is in a valid domain format per RFC 1035 and RFC 6265.
  * Checks for invalid characters and structural issues that could result in a malformed cookie domain.
+ * 
+ * Note: This function accepts internationalized domain names (IDN) in Unicode form.
+ * Punycode (xn--) encoded domains are also accepted but not validated.
  */
 private fun isValidDomainFormat(rpId: String): Boolean {
+    // Defensive check: caller already validates !rpId.isNullOrBlank(), but we validate here too
     if (rpId.isEmpty()) return false
     
     // Domain should not start or end with a dot
