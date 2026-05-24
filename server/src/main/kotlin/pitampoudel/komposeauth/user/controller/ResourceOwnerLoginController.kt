@@ -23,6 +23,7 @@ import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.domain.ResponseType
+import pitampoudel.komposeauth.core.utils.configureDomain
 import pitampoudel.komposeauth.core.utils.findServerUrl
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
@@ -111,19 +112,14 @@ class ResourceOwnerLoginController(
             }
 
             ResponseType.COOKIE -> {
-                val cookieBuilder = ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, accessToken)
+                val cookie = ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, accessToken)
                     .httpOnly(true)
                     .secure(httpServletRequest.isSecure)
                     .path("/")
                     .sameSite(if (httpServletRequest.isSecure) "None" else "Lax")
                     .maxAge((1.days - 1.minutes).toJavaDuration())
-                
-                val rpId = appConfigService.rpId()
-                if (!rpId.isNullOrBlank()) {
-                    cookieBuilder.domain(".$rpId")
-                }
-                
-                val cookie = cookieBuilder.build()
+                    .configureDomain(appConfigService)
+                    .build()
                 httpServletResponse.addHeader("Set-Cookie", cookie.toString())
             }
 
