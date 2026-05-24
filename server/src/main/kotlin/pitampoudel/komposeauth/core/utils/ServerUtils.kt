@@ -40,14 +40,23 @@ fun ResponseCookie.Builder.configureDomain(appConfigService: AppConfigService): 
     }
 
 /**
- * Validates that rpId is in a valid domain format.
- * Checks for invalid characters that could result in a malformed cookie domain.
+ * Validates that rpId is in a valid domain format per RFC 1035 and RFC 6265.
+ * Checks for invalid characters and structural issues that could result in a malformed cookie domain.
  */
 private fun isValidDomainFormat(rpId: String): Boolean {
-    // Domain names should not contain spaces or special characters
-    // Allow alphanumeric, dots, and hyphens (standard domain characters)
-    return rpId.isNotEmpty() &&
-            rpId.all { it.isLetterOrDigit() || it == '.' || it == '-' } &&
-            !rpId.startsWith(".") &&
-            !rpId.endsWith(".")
+    if (rpId.isEmpty()) return false
+    
+    // Domain should not start or end with a dot
+    if (rpId.startsWith(".") || rpId.endsWith(".")) return false
+    
+    // Check each label (parts separated by dots)
+    val labels = rpId.split(".")
+    for (label in labels) {
+        if (label.isEmpty()) return false // No consecutive dots
+        if (label.startsWith("-") || label.endsWith("-")) return false // Hyphens at label boundaries
+        // Each label should only contain alphanumeric and hyphens
+        if (!label.all { it.isLetterOrDigit() || it == '-' }) return false
+    }
+    
+    return true
 }
