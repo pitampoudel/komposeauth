@@ -120,7 +120,7 @@ class ResourceOwnerLoginController(
                 
                 val rpId = appConfigService.rpId()
                 if (!rpId.isNullOrBlank()) {
-                    cookieBuilder.domain("*.$rpId")
+                    cookieBuilder.domain(".$rpId")
                 }
                 
                 val cookie = cookieBuilder.build()

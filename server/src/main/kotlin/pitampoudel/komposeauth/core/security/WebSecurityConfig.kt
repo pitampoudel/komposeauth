@@ -71,7 +71,7 @@ class WebSecurityConfig {
                         
                         val rpId = appConfigService.rpId()
                         if (!rpId.isNullOrBlank()) {
-                            cookieBuilder.domain("*.$rpId")
+                            cookieBuilder.domain(".$rpId")
                         }
                         
                         val clearCookie = cookieBuilder.build()
