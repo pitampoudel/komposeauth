@@ -17,6 +17,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import pitampoudel.core.data.asResource
 import pitampoudel.core.data.safeApiCall
@@ -33,6 +36,27 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
     resourceServerUrls: List<String>
 ) {
     Config.authServerUrl = authServerUrl
+    installKomposeAuth(authPreferences, resourceServerUrls)
+}
+
+internal fun HttpClientConfig<*>.installKomposeAuth(
+    authPreferences: AuthPreferences,
+    authServerUrl: Flow<String>,
+    resourceServerUrls: List<String>,
+    scope: CoroutineScope
+) {
+    scope.launch {
+        authServerUrl.collect {
+            Config.authServerUrl = it
+        }
+    }
+    installKomposeAuth(authPreferences, resourceServerUrls)
+}
+
+internal fun HttpClientConfig<*>.installKomposeAuth(
+    authPreferences: AuthPreferences,
+    resourceServerUrls: List<String>
+) {
     fun isIPv4(host: String): Boolean {
         val ipv4Regex = Regex(
             "^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
@@ -70,9 +94,11 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
                     authPreferences.clear()
                     return@refreshTokens null
                 }
+                val authServerUrl = Config.authServerUrl ?: return@refreshTokens null
                 refresh(client.engine, authServerUrl, refreshToken, authPreferences)
             }
             sendWithoutRequest { builder ->
+                val authServerUrl = Config.authServerUrl ?: return@sendWithoutRequest false
                 val hosts = (resourceServerUrls + authServerUrl).toSet()
                     .map { Url(it).host }.toSet()
                 val host = builder.url.host
