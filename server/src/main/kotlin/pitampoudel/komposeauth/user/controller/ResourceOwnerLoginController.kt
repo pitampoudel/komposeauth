@@ -117,7 +117,7 @@ class ResourceOwnerLoginController(
                     .path("/")
                     .sameSite(if (httpServletRequest.isSecure) "None" else "Lax")
                     .maxAge((1.days - 1.minutes).toJavaDuration())
-                    .domain(appConfigService.rpId())
+                    .domain("." + appConfigService.rpId())
                     .build()
                 httpServletResponse.addHeader("Set-Cookie", cookie.toString())
             }

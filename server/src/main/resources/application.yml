@@ -21,11 +21,16 @@ logging:
 server:
   port: ${PORT:8080}
   forward-headers-strategy: framework
-  servlet:
-    session:
-      httponly: true
-      cookie:
-        name: KOMPOSEAUTH_SESSION
 
 app:
   base64-encryption-key: ${BASE64_ENCRYPTION_KEY}
+
+management:
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  tracing:
+    export:
+      otlp:
+        enabled: false

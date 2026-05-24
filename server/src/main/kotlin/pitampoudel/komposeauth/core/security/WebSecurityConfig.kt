@@ -68,7 +68,7 @@ class WebSecurityConfig {
                             .path("/")
                             .sameSite(if (request.isSecure) "None" else "Lax")
                             .maxAge(0)
-                            .domain(appConfigService.rpId())
+                            .domain("." + appConfigService.rpId())
                             .build()
                         response.addHeader("Set-Cookie", clearCookie.toString())
                         response.contentType = MediaType.APPLICATION_JSON_VALUE

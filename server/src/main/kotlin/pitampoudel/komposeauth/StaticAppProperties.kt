@@ -5,6 +5,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 @ConfigurationProperties(prefix = "app")
-class StaticAppProperties() {
+class StaticAppProperties {
     lateinit var base64EncryptionKey: String
 }
