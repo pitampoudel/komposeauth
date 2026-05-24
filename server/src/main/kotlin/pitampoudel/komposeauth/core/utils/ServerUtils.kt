@@ -12,10 +12,10 @@ fun findServerUrl(request: HttpServletRequest): String {
     return "$scheme://$hostWithPort"
 }
 
-fun ResponseCookie.Builder.configureDomain(appConfigService: AppConfigService): ResponseCookie.Builder {
-    val rpId = appConfigService.rpId()
-    if (!rpId.isNullOrBlank()) {
-        this.domain(".$rpId")
+fun ResponseCookie.Builder.configureDomain(appConfigService: AppConfigService): ResponseCookie.Builder =
+    apply {
+        val rpId = appConfigService.rpId()
+        if (!rpId.isNullOrBlank()) {
+            domain(".$rpId")
+        }
     }
-    return this
-}
