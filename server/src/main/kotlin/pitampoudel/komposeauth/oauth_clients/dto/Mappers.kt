@@ -34,7 +34,7 @@ fun OAuth2Client.toRegisteredClient(): RegisteredClient {
         )
         .tokenSettings(
             TokenSettings.builder()
-                .reuseRefreshTokens(true)
+                .reuseRefreshTokens(false)
                 .refreshTokenTimeToLive(Duration.ofDays(30))
                 .accessTokenTimeToLive(Duration.ofMinutes(15))
                 .build()
