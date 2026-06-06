@@ -2,12 +2,11 @@ package pitampoudel.komposeauth
 
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
@@ -30,9 +29,9 @@ class GlobalExceptionHandlerMvcTest {
             content = "{not-json"
         }.andExpect {
             status { isBadRequest() }
-            content { contentTypeCompatibleWith(MediaType.APPLICATION_JSON) }
-            jsonPath("$.message") { exists() }
-            jsonPath("$.path") { exists() }
+            content { contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON) }
+            jsonPath("$.detail") { exists() }
+            jsonPath("$.status") { value(400) }
         }
     }
 
@@ -43,9 +42,9 @@ class GlobalExceptionHandlerMvcTest {
             accept = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isMethodNotAllowed() }
-            content { contentTypeCompatibleWith(MediaType.APPLICATION_JSON) }
-            jsonPath("$.message") { exists() }
-            jsonPath("$.path") { exists() }
+            content { contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON) }
+            jsonPath("$.detail") { exists() }
+            jsonPath("$.status") { value(405) }
         }
     }
 
