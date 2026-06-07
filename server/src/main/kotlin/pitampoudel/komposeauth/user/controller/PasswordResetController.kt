@@ -38,8 +38,11 @@ class PasswordResetController(
     fun resetPasswordForm(@RequestParam token: String, model: Model): String {
         // Verify token without consuming
         oneTimeTokenService.findValidToken(token, OneTimeToken.Purpose.RESET_PASSWORD)
+        val config = appConfigService.getConfig()
         model.addAttribute("token", token)
-        model.addAttribute("logoUrl", appConfigService.getConfig().logoUrl)
+        model.addAttribute("appName", config.name?.takeIf { it.isNotBlank() } ?: "")
+        model.addAttribute("logoUrl", config.logoUrl?.takeIf { it.isNotBlank() } ?: "")
+        model.addAttribute("brandColor", config.brandColor?.takeIf { it.isNotBlank() } ?: "#4f46e5")
         return "reset-password-form"
     }
 
