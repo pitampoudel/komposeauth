@@ -88,6 +88,12 @@ class WebSecurityConfig {
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
             }
+            .formLogin { formLogin ->
+                formLogin
+                    .loginPage("/session-login")
+                    .loginProcessingUrl("/session-login")
+                    .permitAll()
+            }
             .oauth2Login { oauth2 ->
                 oauth2.successHandler(loginSuccessHandler)
             }
