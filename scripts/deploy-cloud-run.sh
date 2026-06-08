@@ -11,11 +11,9 @@ fi
 
 IMAGE_TAG="pitampoudel/komposeauth:main"
 
-echo "📦 Pulling image: $IMAGE_TAG"
 docker pull "$IMAGE_TAG"
 
 IMAGE_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE_TAG")
-echo "✅ Using image digest: $IMAGE_DIGEST"
 
 ENTRY_COUNT=$(jq 'length' "$TARGETS_FILE")
 
@@ -25,7 +23,6 @@ for i in $(seq 0 $((ENTRY_COUNT - 1))); do
   REGION=$(jq -r ".[$i].region"  "$TARGETS_FILE")
 
   [[ "$SERVICE" == "null" || "$PROJECT" == "null" || "$REGION" == "null" ]] && {
-    echo "❌ Entry $i is missing required fields (service, project, region)"
     exit 1
   }
 
