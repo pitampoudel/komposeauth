@@ -304,7 +304,6 @@
             <tr>
                 <th>Name</th>
                 <th>Client ID</th>
-                <th>Client Secret</th>
                 <th>Redirect URIs</th>
                 <th>Scopes</th>
                 <th></th>
@@ -312,7 +311,7 @@
             </thead>
             <tbody id="clientsBody">
             <tr id="empty-row">
-                <td colspan="6" class="empty">No clients registered yet.</td>
+                <td colspan="5" class="empty">No clients registered yet.</td>
             </tr>
             </tbody>
         </table>
@@ -413,7 +412,7 @@
         formTitle.textContent = "Edit client";
         submitBtn.textContent = "Save changes";
         document.getElementById("clientName").value = client.clientName || "";
-        document.getElementById("clientSecret").value = "";
+        document.getElementById("clientSecret").value = client.clientSecret || "";
         document.getElementById("redirectUris").value = (client.redirectUris || []).join("\n");
         document.getElementById("scopes").value = (client.scopes || []).join("\n");
         document.getElementById("clientUri").value = client.clientUri || "";
@@ -444,7 +443,6 @@
             tr.innerHTML = `
                 <td class="name">${esc(client.clientName || "")}</td>
                 <td class="code">${esc(client.clientId || "")}</td>
-                <td class="code">${esc(client.clientSecret || "")}</td>
                 <td>${esc((client.redirectUris || []).join(", "))}</td>
                 <td>${esc((client.scopes || []).join(", "))}</td>
                 <td>
