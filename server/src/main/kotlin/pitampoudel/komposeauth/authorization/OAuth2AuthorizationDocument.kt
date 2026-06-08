@@ -17,19 +17,19 @@ data class OAuth2AuthorizationDocument(
     val state: String? = null,
     val attributes: String? = null,
 
-    @Indexed(sparse = true) val authorizationCodeValue: String? = null,
+    @Indexed(unique = true, sparse = true) val authorizationCodeValue: String? = null,
     val authorizationCodeIssuedAt: Instant? = null,
     val authorizationCodeExpiresAt: Instant? = null,
     val authorizationCodeMetadata: String? = null,
 
-    @Indexed(sparse = true) val accessTokenValue: String? = null,
+    @Indexed(unique = true, sparse = true) val accessTokenValue: String? = null,
     val accessTokenIssuedAt: Instant? = null,
     val accessTokenExpiresAt: Instant? = null,
     val accessTokenMetadata: String? = null,
     val accessTokenType: String? = null,
     val accessTokenScopes: Set<String>? = null,
 
-    @Indexed(sparse = true) val refreshTokenValue: String? = null,
+    @Indexed(unique = true, sparse = true) val refreshTokenValue: String? = null,
     val refreshTokenIssuedAt: Instant? = null,
     val refreshTokenExpiresAt: Instant? = null,
     val refreshTokenMetadata: String? = null,
