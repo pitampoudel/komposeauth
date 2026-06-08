@@ -3,6 +3,8 @@ package pitampoudel.komposeauth.core.security
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -20,19 +22,16 @@ import org.springframework.security.oauth2.core.oidc.OidcUserInfo
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
-import org.springframework.security.oauth2.server.authorization.token.DelegatingOAuth2TokenGenerator
-import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
-import org.springframework.security.oauth2.server.authorization.token.JwtGenerator
-import org.springframework.security.oauth2.server.authorization.token.OAuth2AccessTokenGenerator
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
+import org.springframework.security.oauth2.server.authorization.token.*
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
@@ -41,7 +40,7 @@ import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.service.UserService
 import java.time.Instant
-import java.util.Base64
+import java.util.*
 import javax.security.auth.login.AccountNotFoundException
 
 @Configuration
@@ -221,8 +220,13 @@ class WebAuthorizationConfig() {
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
-            .exceptionHandling { ex ->
-                ex.authenticationEntryPoint(
+            .exceptionHandling { exceptions ->
+                exceptions.defaultAuthenticationEntryPointFor(
+                    HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                    NegatedRequestMatcher(MediaTypeRequestMatcher(MediaType.TEXT_HTML))
+                )
+
+                exceptions.authenticationEntryPoint(
 //                    LoginUrlAuthenticationEntryPoint("/oauth2/authorization/google")
                     LoginUrlAuthenticationEntryPoint("/session-login")
                 )
