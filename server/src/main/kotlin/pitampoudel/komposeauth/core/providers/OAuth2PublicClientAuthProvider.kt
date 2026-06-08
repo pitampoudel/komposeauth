@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.core.providers
 
+import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
@@ -12,6 +13,8 @@ class OAuth2PublicClientAuthProvider(
     val registeredClientRepository: RegisteredClientRepository
 ) : AuthenticationProvider {
 
+    private val log = LoggerFactory.getLogger(javaClass)
+
     override fun authenticate(authentication: Authentication): Authentication {
         val token = authentication as OAuth2PublicClientAuthToken
 
@@ -22,9 +25,11 @@ class OAuth2PublicClientAuthProvider(
         val registeredClient = registeredClientRepository.findByClientId(token.clientId)
 
         if (registeredClient == null) {
+            log.warn("Public client auth failed: unknown client_id '{}'", token.clientId)
             throw OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT)
         }
 
+        log.debug("Public client authenticated: '{}'", token.clientId)
         return OAuth2ClientAuthenticationToken(
             registeredClient,
             token.clientAuthenticationMethod,
