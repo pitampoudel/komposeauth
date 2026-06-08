@@ -46,7 +46,9 @@ class Oauth2ClientsControllerIntegrationTest {
 
         val createRequest = CreateClientRequest(
             clientName = "Test Client",
-            redirectUris = setOf("https://example.com/callback")
+            redirectUris = setOf("https://example.com/callback"),
+            accessTokenTtlSeconds = 900,
+            refreshTokenTtlDays = 30,
         )
 
         val createResult = mockMvc.post("/${ApiEndpoints.OAUTH2_CLIENTS}") {
@@ -71,7 +73,9 @@ class Oauth2ClientsControllerIntegrationTest {
             redirectUris = setOf("https://example.com/updated-callback"),
             scopes = setOf("openid", "email", "user.read.any"),
             clientUri = "https://example.com/app",
-            logoUri = "https://example.com/logo.png"
+            logoUri = "https://example.com/logo.png",
+            accessTokenTtlSeconds = 900,
+            refreshTokenTtlDays = 30,
         )
 
         mockMvc.post("/${ApiEndpoints.OAUTH2_CLIENTS}") {

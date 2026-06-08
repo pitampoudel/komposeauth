@@ -45,7 +45,9 @@ class Oauth2ClientsControllerSecurityIntegrationTest {
             clientId = "demo-client",
             clientSecret = "secret",
             redirectUris = setOf("https://example.com/callback"),
-            scopes = setOf("openid")
+            scopes = setOf("openid"),
+            accessTokenTtlSeconds = 900,
+            refreshTokenTtlDays = 30
         )
 
         mockMvc.post("/${ApiEndpoints.OAUTH2_CLIENTS}") {
