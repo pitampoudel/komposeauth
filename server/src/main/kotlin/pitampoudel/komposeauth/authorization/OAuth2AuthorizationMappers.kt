@@ -33,6 +33,17 @@ private fun fixOidcClaimTypes(claims: MutableMap<String, Any>): MutableMap<Strin
     return claims
 }
 
+// Spring stores a copy of claims inside token metadata under this key.
+// OAuth2Authorization.Token.getClaims() reads from there (not from the token object),
+// so it needs the same type fix.
+private const val METADATA_CLAIMS_KEY = "metadata.token.claims"
+
+@Suppress("UNCHECKED_CAST")
+private fun fixMetadataClaimTypes(metadata: MutableMap<String, Any>): MutableMap<String, Any> {
+    (metadata[METADATA_CLAIMS_KEY] as? MutableMap<String, Any>)?.let { fixOidcClaimTypes(it) }
+    return metadata
+}
+
 // Use Java serialization for attributes: these contain Spring Security objects
 // (OAuth2AuthorizationRequest, UsernamePasswordAuthenticationToken, etc.) that include
 // final classes which Jackson's default-typing skips, causing them to come back as
@@ -89,7 +100,7 @@ fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: Objec
     )
 }
 
- fun fromOAuth2AuthorizationDocument(
+fun fromOAuth2AuthorizationDocument(
     doc: OAuth2AuthorizationDocument,
     registeredClient: RegisteredClient,
     objectMapper: ObjectMapper
@@ -127,7 +138,9 @@ fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: Objec
             doc.accessTokenScopes ?: emptySet()
         )
         builder.token(token) {
-            it.putAll(doc.accessTokenMetadata?.let { m -> objectMapper.readValue(m, mapTypeRef) } ?: emptyMap())
+            it.putAll(doc.accessTokenMetadata?.let { m ->
+                fixMetadataClaimTypes(objectMapper.readValue(m, mapTypeRef))
+            } ?: emptyMap())
         }
     }
 
@@ -141,14 +154,18 @@ fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: Objec
     }
 
     if (doc.oidcIdTokenValue != null) {
-        val claims = doc.oidcIdTokenClaims
-            ?.let { fixOidcClaimTypes(objectMapper.readValue(it, mapTypeRef)) }
-            ?: mutableMapOf()
         val idToken = OidcIdToken(
-            doc.oidcIdTokenValue, doc.oidcIdTokenIssuedAt, doc.oidcIdTokenExpiresAt, claims
+            doc.oidcIdTokenValue,
+            doc.oidcIdTokenIssuedAt,
+            doc.oidcIdTokenExpiresAt,
+            doc.oidcIdTokenClaims?.let {
+                fixOidcClaimTypes(objectMapper.readValue(it, mapTypeRef))
+            } ?: mutableMapOf()
         )
         builder.token(idToken) {
-            it.putAll(doc.oidcIdTokenMetadata?.let { m -> objectMapper.readValue(m, mapTypeRef) } ?: emptyMap())
+            it.putAll(doc.oidcIdTokenMetadata?.let { m ->
+                fixMetadataClaimTypes(objectMapper.readValue(m, mapTypeRef))
+            } ?: emptyMap())
         }
     }
 
