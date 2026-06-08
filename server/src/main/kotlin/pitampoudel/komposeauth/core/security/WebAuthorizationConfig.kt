@@ -221,15 +221,15 @@ class WebAuthorizationConfig() {
                 sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
             .exceptionHandling { exceptions ->
-                exceptions.defaultAuthenticationEntryPointFor(
-                    HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                    NegatedRequestMatcher(MediaTypeRequestMatcher(MediaType.TEXT_HTML))
-                )
-
-                exceptions.authenticationEntryPoint(
-//                    LoginUrlAuthenticationEntryPoint("/oauth2/authorization/google")
-                    LoginUrlAuthenticationEntryPoint("/session-login")
-                )
+                exceptions
+                    .defaultAuthenticationEntryPointFor(
+                        LoginUrlAuthenticationEntryPoint("/session-login"),
+                        MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+                    )
+                    .defaultAuthenticationEntryPointFor(
+                        HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                        NegatedRequestMatcher(MediaTypeRequestMatcher(MediaType.ALL))
+                    )
             }
             .authorizeHttpRequests { auth ->
                 auth.anyRequest().authenticated()
