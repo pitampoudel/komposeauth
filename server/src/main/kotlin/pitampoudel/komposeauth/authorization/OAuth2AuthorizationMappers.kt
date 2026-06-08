@@ -14,9 +14,24 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
+import java.time.Instant
 import java.util.Base64
 
 private val mapTypeRef = object : TypeReference<MutableMap<String, Any>>() {}
+
+// JWT/OIDC claims whose values are epoch-second timestamps. Jackson deserializes JSON
+// numbers into Double for Map<String, Any>, but Spring's OidcIdToken expects Instant.
+private val TIMESTAMP_CLAIM_NAMES = setOf("iat", "exp", "auth_time", "nbf", "updated_at")
+
+private fun fixOidcClaimTypes(claims: MutableMap<String, Any>): MutableMap<String, Any> {
+    for (key in TIMESTAMP_CLAIM_NAMES) {
+        val value = claims[key]
+        if (value is Number) {
+            claims[key] = Instant.ofEpochSecond(value.toLong())
+        }
+    }
+    return claims
+}
 
 // Use Java serialization for attributes: these contain Spring Security objects
 // (OAuth2AuthorizationRequest, UsernamePasswordAuthenticationToken, etc.) that include
@@ -126,7 +141,9 @@ fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: Objec
     }
 
     if (doc.oidcIdTokenValue != null) {
-        val claims = doc.oidcIdTokenClaims?.let { objectMapper.readValue(it, mapTypeRef) } ?: emptyMap()
+        val claims = doc.oidcIdTokenClaims
+            ?.let { fixOidcClaimTypes(objectMapper.readValue(it, mapTypeRef)) }
+            ?: mutableMapOf()
         val idToken = OidcIdToken(
             doc.oidcIdTokenValue, doc.oidcIdTokenIssuedAt, doc.oidcIdTokenExpiresAt, claims
         )
