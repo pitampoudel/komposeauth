@@ -13,6 +13,8 @@ data class CreateClientRequest(
     val redirectUris: Set<String> = emptySet(),
     val clientUri: String? = null,
     val logoUri: String? = null,
+    val accessTokenTtlSeconds: Long,
+    val refreshTokenTtlDays: Long,
     val scopes: Set<String> = setOf(
         OidcScopes.PROFILE,
         OidcScopes.EMAIL,

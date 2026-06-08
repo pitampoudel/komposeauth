@@ -27,6 +27,8 @@ data class OAuth2Client(
     val requireAuthorizationConsent: Boolean,
     val clientUri: String?,
     val logoUri: String?,
+    val accessTokenTtlSeconds: Long = 900L,
+    val refreshTokenTtlDays: Long = 30L,
     @CreatedDate
     @Indexed
     val createdAt: Instant = Instant.now(),

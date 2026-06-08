@@ -343,6 +343,14 @@
                 <textarea id="scopes"></textarea>
             </div>
             <div class="field">
+                <label for="accessTokenTtl">Access token TTL <span style="color:#334155;font-size:11px;text-transform:none;letter-spacing:0">(seconds)</span></label>
+                <input id="accessTokenTtl" type="text" placeholder="900"/>
+            </div>
+            <div class="field">
+                <label for="refreshTokenTtl">Refresh token TTL <span style="color:#334155;font-size:11px;text-transform:none;letter-spacing:0">(days)</span></label>
+                <input id="refreshTokenTtl" type="text" placeholder="30"/>
+            </div>
+            <div class="field">
                 <label for="clientUri">Client URI</label>
                 <input id="clientUri" type="url" placeholder="https://yourapp.com"/>
             </div>
@@ -392,6 +400,8 @@
         document.getElementById("clientSecret").value = "";
         document.getElementById("redirectUris").value = "";
         document.getElementById("scopes").value = defaultScopes;
+        document.getElementById("accessTokenTtl").value = "900";
+        document.getElementById("refreshTokenTtl").value = "30";
         document.getElementById("clientUri").value = "";
         document.getElementById("logoUri").value = "";
         dialogStatusEl.className = "hidden";
@@ -415,6 +425,8 @@
         document.getElementById("clientSecret").value = client.clientSecret || "";
         document.getElementById("redirectUris").value = (client.redirectUris || []).join("\n");
         document.getElementById("scopes").value = (client.scopes || []).join("\n");
+        document.getElementById("accessTokenTtl").value = client.accessTokenTtlSeconds ?? 900;
+        document.getElementById("refreshTokenTtl").value = client.refreshTokenTtlDays ?? 30;
         document.getElementById("clientUri").value = client.clientUri || "";
         document.getElementById("logoUri").value = client.logoUri || "";
         dialogStatusEl.className = "hidden";
@@ -490,6 +502,8 @@
             clientSecret: document.getElementById("clientSecret").value.trim() || null,
             redirectUris: parseSet(document.getElementById("redirectUris").value),
             scopes: parseSet(document.getElementById("scopes").value),
+            accessTokenTtlSeconds: parseInt(document.getElementById("accessTokenTtl").value, 10) || 900,
+            refreshTokenTtlDays: parseInt(document.getElementById("refreshTokenTtl").value, 10) || 30,
             clientUri: document.getElementById("clientUri").value.trim() || null,
             logoUri: document.getElementById("logoUri").value.trim() || null
         };

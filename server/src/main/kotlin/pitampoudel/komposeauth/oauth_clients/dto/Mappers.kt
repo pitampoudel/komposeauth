@@ -35,8 +35,8 @@ fun OAuth2Client.toRegisteredClient(): RegisteredClient {
         .tokenSettings(
             TokenSettings.builder()
                 .reuseRefreshTokens(false)
-                .refreshTokenTimeToLive(Duration.ofDays(30))
-                .accessTokenTimeToLive(Duration.ofMinutes(15))
+                .refreshTokenTimeToLive(Duration.ofDays(this.refreshTokenTtlDays))
+                .accessTokenTimeToLive(Duration.ofSeconds(this.accessTokenTtlSeconds))
                 .build()
         )
 
@@ -64,6 +64,8 @@ fun CreateClientRequest.toEntity(): OAuth2Client {
         redirectUris = redirectUris,
         clientUri = clientUri,
         logoUri = logoUri,
+        accessTokenTtlSeconds = accessTokenTtlSeconds.coerceAtLeast(60L),
+        refreshTokenTtlDays = refreshTokenTtlDays.coerceAtLeast(1L),
         scopes = scopes,
         requireAuthorizationConsent = false,
         createdAt = Instant.now(),
@@ -79,6 +81,8 @@ fun OAuth2Client.toClientRegistrationResponse(): OAuth2ClientResponse {
         redirectUris = redirectUris,
         clientUri = clientUri,
         logoUri = logoUri,
-        scopes = scopes
+        scopes = scopes,
+        accessTokenTtlSeconds = accessTokenTtlSeconds,
+        refreshTokenTtlDays = refreshTokenTtlDays
     )
 }

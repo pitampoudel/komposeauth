@@ -7,5 +7,7 @@ data class OAuth2ClientResponse(
     val redirectUris: Set<String>,
     val clientUri: String?,
     val logoUri: String?,
-    val scopes: Set<String>
+    val scopes: Set<String>,
+    val accessTokenTtlSeconds: Long,
+    val refreshTokenTtlDays: Long
 )
