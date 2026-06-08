@@ -39,4 +39,9 @@ data class OAuth2AuthorizationDocument(
     val oidcIdTokenExpiresAt: Instant? = null,
     val oidcIdTokenMetadata: String? = null,
     val oidcIdTokenClaims: String? = null,
+
+    // TTL: MongoDB deletes the document automatically once the longest-lived token expires.
+    // Priority: refresh token > access token > authorization code.
+    @Indexed(expireAfter = "0s")
+    val expiresAt: Instant? = refreshTokenExpiresAt ?: accessTokenExpiresAt ?: authorizationCodeExpiresAt,
 )
