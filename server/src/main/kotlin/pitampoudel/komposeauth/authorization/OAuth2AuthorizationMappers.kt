@@ -10,11 +10,31 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import java.util.Base64
 
 private val mapTypeRef = object : TypeReference<MutableMap<String, Any>>() {}
 
+// Use Java serialization for attributes: these contain Spring Security objects
+// (OAuth2AuthorizationRequest, UsernamePasswordAuthenticationToken, etc.) that include
+// final classes which Jackson's default-typing skips, causing them to come back as
+// LinkedHashMap and breaking PKCE / redirect-URI validation.
+private fun serializeAttributes(attributes: Map<String, Any>): String {
+    val baos = ByteArrayOutputStream()
+    ObjectOutputStream(baos).use { it.writeObject(attributes) }
+    return Base64.getEncoder().encodeToString(baos.toByteArray())
+}
 
- fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: ObjectMapper): OAuth2AuthorizationDocument {
+@Suppress("UNCHECKED_CAST")
+private fun deserializeAttributes(encoded: String): Map<String, Any> {
+    val bytes = Base64.getDecoder().decode(encoded)
+    return ObjectInputStream(ByteArrayInputStream(bytes)).use { it.readObject() as Map<String, Any> }
+}
+
+fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: ObjectMapper): OAuth2AuthorizationDocument {
     val authCode = auth.getToken(OAuth2AuthorizationCode::class.java)
     val accessToken = auth.getToken(OAuth2AccessToken::class.java)
     val refreshToken = auth.refreshToken
@@ -27,7 +47,7 @@ private val mapTypeRef = object : TypeReference<MutableMap<String, Any>>() {}
         authorizationGrantType = auth.authorizationGrantType.value,
         authorizedScopes = auth.authorizedScopes,
         state = auth.getAttribute(OAuth2ParameterNames.STATE),
-        attributes = objectMapper.writeValueAsString(auth.attributes),
+        attributes = serializeAttributes(auth.attributes),
 
         authorizationCodeValue = authCode?.token?.tokenValue,
         authorizationCodeIssuedAt = authCode?.token?.issuedAt,
@@ -66,7 +86,7 @@ private val mapTypeRef = object : TypeReference<MutableMap<String, Any>>() {}
         .authorizationGrantType(AuthorizationGrantType(doc.authorizationGrantType))
         .authorizedScopes(doc.authorizedScopes)
 
-    doc.attributes?.let { builder.attributes { attrs -> attrs.putAll(objectMapper.readValue(it, mapTypeRef)) } }
+    doc.attributes?.let { builder.attributes { attrs -> attrs.putAll(deserializeAttributes(it)) } }
     doc.state?.let { builder.attribute(OAuth2ParameterNames.STATE, it) }
 
     if (doc.authorizationCodeValue != null) {

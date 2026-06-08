@@ -11,9 +11,8 @@ import org.springframework.stereotype.Service
 class MongoOAuth2AuthorizationService(
     private val repository: OAuth2AuthorizationDocumentRepository,
     private val registeredClientRepository: RegisteredClientRepository,
-    val objectMapper: ObjectMapper,
+    private val objectMapper: ObjectMapper,
 ) : OAuth2AuthorizationService {
-
 
     override fun save(authorization: OAuth2Authorization) {
         repository.save(toOAuth2AuthorizationDocument(authorization, objectMapper))
@@ -22,7 +21,6 @@ class MongoOAuth2AuthorizationService(
     override fun remove(authorization: OAuth2Authorization) {
         repository.deleteById(authorization.id)
     }
-
 
     override fun findById(id: String): OAuth2Authorization? =
         repository.findById(id).orElse(null)?.let {
@@ -39,10 +37,9 @@ class MongoOAuth2AuthorizationService(
                 ?: repository.findByAccessTokenValue(token)
                 ?: repository.findByRefreshTokenValue(token)
                 ?: repository.findByOidcIdTokenValue(token)
-
             tokenType == OAuth2TokenType.ACCESS_TOKEN -> repository.findByAccessTokenValue(token)
             tokenType == OAuth2TokenType.REFRESH_TOKEN -> repository.findByRefreshTokenValue(token)
-            tokenType.value == "authorization_code" -> repository.findByAuthorizationCodeValue(token)
+            tokenType.value == "code" -> repository.findByAuthorizationCodeValue(token)
             tokenType.value == "id_token" -> repository.findByOidcIdTokenValue(token)
             else -> null
         }
