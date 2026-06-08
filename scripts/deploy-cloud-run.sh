@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-[[ -f .env ]] && source .env
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TARGETS_FILE="${DEPLOY_TARGETS_FILE:-$SCRIPT_DIR/deploy-targets.json}"
+
+if [[ ! -f "$TARGETS_FILE" ]]; then
+  echo "❌ Deploy targets file not found: $TARGETS_FILE"
+  exit 1
+fi
 
 IMAGE_TAG="pitampoudel/komposeauth:main"
-
-: "${KOMPOSEAUTH_DEPLOYS:?KOMPOSEAUTH_DEPLOYS environment variable is required}"
 
 echo "📦 Pulling image: $IMAGE_TAG"
 docker pull "$IMAGE_TAG"
@@ -13,13 +17,15 @@ docker pull "$IMAGE_TAG"
 IMAGE_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE_TAG")
 echo "✅ Using image digest: $IMAGE_DIGEST"
 
-IFS=';' read -ra DEPLOY_ENTRIES <<< "$KOMPOSEAUTH_DEPLOYS"
+ENTRY_COUNT=$(jq 'length' "$TARGETS_FILE")
 
-for ENTRY in "${DEPLOY_ENTRIES[@]}"; do
-  IFS=',' read -r SERVICE PROJECT REGION <<< "$ENTRY"
+for i in $(seq 0 $((ENTRY_COUNT - 1))); do
+  SERVICE=$(jq -r ".[$i].service" "$TARGETS_FILE")
+  PROJECT=$(jq -r ".[$i].project" "$TARGETS_FILE")
+  REGION=$(jq -r ".[$i].region"  "$TARGETS_FILE")
 
-  [[ -z "$SERVICE" || -z "$PROJECT" || -z "$REGION" ]] && {
-    echo "❌ Invalid deploy entry: $ENTRY"
+  [[ "$SERVICE" == "null" || "$PROJECT" == "null" || "$REGION" == "null" ]] && {
+    echo "❌ Entry $i is missing required fields (service, project, region)"
     exit 1
   }
 

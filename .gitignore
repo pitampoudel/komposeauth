@@ -13,3 +13,4 @@ xcuserdata
 *.gpg
 /server/.env
 /.env
+/scripts/deploy-targets.json
