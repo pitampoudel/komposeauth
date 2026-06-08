@@ -224,7 +224,7 @@ class WebAuthorizationConfig() {
             .exceptionHandling { ex ->
                 ex.authenticationEntryPoint(
 //                    LoginUrlAuthenticationEntryPoint("/oauth2/authorization/google")
-                    LoginUrlAuthenticationEntryPoint("/login")
+                    LoginUrlAuthenticationEntryPoint("/session-login")
                 )
             }
             .authorizeHttpRequests { auth ->

@@ -90,8 +90,8 @@ class WebSecurityConfig {
             }
             .formLogin { formLogin ->
                 formLogin
-                    .loginPage("/login")
-                    .loginProcessingUrl("/login")
+                    .loginPage("/session-login")
+                    .loginProcessingUrl("/session-login")
                     .permitAll()
             }
             .oauth2Login { oauth2 ->
@@ -106,6 +106,7 @@ class WebSecurityConfig {
                         "/lib/**",
                         "/favicon.ico",
                         "/assets/**",
+                        "/session-login",
                         "/oauth2/jwks",
                         "/${ApiEndpoints.LOGIN}",
                         "/${ApiEndpoints.LOGOUT}",
