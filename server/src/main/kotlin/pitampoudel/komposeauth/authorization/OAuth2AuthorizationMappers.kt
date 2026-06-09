@@ -23,18 +23,34 @@ private val mapTypeRef = object : TypeReference<MutableMap<String, Any>>() {}
 // Custom claims (like "updated_at") are omitted so they remain as safe Long/epoch numbers.
 private val SPRING_STANDARD_TIMESTAMP_CLAIMS = setOf("iat", "exp", "auth_time", "nbf")
 
-private fun fixOidcClaimTypes(claims: MutableMap<String, Any>): MutableMap<String, Any> {
-    for (key in claims.keys) {
-        val value = claims[key]
-        if (value is Number) {
-            if (key in SPRING_STANDARD_TIMESTAMP_CLAIMS) {
-                // Standard Spring claims are safely converted to Instant because Spring's
-                // JwtEncoder converts them to java.util.Date before passing them to Nimbus.
-                claims[key] = Instant.ofEpochSecond(value.toLong())
-            } else if (key == "updated_at") {
-                // Custom claims must be kept as Long or java.util.Date to prevent
-                // Nimbus's shaded Gson reflection crashes.
-                claims[key] = value.toLong()
+internal fun fixOidcClaimTypes(claims: MutableMap<String, Any>): MutableMap<String, Any> {
+    val iterator = claims.entries.iterator()
+    while (iterator.hasNext()) {
+        val entry = iterator.next()
+        val key = entry.key
+        when (val value = entry.value) {
+            is Instant -> {
+                // Nimbus is happy with epoch seconds for standard claims
+                entry.setValue(value.epochSecond)
+            }
+            is Number -> {
+                if (key in SPRING_STANDARD_TIMESTAMP_CLAIMS) {
+                    // Keep as Long (epoch seconds).
+                    // Nimbus's shaded Gson fails to serialize java.time.Instant on Java 17+.
+                    // Spring Security getters (OidcIdToken, Jwt) handle Long, Date, or Instant automatically.
+                    entry.setValue(value.toLong())
+                } else if (key == "updated_at") {
+                    entry.setValue(value.toLong())
+                }
+            }
+            is Map<*, *> -> {
+                @Suppress("UNCHECKED_CAST")
+                entry.setValue(fixOidcClaimTypes(value as MutableMap<String, Any>))
+            }
+            // Add other collections if you have nested structures
+            is List<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                entry.setValue(value.map { if (it is Map<*, *>) fixOidcClaimTypes(it as MutableMap<String, Any>) else it })
             }
         }
     }
