@@ -19,15 +19,23 @@ import java.util.Base64
 
 private val mapTypeRef = object : TypeReference<MutableMap<String, Any>>() {}
 
-// JWT/OIDC claims whose values are epoch-second timestamps. Jackson deserializes JSON
-// numbers into Double for Map<String, Any>, but Spring's OidcIdToken expects Instant.
-private val TIMESTAMP_CLAIM_NAMES = setOf("iat", "exp", "auth_time", "nbf", "updated_at")
+// Standard OIDC/OAuth2 claim names that Spring Security internally expects to be Instant.
+// Custom claims (like "updated_at") are omitted so they remain as safe Long/epoch numbers.
+private val SPRING_STANDARD_TIMESTAMP_CLAIMS = setOf("iat", "exp", "auth_time", "nbf")
 
 private fun fixOidcClaimTypes(claims: MutableMap<String, Any>): MutableMap<String, Any> {
-    for (key in TIMESTAMP_CLAIM_NAMES) {
+    for (key in claims.keys) {
         val value = claims[key]
         if (value is Number) {
-            claims[key] = Instant.ofEpochSecond(value.toLong())
+            if (key in SPRING_STANDARD_TIMESTAMP_CLAIMS) {
+                // Standard Spring claims are safely converted to Instant because Spring's
+                // JwtEncoder converts them to java.util.Date before passing them to Nimbus.
+                claims[key] = Instant.ofEpochSecond(value.toLong())
+            } else if (key == "updated_at") {
+                // Custom claims must be kept as Long or java.util.Date to prevent
+                // Nimbus's shaded Gson reflection crashes.
+                claims[key] = value.toLong()
+            }
         }
     }
     return claims
