@@ -27,7 +27,9 @@ class MongoOAuth2AuthorizationService(
             fromOAuth2AuthorizationDocument(
                 doc = it,
                 registeredClient = registeredClientRepository.findById(it.registeredClientId) ?: return null,
-                objectMapper = objectMapper
+                objectMapper = objectMapper,
+                // Generic lookups can feed token generation, so keep claims serializer-friendly.
+                claimTypeMode = OidcClaimTypeMode.SERIALIZATION
             )
         }
 
@@ -47,7 +49,13 @@ class MongoOAuth2AuthorizationService(
             fromOAuth2AuthorizationDocument(
                 doc = it,
                 registeredClient = registeredClientRepository.findById(it.registeredClientId) ?: return null,
-                objectMapper = objectMapper
+                objectMapper = objectMapper,
+                // UserInfo reads access-token claims through Spring OIDC accessors.
+                claimTypeMode = if (tokenType == OAuth2TokenType.ACCESS_TOKEN) {
+                    OidcClaimTypeMode.SPRING_ACCESSORS
+                } else {
+                    OidcClaimTypeMode.SERIALIZATION
+                }
             )
         }
     }

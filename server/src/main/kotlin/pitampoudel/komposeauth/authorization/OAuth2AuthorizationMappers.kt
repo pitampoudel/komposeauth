@@ -19,52 +19,79 @@ import java.util.Base64
 
 private val mapTypeRef = object : TypeReference<MutableMap<String, Any>>() {}
 
-// Standard OIDC/OAuth2 claim names that Spring Security internally expects to be Instant.
-// Custom claims (like "updated_at") are omitted so they remain as safe Long/epoch numbers.
-private val SPRING_STANDARD_TIMESTAMP_CLAIMS = setOf("iat", "exp", "auth_time", "nbf")
+private val OIDC_INSTANT_CLAIMS = setOf("iat", "exp", "auth_time", "nbf", "updated_at")
+private const val METADATA_CLAIMS_KEY = "metadata.token.claims"
+
+enum class OidcClaimTypeMode {
+    // Spring's OIDC accessors cast standard timestamp claims to Instant.
+    SPRING_ACCESSORS,
+    // Nimbus/Gson token serialization cannot reflect into java.time.Instant.
+    SERIALIZATION
+}
 
 internal fun fixOidcClaimTypes(claims: MutableMap<String, Any>): MutableMap<String, Any> {
-    val iterator = claims.entries.iterator()
-    while (iterator.hasNext()) {
-        val entry = iterator.next()
-        val key = entry.key
-        when (val value = entry.value) {
-            is Instant -> {
-                // Nimbus is happy with epoch seconds for standard claims
-                entry.setValue(value.epochSecond)
-            }
-            is Number -> {
-                if (key in SPRING_STANDARD_TIMESTAMP_CLAIMS) {
-                    // Keep as Long (epoch seconds).
-                    // Nimbus's shaded Gson fails to serialize java.time.Instant on Java 17+.
-                    // Spring Security getters (OidcIdToken, Jwt) handle Long, Date, or Instant automatically.
-                    entry.setValue(value.toLong())
-                } else if (key == "updated_at") {
-                    entry.setValue(value.toLong())
-                }
-            }
+    claims.replaceAll { key, value ->
+        when (value) {
+            is Number -> if (key in OIDC_INSTANT_CLAIMS) Instant.ofEpochSecond(value.toLong()) else value
+            is String -> if (key in OIDC_INSTANT_CLAIMS) value.toInstantClaimOrNull() ?: value else value
             is Map<*, *> -> {
                 @Suppress("UNCHECKED_CAST")
-                entry.setValue(fixOidcClaimTypes(value as MutableMap<String, Any>))
+                fixOidcClaimTypes(value.toMutableMap() as MutableMap<String, Any>)
             }
-            // Add other collections if you have nested structures
-            is List<*> -> {
-                @Suppress("UNCHECKED_CAST")
-                entry.setValue(value.map { if (it is Map<*, *>) fixOidcClaimTypes(it as MutableMap<String, Any>) else it })
+            is List<*> -> value.map { item ->
+                if (item is Map<*, *>) {
+                    @Suppress("UNCHECKED_CAST")
+                    fixOidcClaimTypes(item.toMutableMap() as MutableMap<String, Any>)
+                } else {
+                    item
+                }
             }
+            else -> value
         }
     }
     return claims
 }
 
-// Spring stores a copy of claims inside token metadata under this key.
-// OAuth2Authorization.Token.getClaims() reads from there (not from the token object),
-// so it needs the same type fix.
-private const val METADATA_CLAIMS_KEY = "metadata.token.claims"
+private fun String.toInstantClaimOrNull(): Instant? {
+    toLongOrNull()?.let { return Instant.ofEpochSecond(it) }
+    return runCatching { Instant.parse(this) }.getOrNull()
+}
+
+internal fun serializeOidcClaimTypes(claims: MutableMap<String, Any>): MutableMap<String, Any> {
+    claims.replaceAll { _, value ->
+        when (value) {
+            // Keep claim maps JSON-friendly before token generation.
+            is Instant -> value.epochSecond
+            is Map<*, *> -> {
+                @Suppress("UNCHECKED_CAST")
+                serializeOidcClaimTypes(value.toMutableMap() as MutableMap<String, Any>)
+            }
+            is List<*> -> value.map { item ->
+                if (item is Map<*, *>) {
+                    @Suppress("UNCHECKED_CAST")
+                    serializeOidcClaimTypes(item.toMutableMap() as MutableMap<String, Any>)
+                } else {
+                    item
+                }
+            }
+            else -> value
+        }
+    }
+    return claims
+}
 
 @Suppress("UNCHECKED_CAST")
-private fun fixMetadataClaimTypes(metadata: MutableMap<String, Any>): MutableMap<String, Any> {
-    (metadata[METADATA_CLAIMS_KEY] as? MutableMap<String, Any>)?.let { fixOidcClaimTypes(it) }
+private fun fixMetadataClaimTypes(
+    metadata: MutableMap<String, Any>,
+    claimTypeMode: OidcClaimTypeMode
+): MutableMap<String, Any> {
+    (metadata[METADATA_CLAIMS_KEY] as? Map<*, *>)?.let {
+        val claims = it.toMutableMap() as MutableMap<String, Any>
+        metadata[METADATA_CLAIMS_KEY] = when (claimTypeMode) {
+            OidcClaimTypeMode.SPRING_ACCESSORS -> fixOidcClaimTypes(claims)
+            OidcClaimTypeMode.SERIALIZATION -> serializeOidcClaimTypes(claims)
+        }
+    }
     return metadata
 }
 
@@ -127,7 +154,8 @@ fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: Objec
 fun fromOAuth2AuthorizationDocument(
     doc: OAuth2AuthorizationDocument,
     registeredClient: RegisteredClient,
-    objectMapper: ObjectMapper
+    objectMapper: ObjectMapper,
+    claimTypeMode: OidcClaimTypeMode = OidcClaimTypeMode.SERIALIZATION
 ): OAuth2Authorization? {
 
     val builder = OAuth2Authorization.withRegisteredClient(registeredClient)
@@ -163,7 +191,7 @@ fun fromOAuth2AuthorizationDocument(
         )
         builder.token(token) {
             it.putAll(doc.accessTokenMetadata?.let { m ->
-                fixMetadataClaimTypes(objectMapper.readValue(m, mapTypeRef))
+                fixMetadataClaimTypes(objectMapper.readValue(m, mapTypeRef), claimTypeMode)
             } ?: emptyMap())
         }
     }
@@ -183,12 +211,16 @@ fun fromOAuth2AuthorizationDocument(
             doc.oidcIdTokenIssuedAt,
             doc.oidcIdTokenExpiresAt,
             doc.oidcIdTokenClaims?.let {
-                fixOidcClaimTypes(objectMapper.readValue(it, mapTypeRef))
+                val claims = objectMapper.readValue(it, mapTypeRef)
+                when (claimTypeMode) {
+                    OidcClaimTypeMode.SPRING_ACCESSORS -> fixOidcClaimTypes(claims)
+                    OidcClaimTypeMode.SERIALIZATION -> serializeOidcClaimTypes(claims)
+                }
             } ?: mutableMapOf()
         )
         builder.token(idToken) {
             it.putAll(doc.oidcIdTokenMetadata?.let { m ->
-                fixMetadataClaimTypes(objectMapper.readValue(m, mapTypeRef))
+                fixMetadataClaimTypes(objectMapper.readValue(m, mapTypeRef), claimTypeMode)
             } ?: emptyMap())
         }
     }
