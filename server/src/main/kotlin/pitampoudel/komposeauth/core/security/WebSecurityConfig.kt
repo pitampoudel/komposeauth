@@ -2,6 +2,8 @@ package pitampoudel.komposeauth.core.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.DispatcherType
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -15,6 +17,8 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import pitampoudel.core.data.MessageResponse
@@ -27,6 +31,22 @@ import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
 class WebSecurityConfig {
+
+    private fun clearTokenCookie(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        appConfigService: AppConfigService
+    ) {
+        val clearCookie = ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, "")
+            .httpOnly(true)
+            .secure(request.isSecure)
+            .path("/")
+            .sameSite(if (request.isSecure) "None" else "Lax")
+            .maxAge(0)
+            .domain("." + appConfigService.rpId())
+            .build()
+        response.addHeader("Set-Cookie", clearCookie.toString())
+    }
 
     @Bean
     fun corsConfigurationSource(appConfigService: AppConfigService): CorsConfigurationSource {
@@ -62,15 +82,7 @@ class WebSecurityConfig {
                 logout
                     .logoutUrl("/${ApiEndpoints.LOGOUT}")
                     .logoutSuccessHandler { request, response, _ ->
-                        val clearCookie = ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, "")
-                            .httpOnly(true)
-                            .secure(request.isSecure)
-                            .path("/")
-                            .sameSite(if (request.isSecure) "None" else "Lax")
-                            .maxAge(0)
-                            .domain("." + appConfigService.rpId())
-                            .build()
-                        response.addHeader("Set-Cookie", clearCookie.toString())
+                        clearTokenCookie(request, response, appConfigService)
                         response.contentType = MediaType.APPLICATION_JSON_VALUE
                         response.writer.write(
                             objectMapper.writeValueAsString(
@@ -132,6 +144,16 @@ class WebSecurityConfig {
                     .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD)
                     .permitAll()
                     .anyRequest().authenticated()
+            }
+            .exceptionHandling { exceptions ->
+                exceptions.defaultAuthenticationEntryPointFor(
+                    { request, response, _ ->
+                        clearTokenCookie(request, response, appConfigService)
+                        response.status = 401
+                        response.contentType = MediaType.APPLICATION_JSON_VALUE
+                    },
+                    NegatedRequestMatcher(MediaTypeRequestMatcher(MediaType.TEXT_HTML))
+                )
             }
             .build()
     }
