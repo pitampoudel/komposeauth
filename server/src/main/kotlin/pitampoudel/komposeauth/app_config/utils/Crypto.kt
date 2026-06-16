@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.utils
+package pitampoudel.komposeauth.app_config.utils
 
 import java.security.SecureRandom
 import javax.crypto.Cipher
