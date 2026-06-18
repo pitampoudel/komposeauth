@@ -1,19 +1,18 @@
 package pitampoudel.komposeauth.webauthn.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import org.bson.types.ObjectId
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.security.web.webauthn.api.Bytes
-import org.springframework.security.web.webauthn.api.CredentialRecord
-import org.springframework.security.web.webauthn.api.PublicKeyCredentialRpEntity
-import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEntity
-import org.springframework.security.web.webauthn.authentication.HttpSessionPublicKeyCredentialRequestOptionsRepository
+import org.springframework.security.web.webauthn.api.*
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
 import org.springframework.security.web.webauthn.management.PublicKeyCredentialUserEntityRepository
 import org.springframework.security.web.webauthn.management.UserCredentialRepository
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations
-import org.springframework.security.web.webauthn.registration.HttpSessionPublicKeyCredentialCreationOptionsRepository
+import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository
 import org.springframework.stereotype.Repository
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.user.repository.UserRepository
@@ -24,6 +23,58 @@ import pitampoudel.komposeauth.webauthn.repository.PublicKeyUserRepository
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import kotlin.jvm.optionals.getOrNull
+
+private class JsonSessionCreationOptionsRepository(
+    private val mapper: ObjectMapper
+) : PublicKeyCredentialCreationOptionsRepository {
+    companion object {
+        private const val ATTR = "WEBAUTHN_CREATION_OPTIONS_JSON"
+    }
+
+    override fun save(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        options: PublicKeyCredentialCreationOptions?
+    ) {
+        val session = request.getSession(false)
+        if (options == null) {
+            session?.removeAttribute(ATTR)
+            return
+        }
+        request.getSession(true).setAttribute(ATTR, mapper.writeValueAsString(options))
+    }
+
+    override fun load(request: HttpServletRequest): PublicKeyCredentialCreationOptions? {
+        val json = request.getSession(false)?.getAttribute(ATTR) as? String ?: return null
+        return mapper.readValue(json, PublicKeyCredentialCreationOptions::class.java)
+    }
+}
+
+private class JsonSessionRequestOptionsRepository(
+    private val mapper: ObjectMapper
+) : PublicKeyCredentialRequestOptionsRepository {
+    companion object {
+        private const val ATTR = "WEBAUTHN_REQUEST_OPTIONS_JSON"
+    }
+
+    override fun save(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        options: PublicKeyCredentialRequestOptions?
+    ) {
+        val session = request.getSession(false)
+        if (options == null) {
+            session?.removeAttribute(ATTR)
+            return
+        }
+        request.getSession(true).setAttribute(ATTR, mapper.writeValueAsString(options))
+    }
+
+    override fun load(request: HttpServletRequest): PublicKeyCredentialRequestOptions? {
+        val json = request.getSession(false)?.getAttribute(ATTR) as? String ?: return null
+        return mapper.readValue(json, PublicKeyCredentialRequestOptions::class.java)
+    }
+}
 
 private fun stableWebAuthnUserHandle(userId: ObjectId): Bytes {
     // 32 bytes, stable. Purpose-separated so it doesn't collide with other hashes.
@@ -126,15 +177,16 @@ class PublicKeyCredentialUserEntityRepositoryImpl(
 @Configuration
 class WebAuthnConfig(
     private val appConfigService: AppConfigService,
+    val objectMapper: ObjectMapper
 ) {
     @Bean
     fun requestOptionsRepository(): PublicKeyCredentialRequestOptionsRepository {
-        return HttpSessionPublicKeyCredentialRequestOptionsRepository()
+        return JsonSessionRequestOptionsRepository(objectMapper)
     }
 
     @Bean
-    fun publicKeyCredentialCreationOptionsRepository(): HttpSessionPublicKeyCredentialCreationOptionsRepository {
-        return HttpSessionPublicKeyCredentialCreationOptionsRepository()
+    fun publicKeyCredentialCreationOptionsRepository(): PublicKeyCredentialCreationOptionsRepository {
+        return JsonSessionCreationOptionsRepository(objectMapper)
     }
 
     @Bean
