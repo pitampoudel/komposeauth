@@ -24,7 +24,6 @@ object PublicEndpoints {
         "/${ApiEndpoints.LOGOUT}",
         "/signup",
         "/api/auth/**",
-        "/users",
         "/${ApiEndpoints.LOGIN_OPTIONS}",
         "/${ApiEndpoints.VERIFY_EMAIL}",
         "/${ApiEndpoints.RESET_PASSWORD}",
@@ -37,13 +36,14 @@ object PublicEndpoints {
     /** Public paths that use optional authentication: a supplied token is still validated. */
     val optionalAuthPatterns: List<String> = listOf(
         "/config",
-        "/${ApiEndpoints.SEND_OTP}"
+        "/${ApiEndpoints.SEND_OTP}",
+        "/users"
     )
 
     fun purelyPublicRequestMatcher(): RequestMatcher {
         val builder = PathPatternRequestMatcher.withDefaults()
         val matchers = purelyPublicPatterns.map { builder.matcher(it) } +
-            builder.matcher(HttpMethod.POST, "/$THIRD_FACTOR_KYC")
+                builder.matcher(HttpMethod.POST, "/$THIRD_FACTOR_KYC")
         return OrRequestMatcher(matchers)
     }
 }
