@@ -237,19 +237,9 @@ class EndpointSecurityIntegrationTest {
     fun `purely public endpoint ignores an invalid token and returns 200`() {
         // A fully public endpoint must not attempt authentication: a bad token is ignored,
         // so the request succeeds instead of being rejected with 401.
-        mockMvc.post("/${ApiEndpoints.USERS}") {
-            contentType = MediaType.APPLICATION_JSON
+        mockMvc.get("/oauth2/jwks") {
             accept = MediaType.APPLICATION_JSON
             header("Authorization", "Bearer invalid-token")
-            content = json.encodeToString(
-                CreateUserRequest(
-                    firstName = "Public",
-                    lastName = "Test",
-                    email = "public-invalid-token@example.com",
-                    password = "Password1",
-                    confirmPassword = "Password1"
-                )
-            )
         }.andExpect {
             status { isOk() }
         }
