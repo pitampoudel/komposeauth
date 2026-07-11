@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.security
 
+import jakarta.servlet.http.Cookie
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,6 +16,7 @@ import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.repository.UserRepository
@@ -202,6 +204,32 @@ class EndpointSecurityIntegrationTest {
             header("Authorization", "Bearer invalid-token")
         }.andExpect {
             status { isUnauthorized() }
+        }
+    }
+
+    @Test
+    fun `invalid header token 401 clears access token cookie`() {
+        val setCookie = mockMvc.get("/${ApiEndpoints.ME}") {
+            accept = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer invalid-token")
+        }.andExpect {
+            status { isUnauthorized() }
+        }.andReturn().response.getHeaders("Set-Cookie")
+        assert(setCookie.any { it.startsWith("$ACCESS_TOKEN_COOKIE_NAME=") && it.contains("Max-Age=0") }) {
+            "expected $ACCESS_TOKEN_COOKIE_NAME cookie to be cleared, got: $setCookie"
+        }
+    }
+
+    @Test
+    fun `invalid cookie token 401 clears access token cookie`() {
+        val setCookie = mockMvc.get("/${ApiEndpoints.ME}") {
+            accept = MediaType.APPLICATION_JSON
+            cookie(Cookie(ACCESS_TOKEN_COOKIE_NAME, "invalid-token"))
+        }.andExpect {
+            status { isUnauthorized() }
+        }.andReturn().response.getHeaders("Set-Cookie")
+        assert(setCookie.any { it.startsWith("$ACCESS_TOKEN_COOKIE_NAME=") && it.contains("Max-Age=0") }) {
+            "expected $ACCESS_TOKEN_COOKIE_NAME cookie to be cleared, got: $setCookie"
         }
     }
 

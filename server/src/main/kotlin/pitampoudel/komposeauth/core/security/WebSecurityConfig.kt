@@ -16,6 +16,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher
@@ -96,6 +97,15 @@ class WebSecurityConfig {
             }
             .oauth2ResourceServer { conf ->
                 conf.bearerTokenResolver(bearerTokenResolver)
+                // An invalid/expired bearer token (from the Authorization header OR the access-token
+                // cookie) is rejected directly by the resource-server filter, short-circuiting the
+                // exceptionHandling entry point below. Clear the stale cookie here too so the browser
+                // stops resending a token that will only keep producing 401s.
+                val bearerEntryPoint = BearerTokenAuthenticationEntryPoint()
+                conf.authenticationEntryPoint { request, response, authException ->
+                    clearTokenCookie(request, response, appConfigService)
+                    bearerEntryPoint.commence(request, response, authException)
+                }
                 conf.jwt {
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
