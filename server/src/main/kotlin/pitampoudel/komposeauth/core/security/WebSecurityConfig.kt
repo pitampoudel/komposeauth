@@ -111,30 +111,8 @@ class WebSecurityConfig {
             }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers(
-                        "/css/**",
-                        "/js/**",
-                        "/img/**",
-                        "/lib/**",
-                        "/favicon.ico",
-                        "/assets/**",
-                        "/session-login",
-                        "/oauth2/jwks",
-                        "/${ApiEndpoints.LOGIN}",
-                        "/${ApiEndpoints.LOGOUT}",
-                        "/signup",
-                        "/api/auth/**",
-                        "/users",
-                        "/config",
-                        "/${ApiEndpoints.LOGIN_OPTIONS}",
-                        "/${ApiEndpoints.VERIFY_EMAIL}",
-                        "/${ApiEndpoints.RESET_PASSWORD}",
-                        "/${ApiEndpoints.SEND_OTP}",
-                        "/reset-password",
-                        "/countries.json",
-                        "/.well-known/**",
-                        "/setup"
-                    ).permitAll()
+                    .requestMatchers(*PublicEndpoints.purelyPublicPatterns.toTypedArray()).permitAll()
+                    .requestMatchers(*PublicEndpoints.optionalAuthPatterns.toTypedArray()).permitAll()
                     .requestMatchers(HttpMethod.POST, "/$THIRD_FACTOR_KYC").permitAll()
                     .requestMatchers(
                         "/v3/api-docs/**",

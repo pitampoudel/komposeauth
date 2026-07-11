@@ -73,7 +73,13 @@ class WebAuthorizationConfig {
 
     @Bean
     fun bearerTokenResolver(): BearerTokenResolver {
+        val purelyPublicMatcher = PublicEndpoints.purelyPublicRequestMatcher()
         return BearerTokenResolver { request ->
+
+            // On purely-public endpoints, never attempt bearer authentication: an
+            // invalid/expired token must be ignored so the request proceeds as anonymous
+            // (returning 200) instead of being rejected with 401 by the resource-server filter.
+            if (purelyPublicMatcher.matches(request)) return@BearerTokenResolver null
 
             val delegate: BearerTokenResolver = DefaultBearerTokenResolver()
             // 1. Try Authorization header first

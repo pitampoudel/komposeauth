@@ -206,6 +206,40 @@ class EndpointSecurityIntegrationTest {
     }
 
     @Test
+    fun `purely public endpoint ignores an invalid token and returns 200`() {
+        // A fully public endpoint must not attempt authentication: a bad token is ignored,
+        // so the request succeeds instead of being rejected with 401.
+        mockMvc.post("/${ApiEndpoints.USERS}") {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer invalid-token")
+            content = json.encodeToString(
+                CreateUserRequest(
+                    firstName = "Public",
+                    lastName = "Test",
+                    email = "public-invalid-token@example.com",
+                    password = "Password1",
+                    confirmPassword = "Password1"
+                )
+            )
+        }.andExpect {
+            status { isOk() }
+        }
+    }
+
+    @Test
+    fun `optional-auth endpoint still rejects an invalid token`() {
+        // Endpoints that use optional authentication continue to validate a supplied token,
+        // so an invalid token is rejected with 401.
+        mockMvc.get("/config") {
+            accept = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer invalid-token")
+        }.andExpect {
+            status { isUnauthorized() }
+        }
+    }
+
+    @Test
     fun `expired token is rejected`() {
         // This would require creating an expired token, which is complex
         // For now, test that malformed tokens are rejected
