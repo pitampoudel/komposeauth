@@ -3,139 +3,217 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title th:text="${appName.isEmpty()} ? 'Sign In' : 'Sign In — ' + ${appName}">Sign In</title>
+    <title th:text="${appName.isEmpty()} ? 'Sign in' : 'Sign in · ' + ${appName}">Sign in</title>
     <style th:inline="css">
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
         :root {
-            --brand: /*[(${brandColor})]*/ initial;
+            --brand: /*[(${brandColor})]*/ #4f46e5;
+
+            --bg: #eef0f3;
+            --text: #1a2231;
+            --muted: #6b7486;
+            --label: #454e5e;
+            --field-bg: #ffffff;
+            --field-bg-hover: #f7f8fa;
+            --field-bg-focus: #ffffff;
+            --divider: #e3e6ea;
+            --alt-btn-bg: #ffffff;
+            --alt-btn-hover: #f4f5f8;
+            --err-text: #b4483a;
+            --err-bg: rgba(214, 105, 90, 0.1);
+            --ok-text: #3f8f66;
+            --ok-bg: rgba(80, 170, 120, 0.12);
         }
 
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0b111d;
+                --text: #eef1f6;
+                --muted: #8b96a8;
+                --label: #c3cbd8;
+                --field-bg: #151d2c;
+                --field-bg-hover: #182135;
+                --field-bg-focus: #172032;
+                --divider: #1b2434;
+                --alt-btn-bg: #151d2c;
+                --alt-btn-hover: #1b2436;
+                --err-text: #eba69c;
+                --err-bg: rgba(214, 105, 90, 0.14);
+                --ok-text: #86cea6;
+                --ok-bg: rgba(80, 170, 120, 0.14);
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: Inter, system-ui, Arial, sans-serif;
-            background: #080f1e;
-            color: #e2e8f0;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            padding: 40px 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 380px;
+            background: transparent;
+            padding: 0;
+            animation: rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 22px;
+        }
+
+        .logo-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+
+        .logo-mark {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--brand);
+            color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 24px 16px;
-        }
-
-        .wrap {
-            width: 100%;
-            max-width: 368px;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 40px;
-        }
-
-        .brand-logo {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            object-fit: cover;
-            flex-shrink: 0;
-        }
-
-        .brand-mark {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: var(--brand);
-            flex-shrink: 0;
-        }
-
-        .brand-name {
-            font-size: 15px;
-            font-weight: 600;
-            color: #f1f5f9;
+            font-size: 20px;
+            font-weight: 700;
         }
 
         .heading {
-            font-size: 22px;
-            font-weight: 600;
-            color: #f8fafc;
+            font-size: 24px;
+            font-weight: 650;
+            letter-spacing: -0.02em;
+            text-align: center;
             margin-bottom: 8px;
         }
 
         .subheading {
-            font-size: 14px;
-            color: #475569;
-            margin-bottom: 48px;
+            font-size: 15px;
+            line-height: 1.5;
+            color: var(--muted);
+            text-align: center;
+            margin-bottom: 28px;
         }
 
-        .field {
-            margin-bottom: 32px;
-        }
+        .field { margin-bottom: 18px; }
 
         .field-row {
             display: flex;
             align-items: baseline;
             justify-content: space-between;
-            margin-bottom: 12px;
+            margin-bottom: 7px;
         }
 
         label {
             display: block;
-            font-size: 11px;
-            font-weight: 600;
-            color: #475569;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-size: 13px;
+            font-weight: 550;
+            color: var(--label);
+            margin-bottom: 7px;
+        }
+
+        .field-row label { margin-bottom: 0; }
+
+        .input-wrap { position: relative; }
+
+        input[type=text],
+        input[type=password],
+        input[type=email] {
+            width: 100%;
+            height: 48px;
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--field-bg);
+            border: 1px solid transparent;
+            border-radius: 14px;
+            padding: 0 16px;
+            outline: none;
+            transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+        }
+
+        .input-wrap input { padding-right: 64px; }
+
+        input::placeholder { color: var(--muted); opacity: 0.75; }
+
+        input:hover { background: var(--field-bg-hover); }
+
+        input:focus {
+            background: var(--field-bg-focus);
+            border-color: color-mix(in srgb, var(--brand) 40%, transparent);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 12%, transparent);
+        }
+
+        /* Preserve field styling through browser autofill */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus {
+            -webkit-text-fill-color: var(--text);
+            -webkit-box-shadow: 0 0 0 1000px var(--field-bg) inset;
+            caret-color: var(--text);
+            transition: background-color 9999s ease-out 0s;
         }
 
         .forgot-link {
-            font-size: 12px;
-            color: #475569;
+            font-size: 13px;
+            font-weight: 550;
+            color: var(--brand);
             text-decoration: none;
             background: none;
             border: none;
             padding: 0;
             cursor: pointer;
             font-family: inherit;
+        }
+
+        .forgot-link:hover { text-decoration: underline; }
+
+        .toggle-pw {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 48px;
+            padding: 0 16px;
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            cursor: pointer;
             transition: color 0.15s;
         }
 
-        .forgot-link:hover { color: #94a3b8; }
-
-        input[type=text],
-        input[type=password],
-        input[type=email] {
-            width: 100%;
-            font-size: 15px;
-            font-family: inherit;
-            color: #f1f5f9;
-            background: transparent;
-            border: none;
-            border-bottom: 1px solid #1e2d45;
-            padding: 0 0 12px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        input::placeholder { color: #1e3050; }
-
-        input:focus { border-bottom-color: var(--brand); }
-
-        .actions {
-            margin-top: 48px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+        .toggle-pw:hover { color: var(--text); }
 
         .btn {
             width: 100%;
-            padding: 14px 16px;
+            height: 48px;
             border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
             font-family: inherit;
             cursor: pointer;
             display: flex;
@@ -143,123 +221,152 @@
             justify-content: center;
             gap: 10px;
             text-decoration: none;
-            transition: opacity 0.15s, background 0.15s;
+            transition: filter 0.15s, background 0.15s;
         }
 
         .btn-primary {
+            margin-top: 24px;
             background: var(--brand);
             color: #fff;
         }
 
-        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary:hover { filter: brightness(0.94); }
+
+        .btn-primary:active { filter: brightness(0.88); }
 
         .btn-primary:disabled {
-            opacity: 0.5;
+            opacity: 0.6;
             cursor: not-allowed;
+            filter: none;
         }
 
         .divider {
             display: flex;
             align-items: center;
-            gap: 16px;
-            color: #1e2d45;
-            font-size: 11px;
+            gap: 14px;
+            color: var(--muted);
+            font-size: 12px;
+            margin: 22px 0;
         }
 
         .divider::before,
         .divider::after {
             content: '';
             flex: 1;
-            border-top: 1px solid #111c2e;
+            height: 1px;
+            background: var(--divider);
         }
 
-        .btn-google {
-            background: #0d1627;
-            color: #94a3b8;
+        .btn-alt {
+            background: var(--alt-btn-bg);
+            color: var(--text);
         }
 
-        .btn-google:hover { background: #111e35; }
+        .btn-alt:hover { background: var(--alt-btn-hover); }
 
         .google-icon {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             flex-shrink: 0;
         }
 
-        .error {
-            font-size: 13px;
-            color: #f87171;
-            margin-bottom: 32px;
-            padding: 12px 16px;
-            background: rgba(248, 113, 113, 0.06);
-            border-radius: 6px;
+        .alert {
+            font-size: 13.5px;
+            line-height: 1.45;
+            border-radius: 12px;
+            padding: 12px 15px;
+            margin-bottom: 22px;
+        }
+
+        .alert-error {
+            color: var(--err-text);
+            background: var(--err-bg);
+        }
+
+        .alert-success {
+            color: var(--ok-text);
+            background: var(--ok-bg);
         }
 
         .back-link {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            font-size: 13px;
-            color: #475569;
+            font-size: 13.5px;
+            font-weight: 550;
+            color: var(--muted);
             background: none;
             border: none;
             padding: 0;
             cursor: pointer;
             font-family: inherit;
-            margin-bottom: 40px;
+            margin-bottom: 22px;
             transition: color 0.15s;
         }
 
-        .back-link:hover { color: #94a3b8; }
+        .back-link:hover { color: var(--text); }
 
-        .status {
-            font-size: 13px;
-            border-radius: 6px;
-            padding: 12px 16px;
-            margin-bottom: 32px;
+        .footer {
+            position: relative;
+            z-index: 1;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12.5px;
+            color: var(--muted);
         }
 
-        .status-success {
-            color: #6ee7b7;
-            background: rgba(110, 231, 183, 0.06);
-        }
-
-        .status-error {
-            color: #f87171;
-            background: rgba(248, 113, 113, 0.06);
-        }
+        .footer svg { flex-shrink: 0; }
 
         .hidden { display: none; }
 
         .view { display: none; }
         .view.active { display: block; }
+
+        :focus-visible {
+            outline: 2px solid var(--brand);
+            outline-offset: 2px;
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+            border-radius: 8px;
+        }
+
+        input:focus-visible { outline: none; }
+
+
+        @media (prefers-reduced-motion: reduce) {
+            * { animation: none !important; transition: none !important; }
+        }
     </style>
 </head>
 <body>
-<div class="wrap">
+<div class="card">
 
-    <div class="brand">
-        <img th:if="${!logoUrl.isEmpty()}" th:src="${logoUrl}" class="brand-logo" alt=""/>
-        <div th:if="${logoUrl.isEmpty()}" class="brand-mark"></div>
-        <span th:if="${!appName.isEmpty()}" class="brand-name" th:text="${appName}"></span>
+    <div class="logo">
+        <img th:if="${!logoUrl.isEmpty()}" th:src="${logoUrl}" class="logo-img" alt=""/>
+        <span th:unless="${!logoUrl.isEmpty()}" class="logo-mark"
+              th:text="${appName.isEmpty()} ? '' : appName.substring(0,1).toUpperCase()"></span>
     </div>
 
     <!-- Login view -->
     <div id="view-login" class="view active">
         <h1 class="heading">Welcome back</h1>
         <p class="subheading"
-           th:text="${appName.isEmpty()} ? 'Sign in to your account to continue' : 'Sign in to ' + ${appName} + ' to continue'">
-            Sign in to your account to continue
+           th:text="${appName.isEmpty()} ? 'Sign in to continue to your account' : 'Sign in to continue to ' + ${appName}">
+            Sign in to continue to your account
         </p>
 
-        <p th:if="${error}" class="error" th:text="${error}"></p>
+        <p th:if="${error}" class="alert alert-error" role="alert" aria-live="assertive" th:text="${error}"></p>
 
-        <form th:action="@{/session-login}" method="post">
+        <form id="login-form" th:action="@{/session-login}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" th:if="${_csrf != null}"/>
 
             <div class="field">
                 <label for="username">Email or phone</label>
-                <input id="username" type="text" name="username" autocomplete="username" placeholder="you@example.com" required autofocus/>
+                <input id="username" type="text" name="username" autocomplete="username"
+                       placeholder="you@example.com" required autofocus/>
             </div>
 
             <div class="field">
@@ -267,24 +374,27 @@
                     <label for="password">Password</label>
                     <button type="button" class="forgot-link" onclick="showView('forgot')">Forgot password?</button>
                 </div>
-                <input id="password" type="password" name="password" autocomplete="current-password" placeholder="••••••••" required/>
+                <div class="input-wrap">
+                    <input id="password" type="password" name="password" autocomplete="current-password"
+                           placeholder="Enter your password" required/>
+                    <button type="button" id="toggle-pw" class="toggle-pw" onclick="togglePassword(this)"
+                            aria-label="Show password" aria-pressed="false">Show</button>
+                </div>
             </div>
 
-            <div class="actions">
-                <button class="btn btn-primary" type="submit">Continue</button>
+            <button id="login-btn" class="btn btn-primary" type="submit">Sign in</button>
 
-                <div th:if="${googleEnabled}" class="divider">or</div>
+            <div th:if="${googleEnabled}" class="divider">or</div>
 
-                <a th:if="${googleEnabled}" class="btn btn-google" href="/oauth2/authorization/google">
-                    <svg class="google-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                    </svg>
-                    Continue with Google
-                </a>
-            </div>
+            <a th:if="${googleEnabled}" class="btn btn-alt" href="/oauth2/authorization/google">
+                <svg class="google-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                Continue with Google
+            </a>
         </form>
     </div>
 
@@ -292,15 +402,15 @@
     <div id="view-forgot" class="view">
         <button type="button" class="back-link" onclick="showView('login')">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             Back to sign in
         </button>
 
         <h1 class="heading">Reset password</h1>
-        <p class="subheading">Enter your email and we'll send you a reset link.</p>
+        <p class="subheading">Enter your email and we'll send you a link to reset it.</p>
 
-        <div id="forgot-status" class="hidden"></div>
+        <div id="forgot-status" class="hidden" role="status" aria-live="polite"></div>
 
         <form id="forgot-form">
             <div class="field">
@@ -308,14 +418,36 @@
                 <input id="reset-email" type="email" autocomplete="email" placeholder="you@example.com" required/>
             </div>
 
-            <div class="actions">
-                <button id="forgot-btn" class="btn btn-primary" type="submit">Send reset link</button>
-            </div>
+            <button id="forgot-btn" class="btn btn-primary" type="submit">Send reset link</button>
         </form>
     </div>
 
 </div>
+
+<div class="footer">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 10V8a6 6 0 0 1 12 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <rect x="4" y="10" width="16" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
+    </svg>
+    Secure sign-in
+</div>
+
 <script>
+    function togglePassword(btn) {
+        const input = document.getElementById('password');
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.textContent = show ? 'Hide' : 'Show';
+        btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+    }
+
+    document.getElementById('login-form').addEventListener('submit', function () {
+        const btn = document.getElementById('login-btn');
+        btn.disabled = true;
+        btn.textContent = 'Signing in…';
+    });
+
     function showView(name) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById('view-' + name).classList.add('active');
@@ -323,6 +455,7 @@
             document.getElementById('reset-email').value = '';
             document.getElementById('forgot-status').className = 'hidden';
             document.getElementById('forgot-form').style.display = '';
+            document.getElementById('reset-email').focus();
         }
     }
 
@@ -344,15 +477,15 @@
             const data = await res.json().catch(() => ({}));
             if (res.ok) {
                 statusEl.textContent = data.message || 'Reset link sent. Check your inbox.';
-                statusEl.className = 'status status-success';
+                statusEl.className = 'alert alert-success';
                 document.getElementById('forgot-form').style.display = 'none';
             } else {
                 statusEl.textContent = data.message || 'Something went wrong. Please try again.';
-                statusEl.className = 'status status-error';
+                statusEl.className = 'alert alert-error';
             }
         } catch (_) {
             statusEl.textContent = 'Network error. Please try again.';
-            statusEl.className = 'status status-error';
+            statusEl.className = 'alert alert-error';
         } finally {
             btn.disabled = false;
             btn.textContent = 'Send reset link';
