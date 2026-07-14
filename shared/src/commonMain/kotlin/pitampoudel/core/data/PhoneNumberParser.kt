@@ -19,7 +19,11 @@ fun parsePhoneNumber(countryNameCode: String?, phoneNumber: String): PhoneNumber
     val phoneUtil = PhoneNumberUtil.createInstance(metadataLoader = defaultMetadataLoader())
     return try {
         val num = phoneUtil.parse(phoneNumber, countryNameCode)
-        if (phoneUtil.isValidNumber(num)) PhoneNumber(
+        // Accept numbers that are valid OR merely "possible" (correct country code and length).
+        // libphonenumber's bundled per-carrier prefix metadata lags real-world allocations
+        // (e.g. newly issued Nepal mobile prefixes), so isValidNumber wrongly rejects live numbers.
+        // isPossibleNumber still rejects malformed input (wrong length / unknown country code).
+        if (phoneUtil.isValidNumber(num) || phoneUtil.isPossibleNumber(num)) PhoneNumber(
             nationalNumber = num.nationalNumber,
             countryNameCode = phoneUtil.getRegionCodeForCountryCode(num.countryCode),
             fullNumberInE164Format = phoneUtil.format(
