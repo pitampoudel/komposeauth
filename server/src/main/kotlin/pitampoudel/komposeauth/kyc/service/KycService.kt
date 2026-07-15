@@ -19,10 +19,13 @@ import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.Base64
 import kotlinx.datetime.toJavaLocalDate
 import pitampoudel.komposeauth.core.utils.detectMimeType
 import pitampoudel.komposeauth.kyc.domain.DocumentType
+import pitampoudel.komposeauth.kyc.dto.docType
+import pitampoudel.komposeauth.kyc.dto.toGender
 
 
 @Service
@@ -207,14 +210,10 @@ class KycService(
             throw BadRequestException("KYC already submitted; cannot resubmit")
         }
 
-        val detectedDocType = data.documentDetectionLog.lastOrNull { it.isVerified }?.claimedDocType?.let {
-            when {
-                it.contains("citizenship", ignoreCase = true) -> DocumentType.CITIZENSHIP
-                it.contains("passport", ignoreCase = true) -> DocumentType.PASSPORT
-                it.contains("national", ignoreCase = true) -> DocumentType.NATIONAL_ID
-                else -> null
-            }
-        }
+        // Trust what Third Factor's model detected, not what the user claimed the document was.
+        val detectedDocType = data.documentDetectionLog
+            .lastOrNull { it.isVerified && it.docType() != null }
+            ?.docType()
 
         fun uploadBase64Photo(label: String, base64: String): String? {
             val raw = base64.substringAfter("base64,").trim().takeIf { it.isNotBlank() } ?: return null
@@ -222,37 +221,61 @@ class KycService(
             return storageService.upload("kyc/${userId.toHexString()}/$label", bytes.detectMimeType(), bytes)
         }
 
-        val documentFront =
-            data.documentPhoto.lastOrNull { it.claimedDocType.contains("front", ignoreCase = true) }?.photo
-        val documentBack =
-            data.documentPhoto.lastOrNull { it.claimedDocType.contains("back", ignoreCase = true) }?.photo
+        fun photoFor(side: String): String? = data.documentPhoto
+            .lastOrNull { (it.detectedDocType ?: it.claimedDocType).orEmpty().contains(side, ignoreCase = true) }
+            ?.photo
 
-        if (detectedDocType == null || data.userPhoto.isBlank() || documentFront == null || documentBack == null) {
+        val documentFront = photoFor("front")
+        val documentBack = photoFor("back")
+        val userPhoto = data.userPhoto?.takeIf { it.isNotBlank() }
+
+        if (detectedDocType == null || userPhoto == null || documentFront == null || documentBack == null) {
             throw BadRequestException("Document detection failed")
         }
 
-        val selfieUrl = uploadBase64Photo("selfie", data.userPhoto)
+        val selfieUrl = uploadBase64Photo("selfie", userPhoto)
         val documentFrontUrl = uploadBase64Photo("front", documentFront)
         val documentBackUrl = uploadBase64Photo("back", documentBack)
 
+        val documentNumber = data.documentNumber?.takeIf { it.isNotBlank() }
+            ?: data.documentDetectionLog.lastOrNull { it.isVerified }?.documentNumber?.takeIf { it.isNotBlank() }
 
         val updated = existingKyc.copy(
             documentType = detectedDocType,
-            documentNumber = data.documentNumber,
+            documentNumber = documentNumber,
             documentFrontUrl = documentFrontUrl,
             documentBackUrl = documentBackUrl,
             documentIssuedDate = null,
             documentExpiryDate = null,
             documentIssuedPlace = null,
             selfieUrl = selfieUrl,
+            thirdFactorSession = data.session,
+            thirdFactorVerified = data.isVerified,
+            thirdFactorFaceMatch = data.percentageMatch,
+            thirdFactorBypassed = data.bypassed?.let { it > 0 },
+            thirdFactorForcedNext = data.forcedNext,
+            thirdFactorCompletedAt = data.completedAt?.let {
+                runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull()
+            },
+            // The document outranks what the user typed, but only where Third Factor actually read
+            // it: a failed scan reports 'N/A' gender and a blank nationality, which must not
+            // overwrite good data.
+            nationality = data.nationality?.takeIf { it.isNotBlank() } ?: existingKyc.nationality,
+            gender = data.gender?.toGender() ?: existingKyc.gender,
             status = KycResponse.Status.PENDING
         )
         val saved = kycRepo.save(updated)
         val user = userRepository.findById(userId).orElse(null)
-        slackNotifier.send("📝 KYC documents submitted by ${user.fullName}")
+        if (user != null) {
+            val warnings = saved.thirdFactorWarnings
+            slackNotifier.send(
+                if (warnings.isEmpty()) "📝 KYC documents submitted by ${user.fullName}"
+                else "⚠️ KYC documents submitted by ${user.fullName} — needs a closer look:\n" +
+                    warnings.joinToString("\n") { "• $it" }
+            )
+        }
         return saved.toResponse()
     }
-
 
     private fun updateStatus(
         kycId: ObjectId,

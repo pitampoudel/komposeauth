@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm
 import org.springframework.security.oauth2.jwt.JwsHeader
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
+import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder
@@ -50,12 +51,13 @@ class JwtTokenService {
         ).tokenValue
     }
 
-    fun verifyHs256Token(token: String, secretKey: String) {
+    /** Returns the verified claims so callers can bind on them rather than on untrusted request data. */
+    fun verifyHs256Token(token: String, secretKey: String): Jwt {
         val secretBytes = resolveHs256Secret(secretKey)
         val decoder = NimbusJwtDecoder
             .withSecretKey(SecretKeySpec(secretBytes, "HmacSHA256"))
             .build()
-        decoder.decode(token)
+        return decoder.decode(token)
     }
 
     private fun resolveHs256Secret(secretKey: String): ByteArray {

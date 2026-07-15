@@ -7,6 +7,7 @@ import org.bson.types.ObjectId
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
+import org.springframework.data.annotation.Transient
 import org.springframework.data.annotation.TypeAlias
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.CompoundIndexes
@@ -71,9 +72,38 @@ data class KycVerification(
     val currentAddressCity: String? = null,
     val currentAddressLine1: String? = null,
     val currentAddressLine2: String? = null,
+    // THIRD FACTOR
+    // Verdict and integrity signals from the Third Factor webhook. Null when the KYC was
+    // submitted through the manual flow rather than the SDK.
+    val thirdFactorSession: String? = null,
+    val thirdFactorVerified: Boolean? = null,
+    val thirdFactorFaceMatch: Double? = null,
+    val thirdFactorBypassed: Boolean? = null,
+    val thirdFactorForcedNext: Boolean? = null,
+    val thirdFactorCompletedAt: Instant? = null,
+
     // OTHER
     @Indexed
     val status: KycResponse.Status = KycResponse.Status.DRAFT,
     @CreatedDate val createdAt: Instant = Instant.now(),
     @LastModifiedDate val updatedAt: Instant = Instant.now()
-)
+) {
+    /**
+     * Reasons a reviewer should look closer at a Third Factor submission, derived from the signals
+     * above. Empty means nothing stood out. Deliberately not persisted: it is a reading of the
+     * stored fields, and a stored copy could only ever contradict them.
+     */
+    @get:Transient
+    val thirdFactorWarnings: List<String>
+        get() = buildList {
+            if (thirdFactorVerified == false) add("Third Factor marked the session as not verified")
+            if (thirdFactorBypassed == true) add("One or more steps were bypassed")
+            if (thirdFactorForcedNext == true) add("User force-advanced past a failed step")
+            thirdFactorFaceMatch?.takeIf { it < FACE_MATCH_THRESHOLD }
+                ?.let { add("Face-to-document match is only ${"%.1f".format(it)}%") }
+        }
+
+    private companion object {
+        const val FACE_MATCH_THRESHOLD = 70.0
+    }
+}

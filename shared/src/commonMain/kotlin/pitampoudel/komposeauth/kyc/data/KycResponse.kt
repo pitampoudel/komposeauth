@@ -12,7 +12,13 @@ data class KycResponse(
     val currentAddress: AddressInformation,
     val permanentAddress: AddressInformation,
     val documentInformation: DocumentInformationResponse,
-    val status: Status
+    val status: Status,
+    /**
+     * Reasons a reviewer should look closer at a Third Factor submission — a failed verdict, a
+     * bypassed step, a weak face match, or a document that disagrees with what the user declared.
+     * Empty for manual submissions and for sessions where nothing stood out.
+     */
+    val thirdFactorWarnings: List<String> = emptyList()
 ) {
 
     @Serializable

@@ -84,7 +84,17 @@ class ThirdFactorKycController(
     ): ResponseEntity<KycResponse> {
         val secretKey = appConfigService.getConfig().thirdFactorSecretKey
             ?: error("Third-factor secret key is not configured")
-        jwtTokenService.verifyHs256Token(data.jwt, secretKey)
+        val jwt = jwtTokenService.verifyHs256Token(data.jwt, secretKey)
+
+        // This endpoint is public, so a valid signature only proves the token is one we issued —
+        // not that it was issued for the user the body names. Every user holds a signed token for
+        // their own session, so without this check one could submit documents against another
+        // user's KYC by swapping the identifier. Bind to the token we signed.
+        val tokenIdentifier = jwt.getClaimAsString("identifier") ?: jwt.subject
+        if (tokenIdentifier.isNullOrBlank() || tokenIdentifier != data.identifier) {
+            throw BadRequestException("Identifier does not match the verification session")
+        }
+
         return ResponseEntity.ok(kycService.submitThirdFactorVerification(findServerUrl(httpServletRequest), data))
     }
 
