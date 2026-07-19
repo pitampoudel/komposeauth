@@ -16,7 +16,7 @@ spring:
       include-binding-errors: always
 logging:
   level:
-    root: INFO
+    root: ERROR
 
 server:
   port: ${PORT:8080}
@@ -34,7 +34,3 @@ management:
     export:
       otlp:
         enabled: false
-
-cleanup:
-  junk-users:
-    enabled: true
