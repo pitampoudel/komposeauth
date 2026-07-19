@@ -14,7 +14,8 @@ import pitampoudel.komposeauth.user.entity.User
 @Component
 @ConditionalOnProperty(prefix = "cleanup.junk-users", name = ["enabled"], havingValue = "true")
 class JunkUserCleanupRunner(
-    private val mongoTemplate: MongoTemplate
+    private val mongoTemplate: MongoTemplate,
+    private val userService: UserService
 ) : ApplicationRunner {
     private val log = LoggerFactory.getLogger(javaClass)
     private val trustedEmailDomains = listOf("gmail.com", "outlook.com", "yahoo.com", "icloud.com")
@@ -50,14 +51,17 @@ class JunkUserCleanupRunner(
 
         log.info("Junk cleanup: candidates={}", ids.size)
 
-        val deleteResult = mongoTemplate.remove(Query(Criteria("_id").`in`(ids)), User::class.java)
-        log.info(
-            "Junk cleanup: deleted={} acknowledged={}",
-            deleteResult.deletedCount,
-            deleteResult.wasAcknowledged()
-        )
+        var deletedCount = 0
+        for (id in ids) {
+            try {
+                userService.deleteUser(id)
+                deletedCount++
+            } catch (e: Exception) {
+                log.error("Failed to delete junk user {}", id, e)
+            }
+        }
 
-        log.info("Junk cleanup finished; deleted {} users", ids.size)
+        log.info("Junk cleanup finished; deleted {} users", deletedCount)
     }
 
     private fun buildEmailPattern(domains: List<String>): String {

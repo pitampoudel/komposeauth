@@ -63,7 +63,8 @@ class UserServiceAdminEdgeCasesTest {
             webAuthnRelyingPartyOperations = mock(),
             roleChangeEmailNotifier = mock(),
             emailVerificationService = mock(),
-            appleTokenValidator = mock()
+            appleTokenValidator = mock(),
+            oauth2AuthorizationDocumentRepository = mock()
         )
 
         assertThrows<org.apache.coyote.BadRequestException> {
@@ -93,7 +94,8 @@ class UserServiceAdminEdgeCasesTest {
             webAuthnRelyingPartyOperations = mock(),
             roleChangeEmailNotifier = mock(),
             emailVerificationService = mock(),
-            appleTokenValidator = mock()
+            appleTokenValidator = mock(),
+            oauth2AuthorizationDocumentRepository = mock()
 
         )
 
@@ -127,7 +129,8 @@ class UserServiceAdminEdgeCasesTest {
             webAuthnRelyingPartyOperations = mock(),
             roleChangeEmailNotifier = mock(),
             emailVerificationService = mock(),
-            appleTokenValidator = mock()
+            appleTokenValidator = mock(),
+            oauth2AuthorizationDocumentRepository = mock()
         )
 
         val result = service.findUsersFlexible(ids = null, q = null, page = -10, size = 9999)
@@ -164,7 +167,8 @@ class UserServiceAdminEdgeCasesTest {
             webAuthnRelyingPartyOperations = mock(),
             roleChangeEmailNotifier = mock(),
             emailVerificationService = mock(),
-            appleTokenValidator = mock()
+            appleTokenValidator = mock(),
+            oauth2AuthorizationDocumentRepository = mock()
         )
 
         service.findUsersFlexible(ids = null, q = "  MixedCase  ", page = 1, size = 25)
@@ -201,7 +205,8 @@ class UserServiceAdminEdgeCasesTest {
             webAuthnRelyingPartyOperations = mock(),
             roleChangeEmailNotifier = mock(),
             emailVerificationService = mock(),
-            appleTokenValidator = mock()
+            appleTokenValidator = mock(),
+            oauth2AuthorizationDocumentRepository = mock()
         )
 
         service.findUsersFlexible(ids = null, q = "John    Doe", page = 2, size = 15)
