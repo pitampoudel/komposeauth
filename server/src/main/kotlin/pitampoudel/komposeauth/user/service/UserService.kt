@@ -25,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.core.domain.isValidEmail
 import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.authorization.OAuth2AuthorizationDocumentRepository
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
@@ -74,7 +75,8 @@ class UserService(
     private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
     private val roleChangeEmailNotifier: RoleChangeEmailNotifier,
     private val emailVerificationService: EmailVerificationService,
-    private val appleTokenValidator: AppleTokenValidator
+    private val appleTokenValidator: AppleTokenValidator,
+    private val oauth2AuthorizationDocumentRepository: OAuth2AuthorizationDocumentRepository
 ) {
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
@@ -467,6 +469,9 @@ class UserService(
         }
 
         user.picture?.let { storageService.delete(it) }
+
+        oneTimeTokenRepository.deleteAllByUserId(user.id)
+        oauth2AuthorizationDocumentRepository.deleteAllByPrincipalName(user.id.toHexString())
 
         userRepository.deleteById(user.id)
     }

@@ -8,4 +8,5 @@ import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 @Repository
 interface OneTimeTokenRepository : MongoRepository<OneTimeToken, ObjectId> {
     fun findByTokenHashAndPurpose(tokenHash: String, purpose: OneTimeToken.Purpose): OneTimeToken?
+    fun deleteAllByUserId(userId: ObjectId)
 }
