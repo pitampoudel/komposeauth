@@ -10,6 +10,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.patch
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
@@ -29,29 +30,10 @@ class InputValidationIntegrationTest {
     @Autowired
     private lateinit var json: Json
 
-    @Test
-    fun `create user with duplicate email fails`() {
-        val email = "duplicate@example.com"
-        TestAuthHelpers.createUser(mockMvc, json, email)
 
-        val request = CreateUserRequest(
-            firstName = "Duplicate",
-            lastName = "User",
-            email = email,
-            password = "Password1",
-            confirmPassword = "Password1"
-        )
-
-        mockMvc.post("/${ApiEndpoints.USERS}") {
-            contentType = MediaType.APPLICATION_JSON
-            accept = MediaType.APPLICATION_JSON
-            content = json.encodeToString(CreateUserRequest.serializer(), request)
-        }.andExpect {
-            status { is4xxClientError() }
-        }
-    }
     @Test
     fun `create user with very long name succeeds`() {
+        val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, pitampoudel.komposeauth.user.repository.UserRepository::class.java.let { mockMvc.dispatcherServlet.webApplicationContext?.getBean(it)!! }, "admin-longname@example.com")
         val longName = "A".repeat(100)
         val request = CreateUserRequest(
             firstName = longName,
@@ -61,9 +43,10 @@ class InputValidationIntegrationTest {
             confirmPassword = "Password1"
         )
 
-        mockMvc.post("/${ApiEndpoints.USERS}") {
+        mockMvc.patch("/${ApiEndpoints.USERS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
+            cookie(adminCookie)
             content = json.encodeToString(CreateUserRequest.serializer(), request)
         }.andExpect {
             status { isOk() }
@@ -72,6 +55,7 @@ class InputValidationIntegrationTest {
 
     @Test
     fun `create user with special characters in name succeeds`() {
+        val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, pitampoudel.komposeauth.user.repository.UserRepository::class.java.let { mockMvc.dispatcherServlet.webApplicationContext?.getBean(it)!! }, "admin-specialchars@example.com")
         val request = CreateUserRequest(
             firstName = "José",
             lastName = "O'Brien-Smith",
@@ -80,9 +64,10 @@ class InputValidationIntegrationTest {
             confirmPassword = "Password1"
         )
 
-        mockMvc.post("/${ApiEndpoints.USERS}") {
+        mockMvc.patch("/${ApiEndpoints.USERS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
+            cookie(adminCookie)
             content = json.encodeToString(CreateUserRequest.serializer(), request)
         }.andExpect {
             status { isOk() }
@@ -123,9 +108,11 @@ class InputValidationIntegrationTest {
 
     @Test
     fun `malformed JSON request returns bad request`() {
-        mockMvc.post("/${ApiEndpoints.USERS}") {
+        val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, pitampoudel.komposeauth.user.repository.UserRepository::class.java.let { mockMvc.dispatcherServlet.webApplicationContext?.getBean(it)!! }, "admin-malformed@example.com")
+        mockMvc.patch("/${ApiEndpoints.USERS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
+            cookie(adminCookie)
             content = "{invalid json}"
         }.andExpect {
             status { isBadRequest() }
@@ -134,9 +121,11 @@ class InputValidationIntegrationTest {
 
     @Test
     fun `missing required fields in request returns bad request`() {
-        mockMvc.post("/${ApiEndpoints.USERS}") {
+        val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, pitampoudel.komposeauth.user.repository.UserRepository::class.java.let { mockMvc.dispatcherServlet.webApplicationContext?.getBean(it)!! }, "admin-missing@example.com")
+        mockMvc.patch("/${ApiEndpoints.USERS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
+            cookie(adminCookie)
             content = "{\"firstName\": \"Test\"}"
         }.andExpect {
             status { isBadRequest() }

@@ -17,7 +17,6 @@ import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
-import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.repository.UserRepository
 
@@ -145,26 +144,6 @@ class EndpointSecurityIntegrationTest {
         }
     }
 
-    @Test
-    fun `public endpoints are accessible without authentication`() {
-
-        // Create user endpoint should be public
-        mockMvc.post("/${ApiEndpoints.USERS}") {
-            contentType = MediaType.APPLICATION_JSON
-            accept = MediaType.APPLICATION_JSON
-            content = json.encodeToString(
-                CreateUserRequest(
-                    firstName = "Public",
-                    lastName = "Test",
-                    email = "public-endpoint-test@example.com",
-                    password = "Password1",
-                    confirmPassword = "Password1"
-                )
-            )
-        }.andExpect {
-            status { isOk() }
-        }
-    }
 
     @Test
     fun `authenticated user can access their own profile`() {

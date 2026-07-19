@@ -2,17 +2,15 @@ package pitampoudel.komposeauth
 
 import jakarta.servlet.http.Cookie
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.bson.types.ObjectId
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
-import pitampoudel.komposeauth.user.data.CreateUserRequest
-import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.domain.ResponseType
+import pitampoudel.komposeauth.user.data.CreateUserRequest
+import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.repository.UserRepository
 import kotlin.test.assertNotNull
 
@@ -30,31 +28,20 @@ object TestAuthHelpers {
      * - JSON string: "..."
      */
     fun createUser(mockMvc: MockMvc, json: Json, email: String, password: String = "Password1"): String {
-        val mvcResult = mockMvc.post("/${ApiEndpoints.USERS}") {
-            contentType = MediaType.APPLICATION_JSON
-            accept = MediaType.APPLICATION_JSON
-            content = json.encodeToString(
-                CreateUserRequest(
-                    firstName = "Test",
-                    lastName = "User",
-                    email = email,
-                    password = password,
-                    confirmPassword = password
-                )
-            )
-        }.andExpect {
-            status { isOk() }
-        }.andReturn()
+        val request = CreateUserRequest(
+            firstName = "Test",
+            lastName = "User",
+            email = email,
+            password = password,
+            confirmPassword = password
+        )
 
-        val body = mvcResult.response.contentAsString
-        val id: String? = when (val element = json.parseToJsonElement(body)) {
-            is kotlinx.serialization.json.JsonObject -> element.jsonObject["id"]?.jsonPrimitive?.content
-            is kotlinx.serialization.json.JsonPrimitive -> if (element.isString) element.content else null
-            else -> null
-        }
+        val context = mockMvc.dispatcherServlet.webApplicationContext
+            ?: error("No WebApplicationContext found in MockMvc")
+        val userService = context.getBean(pitampoudel.komposeauth.user.service.UserService::class.java)
 
-        assertNotNull(id)
-        return id
+        val user = userService.createUser("http://localhost", request)
+        return user.id.toHexString()
     }
 
     /** Logs in with username+password and returns the access token cookie. */

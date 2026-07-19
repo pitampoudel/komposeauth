@@ -97,23 +97,19 @@ class PhoneNumberControllerIntegrationTest {
         val ownerCookie = TestAuthHelpers.loginCookie(mockMvc, json, ownerEmail)
 
         // Create another user with the target phone number
-        mockMvc.post("/${ApiEndpoints.USERS}") {
-            contentType = MediaType.APPLICATION_JSON
-            accept = MediaType.APPLICATION_JSON
-            content = json.encodeToString(
-                CreateUserRequest.serializer(),
-                CreateUserRequest(
-                    firstName = "Other",
-                    lastName = "User",
-                    phoneNumber = otherPhone,
-                    countryNameCode = "NP",
-                    password = "Password1",
-                    confirmPassword = "Password1"
-                )
+        val context = mockMvc.dispatcherServlet.webApplicationContext!!
+        val userService = context.getBean(pitampoudel.komposeauth.user.service.UserService::class.java)
+        userService.createUser(
+            "http://localhost",
+            CreateUserRequest(
+                firstName = "Other",
+                lastName = "User",
+                phoneNumber = otherPhone,
+                countryNameCode = "NP",
+                password = "Password1",
+                confirmPassword = "Password1"
             )
-        }.andExpect {
-            status { isOk() }
-        }
+        )
 
         val request = SendOtpRequest(
             username = otherPhone
