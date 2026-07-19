@@ -34,21 +34,21 @@ class UsersController(
     val kycService: KycService,
     private val userContextService: UserContextService
 ) {
-    @PostMapping("/$USERS")
-    @Operation(
-        summary = "Create user",
-        description = "Creates a new user account",
-    )
-    fun create(
-        @RequestBody request: CreateUserRequest,
-        req: HttpServletRequest
-    ): ResponseEntity<UserResponse> {
-        return ResponseEntity.ok()
-            .body(
-                userService.createUser(findServerUrl(req), request).mapToResponseDto(false)
-            )
-
-    }
+//    @PostMapping("/$USERS")
+//    @Operation(
+//        summary = "Create user",
+//        description = "Creates a new user account",
+//    )
+//    fun create(
+//        @RequestBody request: CreateUserRequest,
+//        req: HttpServletRequest
+//    ): ResponseEntity<UserResponse> {
+//        return ResponseEntity.ok()
+//            .body(
+//                userService.createUser(findServerUrl(req), request).mapToResponseDto(false)
+//            )
+//
+//    }
 
     @PatchMapping("/$USERS")
     @Operation(

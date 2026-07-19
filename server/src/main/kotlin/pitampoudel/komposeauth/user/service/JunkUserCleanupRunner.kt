@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.stream
 import org.springframework.stereotype.Component
 import pitampoudel.komposeauth.user.entity.User
 
@@ -36,7 +37,7 @@ class JunkUserCleanupRunner(
 
         val ids = mutableListOf<ObjectId>()
 
-        mongoTemplate.stream(Query(criteria), User::class.java).use { stream ->
+        mongoTemplate.stream<User>(Query(criteria)).use { stream ->
             val iterator = stream.iterator()
             while (iterator.hasNext()) {
                 val doc = iterator.next()
