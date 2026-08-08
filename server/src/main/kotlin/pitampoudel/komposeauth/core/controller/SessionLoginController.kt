@@ -42,12 +42,10 @@ class SessionLoginController(private val appConfigService: AppConfigService) {
         // `error` means we just came back from a failed or cancelled Google login. Falling through
         // to the form is what stops us bouncing the user straight back to the provider forever.
         if (error == null && googleEnabled && requestedIdp.equals(GOOGLE, ignoreCase = true)) {
-            val uri = UriComponentsBuilder.fromPath("/oauth2/authorization/$GOOGLE")
-            (prompt?.takeIf { it.isNotBlank() } ?: saved(PROMPT_PARAM))
-                ?.let { uri.queryParam(PROMPT_PARAM, it) }
-            (loginHint?.takeIf { it.isNotBlank() } ?: saved(LOGIN_HINT_PARAM))
-                ?.let { uri.queryParam(LOGIN_HINT_PARAM, it) }
-            return "redirect:" + uri.encode().toUriString()
+            val uri = googleAuthorizationUrl(prompt = prompt?.takeIf { it.isNotBlank() } ?: saved(PROMPT_PARAM),
+                loginHint = loginHint?.takeIf { it.isNotBlank() } ?: saved(LOGIN_HINT_PARAM))
+
+            return "redirect:$uri"
         }
 
         model.addAttribute("googleEnabled", googleEnabled)
@@ -61,9 +59,12 @@ class SessionLoginController(private val appConfigService: AppConfigService) {
         return "session-login"
     }
 
-    private fun googleAuthorizationUrl(prompt: String?): String =
+    private fun googleAuthorizationUrl(prompt: String?, loginHint: String? = null): String =
         UriComponentsBuilder.fromPath("/oauth2/authorization/$GOOGLE")
-            .apply { prompt?.takeIf { it.isNotBlank() }?.let { queryParam(PROMPT_PARAM, it) } }
+            .apply {
+                prompt?.takeIf { it.isNotBlank() }?.let { queryParam(PROMPT_PARAM, it) }
+                loginHint?.takeIf { it.isNotBlank() }?.let { queryParam(LOGIN_HINT_PARAM, it) }
+            }
             .encode()
             .toUriString()
 
