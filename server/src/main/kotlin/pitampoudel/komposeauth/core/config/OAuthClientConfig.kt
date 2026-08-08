@@ -6,6 +6,9 @@ import org.springframework.security.config.oauth2.client.CommonOAuth2Provider
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 
 @Configuration
@@ -34,4 +37,14 @@ class OAuthClientConfig {
             InMemoryClientRegistrationRepository(registrations)
         }
     }
+
+    @Bean
+    fun authorizationRequestResolver(
+        clientRegistrationRepository: ClientRegistrationRepository
+    ): OAuth2AuthorizationRequestResolver = GoogleAuthorizationRequestResolver(
+        DefaultOAuth2AuthorizationRequestResolver(
+            clientRegistrationRepository,
+            OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI
+        )
+    )
 }

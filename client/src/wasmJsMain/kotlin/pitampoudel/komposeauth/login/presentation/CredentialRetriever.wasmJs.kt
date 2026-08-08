@@ -91,7 +91,10 @@ private fun buildGoogleAuthUrl(
         "client_id" to clientId,
         "redirect_uri" to redirectUri,
         "scope" to "openid email profile",
-        "state" to state
+        "state" to state,
+        // Without this Google reuses whichever account it already has a session for, leaving no
+        // way to sign in as somebody else.
+        "prompt" to "select_account"
     )
     return "https://accounts.google.com/o/oauth2/v2/auth?" +
             params.entries.joinToString("&") { (k, v) -> "${k}=${v.encodeURLParameter()}" }

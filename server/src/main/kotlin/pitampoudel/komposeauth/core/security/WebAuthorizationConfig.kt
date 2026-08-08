@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.core.security
 
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -22,11 +23,13 @@ import org.springframework.security.oauth2.core.oidc.OidcUserInfo
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.token.*
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.access.intercept.AuthorizationFilter
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
@@ -169,7 +172,9 @@ class WebAuthorizationConfig {
         http: HttpSecurity,
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
-        kycService: KycService
+        kycService: KycService,
+        securityContextRepository: HttpSessionSecurityContextRepository,
+        authorizationServerSettings: ObjectProvider<AuthorizationServerSettings>
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
 
@@ -226,6 +231,17 @@ class WebAuthorizationConfig {
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
+            // Runs before the authorization check so that dropping the session authentication for
+            // `prompt=login` / `prompt=select_account` sends the request to the login entry point.
+            .addFilterBefore(
+                PromptReAuthenticationFilter(
+                    authorizationEndpointUri = authorizationServerSettings.ifAvailable
+                        ?.authorizationEndpoint
+                        ?: AuthorizationServerSettings.builder().build().authorizationEndpoint,
+                    securityContextRepository = securityContextRepository
+                ),
+                AuthorizationFilter::class.java
+            )
             .authorizeHttpRequests { auth ->
                 auth.anyRequest().authenticated()
             }

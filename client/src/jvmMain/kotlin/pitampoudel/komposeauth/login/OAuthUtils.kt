@@ -12,7 +12,8 @@ object OAuthUtils {
                 "&response_type=code" +
                 "&scope=openid%20email%20profile" +
                 "&code_challenge_method=S256" +
-                "&access_type=offline"
+                "&access_type=offline" +
+                "&prompt=select_account"
     }
 
     fun listenForCode(port: Int): String {
