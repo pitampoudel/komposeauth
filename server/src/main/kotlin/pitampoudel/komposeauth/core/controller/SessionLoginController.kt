@@ -42,9 +42,10 @@ class SessionLoginController(private val appConfigService: AppConfigService) {
         // `error` means we just came back from a failed or cancelled Google login. Falling through
         // to the form is what stops us bouncing the user straight back to the provider forever.
         if (error == null && googleEnabled && requestedIdp.equals(GOOGLE, ignoreCase = true)) {
-            val uri = googleAuthorizationUrl(prompt = prompt?.takeIf { it.isNotBlank() } ?: saved(PROMPT_PARAM),
-                loginHint = loginHint?.takeIf { it.isNotBlank() } ?: saved(LOGIN_HINT_PARAM))
-
+            val uri = googleAuthorizationUrl(
+                prompt = prompt?.takeIf { it.isNotBlank() } ?: saved(PROMPT_PARAM),
+                loginHint = loginHint?.takeIf { it.isNotBlank() } ?: saved(LOGIN_HINT_PARAM)
+            )
             return "redirect:$uri"
         }
 
