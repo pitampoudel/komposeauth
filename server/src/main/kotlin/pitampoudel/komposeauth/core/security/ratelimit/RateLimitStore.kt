@@ -36,18 +36,18 @@ class InMemoryRateLimitStore : RateLimitStore {
     private val buckets = ConcurrentHashMap<String, Bucket>()
 
     override fun incrementAndCount(bucketKey: String, expiresAt: Instant): Long {
-        val now = Instant.now()
+        // The key already names the window, so a new window is simply a new entry — same as the
+        // Mongo store, where the document `_id` distinguishes windows. `expiresAt` is only ever a
+        // hint for pruning; deciding expiry here from a second clock would disagree with the caller
+        // about which window is current.
         if (buckets.size >= CLEANUP_THRESHOLD) {
+            val now = Instant.now()
             buckets.entries.removeIf { it.value.expiresAt.isBefore(now) }
         }
-        val bucket = buckets.compute(bucketKey) { _, existing ->
-            if (existing == null || existing.expiresAt.isBefore(now)) {
-                Bucket(expiresAt, AtomicLong(0))
-            } else {
-                existing
-            }
-        }!!
-        return bucket.count.incrementAndGet()
+        return buckets
+            .computeIfAbsent(bucketKey) { Bucket(expiresAt, AtomicLong(0)) }
+            .count
+            .incrementAndGet()
     }
 
     private companion object {

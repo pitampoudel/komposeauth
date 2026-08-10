@@ -3,6 +3,7 @@ package pitampoudel.komposeauth.core.security.ratelimit
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
@@ -17,7 +18,9 @@ import java.time.Instant
  */
 @Service
 class RateLimiter(
-    private val store: RateLimitStore
+    private val store: RateLimitStore,
+    /** Injected so window rollover can be tested without sleeping through real seconds. */
+    private val clock: Clock
 ) {
 
     /** @param retryAfterSeconds how long until the current window rolls over. */
@@ -28,7 +31,7 @@ class RateLimiter(
      */
     fun check(key: String, limit: Int, window: Duration): Decision {
         val windowSeconds = window.seconds.coerceAtLeast(1)
-        val nowSeconds = Instant.now().epochSecond
+        val nowSeconds = clock.instant().epochSecond
         val windowIndex = Math.floorDiv(nowSeconds, windowSeconds)
         val windowEndSeconds = (windowIndex + 1) * windowSeconds
 

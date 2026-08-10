@@ -7,14 +7,25 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneOffset
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 class RateLimiterTest {
 
-    private fun limiter() = RateLimiter(InMemoryRateLimitStore())
+    /** A clock the test moves by hand, so window rollover doesn't depend on real elapsed time. */
+    private class MutableClock(var now: Instant) : Clock() {
+        override fun instant() = now
+        override fun getZone() = ZoneOffset.UTC
+        override fun withZone(zone: java.time.ZoneId) = this
+        fun advance(by: Duration) { now = now.plus(by) }
+    }
+
+    private fun limiter(clock: Clock = Clock.systemUTC()) =
+        RateLimiter(InMemoryRateLimitStore(), clock)
 
     @Test
     fun `allows up to the limit then refuses`() {
@@ -44,18 +55,33 @@ class RateLimiterTest {
 
     @Test
     fun `starts a fresh window once the old one has elapsed`() {
-        val limiter = limiter()
-        val oneSecond = Duration.ofSeconds(1)
+        val clock = MutableClock(Instant.parse("2026-01-01T00:00:30Z"))
+        val limiter = limiter(clock)
+        val window = Duration.ofMinutes(5)
 
-        // Windows are clock-aligned, so land inside one before spending it.
-        while (Instant.now().nano > 300_000_000) Thread.sleep(10)
+        assertTrue(limiter.tryAcquire("k", limit = 1, window = window))
+        assertFalse(limiter.tryAcquire("k", limit = 1, window = window))
 
-        assertTrue(limiter.tryAcquire("k", limit = 1, window = oneSecond))
-        assertFalse(limiter.tryAcquire("k", limit = 1, window = oneSecond))
+        // Still inside the same window.
+        clock.advance(Duration.ofMinutes(4))
+        assertFalse(limiter.tryAcquire("k", limit = 1, window = window))
 
-        Thread.sleep(900)
+        // Past the boundary, so the budget is replenished.
+        clock.advance(Duration.ofMinutes(2))
+        assertTrue(limiter.tryAcquire("k", limit = 1, window = window))
+    }
 
-        assertTrue(limiter.tryAcquire("k", limit = 1, window = oneSecond))
+    @Test
+    fun `aligns windows to the clock rather than to first use`() {
+        // Two instances starting at different moments inside the same window must agree on which
+        // window it is, otherwise each would grant its own fresh budget.
+        val store = InMemoryRateLimitStore()
+        val early = RateLimiter(store, MutableClock(Instant.parse("2026-01-01T00:00:10Z")))
+        val late = RateLimiter(store, MutableClock(Instant.parse("2026-01-01T00:04:50Z")))
+        val window = Duration.ofMinutes(5)
+
+        assertTrue(early.tryAcquire("k", limit = 1, window = window))
+        assertFalse(late.tryAcquire("k", limit = 1, window = window))
     }
 
     @Test
@@ -88,8 +114,8 @@ class RateLimiterTest {
         // What the Mongo-backed store buys on serverless: the tally follows the key, not the
         // process, so scaling out or cold-starting doesn't hand an attacker a fresh allowance.
         val shared = InMemoryRateLimitStore()
-        val instanceA = RateLimiter(shared)
-        val instanceB = RateLimiter(shared)
+        val instanceA = RateLimiter(shared, Clock.systemUTC())
+        val instanceB = RateLimiter(shared, Clock.systemUTC())
         val window = Duration.ofMinutes(5)
 
         assertTrue(instanceA.tryAcquire("k", limit = 2, window = window))
@@ -105,7 +131,7 @@ class RateLimiterTest {
             override fun incrementAndCount(bucketKey: String, expiresAt: Instant): Long = 0
         }
 
-        assertTrue(RateLimiter(brokenStore).tryAcquire("k", limit = 1, window = Duration.ofMinutes(5)))
+        assertTrue(RateLimiter(brokenStore, Clock.systemUTC()).tryAcquire("k", limit = 1, window = Duration.ofMinutes(5)))
     }
 
     @Test
@@ -115,7 +141,7 @@ class RateLimiterTest {
             override fun incrementAndCount(bucketKey: String, expiresAt: Instant): Long =
                 seen.computeIfAbsent(bucketKey) { AtomicLong() }.incrementAndGet()
         }
-        val limiter = RateLimiter(recordingStore)
+        val limiter = RateLimiter(recordingStore, Clock.systemUTC())
 
         limiter.tryAcquire("k", limit = 5, window = Duration.ofMinutes(1))
         limiter.tryAcquire("k", limit = 5, window = Duration.ofMinutes(5))
