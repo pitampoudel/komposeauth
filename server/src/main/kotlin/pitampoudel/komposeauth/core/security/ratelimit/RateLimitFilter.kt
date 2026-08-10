@@ -15,11 +15,15 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints
  * login, OTP issuing and verification, and password-reset mail.
  *
  * Runs after Spring's `ForwardedHeaderFilter` (see `server.forward-headers-strategy`), so
- * `remoteAddr` already reflects the real client when the app sits behind a trusted proxy.
+ * Runs before `ForwardedHeaderFilter` and works the client address out itself via [ClientIpResolver],
+ * because `remoteAddr` under `server.forward-headers-strategy: framework` is taken from the leftmost
+ * `X-Forwarded-For` entry — a value the caller supplies, and can vary per request to be counted as a
+ * new client every time.
  */
 class RateLimitFilter(
     private val rateLimiter: RateLimiter,
-    private val properties: RateLimitProperties
+    private val properties: RateLimitProperties,
+    private val clientIpResolver: ClientIpResolver
 ) : OncePerRequestFilter() {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -49,15 +53,18 @@ class RateLimitFilter(
             return
         }
 
+        // Rules name application paths, so strip any deployment context path before matching.
+        val path = request.requestURI.removePrefix(request.contextPath)
         val rule = rules.firstOrNull {
-            it.method.matches(request.method) && it.path == request.requestURI
+            it.method.matches(request.method) && it.path == path
         }
         if (rule == null) {
             filterChain.doFilter(request, response)
             return
         }
 
-        val key = "ip:${request.remoteAddr}:${rule.method}:${rule.path}"
+        val clientIp = clientIpResolver.resolve(request)
+        val key = "ip:$clientIp:${rule.method}:${rule.path}"
         val decision = rateLimiter.check(key, rule.quota.limit, rule.quota.window)
         if (decision.allowed) {
             filterChain.doFilter(request, response)
@@ -68,8 +75,8 @@ class RateLimitFilter(
         log.warn(
             "Rate limit exceeded for {} {} from {}",
             request.method,
-            request.requestURI,
-            request.remoteAddr
+            path,
+            clientIp
         )
         response.status = HttpStatus.TOO_MANY_REQUESTS.value()
         response.setHeader("Retry-After", retryAfter.toString())

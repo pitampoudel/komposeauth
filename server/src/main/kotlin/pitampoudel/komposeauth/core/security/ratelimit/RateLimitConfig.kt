@@ -1,9 +1,12 @@
 package pitampoudel.komposeauth.core.security.ratelimit
 
+import jakarta.servlet.DispatcherType
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
+import org.springframework.web.filter.ForwardedHeaderFilter
 import java.time.Clock
 
 @Configuration
@@ -17,17 +20,48 @@ class RateLimitConfig {
     fun rateLimitClock(): Clock = Clock.systemUTC()
 
     /**
-     * Registered ahead of the security filter chains so throttled requests are turned away before
-     * any password hashing or SMS provider call happens.
+     * Registered ahead of everything, including [ForwardedHeaderFilter] below.
+     *
+     * Two reasons, and the second is the load-bearing one. Throttled requests are turned away before
+     * any password hashing or SMS provider call happens; and the limiter gets to see the request as
+     * it arrived — real peer address, `X-Forwarded-For` intact — rather than after
+     * `ForwardedHeaderFilter` has overwritten `remoteAddr` with the header's leftmost entry and
+     * stripped the header away. That entry is chosen by whoever sent the request, so a limiter
+     * reading it counts a different "client" on every attempt. See [ClientIpResolver].
      */
     @Bean
     fun rateLimitFilterRegistration(
         rateLimiter: RateLimiter,
-        properties: RateLimitProperties
+        properties: RateLimitProperties,
+        clientIpResolver: ClientIpResolver
     ): FilterRegistrationBean<RateLimitFilter> {
-        val registration = FilterRegistrationBean(RateLimitFilter(rateLimiter, properties))
-        registration.order = Ordered.HIGHEST_PRECEDENCE + 100
+        val registration = FilterRegistrationBean(
+            RateLimitFilter(rateLimiter, properties, clientIpResolver)
+        )
+        registration.order = Ordered.HIGHEST_PRECEDENCE
         registration.addUrlPatterns("/*")
+        return registration
+    }
+
+    /**
+     * The same filter Spring Boot would register, moved one notch later so the rate limiter runs
+     * first.
+     *
+     * Boot registers this at `HIGHEST_PRECEDENCE` and there is no order below that to claim, so the
+     * only way to get in front of it is to register it here instead — which Boot allows for, backing
+     * off through `@ConditionalOnMissingFilterBean`. The property condition is copied from Boot so
+     * the filter still appears only when forwarded headers are actually being trusted.
+     */
+    @Bean
+    @ConditionalOnProperty(name = ["server.forward-headers-strategy"], havingValue = "framework")
+    fun forwardedHeaderFilter(): FilterRegistrationBean<ForwardedHeaderFilter> {
+        val registration = FilterRegistrationBean(ForwardedHeaderFilter())
+        registration.setDispatcherTypes(
+            DispatcherType.REQUEST,
+            DispatcherType.ASYNC,
+            DispatcherType.ERROR
+        )
+        registration.order = Ordered.HIGHEST_PRECEDENCE + 50
         return registration
     }
 }

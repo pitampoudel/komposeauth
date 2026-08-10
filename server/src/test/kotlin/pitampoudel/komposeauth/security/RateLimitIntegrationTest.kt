@@ -52,10 +52,11 @@ class RateLimitIntegrationTest {
         mongoTemplate.remove(org.springframework.data.mongodb.core.query.Query(), RateLimitWindow::class.java)
     }
 
-    private fun attemptLogin(email: String, password: String) =
+    private fun attemptLogin(email: String, password: String, forwardedFor: String? = null) =
         mockMvc.post("/${ApiEndpoints.LOGIN}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
+            forwardedFor?.let { header("X-Forwarded-For", it) }
             content = json.encodeToString<Credential>(
                 Credential.UsernamePassword(username = email, password = password)
             )
@@ -93,6 +94,29 @@ class RateLimitIntegrationTest {
         // Guessing correctly on the next attempt must not get through either — otherwise the limit
         // would only slow an attacker down until the moment they succeed.
         attemptLogin(email, "Password1").andExpect {
+            status { isTooManyRequests() }
+        }
+    }
+
+    /**
+     * The bypass this configuration exists to close.
+     *
+     * `X-Forwarded-For` is chosen by whoever sends the request. With no proxy declared — the default,
+     * and what the quickstart's directly-exposed container is — believing it would hand an attacker
+     * a fresh budget per request simply for varying a header, which is to say no limit at all.
+     */
+    @Test
+    fun `a forged forwarded-for header does not buy more attempts`() {
+        val email = "spoofer@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email)
+
+        repeat(3) { attempt ->
+            attemptLogin(email, "WrongPassword1", forwardedFor = "10.0.0.$attempt").andExpect {
+                status { isForbidden() }
+            }
+        }
+
+        attemptLogin(email, "WrongPassword1", forwardedFor = "10.0.0.99").andExpect {
             status { isTooManyRequests() }
         }
     }
