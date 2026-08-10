@@ -64,6 +64,20 @@
             color: #475569;
         }
 
+        .nav-links { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+
+        .nav-link {
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .nav-link:hover { background: #131f33; color: #f1f5f9; }
+
         .container {
             max-width: 1100px;
             margin: 0 auto;
@@ -285,6 +299,10 @@
         <span th:if="${!appName.isEmpty()}" class="brand-name" th:text="${appName}"></span>
     </div>
     <span class="nav-title">OAuth2 Clients</span>
+    <div class="nav-links">
+        <a class="nav-link" href="/users/dashboard">People</a>
+        <a class="nav-link" href="/config">Configuration</a>
+    </div>
 </nav>
 
 <div class="container">

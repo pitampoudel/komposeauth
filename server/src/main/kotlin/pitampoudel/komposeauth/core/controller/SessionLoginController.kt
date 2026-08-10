@@ -23,7 +23,14 @@ class SessionLoginController(private val appConfigService: AppConfigService) {
         model.addAttribute("logoUrl", config.logoUrl?.takeIf { it.isNotBlank() } ?: "")
         model.addAttribute("brandColor", config.brandColor?.takeIf { it.isNotBlank() } ?: "#4f46e5")
         if (error != null) {
-            model.addAttribute("error", "Invalid username or password.")
+            model.addAttribute(
+                "error",
+                if (error == "locked") {
+                    "This account has been deactivated. Contact support to get it reopened."
+                } else {
+                    "That email or password didn't match. Check them and try again, or reset your password."
+                }
+            )
         }
         return "session-login"
     }

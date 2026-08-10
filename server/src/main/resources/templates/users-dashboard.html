@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${appName.isEmpty()} ? 'People and roles' : ${appName} + ' · People and roles'">People and roles</title>
+    <style th:inline="css">
+        :root {
+            --brand: /*[(${brandColor})]*/ #3458d4;
+            --brand-strong: color-mix(in oklab, var(--brand) 82%, #000);
+            --on-brand: #ffffff;
+
+            --background: #f6f8fc;
+            --foreground: #141e32;
+            --surface: #ffffff;
+            --surface-soft: #e9eef9;
+            --muted: #4c5a72;
+            --divider: color-mix(in oklab, var(--foreground) 8%, transparent);
+
+            --danger-bg: color-mix(in oklab, #ef4444 10%, transparent);
+            --danger-text: #dc2626;
+            --danger-line: color-mix(in oklab, #ef4444 30%, transparent);
+            --ok-bg: color-mix(in oklab, #12c07e 12%, transparent);
+            --ok-text: #077a4f;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --brand-strong: color-mix(in oklab, var(--brand) 78%, #fff);
+
+                --background: #0a1020;
+                --foreground: #e7ebf6;
+                --surface: #121b31;
+                --surface-soft: #1a2540;
+                --muted: #aab8d2;
+                --divider: color-mix(in oklab, var(--foreground) 12%, transparent);
+
+                --danger-text: #f87171;
+                --ok-text: #7dffc8;
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background:
+                radial-gradient(circle at 8% 0%, color-mix(in oklab, var(--brand) 6%, transparent), transparent 46%),
+                linear-gradient(180deg, color-mix(in oklab, var(--surface-soft) 40%, transparent), transparent 480px),
+                var(--background);
+            color: var(--foreground);
+            font-family: "Space Grotesk", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* Display face where it's installed, then a serif fallback — no third-party font host. */
+        .font-display { font-family: Fraunces, "Iowan Old Style", Georgia, serif; }
+
+        a { color: inherit; }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            height: 60px;
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: color-mix(in oklab, var(--background) 85%, transparent);
+            backdrop-filter: blur(8px);
+        }
+
+        .nav-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+        .brand-logo { width: 26px; height: 26px; border-radius: 8px; object-fit: cover; }
+
+        .brand-mark {
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            background: color-mix(in oklab, var(--brand) 14%, transparent);
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .brand-name { font-size: 14px; font-weight: 600; }
+
+        .nav-links { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+
+        .nav-link {
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .nav-link:hover { background: color-mix(in oklab, var(--surface-soft) 50%, transparent); color: var(--foreground); }
+
+        .nav-link.current { color: var(--foreground); background: color-mix(in oklab, var(--surface-soft) 70%, transparent); }
+
+        main { max-width: 880px; margin: 0 auto; padding: 32px 24px 96px; }
+
+        .eyebrow {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--brand);
+        }
+
+        h1 { font-size: 36px; line-height: 1.1; margin-top: 8px; font-weight: 600; }
+
+        .page-desc { margin-top: 8px; max-width: 52ch; font-size: 15px; color: var(--muted); }
+
+        section { margin-top: 44px; }
+
+        .section-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        h2 { font-size: 16px; font-weight: 600; }
+
+        .section-hint { font-size: 13px; color: var(--muted); }
+
+        /* Role catalog: each chip carries its share of the whole, never a bare count. */
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            border: none;
+            border-radius: 999px;
+            background: color-mix(in oklab, var(--surface-soft) 60%, transparent);
+            color: var(--foreground);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .chip:hover { background: var(--surface-soft); }
+
+        .chip[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); }
+
+        .chip .share { font-weight: 500; opacity: 0.75; }
+
+        .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 4px; }
+
+        input[type=search], input[type=text] {
+            flex: 1 1 240px;
+            height: 42px;
+            padding: 0 16px;
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--foreground);
+            background: color-mix(in oklab, var(--surface-soft) 55%, transparent);
+            border: none;
+            border-radius: 999px;
+            outline: none;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+
+        input::placeholder { color: var(--muted); opacity: 0.75; }
+
+        input:hover { background: var(--surface-soft); }
+
+        input:focus-visible {
+            background: var(--surface-soft);
+            box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand) 50%, transparent);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            border-radius: 999px;
+            font-family: inherit;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+
+        .btn:disabled { cursor: not-allowed; opacity: 0.5; }
+
+        .btn-xs { padding: 6px 12px; font-size: 12px; }
+        .btn-sm { padding: 8px 16px; font-size: 13px; }
+
+        .btn-primary { background: var(--brand); color: var(--on-brand); }
+        .btn-primary:hover:not(:disabled) { background: var(--brand-strong); }
+
+        .btn-secondary { background: color-mix(in oklab, var(--surface-soft) 60%, transparent); color: var(--foreground); }
+        .btn-secondary:hover:not(:disabled) { background: var(--surface-soft); }
+
+        .btn-ghost { background: none; color: var(--muted); }
+        .btn-ghost:hover:not(:disabled) { background: color-mix(in oklab, var(--surface-soft) 50%, transparent); color: var(--foreground); }
+
+        /* The one sanctioned visible edge in the system. */
+        .btn-danger { background: none; border: 1px solid var(--danger-line); color: var(--danger-text); }
+        .btn-danger:hover:not(:disabled) { background: var(--danger-bg); }
+
+        /* Rows separate by a faint divider and spacing — no cards, no panel edges. */
+        .rows { margin-top: 8px; }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 4px;
+        }
+
+        .row + .row { border-top: 1px solid var(--divider); }
+
+        .avatar {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            background: color-mix(in oklab, var(--brand) 12%, transparent);
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .row-main { min-width: 0; flex: 1; }
+
+        .row-name {
+            font-size: 14px;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .row-sub {
+            margin-top: 2px;
+            font-size: 13px;
+            color: var(--muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .row-roles { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            background: color-mix(in oklab, var(--surface-soft) 70%, transparent);
+            color: var(--muted);
+        }
+
+        .badge-brand { background: color-mix(in oklab, var(--brand) 10%, transparent); color: var(--brand); }
+
+        .badge-none { color: var(--muted); opacity: 0.8; font-style: italic; background: none; padding-left: 0; }
+
+        .empty { padding: 32px 24px; text-align: center; }
+
+        .empty h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+
+        .empty p { font-size: 14px; color: var(--muted); max-width: 44ch; margin: 0 auto; }
+
+        .empty .btn { margin-top: 18px; }
+
+        .list-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 16px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .alert-error { background: var(--danger-bg); color: var(--danger-text); }
+        .alert-success { background: var(--ok-bg); color: var(--ok-text); }
+
+        #status { margin-top: 18px; }
+
+        dialog {
+            width: min(440px, calc(100vw - 32px));
+            padding: 24px;
+            border: none;
+            border-radius: 24px;
+            background: var(--surface);
+            color: var(--foreground);
+        }
+
+        dialog::backdrop { background: color-mix(in oklab, #05070f 55%, transparent); }
+
+        .dialog-head { margin-bottom: 4px; }
+
+        .dialog-title { font-size: 18px; font-weight: 600; }
+
+        .dialog-sub { margin-top: 2px; font-size: 13px; color: var(--muted); }
+
+        .role-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 0;
+        }
+
+        .role-option + .role-option { border-top: 1px solid var(--divider); }
+
+        .role-option input[type=checkbox] {
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            accent-color: var(--brand);
+            cursor: pointer;
+        }
+
+        .role-option input[type=checkbox]:disabled { cursor: not-allowed; opacity: 0.5; }
+
+        .role-option-body { min-width: 0; flex: 1; }
+
+        .role-option-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+
+        .role-option-why { margin-top: 3px; font-size: 12.5px; color: var(--muted); }
+
+        .dialog-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+        .hidden { display: none !important; }
+
+        .spin {
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+
+        :focus-visible {
+            outline: 2px solid color-mix(in oklab, var(--brand) 50%, transparent);
+            outline-offset: 2px;
+        }
+
+        input:focus-visible { outline: none; }
+
+        @media (max-width: 620px) {
+            h1 { font-size: 28px; }
+            .row { flex-wrap: wrap; }
+            .row-roles { justify-content: flex-start; width: 100%; padding-left: 52px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { animation: none !important; transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-brand">
+        <img th:if="${!logoUrl.isEmpty()}" th:src="${logoUrl}" class="brand-logo" alt=""/>
+        <span th:unless="${!logoUrl.isEmpty()}" class="brand-mark"
+              th:text="${appName.isEmpty() ? '' : appName.substring(0,1).toUpperCase()}"></span>
+        <span class="brand-name" th:text="${appName.isEmpty()} ? 'Admin' : appName">Admin</span>
+    </div>
+    <div class="nav-links">
+        <a class="nav-link current" href="/users/dashboard">People</a>
+        <a class="nav-link" href="/oauth2/clients/dashboard">OAuth2 clients</a>
+        <a class="nav-link" href="/config">Configuration</a>
+    </div>
+</nav>
+
+<main>
+    <p class="eyebrow">Access</p>
+    <h1 class="font-display">People and roles</h1>
+    <p class="page-desc">
+        A role is how someone gets access. Assign one here; the names themselves come from your
+        configuration.
+    </p>
+
+    <section>
+        <div class="section-head">
+            <h2>Roles</h2>
+            <span class="section-hint">Tap a role to see who holds it</span>
+        </div>
+        <div id="roleChips" class="chips" role="group" aria-label="Filter people by role"></div>
+        <p id="catalogHint" class="section-hint hidden" style="margin-top:12px;">
+            Only the built-in roles exist so far.
+            <a href="/config" style="color:var(--brand);font-weight:600;">Add your own in Configuration</a>
+            and they'll show up here.
+        </p>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <h2>People</h2>
+            <span id="peopleCount" class="section-hint"></span>
+        </div>
+
+        <div class="toolbar">
+            <label for="search" class="sr-only">Search people</label>
+            <input id="search" type="search" placeholder="Search by name, email or phone" autocomplete="off"/>
+            <button id="clearFilters" class="btn btn-ghost btn-sm hidden" type="button">Clear</button>
+        </div>
+
+        <div id="status" class="hidden" role="status" aria-live="polite"></div>
+
+        <div id="rows" class="rows" aria-busy="false"></div>
+
+        <div id="empty" class="empty hidden">
+            <h3 id="emptyTitle">No one matches that</h3>
+            <p id="emptyBody">Try a different name, email or phone number.</p>
+            <button id="emptyClear" class="btn btn-secondary btn-sm" type="button">Clear search</button>
+        </div>
+
+        <div class="list-foot">
+            <span id="shown"></span>
+            <button id="loadMore" class="btn btn-secondary btn-sm hidden" type="button">Show more</button>
+        </div>
+    </section>
+</main>
+
+<dialog id="rolesDialog" aria-labelledby="dialogTitle">
+    <div class="dialog-head">
+        <div id="dialogTitle" class="dialog-title">Manage roles</div>
+        <div id="dialogSub" class="dialog-sub"></div>
+    </div>
+
+    <div id="dialogStatus" class="alert alert-error hidden" role="alert" style="margin-top:14px;"></div>
+
+    <div id="roleOptions"></div>
+
+    <div class="dialog-foot">
+        <button id="dialogDone" class="btn btn-secondary btn-sm" type="button">Done</button>
+    </div>
+</dialog>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const VIEWER_ROLES = /*[[${viewerRoles}]]*/ [];
+    /*]]>*/
+
+    const PAGE_SIZE = 25;
+    const SUPER_ADMIN = "SUPER_ADMIN";
+
+    const state = {
+        roles: [],          // [{role, userCount, builtIn}]
+        totalUsers: 0,
+        role: null,         // active role filter
+        query: "",
+        page: 0,
+        loaded: [],         // users accumulated across pages
+        totalItems: 0,
+        hasNext: false,
+        target: null        // user open in the dialog
+    };
+
+    const el = {
+        roleChips: document.getElementById("roleChips"),
+        catalogHint: document.getElementById("catalogHint"),
+        peopleCount: document.getElementById("peopleCount"),
+        search: document.getElementById("search"),
+        clearFilters: document.getElementById("clearFilters"),
+        status: document.getElementById("status"),
+        rows: document.getElementById("rows"),
+        empty: document.getElementById("empty"),
+        emptyTitle: document.getElementById("emptyTitle"),
+        emptyBody: document.getElementById("emptyBody"),
+        emptyClear: document.getElementById("emptyClear"),
+        shown: document.getElementById("shown"),
+        loadMore: document.getElementById("loadMore"),
+        dialog: document.getElementById("rolesDialog"),
+        dialogTitle: document.getElementById("dialogTitle"),
+        dialogSub: document.getElementById("dialogSub"),
+        dialogStatus: document.getElementById("dialogStatus"),
+        roleOptions: document.getElementById("roleOptions"),
+        dialogDone: document.getElementById("dialogDone")
+    };
+
+    function esc(value) {
+        return String(value ?? "").replace(/[&<>"']/g, c => (
+            {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]
+        ));
+    }
+
+    function plural(n, one, many) {
+        return n === 1 ? one : many;
+    }
+
+    /** Reads the message the API meant to be read, whatever shape the error came back in. */
+    async function problem(res, fallback) {
+        const body = await res.json().catch(() => ({}));
+        return body.detail || body.message || body.title || fallback;
+    }
+
+    function showStatus(kind, text) {
+        el.status.textContent = text;
+        el.status.className = "alert alert-" + kind;
+    }
+
+    function hideStatus() {
+        el.status.className = "hidden";
+    }
+
+    function displayName(user) {
+        const name = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+        return name || user.email || user.phoneNumber || "Unnamed person";
+    }
+
+    function initial(user) {
+        const source = displayName(user);
+        return source && source !== "Unnamed person" ? source.trim().charAt(0) : "?";
+    }
+
+    function contact(user) {
+        return [user.email, user.phoneNumber].filter(Boolean).join(" · ") || "No contact details";
+    }
+
+    // ---- roles catalog -------------------------------------------------------
+
+    async function loadRoles() {
+        const res = await fetch("/roles", {credentials: "same-origin", headers: {Accept: "application/json"}});
+        if (!res.ok) {
+            showStatus("error", await problem(res, "Couldn't load the roles. Reload the page to try again."));
+            return;
+        }
+        state.roles = await res.json();
+        renderRoleChips();
+    }
+
+    function renderRoleChips() {
+        const everyone = `
+            <button class="chip" type="button" data-role="" aria-pressed="${state.role === null}">
+                Everyone
+            </button>`;
+
+        const chips = state.roles.map(r => {
+            const share = state.totalUsers > 0
+                ? `${r.userCount} of ${state.totalUsers} ${plural(state.totalUsers, "person", "people")}`
+                : `${r.userCount} ${plural(r.userCount, "person", "people")}`;
+            return `
+                <button class="chip" type="button" data-role="${esc(r.role)}" aria-pressed="${state.role === r.role}">
+                    ${esc(r.role)}<span class="share">${esc(share)}</span>
+                </button>`;
+        }).join("");
+
+        el.roleChips.innerHTML = everyone + chips;
+        el.roleChips.querySelectorAll(".chip").forEach(chip => {
+            chip.addEventListener("click", () => {
+                const role = chip.dataset.role || null;
+                state.role = state.role === role ? null : role;
+                resetAndLoad();
+            });
+        });
+
+        el.catalogHint.classList.toggle("hidden", state.roles.some(r => !r.builtIn));
+    }
+
+    // ---- people --------------------------------------------------------------
+
+    function resetAndLoad() {
+        state.page = 0;
+        state.loaded = [];
+        loadUsers();
+    }
+
+    async function loadUsers() {
+        el.rows.setAttribute("aria-busy", "true");
+        const params = new URLSearchParams({page: String(state.page), size: String(PAGE_SIZE)});
+        if (state.query) params.set("q", state.query);
+        if (state.role) params.set("role", state.role);
+
+        const res = await fetch("/users?" + params.toString(), {
+            credentials: "same-origin",
+            headers: {Accept: "application/json"}
+        });
+        el.rows.setAttribute("aria-busy", "false");
+
+        if (!res.ok) {
+            showStatus("error", await problem(res, "Couldn't load people. Reload the page to try again."));
+            return;
+        }
+        hideStatus();
+
+        const page = await res.json();
+        state.loaded = state.page === 0 ? page.items : state.loaded.concat(page.items);
+        state.totalItems = page.totalItems;
+        state.hasNext = page.hasNext;
+
+        // The unfiltered total is the denominator every role share is measured against.
+        if (!state.role && !state.query) {
+            state.totalUsers = page.totalItems;
+            renderRoleChips();
+        }
+
+        renderRows();
+    }
+
+    function renderRows() {
+        const filtering = Boolean(state.role || state.query);
+        el.clearFilters.classList.toggle("hidden", !filtering);
+
+        el.peopleCount.textContent = state.totalUsers > 0
+            ? `${state.totalUsers} ${plural(state.totalUsers, "person", "people")} in total`
+            : "";
+
+        if (!state.loaded.length) {
+            el.rows.innerHTML = "";
+            el.shown.textContent = "";
+            el.loadMore.classList.add("hidden");
+            el.empty.classList.remove("hidden");
+            if (filtering) {
+                el.emptyTitle.textContent = state.role
+                    ? `Nobody holds ${state.role} yet`
+                    : "No one matches that";
+                el.emptyBody.textContent = state.role
+                    ? "Find the person below and give them the role from their row."
+                    : "Try a different name, email or phone number.";
+                el.emptyClear.classList.remove("hidden");
+            } else {
+                el.emptyTitle.textContent = "No one has signed in yet";
+                el.emptyBody.textContent = "The first person to sign in shows up here, and you can give them a role from their row.";
+                el.emptyClear.classList.add("hidden");
+            }
+            return;
+        }
+
+        el.empty.classList.add("hidden");
+
+        el.rows.innerHTML = state.loaded.map(user => {
+            const roles = (user.roles || []).length
+                ? user.roles.map(r => `<span class="badge badge-brand">${esc(r)}</span>`).join("")
+                : `<span class="badge badge-none">No role</span>`;
+            return `
+                <div class="row">
+                    <div class="avatar" aria-hidden="true">${esc(initial(user))}</div>
+                    <div class="row-main">
+                        <div class="row-name">${esc(displayName(user))}</div>
+                        <div class="row-sub">${esc(contact(user))}</div>
+                    </div>
+                    <div class="row-roles">${roles}</div>
+                    <button class="btn btn-secondary btn-xs manage" type="button" data-id="${esc(user.id)}">
+                        Manage<span class="sr-only"> roles for ${esc(displayName(user))}</span>
+                    </button>
+                </div>`;
+        }).join("");
+
+        el.rows.querySelectorAll(".manage").forEach(btn => {
+            btn.addEventListener("click", () => {
+                openDialog(state.loaded.find(u => u.id === btn.dataset.id));
+            });
+        });
+
+        el.shown.textContent = `Showing ${state.loaded.length} of ${state.totalItems}`;
+        el.loadMore.classList.toggle("hidden", !state.hasNext);
+    }
+
+    // ---- manage roles --------------------------------------------------------
+
+    function openDialog(user) {
+        if (!user) return;
+        state.target = user;
+        el.dialogTitle.textContent = displayName(user);
+        el.dialogSub.textContent = contact(user);
+        el.dialogStatus.className = "alert alert-error hidden";
+        renderRoleOptions();
+        el.dialog.showModal();
+    }
+
+    /**
+     * Every rule the server enforces is shown here as a disabled control with the reason, so a
+     * click never fails for something the page already knew.
+     */
+    function optionBlockedReason(role, held) {
+        if (role.role === SUPER_ADMIN && !VIEWER_ROLES.includes(SUPER_ADMIN)) {
+            return `Only a ${SUPER_ADMIN} can give out ${SUPER_ADMIN}.`;
+        }
+        if (held && role.builtIn && role.userCount <= 1) {
+            return `This is the last ${role.role}. Give it to someone else first.`;
+        }
+        return null;
+    }
+
+    function renderRoleOptions() {
+        const held = state.target.roles || [];
+
+        el.roleOptions.innerHTML = state.roles.map(role => {
+            const on = held.includes(role.role);
+            const blocked = optionBlockedReason(role, on);
+            const why = blocked
+                ? `<div class="role-option-why">${esc(blocked)}</div>`
+                : `<div class="role-option-why">${role.userCount} ${plural(role.userCount, "person holds", "people hold")} this</div>`;
+            return `
+                <label class="role-option">
+                    <input type="checkbox" data-role="${esc(role.role)}"
+                           ${on ? "checked" : ""} ${blocked ? "disabled" : ""}/>
+                    <span class="role-option-body">
+                        <span class="role-option-name">
+                            ${esc(role.role)}
+                            ${role.builtIn ? '<span class="badge">Built in</span>' : ""}
+                        </span>
+                        ${why}
+                    </span>
+                </label>`;
+        }).join("");
+
+        el.roleOptions.querySelectorAll("input[type=checkbox]").forEach(box => {
+            box.addEventListener("change", () => toggleRole(box));
+        });
+    }
+
+    async function toggleRole(box) {
+        const role = box.dataset.role;
+        const grant = box.checked;
+        const boxes = el.roleOptions.querySelectorAll("input[type=checkbox]");
+
+        boxes.forEach(b => b.disabled = true);
+        el.dialogStatus.className = "alert alert-error hidden";
+
+        try {
+            const res = await fetch(`/users/${encodeURIComponent(state.target.id)}/roles/${encodeURIComponent(role)}`, {
+                method: grant ? "POST" : "DELETE",
+                credentials: "same-origin",
+                headers: {Accept: "application/json"}
+            });
+
+            if (!res.ok) {
+                el.dialogStatus.textContent = await problem(
+                    res,
+                    grant ? "Couldn't give that role. Try again." : "Couldn't remove that role. Try again."
+                );
+                el.dialogStatus.className = "alert alert-error";
+                return;
+            }
+
+            const updated = await res.json();
+            state.target = updated;
+
+            const index = state.loaded.findIndex(u => u.id === updated.id);
+            if (index >= 0) state.loaded[index] = updated;
+
+            await loadRoles();
+            renderRows();
+        } catch (_) {
+            el.dialogStatus.textContent = "No connection. Check your network and try again.";
+            el.dialogStatus.className = "alert alert-error";
+        } finally {
+            // Rebuilt from state either way: on success it reflects the new roles, on failure it
+            // puts the checkbox back where it was.
+            renderRoleOptions();
+        }
+    }
+
+    // ---- wiring --------------------------------------------------------------
+
+    let searchTimer;
+    el.search.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            state.query = el.search.value.trim();
+            resetAndLoad();
+        }, 250);
+    });
+
+    function clearFilters() {
+        el.search.value = "";
+        state.query = "";
+        state.role = null;
+        renderRoleChips();
+        resetAndLoad();
+    }
+
+    el.clearFilters.addEventListener("click", clearFilters);
+    el.emptyClear.addEventListener("click", clearFilters);
+
+    el.loadMore.addEventListener("click", () => {
+        state.page += 1;
+        loadUsers();
+    });
+
+    el.dialogDone.addEventListener("click", () => el.dialog.close());
+
+    (async function init() {
+        await loadUsers();
+        await loadRoles();
+    })();
+</script>
+</body>
+</html>

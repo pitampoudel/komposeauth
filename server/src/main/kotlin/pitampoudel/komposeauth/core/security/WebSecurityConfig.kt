@@ -12,8 +12,11 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseCookie
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.authentication.DisabledException
+import org.springframework.security.authentication.LockedException
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.web.DefaultRedirectStrategy
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
@@ -114,6 +117,16 @@ class WebSecurityConfig {
                 formLogin
                     .loginPage("/session-login")
                     .loginProcessingUrl("/session-login")
+                    // A locked account and a wrong password are different problems with different
+                    // fixes, so the page needs to tell them apart.
+                    .failureHandler { request, response, exception ->
+                        val reason = when (exception) {
+                            is LockedException, is DisabledException -> "locked"
+                            else -> ""
+                        }
+                        DefaultRedirectStrategy()
+                            .sendRedirect(request, response, "/session-login?error=$reason")
+                    }
                     .permitAll()
             }
             .oauth2Login { oauth2 ->
