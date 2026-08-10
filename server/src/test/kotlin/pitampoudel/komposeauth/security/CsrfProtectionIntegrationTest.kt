@@ -8,7 +8,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
@@ -49,16 +48,19 @@ class CsrfProtectionIntegrationTest {
         val userId = TestAuthHelpers.createUser(mockMvc, json, email)
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
-        // Goes through the same fully-wired client as the rest of the suite, so the filter chain
-        // under test is the real one. The token is overridden with a bad value, standing in for a
-        // cross-site caller that cannot read the real one — the post-processor added here runs
-        // after the harness default, so this is the value that reaches the server.
+        // The same fully-wired client the rest of the suite uses, so the chain under test is the
+        // real one — but opting out of the automatic token, so this request carries none at all.
+        //
+        // An earlier version sent a deliberately invalid token instead. That does not work: csrf()
+        // *sets* the token parameter, so the harness's own token processor simply overwrote the bad
+        // value with a good one and the write sailed through, looking exactly like a security hole.
+        // Sending nothing cannot be undone by ordering.
         val response = mockMvc.post("/${ApiEndpoints.UPDATE_PROFILE}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
+            header(TestConfig.OMIT_CSRF_TOKEN_HEADER, "true")
             cookie(cookie)
             content = """{"givenName":"Forged"}"""
-            with(csrf().useInvalidToken())
         }.andReturn().response
 
         // Checked first, because this is the property the protection exists for: whatever status
