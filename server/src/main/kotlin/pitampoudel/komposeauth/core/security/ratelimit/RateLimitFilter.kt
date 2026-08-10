@@ -57,12 +57,13 @@ class RateLimitFilter(
         }
 
         val key = "ip:${request.remoteAddr}:${rule.method}:${rule.path}"
-        if (rateLimiter.tryAcquire(key, rule.limit, rule.window)) {
+        val decision = rateLimiter.check(key, rule.limit, rule.window)
+        if (decision.allowed) {
             filterChain.doFilter(request, response)
             return
         }
 
-        val retryAfter = rateLimiter.retryAfterSeconds(key)
+        val retryAfter = decision.retryAfterSeconds
         log.warn(
             "Rate limit exceeded for {} {} from {}",
             request.method,

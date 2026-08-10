@@ -44,7 +44,7 @@ class OtpVerifyController(
             key = "otp-target:$target",
             limit = 5,
             window = Duration.ofHours(1),
-            message = "Too many verification codes requested for this address. Try again later."
+            message = "Too many verification codes requested for this address."
         )
     }
 

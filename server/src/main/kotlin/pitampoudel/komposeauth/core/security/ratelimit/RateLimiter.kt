@@ -5,60 +5,61 @@ import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import java.time.Duration
 import java.time.Instant
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Fixed-window request counter used to blunt credential stuffing and, on the OTP endpoints, to stop
- * an attacker from running up an SMS bill against someone else's phone number.
+ * an attacker running up an SMS bill against someone else's phone number.
  *
- * State is held in this process. Behind more than one instance the effective limit multiplies by the
- * instance count, which still bounds abuse but is not exact — move the counters to a shared store
- * (Redis, or the existing Mongo) if precise global limits are needed.
+ * Windows are aligned to the clock rather than to first use, so every instance derives the same
+ * window boundary for the same key without coordinating. Counting itself is delegated to a
+ * [RateLimitStore]; in production that is Mongo, which is what keeps the limits meaningful across
+ * cold starts and multiple instances.
  */
 @Service
-class RateLimiter {
+class RateLimiter(
+    private val store: RateLimitStore
+) {
 
-    private data class Window(val resetAt: Instant, val count: AtomicInteger)
-
-    private val windows = ConcurrentHashMap<String, Window>()
-
-    /** Cheap amortised cleanup so abandoned keys don't accumulate. */
-    private fun sweepIfNeeded(now: Instant) {
-        if (windows.size < CLEANUP_THRESHOLD) return
-        windows.entries.removeIf { it.value.resetAt.isBefore(now) }
-    }
+    /** @param retryAfterSeconds how long until the current window rolls over. */
+    data class Decision(val allowed: Boolean, val retryAfterSeconds: Long)
 
     /**
-     * Records a hit against [key]. Returns false once more than [limit] hits land inside [window].
+     * Records a hit against [key] and reports whether it fits inside [limit] for this [window].
      */
-    fun tryAcquire(key: String, limit: Int, window: Duration): Boolean {
-        val now = Instant.now()
-        sweepIfNeeded(now)
-        val current = windows.compute(key) { _, existing ->
-            if (existing == null || existing.resetAt.isBefore(now)) {
-                Window(now.plus(window), AtomicInteger(0))
-            } else {
-                existing
-            }
-        }!!
-        return current.count.incrementAndGet() <= limit
+    fun check(key: String, limit: Int, window: Duration): Decision {
+        val windowSeconds = window.seconds.coerceAtLeast(1)
+        val nowSeconds = Instant.now().epochSecond
+        val windowIndex = Math.floorDiv(nowSeconds, windowSeconds)
+        val windowEndSeconds = (windowIndex + 1) * windowSeconds
+
+        val count = store.incrementAndCount(
+            bucketKey = "$key|$windowIndex",
+            // A little past the window so the TTL monitor can't drop a bucket that is still counting.
+            expiresAt = Instant.ofEpochSecond(windowEndSeconds).plusSeconds(EXPIRY_GRACE_SECONDS)
+        )
+
+        return Decision(
+            allowed = count <= limit,
+            retryAfterSeconds = (windowEndSeconds - nowSeconds).coerceAtLeast(1)
+        )
     }
+
+    /** Records a hit and returns whether it was within budget. */
+    fun tryAcquire(key: String, limit: Int, window: Duration): Boolean =
+        check(key, limit, window).allowed
 
     /** As [tryAcquire], but raises 429 with a Retry-After hint instead of returning false. */
     fun enforce(key: String, limit: Int, window: Duration, message: String) {
-        if (!tryAcquire(key, limit, window)) {
-            throw ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, message)
+        val decision = check(key, limit, window)
+        if (!decision.allowed) {
+            throw ResponseStatusException(
+                HttpStatus.TOO_MANY_REQUESTS,
+                "$message Try again in ${decision.retryAfterSeconds} seconds."
+            )
         }
     }
 
-    /** Seconds until [key]'s window resets, for a Retry-After header. */
-    fun retryAfterSeconds(key: String): Long {
-        val resetAt = windows[key]?.resetAt ?: return 0
-        return maxOf(0, Duration.between(Instant.now(), resetAt).seconds)
-    }
-
     private companion object {
-        const val CLEANUP_THRESHOLD = 10_000
+        const val EXPIRY_GRACE_SECONDS = 60L
     }
 }
