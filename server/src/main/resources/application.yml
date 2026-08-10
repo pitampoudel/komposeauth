@@ -1,11 +1,10 @@
 spring:
   application:
     name: "komposeauth"
+  mongodb:
+    uri: ${MONGODB_URI}
   data:
     mongodb:
-      # `spring.mongodb.uri` is not a property Spring Boot reads; the connection string has to live
-      # under `spring.data.mongodb` or the app silently falls back to localhost.
-      uri: ${MONGODB_URI}
       auto-index-creation: true
   jmx:
     enabled: false
