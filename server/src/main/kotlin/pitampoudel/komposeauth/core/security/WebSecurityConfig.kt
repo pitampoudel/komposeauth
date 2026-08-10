@@ -22,9 +22,8 @@ import org.springframework.security.oauth2.server.resource.web.BearerTokenResolv
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.config.ObjectPostProcessor
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository
 import org.springframework.security.web.csrf.CsrfFilter
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy
 import org.springframework.security.web.util.matcher.AndRequestMatcher
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
@@ -38,6 +37,8 @@ import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.security.csrf.CrossOriginCsrfTokenRepository
+import pitampoudel.komposeauth.core.security.csrf.authCookieDomain
 
 @Configuration
 @EnableWebSecurity
@@ -55,7 +56,7 @@ class WebSecurityConfig {
             .path("/")
             .sameSite(if (request.isSecure) "None" else "Lax")
             .maxAge(0)
-            .domain("." + appConfigService.rpId())
+            .domain(authCookieDomain(appConfigService))
             .build()
         response.addHeader("Set-Cookie", clearCookie.toString())
     }
@@ -130,7 +131,8 @@ class WebSecurityConfig {
         objectMapper: ObjectMapper,
         bearerTokenResolver: BearerTokenResolver,
         loginSuccessHandler: OAuth2LoginSuccessHandler,
-        appConfigService: AppConfigService
+        appConfigService: AppConfigService,
+        csrfTokenRepository: CrossOriginCsrfTokenRepository
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -139,8 +141,15 @@ class WebSecurityConfig {
             // could drive a form-encoded POST — /config (every secret this server holds),
             // /update-profile, role grants — using a logged-in victim's credentials.
             .csrf { csrf ->
-                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                csrf.csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler())
+                // Scoped and same-site-configured to match the access-token cookie, so browser apps
+                // on sibling origins can actually obtain a token. See the repository's own notes.
+                csrf.csrfTokenRepository(csrfTokenRepository)
+                // Spring's default handler. It masks the token with a fresh random pad on each
+                // render, so the value in a page's markup differs every time and cannot be recovered
+                // by measuring the size of a compressed response (BREACH). Everything that submits a
+                // token here — Thymeleaf forms, the console's fetch calls, /csrf — takes it from the
+                // rendered value rather than the cookie, so the masking is transparent to all of them.
+                csrf.csrfTokenRequestHandler(XorCsrfTokenRequestAttributeHandler())
                 csrf.requireCsrfProtectionMatcher(csrfProtectionMatcher())
                 // Configuring the matcher above is not enough on its own: exemptions registered by
                 // other configurers are AND-NOT-ed onto whatever is set here, and the resource
