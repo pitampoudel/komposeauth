@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.app_config.service
 
 import org.springframework.stereotype.Service
 import pitampoudel.komposeauth.core.domain.Platform
+import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.webauthn.utils.WebAuthnUtils.androidOrigin
 
 @Service
@@ -30,6 +31,20 @@ class AppConfigService(val appConfigProvider: AppConfigProvider) {
             Platform.IOS -> appConfigProvider.get().googleAuthClientSecret
         }
         return value?.takeIf { it.isNotBlank() }
+    }
+
+    /** Role names configured for this app, normalized and stripped of anything malformed. */
+    fun configuredRoles(): List<String> {
+        return appConfigProvider.get().rolesCatalog
+            ?.split(",", "\n")
+            ?.map { Roles.normalize(it) }
+            ?.filter { Roles.isValidName(it) }
+            .orEmpty()
+    }
+
+    /** Every role that may be granted: the built-in ones plus whatever the app configured. */
+    fun availableRoles(): List<String> {
+        return (Roles.BUILT_IN + configuredRoles()).distinct()
     }
 
     fun corsAllowedOrigins(): List<String> {

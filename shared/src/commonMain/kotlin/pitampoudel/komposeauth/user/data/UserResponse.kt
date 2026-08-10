@@ -19,6 +19,7 @@ data class UserResponse(
     val phoneNumber: String?,
     val phoneNumberVerified: Boolean,
     val kycVerified: Boolean,
+    val roles: List<String> = emptyList(),
 ) {
     init {
         require(email != null || phoneNumber != null)

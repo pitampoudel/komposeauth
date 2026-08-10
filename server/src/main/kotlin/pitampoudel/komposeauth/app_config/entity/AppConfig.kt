@@ -49,6 +49,12 @@ data class AppConfig(
     var allowedAndroidSha256List: String? = null,
     var corsAllowedOriginList: String? = null,
 
+    /**
+     * Comma- or newline-separated role names that may be granted to users, on top of the
+     * built-in [pitampoudel.komposeauth.core.domain.Roles.BUILT_IN] roles.
+     */
+    var rolesCatalog: String? = null,
+
     // SMS Provider Configuration
     var smsProvider: String? = null, // "twilio", "samaye", "sparrow", or null for none
 
@@ -108,6 +114,7 @@ data class AppConfig(
         if (appleAuthClientId.isNullOrBlank()) appleAuthClientId = null
         if (allowedAndroidSha256List.isNullOrBlank()) allowedAndroidSha256List = null
         if (corsAllowedOriginList.isNullOrBlank()) corsAllowedOriginList = null
+        if (rolesCatalog.isNullOrBlank()) rolesCatalog = null
         if (smsProvider.isNullOrBlank()) smsProvider = null
         if (twilioAccountSid.isNullOrBlank()) twilioAccountSid = null
         if (twilioAuthToken.isNullOrBlank()) twilioAuthToken = null

@@ -1,14 +1,17 @@
 package pitampoudel.komposeauth.user.service
 
+import org.apache.coyote.BadRequestException
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.context.ActiveProfiles
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 
@@ -25,6 +28,16 @@ class UserServiceCoreTest {
 
     @Autowired
     private lateinit var passwordEncoder: PasswordEncoder
+
+    /** The admin performing a role change. Not persisted — only their roles and name are read. */
+    private fun actor(roles: List<String> = listOf(Roles.ADMIN)) = User(
+        id = ObjectId.get(),
+        firstName = "Test",
+        lastName = "Admin",
+        email = "actor-${ObjectId.get().toHexString()}@example.com",
+        phoneNumber = null,
+        roles = roles
+    )
 
     @Test
     fun `findUser returns user when exists`() {
@@ -82,7 +95,7 @@ class UserServiceCoreTest {
     }
 
     @Test
-    fun `grantAdmin adds ADMIN role to user`() {
+    fun `grantRole adds ADMIN role to user`() {
         val user = userRepository.save(
             User(
                 id = ObjectId.get(),
@@ -96,13 +109,51 @@ class UserServiceCoreTest {
             )
         )
 
-        val updated = userService.grantAdmin("Test Admin", user.id.toHexString())
+        val updated = userService.grantRole(actor(), user.id.toHexString(), Roles.ADMIN)
 
-        assertTrue(updated.roles.contains("ADMIN"))
+        assertTrue(updated.roles.contains(Roles.ADMIN))
     }
 
     @Test
-    fun `grantAdmin is idempotent`() {
+    fun `grantRole normalizes the role name`() {
+        val user = userRepository.save(
+            User(
+                id = ObjectId.get(),
+                firstName = "Normalize",
+                lastName = "Test",
+                email = "normalize-role-test@example.com",
+                passwordHash = passwordEncoder.encode("Password1"),
+                roles = emptyList(),
+                phoneNumber = null
+            )
+        )
+
+        val updated = userService.grantRole(actor(), user.id.toHexString(), " admin ")
+
+        assertEquals(listOf(Roles.ADMIN), updated.roles)
+    }
+
+    @Test
+    fun `grantRole rejects a role outside the catalog`() {
+        val user = userRepository.save(
+            User(
+                id = ObjectId.get(),
+                firstName = "Unknown",
+                lastName = "Role",
+                email = "unknown-role-test@example.com",
+                passwordHash = passwordEncoder.encode("Password1"),
+                roles = emptyList(),
+                phoneNumber = null
+            )
+        )
+
+        assertThrows(BadRequestException::class.java) {
+            userService.grantRole(actor(), user.id.toHexString(), "NOT_IN_CATALOG")
+        }
+    }
+
+    @Test
+    fun `grantRole is idempotent`() {
         val user = userRepository.save(
             User(
                 id = ObjectId.get(),
@@ -110,16 +161,58 @@ class UserServiceCoreTest {
                 lastName = "Test",
                 email = "idempotent-admin@example.com",
                 passwordHash = passwordEncoder.encode("Password1"),
-                roles = listOf("ADMIN"),
+                roles = listOf(Roles.ADMIN),
                 phoneNumber = null
 
             )
         )
 
-        val updated = userService.grantAdmin("Test Admin", user.id.toHexString())
+        val updated = userService.grantRole(actor(), user.id.toHexString(), Roles.ADMIN)
 
-        assertTrue(updated.roles.contains("ADMIN"))
-        assertEquals(1, updated.roles.count { it == "ADMIN" })
+        assertTrue(updated.roles.contains(Roles.ADMIN))
+        assertEquals(1, updated.roles.count { it == Roles.ADMIN })
+    }
+
+    @Test
+    fun `grantRole rejects SUPER_ADMIN when the actor is only an ADMIN`() {
+        val user = userRepository.save(
+            User(
+                id = ObjectId.get(),
+                firstName = "Escalation",
+                lastName = "Test",
+                email = "escalation-test@example.com",
+                passwordHash = passwordEncoder.encode("Password1"),
+                roles = emptyList(),
+                phoneNumber = null
+            )
+        )
+
+        assertThrows(AccessDeniedException::class.java) {
+            userService.grantRole(actor(), user.id.toHexString(), Roles.SUPER_ADMIN)
+        }
+    }
+
+    @Test
+    fun `grantRole allows SUPER_ADMIN when the actor is a SUPER_ADMIN`() {
+        val user = userRepository.save(
+            User(
+                id = ObjectId.get(),
+                firstName = "Super",
+                lastName = "Target",
+                email = "super-target-test@example.com",
+                passwordHash = passwordEncoder.encode("Password1"),
+                roles = emptyList(),
+                phoneNumber = null
+            )
+        )
+
+        val updated = userService.grantRole(
+            actor(roles = listOf(Roles.ADMIN, Roles.SUPER_ADMIN)),
+            user.id.toHexString(),
+            Roles.SUPER_ADMIN
+        )
+
+        assertTrue(updated.roles.contains(Roles.SUPER_ADMIN))
     }
 
     @Test
@@ -144,7 +237,7 @@ class UserServiceCoreTest {
     }
 
     @Test
-    fun `listAdmins returns only admin users`() {
+    fun `findUsersFlexible by role returns only users holding that role`() {
         // Create regular user
         userRepository.save(
             User(
@@ -167,19 +260,25 @@ class UserServiceCoreTest {
                 lastName = "User",
                 email = "admin-list-admins@example.com",
                 passwordHash = passwordEncoder.encode("Password1"),
-                roles = listOf("ADMIN"),
+                roles = listOf(Roles.ADMIN),
                 phoneNumber = null
             )
         )
 
-        val result = userService.listAdmins(0, 50)
+        val result = userService.findUsersFlexible(
+            ids = null,
+            q = null,
+            role = Roles.ADMIN,
+            page = 0,
+            size = 50
+        )
 
-        assertTrue(result.content.all { it.roles.contains("ADMIN") })
+        assertTrue(result.content.all { it.roles.contains(Roles.ADMIN) })
         assertTrue(result.content.any { it.id == admin.id })
     }
 
     @Test
-    fun `listAdmins supports pagination`() {
+    fun `findUsersFlexible by role supports pagination`() {
         // Create multiple admin users
         repeat(5) { index ->
             userRepository.save(
@@ -189,18 +288,43 @@ class UserServiceCoreTest {
                     lastName = "User",
                     email = "admin-page-$index@example.com",
                     passwordHash = passwordEncoder.encode("Password1"),
-                    roles = listOf("ADMIN"),
+                    roles = listOf(Roles.ADMIN),
                     phoneNumber = null
                 )
             )
         }
 
-        val page1 = userService.listAdmins(0, 2)
+        val page1 = userService.findUsersFlexible(
+            ids = null, q = null, role = Roles.ADMIN, page = 0, size = 2
+        )
         assertEquals(2, page1.size)
         assertTrue(page1.hasNext())
 
-        val page2 = userService.listAdmins(1, 2)
+        val page2 = userService.findUsersFlexible(
+            ids = null, q = null, role = Roles.ADMIN, page = 1, size = 2
+        )
         assertEquals(2, page2.size)
+    }
+
+    @Test
+    fun `listRoles reports built-in roles with their user counts`() {
+        userRepository.save(
+            User(
+                id = ObjectId.get(),
+                firstName = "Counted",
+                lastName = "Admin",
+                email = "counted-admin@example.com",
+                passwordHash = passwordEncoder.encode("Password1"),
+                roles = listOf(Roles.ADMIN),
+                phoneNumber = null
+            )
+        )
+
+        val roles = userService.listRoles()
+
+        assertEquals(Roles.BUILT_IN, roles.map { it.role })
+        assertTrue(roles.all { it.builtIn })
+        assertTrue(roles.first { it.role == Roles.ADMIN }.userCount >= 1)
     }
 
     @Test

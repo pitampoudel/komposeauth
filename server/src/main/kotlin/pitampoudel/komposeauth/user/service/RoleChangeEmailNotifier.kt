@@ -18,13 +18,13 @@ class RoleChangeEmailNotifier(
      * Best-effort: returns whether the email send call succeeded.
      * Never throws.
      */
-    fun notify(target: User, action: Action, actor: String?): Boolean {
+    fun notify(target: User, action: Action, actor: String?, role: String): Boolean {
         val actorLabel = actor?.takeIf { it.isNotBlank() } ?: "system"
         val targetLabel = target.email ?: target.phoneNumber ?: target.id.toHexString()
 
         when (action) {
-            Action.GRANTED -> slackNotifier.send("🛡️ Admin role granted to $targetLabel by $actorLabel")
-            Action.REVOKED -> slackNotifier.send("🛡️ Admin role revoked for $targetLabel by $actorLabel")
+            Action.GRANTED -> slackNotifier.send("🛡️ $role role granted to $targetLabel by $actorLabel")
+            Action.REVOKED -> slackNotifier.send("🛡️ $role role revoked for $targetLabel by $actorLabel")
         }
 
         val to = target.email
@@ -34,14 +34,14 @@ class RoleChangeEmailNotifier(
         val websiteUrl = appConfigService.getConfig().websiteUrl ?: ""
 
         val subject = when (action) {
-            Action.GRANTED -> "Admin access granted"
-            Action.REVOKED -> "Admin access revoked"
+            Action.GRANTED -> "$role access granted"
+            Action.REVOKED -> "$role access revoked"
         }
 
 
         val message = when (action) {
-            Action.GRANTED -> "You’ve been granted <b>ADMIN</b> access in $appName by ${actor ?: "an admin"}."
-            Action.REVOKED -> "Your <b>ADMIN</b> access in $appName was revoked by ${actor ?: "an admin"}."
+            Action.GRANTED -> "You’ve been granted <b>$role</b> access in $appName by ${actor ?: "an admin"}."
+            Action.REVOKED -> "Your <b>$role</b> access in $appName was revoked by ${actor ?: "an admin"}."
         }
 
         return emailService.sendHtmlMail(

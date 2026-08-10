@@ -81,17 +81,18 @@ class UsersController(
     @GetMapping("/$USERS")
     @Operation(
         summary = "Get users",
-        description = "Fetch users by optional filters: comma-separated IDs (ids), search query (q). If no filters provided, returns all users with pagination."
+        description = "Fetch users by optional filters: comma-separated IDs (ids), search query (q), role. If no filters provided, returns all users with pagination."
     )
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_READ_ANY_USER')")
     fun getUsers(
         @RequestParam(required = false) ids: String?,
         @RequestParam(required = false, name = "q") query: String?,
+        @RequestParam(required = false) role: String?,
         @RequestParam(required = false, defaultValue = "0") page: Int,
         @RequestParam(required = false, defaultValue = "50") size: Int
     ): ResponseEntity<PageResponse<UserResponse>> {
         val idList = ids?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
-        val usersPage = userService.findUsersFlexible(idList, query, page, size)
+        val usersPage = userService.findUsersFlexible(idList, query, role, page, size)
         val verifiedUserIds = kycService.verifiedUserIds(usersPage.content.map { it.id })
         val userResponses = usersPage.content.map { user ->
             user.mapToResponseDto(verifiedUserIds.contains(user.id))
