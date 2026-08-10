@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.security.web.FilterChainProxy
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
@@ -42,6 +43,24 @@ class CsrfProtectionIntegrationTest {
     @Autowired
     private lateinit var userRepository: UserRepository
 
+    @Autowired
+    private lateinit var securityFilterChainProxy: FilterChainProxy
+
+    /** The security filters actually assembled for [path], in order. */
+    private fun filtersFor(path: String): List<String> =
+        securityFilterChainProxy.getFilters(path).orEmpty().map { it.javaClass.simpleName }
+
+    @Test
+    fun `csrf filter is present in the chain that serves the api`() {
+        // Checked on its own so a missing filter reports itself directly, rather than showing up
+        // as the confusing "a forged write succeeded" further down.
+        val filters = filtersFor("/${ApiEndpoints.UPDATE_PROFILE}")
+        assertTrue(
+            filters.any { it == "CsrfFilter" },
+            "CsrfFilter is not in the chain for /${ApiEndpoints.UPDATE_PROFILE}; chain was: $filters"
+        )
+    }
+
     @Test
     fun `cookie-authenticated write is rejected without a valid csrf token`() {
         val email = "csrf-reject@example.com"
@@ -70,7 +89,8 @@ class CsrfProtectionIntegrationTest {
             "Forged",
             user.firstName,
             "forged write was applied — CSRF is not protecting this endpoint " +
-                    "(response status was ${response.status})"
+                    "(status ${response.status}); chain for the request was " +
+                    "${filtersFor("/${ApiEndpoints.UPDATE_PROFILE}")}"
         )
 
         // Deliberately only "not success". CsrfFilter runs before the bearer token in the cookie is
