@@ -35,9 +35,8 @@ object PublicEndpoints {
 
     /** Public paths that use optional authentication: a supplied token is still validated. */
     val optionalAuthPatterns: List<String> = listOf(
-        // Both addresses serve the same configuration page, and both accept the master key, so the
-        // filter chain has to let them through to the controller's own access check.
-        "/config",
+        // The configuration page also accepts a master key, so the filter chain has to let it
+        // through to the controller's own access check.
         "/admin/config",
         "/${ApiEndpoints.SEND_OTP}",
         "/users"

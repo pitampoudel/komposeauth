@@ -124,13 +124,7 @@ class AppConfigController(
     )
 
 
-    /**
-     * Served at both addresses: `/admin/config` is where the console's navigation points, and
-     * `/config` stays valid for the first-run and master-key routes that already use it. The form
-     * posts back to whichever address served it, so a `key` query parameter survives the round trip
-     * either way.
-     */
-    @GetMapping("/config", "/admin/config")
+    @GetMapping("/admin/config")
     @Operation(
         summary = "web page to configure this app"
     )
@@ -147,7 +141,7 @@ class AppConfigController(
         return "admin/config"
     }
 
-    @PostMapping("/config", "/admin/config")
+    @PostMapping("/admin/config")
     fun submit(
         @RequestParam("key", required = false) key: String?,
         @ModelAttribute form: AppConfig,

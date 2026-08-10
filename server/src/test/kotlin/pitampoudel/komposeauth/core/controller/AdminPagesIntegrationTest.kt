@@ -85,20 +85,16 @@ class AdminPagesIntegrationTest {
             }
     }
 
+    /**
+     * The configuration page is served at exactly one address. `/config` was the old one, and it
+     * was also listed in [pitampoudel.komposeauth.core.security.PublicEndpoints.optionalAuthPatterns] —
+     * so leaving a second mapping behind would leave a second way past the filter chain too.
+     */
     @Test
-    fun `the old dashboard addresses still lead somewhere`() {
+    fun `configuration answers on the console address only`() {
         val cookie = adminCookie("admin-legacy@example.com")
 
-        mockMvc.get("/users/dashboard") { cookie(cookie) }
-            .andExpect {
-                status { is3xxRedirection() }
-                redirectedUrl("/admin/users")
-            }
-
-        mockMvc.get("/oauth2/clients/dashboard") { cookie(cookie) }
-            .andExpect {
-                status { is3xxRedirection() }
-                redirectedUrl("/admin/clients")
-            }
+        mockMvc.get("/config") { cookie(cookie) }
+            .andExpect { status { isNotFound() } }
     }
 }
