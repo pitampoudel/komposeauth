@@ -21,7 +21,7 @@ class SessionLoginController(private val appConfigService: AppConfigService) {
         )
         model.addAttribute("appName", config.name?.takeIf { it.isNotBlank() } ?: "")
         model.addAttribute("logoUrl", config.logoUrl?.takeIf { it.isNotBlank() } ?: "")
-        model.addAttribute("brandColor", config.brandColor?.takeIf { it.isNotBlank() } ?: "#4f46e5")
+        model.addAttribute("brandColor", config.brandColor?.takeIf { it.isNotBlank() } ?: "#3458d4")
         if (error != null) {
             model.addAttribute(
                 "error",

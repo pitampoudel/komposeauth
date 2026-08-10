@@ -66,7 +66,7 @@ class Oauth2ClientsControllerSecurityIntegrationTest {
             status { isForbidden() }
         }
 
-        mockMvc.get("/oauth2/clients/dashboard") {
+        mockMvc.get("/admin/clients") {
             accept = MediaType.TEXT_HTML
             cookie(cookie)
         }.andExpect {

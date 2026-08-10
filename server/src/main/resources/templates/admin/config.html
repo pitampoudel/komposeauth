@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html th:replace="~{admin/layout :: page(~{::title}, 'config', ~{::style}, ~{::main}, ~{::script})}"
+      lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${appName.isEmpty()} ? 'Configuration · Admin' : ${appName} + ' · Configuration'">Configuration</title>
+    <style>
+        .field-group { margin-top: 40px; }
+
+        .field-group-title {
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--divider);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .group-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
+
+        .config-field.full-width { grid-column: 1 / -1; }
+
+        /* A long form needs its commit within reach wherever you stopped reading. */
+        .save-bar {
+            position: sticky;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 14px;
+            margin-top: 40px;
+            padding: 16px 0;
+            background: linear-gradient(180deg, transparent, var(--background) 40%);
+        }
+
+        .save-note { font-size: 13px; color: var(--muted); margin-right: auto; }
+
+        @media (max-width: 620px) {
+            .group-grid { grid-template-columns: minmax(0, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<main>
+    <p class="eyebrow">Settings</p>
+    <h1 class="font-display">Configuration</h1>
+    <p class="lede">
+        Every credential and switch this server runs on. Changes take effect as soon as you save.
+    </p>
+
+    <div th:if="${saved}" class="alert alert-success" role="status" style="margin-top: 24px;">
+        Configuration saved.
+    </div>
+
+    <form method="post">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}"/>
+
+        <div th:each="group : ${fieldGroups}" class="field-group">
+            <h2 th:if="${group.title != null}" class="field-group-title" th:text="${group.title}"></h2>
+
+            <div class="group-grid">
+                <div th:each="field : ${group.fields}" class="config-field"
+                     th:classappend="${field.inputType == 'textarea'} ? ' full-width' : ''">
+                    <label th:for="${field.name}" th:text="${field.label}"></label>
+
+                    <textarea th:if="${field.inputType == 'textarea'}"
+                              th:id="${field.name}"
+                              th:name="${field.name}"
+                              th:text="${field.value}"></textarea>
+
+                    <select th:if="${field.inputType == 'select'}"
+                            th:id="${field.name}"
+                            th:name="${field.name}">
+                        <option th:each="option : ${field.options}"
+                                th:value="${option.value}"
+                                th:text="${option.label}"
+                                th:selected="${option.value == (field.value ?: '')}">
+                        </option>
+                    </select>
+
+                    <input th:if="${field.inputType != 'textarea' and field.inputType != 'select'}"
+                           th:id="${field.name}"
+                           th:name="${field.name}"
+                           th:type="${field.inputType}"
+                           th:value="${field.value}"/>
+                </div>
+            </div>
+        </div>
+
+        <div class="save-bar">
+            <span class="save-note">Secrets are stored as entered and never shown anywhere else.</span>
+            <button class="btn btn-primary btn-md" type="submit">Save configuration</button>
+        </div>
+    </form>
+</main>
+
+<script>
+    // The configuration form is a plain server-rendered post; nothing to wire up.
+</script>
+
+</body>
+</html>

@@ -12,6 +12,7 @@ import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.app_config.service.MasterKeyValidator
 import pitampoudel.komposeauth.core.config.UserContextService
+import pitampoudel.komposeauth.core.controller.AdminShell
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.user.service.UserService
 
@@ -20,6 +21,7 @@ class AppConfigController(
     private val appConfigProvider: AppConfigProvider,
     private val userService: UserService,
     private val masterKeyValidator: MasterKeyValidator,
+    private val adminShell: AdminShell,
     val userContextService: UserContextService
 ) {
     fun fieldGroups(value: AppConfig) = buildFieldGroups(
@@ -122,7 +124,13 @@ class AppConfigController(
     )
 
 
-    @GetMapping("/config")
+    /**
+     * Served at both addresses: `/admin/config` is where the console's navigation points, and
+     * `/config` stays valid for the first-run and master-key routes that already use it. The form
+     * posts back to whichever address served it, so a `key` query parameter survives the round trip
+     * either way.
+     */
+    @GetMapping("/config", "/admin/config")
     @Operation(
         summary = "web page to configure this app"
     )
@@ -133,12 +141,13 @@ class AppConfigController(
     ): String {
         enforceConfigAccessOrRedirect(key = key)?.let { return it }
         val config = appConfigProvider.get()
+        adminShell.apply(model)
         model.addAttribute("config", config)
         model.addAttribute("fieldGroups", fieldGroups(config))
-        return "config"
+        return "admin/config"
     }
 
-    @PostMapping("/config")
+    @PostMapping("/config", "/admin/config")
     fun submit(
         @RequestParam("key", required = false) key: String?,
         @ModelAttribute form: AppConfig,
@@ -146,9 +155,11 @@ class AppConfigController(
     ): String {
         enforceConfigAccessOrRedirect(key = key)?.let { return it }
         val config = appConfigProvider.save(form)
+        adminShell.apply(model)
         model.addAttribute("config", config)
         model.addAttribute("fieldGroups", fieldGroups(config))
-        return "config"
+        model.addAttribute("saved", true)
+        return "admin/config"
     }
 
     private fun enforceConfigAccessOrRedirect(key: String?): String? {
@@ -162,6 +173,7 @@ class AppConfigController(
             }
             return null
         }
-        return "redirect:/login"
+        // `/login` is the JSON login API, not a page; the browser sign-in page is /session-login.
+        return "redirect:/session-login"
     }
 }

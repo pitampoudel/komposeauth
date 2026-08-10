@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html th:replace="~{admin/layout :: page(~{::title}, 'overview', ~{::style}, ~{::main}, ~{::script})}"
+      lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${appName.isEmpty()} ? 'Overview · Admin' : ${appName} + ' · Admin'">Overview</title>
+    <style>
+        /* The opening line is the page's whole thesis, so it gets the display face and room. */
+        .posture { font-size: 34px; line-height: 1.2; max-width: 20ch; }
+
+        @media (max-width: 900px) {
+            .posture { font-size: 26px; max-width: none; }
+        }
+    </style>
+</head>
+<body>
+
+<main>
+    <p class="eyebrow" th:text="${appName.isEmpty()} ? 'Identity' : ${appName}">Identity</p>
+    <h1 class="font-display posture" th:text="${postureLine}">Who can get in.</h1>
+    <p class="lede">
+        Everything this server lets through the door, in one place. Change any of it from
+        <a href="/admin/config" class="inline-link">Configuration</a>.
+    </p>
+
+    <section>
+        <div class="section-head">
+            <h2>Ways in</h2>
+            <span class="section-hint">How people prove who they are</span>
+        </div>
+        <div class="rows">
+            <div class="row" th:each="check : ${signInMethods}">
+                <div class="row-main">
+                    <div class="row-name" th:text="${check.name}"></div>
+                    <div class="row-sub" th:text="${check.detail}"></div>
+                </div>
+                <span class="badge" th:classappend="${check.ready} ? ' badge-ok' : ''"
+                      th:text="${check.ready} ? 'On' : 'Off'">Off</span>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <h2>Delivery</h2>
+            <span class="section-hint">Codes, verification links and password resets travel this way</span>
+        </div>
+        <div class="rows">
+            <div class="row" th:each="check : ${deliveryChannels}">
+                <div class="row-main">
+                    <div class="row-name" th:text="${check.name}"></div>
+                    <div class="row-sub" th:text="${check.detail}"></div>
+                </div>
+                <span class="badge" th:classappend="${check.ready} ? ' badge-ok' : ''"
+                      th:text="${check.ready} ? 'On' : 'Off'">Off</span>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <h2>Roles</h2>
+            <a class="section-hint inline-link" href="/admin/users">Assign them in People</a>
+        </div>
+        <div class="chips">
+            <span class="chip-static" th:each="role : ${roles}">
+                <span class="mono" th:text="${role.role}"></span>
+                <span class="share" th:text="${role.userCount}">0</span>
+            </span>
+        </div>
+        <p class="section-hint" style="margin-top: 12px;" th:if="${!hasCustomRoles}">
+            Only the built-in roles exist so far.
+            <a class="inline-link" href="/admin/config">Add your own in Configuration</a>
+            and they become grantable here.
+        </p>
+    </section>
+</main>
+
+<script>
+    // The overview is rendered whole by the server; nothing to wire up.
+</script>
+
+</body>
+</html>
