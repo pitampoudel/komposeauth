@@ -6,6 +6,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -83,7 +85,7 @@ class AuthFlowsIntegrationTest {
             oneTimeTokenRepository.findAll()
                 .any { it.purpose == OneTimeToken.Purpose.REFRESH_TOKEN })
         oneTimeTokenService.consume(refreshToken, OneTimeToken.Purpose.REFRESH_TOKEN)
-        assertThrows(IllegalStateException::class.java) {
+        assertThrows(ResponseStatusException::class.java) {
             oneTimeTokenService.consume(refreshToken, OneTimeToken.Purpose.REFRESH_TOKEN)
         }
     }
@@ -147,7 +149,7 @@ class AuthFlowsIntegrationTest {
         assertTrue(updated.emailVerified)
 
         // Token must be consumed (replay fails)
-        assertThrows(IllegalStateException::class.java) {
+        assertThrows(ResponseStatusException::class.java) {
             oneTimeTokenService.findValidToken(token, OneTimeToken.Purpose.VERIFY_EMAIL)
         }
     }
@@ -171,7 +173,7 @@ class AuthFlowsIntegrationTest {
             status { is3xxRedirection() }
         }
 
-        assertThrows(IllegalStateException::class.java) {
+        assertThrows(ResponseStatusException::class.java) {
             oneTimeTokenService.findValidToken(token, OneTimeToken.Purpose.RESET_PASSWORD)
         }
 

@@ -1,0 +1,6 @@
+# The whole suite runs from one client address, so the per-address abuse limits would count every
+# test's sign-in against the same budget and start rejecting partway through a run. Rate limiting is
+# covered by its own unit tests and by RateLimitIntegrationTest, which turns it back on deliberately.
+app:
+  rate-limit:
+    enabled: false

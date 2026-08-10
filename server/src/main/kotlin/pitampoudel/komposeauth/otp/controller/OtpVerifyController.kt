@@ -13,10 +13,10 @@ import pitampoudel.core.data.MessageResponse
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.security.ratelimit.RateLimitProperties
 import pitampoudel.komposeauth.core.security.ratelimit.RateLimiter
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
 import pitampoudel.komposeauth.core.utils.findServerUrl
-import java.time.Duration
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
 import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.UserResponse
@@ -31,7 +31,8 @@ class OtpVerifyController(
     private val userContextService: UserContextService,
     val emailVerificationService: EmailVerificationService,
     val phoneNumberVerificationService: PhoneNumberVerificationService,
-    private val rateLimiter: RateLimiter
+    private val rateLimiter: RateLimiter,
+    private val rateLimitProperties: RateLimitProperties
 ) {
 
     /**
@@ -40,10 +41,11 @@ class OtpVerifyController(
      * SMS bill by pointing the endpoint at a premium-rate number.
      */
     private fun enforceTargetQuota(target: String) {
+        if (!rateLimitProperties.enabled) return
         rateLimiter.enforce(
             key = "otp-target:$target",
-            limit = 5,
-            window = Duration.ofHours(1),
+            limit = rateLimitProperties.otpPerTarget.limit,
+            window = rateLimitProperties.otpPerTarget.window,
             message = "Too many verification codes requested for this address."
         )
     }

@@ -22,9 +22,10 @@ class RateLimitConfig {
      */
     @Bean
     fun rateLimitFilterRegistration(
-        rateLimiter: RateLimiter
+        rateLimiter: RateLimiter,
+        properties: RateLimitProperties
     ): FilterRegistrationBean<RateLimitFilter> {
-        val registration = FilterRegistrationBean(RateLimitFilter(rateLimiter))
+        val registration = FilterRegistrationBean(RateLimitFilter(rateLimiter, properties))
         registration.order = Ordered.HIGHEST_PRECEDENCE + 100
         registration.addUrlPatterns("/*")
         return registration

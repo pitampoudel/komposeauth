@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.filter.OncePerRequestFilter
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
-import java.time.Duration
 
 /**
  * Per-client-IP throttling for the unauthenticated endpoints an attacker can hammer: password
@@ -19,7 +18,8 @@ import java.time.Duration
  * `remoteAddr` already reflects the real client when the app sits behind a trusted proxy.
  */
 class RateLimitFilter(
-    private val rateLimiter: RateLimiter
+    private val rateLimiter: RateLimiter,
+    private val properties: RateLimitProperties
 ) : OncePerRequestFilter() {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -27,20 +27,16 @@ class RateLimitFilter(
     private data class Rule(
         val method: HttpMethod,
         val path: String,
-        val limit: Int,
-        val window: Duration
+        val quota: RateLimitProperties.Rule
     )
 
-    private val rules = listOf(
-        // Password and OTP login: enough headroom for a person fumbling their password, far too
-        // little for credential stuffing.
-        Rule(HttpMethod.POST, "/${ApiEndpoints.LOGIN}", 10, Duration.ofMinutes(5)),
-        Rule(HttpMethod.POST, "/session-login", 10, Duration.ofMinutes(5)),
-        // Each of these sends an SMS or an email on someone else's behalf.
-        Rule(HttpMethod.POST, "/${ApiEndpoints.SEND_OTP}", 5, Duration.ofMinutes(15)),
-        Rule(HttpMethod.POST, "/${ApiEndpoints.VERIFY_OTP}", 10, Duration.ofMinutes(15)),
-        Rule(HttpMethod.PUT, "/${ApiEndpoints.RESET_PASSWORD}", 5, Duration.ofHours(1)),
-        Rule(HttpMethod.POST, "/${ApiEndpoints.RESET_PASSWORD}", 10, Duration.ofHours(1))
+    private val rules: List<Rule> = listOf(
+        Rule(HttpMethod.POST, "/${ApiEndpoints.LOGIN}", properties.login),
+        Rule(HttpMethod.POST, "/session-login", properties.login),
+        Rule(HttpMethod.POST, "/${ApiEndpoints.SEND_OTP}", properties.otpSend),
+        Rule(HttpMethod.POST, "/${ApiEndpoints.VERIFY_OTP}", properties.otpVerify),
+        Rule(HttpMethod.PUT, "/${ApiEndpoints.RESET_PASSWORD}", properties.passwordResetRequest),
+        Rule(HttpMethod.POST, "/${ApiEndpoints.RESET_PASSWORD}", properties.passwordResetSubmit)
     )
 
     override fun doFilterInternal(
@@ -48,6 +44,11 @@ class RateLimitFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
+        if (!properties.enabled) {
+            filterChain.doFilter(request, response)
+            return
+        }
+
         val rule = rules.firstOrNull {
             it.method.matches(request.method) && it.path == request.requestURI
         }
@@ -57,7 +58,7 @@ class RateLimitFilter(
         }
 
         val key = "ip:${request.remoteAddr}:${rule.method}:${rule.path}"
-        val decision = rateLimiter.check(key, rule.limit, rule.window)
+        val decision = rateLimiter.check(key, rule.quota.limit, rule.quota.window)
         if (decision.allowed) {
             filterChain.doFilter(request, response)
             return
