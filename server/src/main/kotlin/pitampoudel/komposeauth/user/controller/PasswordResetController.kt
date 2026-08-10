@@ -102,14 +102,22 @@ class PasswordResetController(
         val stored = oneTimeTokenService.findValidToken(token, OneTimeToken.Purpose.RESET_PASSWORD)
         val user = userService.findUser(stored.userId.toHexString())
             ?: throw BadRequestException("User not found")
+        // Validate the new password before burning the token, so a typo doesn't cost the user their
+        // reset link.
+        val update = UpdateProfileRequest(
+            password = newPassword,
+            confirmPassword = confirmPassword
+        )
+        // Then consume before applying: the token must not survive to be replayed, and a concurrent
+        // second request has to lose the race rather than reset the password twice.
+        oneTimeTokenService.consume(token, OneTimeToken.Purpose.RESET_PASSWORD)
         userService.updateUser(
             userId = user.id,
-            req = UpdateProfileRequest(
-                password = newPassword,
-                confirmPassword = confirmPassword
-            )
+            req = update,
+            // The emailed one-time token is the proof of ownership here; the user is resetting the
+            // password precisely because they cannot supply the current one.
+            requireReauthentication = false
         )
-        oneTimeTokenService.consume(token, OneTimeToken.Purpose.RESET_PASSWORD)
         return RedirectView("${appConfigService.getConfig().websiteUrl}?passwordReset=true")
     }
 }

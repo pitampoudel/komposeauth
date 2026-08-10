@@ -21,8 +21,12 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher
+import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import pitampoudel.core.data.MessageResponse
@@ -63,10 +67,29 @@ class WebSecurityConfig {
                 configuration.allowedOrigins = origins
             }
             configuration.allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+            // Safe to reflect: the origin allowlist above is what actually gates access, and it is
+            // never `*` while credentials are allowed.
             configuration.allowedHeaders = listOf("*")
             configuration.allowCredentials = true
+            configuration.maxAge = 1800L
             configuration
         }
+    }
+
+    /**
+     * A request that carries a bearer token in the `Authorization` header and no session or
+     * access-token cookie cannot be forged cross-site: the browser will not attach that header on
+     * its own. Native and server-to-server clients authenticate this way, so exempting them keeps
+     * CSRF protection focused on the cookie-authenticated browser surface where it actually applies.
+     */
+    private fun headerOnlyBearerRequest(): RequestMatcher = RequestMatcher { request ->
+        val hasBearerHeader = request.getHeader("Authorization")
+            ?.startsWith("Bearer ", ignoreCase = true) == true
+        val cookieNames = request.cookies?.map { it.name }.orEmpty()
+        val hasAmbientCredential = cookieNames.any {
+            it == ACCESS_TOKEN_COOKIE_NAME || it == "JSESSIONID" || it == "SESSION"
+        }
+        hasBearerHeader && !hasAmbientCredential
     }
 
     @Bean
@@ -81,7 +104,43 @@ class WebSecurityConfig {
     ): SecurityFilterChain {
         return http
             .cors { }
-            .csrf { csrf -> csrf.disable() }
+            // Session and access-token cookies are ambient authority, and the access-token cookie is
+            // deliberately SameSite=None so it crosses sites. With CSRF off, any page on the internet
+            // could drive a form-encoded POST — /config (every secret this server holds),
+            // /update-profile, role grants — using a logged-in victim's credentials.
+            .csrf { csrf ->
+                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                    .csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler())
+                    .ignoringRequestMatchers(
+                        PublicEndpoints.csrfExemptRequestMatcher(),
+                        headerOnlyBearerRequest()
+                    )
+            }
+            .headers { headers ->
+                headers
+                    .frameOptions { it.deny() }
+                    .httpStrictTransportSecurity { hsts ->
+                        hsts.includeSubDomains(true).maxAgeInSeconds(31_536_000)
+                    }
+                    .referrerPolicy {
+                        it.policy(ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                    }
+                    .contentSecurityPolicy {
+                        // The bundled Thymeleaf pages use inline script/style, so those stay allowed;
+                        // everything else is same-origin only and the pages cannot be framed.
+                        it.policyDirectives(
+                            "default-src 'self'; " +
+                                    "script-src 'self' 'unsafe-inline'; " +
+                                    "style-src 'self' 'unsafe-inline'; " +
+                                    "img-src 'self' data: https:; " +
+                                    "connect-src 'self'; " +
+                                    "object-src 'none'; " +
+                                    "base-uri 'self'; " +
+                                    "form-action 'self'; " +
+                                    "frame-ancestors 'none'"
+                        )
+                    }
+            }
             .logout { logout ->
                 logout
                     .logoutUrl("/${ApiEndpoints.LOGOUT}")

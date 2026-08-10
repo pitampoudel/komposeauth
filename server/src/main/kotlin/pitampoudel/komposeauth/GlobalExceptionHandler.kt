@@ -30,9 +30,12 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleHttpMessageNotReadableException(ex: HttpMessageNotReadableException): ResponseEntity<ProblemDetail> {
+        // Jackson's root-cause text names internal classes, fields and package paths. Log it, but
+        // don't hand a map of the internals to the caller.
+        log.debug("Unreadable request body", ex)
         val problem = ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,
-            ex.rootCause?.message ?: ex.message ?: "Invalid request body: The provided JSON is malformed or invalid."
+            "Invalid request body: the provided JSON is malformed or invalid."
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem)
     }
@@ -96,9 +99,12 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException::class)
     fun handleDataIntegrityViolationException(ex: DataIntegrityViolationException): ResponseEntity<ProblemDetail> {
+        // The driver's message quotes the offending document — including the colliding email or
+        // phone number — plus collection and index names.
+        log.debug("Data integrity violation", ex)
         val problem = ProblemDetail.forStatusAndDetail(
             HttpStatus.CONFLICT,
-            ex.rootCause?.message ?: ex.message ?: "Data integrity violation."
+            "That value conflicts with an existing record."
         )
         return ResponseEntity.status(HttpStatus.CONFLICT).body(problem)
     }
@@ -110,12 +116,16 @@ class GlobalExceptionHandler {
         NoHandlerFoundException::class
     )
     fun handleNotFoundException(ex: Exception): ResponseEntity<ProblemDetail> {
+        // These messages embed the looked-up identifier, which turns a 404 into a confirmation of
+        // which accounts exist.
+        log.debug("Not found", ex)
         val problem = ProblemDetail.forStatusAndDetail(
             HttpStatus.NOT_FOUND,
-            ex.message ?: "Not found."
+            "Not found."
         )
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem)
     }
+
 
     @ExceptionHandler(AccessDeniedException::class, AuthorizationDeniedException::class, AccountLockedException::class)
     fun handleForbiddenException(ex: Exception): ResponseEntity<ProblemDetail> {

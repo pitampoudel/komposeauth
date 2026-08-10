@@ -11,12 +11,15 @@ spring:
   web:
     error:
       include-exception: false
-      include-message: always
+      # Framework error messages quote internal state and identifiers; keep them out of responses.
+      include-message: never
       include-stacktrace: never
-      include-binding-errors: always
+      include-binding-errors: never
 logging:
   level:
-    root: ERROR
+    root: WARN
+    # Security decisions (rate-limit trips, rejected clients, failed logins) need to be visible.
+    pitampoudel.komposeauth: INFO
 
 server:
   port: ${PORT:8080}

@@ -13,8 +13,10 @@ import pitampoudel.core.data.MessageResponse
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.security.ratelimit.RateLimiter
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
 import pitampoudel.komposeauth.core.utils.findServerUrl
+import java.time.Duration
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
 import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.UserResponse
@@ -28,8 +30,23 @@ class OtpVerifyController(
     private val userService: UserService,
     private val userContextService: UserContextService,
     val emailVerificationService: EmailVerificationService,
-    val phoneNumberVerificationService: PhoneNumberVerificationService
+    val phoneNumberVerificationService: PhoneNumberVerificationService,
+    private val rateLimiter: RateLimiter
 ) {
+
+    /**
+     * Caps how often one address or phone number can be targeted, whoever asks. The per-IP filter
+     * alone doesn't stop a distributed sender from flooding a single victim — or from running up an
+     * SMS bill by pointing the endpoint at a premium-rate number.
+     */
+    private fun enforceTargetQuota(target: String) {
+        rateLimiter.enforce(
+            key = "otp-target:$target",
+            limit = 5,
+            window = Duration.ofHours(1),
+            message = "Too many verification codes requested for this address."
+        )
+    }
 
     @Operation(summary = "Send OTP")
     @PostMapping("/${ApiEndpoints.SEND_OTP}")
@@ -44,6 +61,7 @@ class OtpVerifyController(
                 val parsedPhone = parsePhoneNumber(null, request.username)
                     ?: throw IllegalArgumentException("Invalid phone number format")
                 enforceSelfRequest(currentUser = authenticatedUser, targetUsername = parsedPhone.fullNumberInE164Format)
+                enforceTargetQuota(parsedPhone.fullNumberInE164Format)
                 phoneNumberVerificationService.initiate(
                     phoneNumber = parsedPhone.fullNumberInE164Format
                 )
@@ -52,6 +70,7 @@ class OtpVerifyController(
             OtpType.EMAIL -> {
                 val normalizedEmail = request.username.lowercase()
                 enforceSelfRequest(currentUser = authenticatedUser, targetUsername = normalizedEmail)
+                enforceTargetQuota(normalizedEmail)
                 emailVerificationService.initiate(
                     email = request.username,
                     baseUrl = findServerUrl(httpServletRequest)
