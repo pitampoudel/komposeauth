@@ -129,12 +129,12 @@ class Oauth2ClientsControllerIntegrationTest {
             "oauth-ui-admin@example.com"
         )
 
-        mockMvc.get("/oauth2/clients/dashboard") {
+        mockMvc.get("/admin/clients") {
             accept = MediaType.TEXT_HTML
             cookie(adminCookie)
         }.andExpect {
             status { isOk() }
-            content { string(org.hamcrest.Matchers.containsString("OAuth2 Clients")) }
+            content { string(org.hamcrest.Matchers.containsString("Apps that can ask for tokens")) }
         }
     }
 }

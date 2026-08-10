@@ -46,7 +46,7 @@ docker run -p 80:8080 \
 ```
 
 - After the container is running, open this page to configure everything else:
-  - http://localhost/config
+  - http://localhost/admin/config
 
 ### 2) Add the SDK to your KMP project
 

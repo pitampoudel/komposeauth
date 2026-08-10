@@ -11,7 +11,10 @@ import org.thymeleaf.spring6.expression.ThymeleafEvaluationContext
 import org.thymeleaf.templatemode.TemplateMode
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver
 import org.thymeleaf.web.servlet.JakartaServletWebApplication
+import pitampoudel.komposeauth.core.controller.ConsoleCheck
+import pitampoudel.komposeauth.user.data.RoleResponse
 import kotlin.test.assertContains
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -55,6 +58,16 @@ class TemplateRenderingTest {
         extra.forEach { (key, value) -> setVariable(key, value) }
     }
 
+    /** Branding plus everything `admin/layout.html` reads, as [AdminShell] supplies it. */
+    private fun consoleContext(vararg extra: Pair<String, Any>) = brandingContext(
+        "userCount" to 142L,
+        "clientCount" to 3L,
+        "viewerName" to "Pitam Poudel",
+        "viewerSub" to "ADMIN",
+        "viewerRoles" to listOf("ADMIN"),
+        *extra
+    )
+
     @Test
     fun `login page renders both views and the branded heading`() {
         val html = engine.process("session-login", brandingContext())
@@ -90,14 +103,13 @@ class TemplateRenderingTest {
     }
 
     @Test
-    fun `users dashboard renders and inlines the viewer's roles`() {
+    fun `people page renders and inlines the viewer's roles`() {
         val html = engine.process(
-            "users-dashboard",
-            brandingContext("viewerRoles" to listOf("ADMIN", "SUPER_ADMIN"))
+            "admin/users",
+            consoleContext("viewerRoles" to listOf("ADMIN", "SUPER_ADMIN"))
         )
 
         assertContains(html, "People and roles")
-        assertContains(html, "/oauth2/clients/dashboard")
         // The page disables SUPER_ADMIN controls for a viewer who lacks it, so the roles have to
         // survive inlining as real JSON.
         assertContains(html, "\"SUPER_ADMIN\"")
@@ -109,21 +121,83 @@ class TemplateRenderingTest {
     }
 
     @Test
-    fun `oauth2 clients page renders with its cross-links`() {
-        val html = engine.process("oauth2-clients", brandingContext())
+    fun `applications page renders`() {
+        val html = engine.process("admin/clients", consoleContext())
 
-        assertContains(html, "OAuth2 Clients")
-        assertContains(html, "/users/dashboard")
+        assertContains(html, "Apps that can ask for tokens")
+        assertContains(html, "Register an app")
     }
 
     @Test
-    fun `users dashboard falls back when the app has no name or logo`() {
-        val context = brandingContext("viewerRoles" to emptyList<String>())
+    fun `configuration page renders its groups inside the console`() {
+        val html = engine.process(
+            "admin/config",
+            consoleContext("saved" to true, "fieldGroups" to emptyList<Any>())
+        )
+
+        assertContains(html, "Save configuration")
+        assertContains(html, "Configuration saved.")
+    }
+
+    @Test
+    fun `overview states what is on and what is off`() {
+        val html = engine.process(
+            "admin/overview",
+            consoleContext(
+                "postureLine" to "142 people can sign in, and 3 apps can ask for tokens on their behalf.",
+                "signInMethods" to listOf(ConsoleCheck("Passkeys", true, "Registered against bolnepage.com.")),
+                "deliveryChannels" to listOf(ConsoleCheck("Email", false, "SMTP is not set.")),
+                "roles" to listOf(RoleResponse("ADMIN", 2, true)),
+                "hasCustomRoles" to false
+            )
+        )
+
+        assertContains(html, "142 people can sign in")
+        assertContains(html, "Registered against bolnepage.com.")
+        // A check that is off must say so rather than simply be absent.
+        assertContains(html, "SMTP is not set.")
+        assertContains(html, ">Off<")
+    }
+
+    /**
+     * Every console page shares one layout, so the navigation is only ever as correct as the
+     * `active` argument each page passes into it.
+     */
+    @Test
+    fun `the console marks exactly one navigation entry as current`() {
+        val pages = mapOf(
+            "admin/users" to "/admin/users",
+            "admin/clients" to "/admin/clients",
+            "admin/config" to "/admin/config"
+        )
+
+        pages.forEach { (template, href) ->
+            val html = engine.process(
+                template,
+                consoleContext("fieldGroups" to emptyList<Any>())
+            )
+            // Scoped to the rendered <nav>: the layout's stylesheet also mentions the attribute.
+            val nav = html.substringAfter("<nav class=\"rail-nav\"").substringBefore("</nav>")
+            assertEquals(
+                1,
+                Regex("aria-current=\"page\"").findAll(nav).count(),
+                "$template should light up exactly one navigation entry"
+            )
+            assertTrue(
+                Regex("""href="$href"\s+aria-current="page"""").containsMatchIn(nav),
+                "$template should mark $href as the current page"
+            )
+        }
+    }
+
+    @Test
+    fun `the console falls back when the app has no name or logo`() {
+        val context = consoleContext("viewerRoles" to emptyList<String>())
         context.setVariable("appName", "")
 
-        val html = engine.process("users-dashboard", context)
+        val html = engine.process("admin/users", context)
 
-        assertContains(html, "Admin")
+        assertContains(html, "Identity")
         assertContains(html, "const VIEWER_ROLES = []")
     }
 }

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html th:replace="~{admin/layout :: page(~{::title}, 'clients', ~{::style}, ~{::main}, ~{::script})}"
+      lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${appName.isEmpty()} ? 'Applications · Admin' : ${appName} + ' · Applications'">Applications</title>
+    <style>
+        #status { margin-top: 20px; }
+
+        .client-mark {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: color-mix(in oklab, var(--brand) 12%, transparent);
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* The client ID is the one string an operator retypes most, so it copies on click. */
+        .copy-id {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            max-width: 100%;
+            padding: 0;
+            border: none;
+            background: none;
+            color: var(--muted);
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 12.5px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .copy-id:hover { color: var(--brand); }
+
+        .copy-id .id-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .copy-id .copy-hint { flex-shrink: 0; font-size: 11px; font-family: inherit; opacity: 0.75; }
+
+        .row-facts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+        .field { margin-bottom: 16px; }
+
+        .field-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+        .dialog-body { max-height: min(56vh, 460px); overflow-y: auto; padding-right: 4px; margin-top: 18px; }
+
+        @media (max-width: 620px) {
+            .row { flex-wrap: wrap; }
+            .row-facts { justify-content: flex-start; width: 100%; padding-left: 52px; }
+            .field-pair { grid-template-columns: minmax(0, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<main>
+    <div class="page-head">
+        <div>
+            <p class="eyebrow">Applications</p>
+            <h1 class="font-display">Apps that can ask for tokens</h1>
+            <p class="lede">
+                Each application registered here can send people to this server to sign in, and
+                exchange the result for a token.
+            </p>
+        </div>
+        <button class="btn btn-primary btn-md" type="button" id="newClientBtn">Register an app</button>
+    </div>
+
+    <div id="status" class="hidden" role="status" aria-live="polite"></div>
+
+    <section>
+        <div id="rows" class="rows" aria-busy="false"></div>
+
+        <div id="empty" class="empty hidden">
+            <h3>No app is registered yet</h3>
+            <p>Register one to get a client ID and secret it can sign people in with.</p>
+            <button class="btn btn-secondary btn-sm" type="button" id="emptyNewBtn">Register an app</button>
+        </div>
+    </section>
+
+    <dialog id="clientDialog" aria-labelledby="formTitle">
+        <div class="dialog-head">
+            <div class="dialog-title" id="formTitle">Register an app</div>
+            <div class="dialog-sub" id="formSub">The client ID and secret go into the app's own configuration.</div>
+        </div>
+
+        <form id="clientForm">
+            <div class="dialog-body">
+                <div class="field">
+                    <label for="clientName">App name</label>
+                    <input id="clientName" type="text" required placeholder="Checkout web app"/>
+                </div>
+                <div class="field">
+                    <label for="clientSecret">Client secret <span class="hint">— leave blank to generate one</span></label>
+                    <input id="clientSecret" type="text" placeholder="Generated on save"/>
+                </div>
+                <div class="field">
+                    <label for="redirectUris">Redirect URIs <span class="hint">— one per line</span></label>
+                    <textarea id="redirectUris" placeholder="https://yourapp.com/callback"></textarea>
+                </div>
+                <div class="field">
+                    <label for="scopes">Scopes <span class="hint">— one per line</span></label>
+                    <textarea id="scopes"></textarea>
+                </div>
+                <div class="field field-pair">
+                    <div>
+                        <label for="accessTokenTtl">Access token lasts <span class="hint">— seconds</span></label>
+                        <input id="accessTokenTtl" type="number" min="60" placeholder="900"/>
+                    </div>
+                    <div>
+                        <label for="refreshTokenTtl">Refresh token lasts <span class="hint">— days</span></label>
+                        <input id="refreshTokenTtl" type="number" min="1" placeholder="30"/>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="clientUri">App URL</label>
+                    <input id="clientUri" type="url" placeholder="https://yourapp.com"/>
+                </div>
+                <div class="field">
+                    <label for="logoUri">Logo URL</label>
+                    <input id="logoUri" type="url" placeholder="https://yourapp.com/logo.png"/>
+                </div>
+            </div>
+
+            <div id="dialogStatus" class="alert alert-error hidden" role="alert" style="margin-top:14px;"></div>
+
+            <div class="dialog-foot">
+                <button class="btn btn-ghost btn-sm" type="button" id="cancelBtn">Cancel</button>
+                <button class="btn btn-primary btn-sm" type="submit" id="submitBtn">Register app</button>
+            </div>
+        </form>
+    </dialog>
+</main>
+
+<script>
+    const API_BASE = "/oauth2/clients";
+    const DEFAULT_SCOPES = "openid\nprofile\nemail\noffline_access\nuser.read.any";
+
+    const el = {
+        rows: document.getElementById("rows"),
+        empty: document.getElementById("empty"),
+        status: document.getElementById("status"),
+        newClientBtn: document.getElementById("newClientBtn"),
+        emptyNewBtn: document.getElementById("emptyNewBtn"),
+        dialog: document.getElementById("clientDialog"),
+        form: document.getElementById("clientForm"),
+        dialogStatus: document.getElementById("dialogStatus"),
+        formTitle: document.getElementById("formTitle"),
+        formSub: document.getElementById("formSub"),
+        submitBtn: document.getElementById("submitBtn"),
+        cancelBtn: document.getElementById("cancelBtn")
+    };
+
+    const fields = {
+        clientName: document.getElementById("clientName"),
+        clientSecret: document.getElementById("clientSecret"),
+        redirectUris: document.getElementById("redirectUris"),
+        scopes: document.getElementById("scopes"),
+        accessTokenTtl: document.getElementById("accessTokenTtl"),
+        refreshTokenTtl: document.getElementById("refreshTokenTtl"),
+        clientUri: document.getElementById("clientUri"),
+        logoUri: document.getElementById("logoUri")
+    };
+
+    const formState = {editingClientId: null, mode: "create"};
+    let clients = [];
+
+    function plural(n, one, many) {
+        return n === 1 ? one : many;
+    }
+
+    function parseSet(value) {
+        return [...new Set(value.split(/[\n,]/).map(s => s.trim()).filter(Boolean))];
+    }
+
+    function showStatus(target, kind, text) {
+        target.textContent = text;
+        target.className = "alert alert-" + kind;
+    }
+
+    // ---- list ----------------------------------------------------------------
+
+    async function loadClients() {
+        el.rows.setAttribute("aria-busy", "true");
+        try {
+            const res = await fetch(API_BASE, {credentials: "same-origin", headers: {Accept: "application/json"}});
+            if (!res.ok) throw new Error(await problemText(res, "Couldn't load your apps. Reload the page to try again."));
+            clients = await res.json();
+            renderClients();
+        } catch (err) {
+            showStatus(el.status, "error", err.message || "Couldn't load your apps. Reload the page to try again.");
+        } finally {
+            el.rows.setAttribute("aria-busy", "false");
+        }
+    }
+
+    function facts(client) {
+        const uris = (client.redirectUris || []).length;
+        const scopes = (client.scopes || []).length;
+        return [
+            `${uris} ${plural(uris, "redirect URI", "redirect URIs")}`,
+            `${scopes} ${plural(scopes, "scope", "scopes")}`
+        ];
+    }
+
+    function renderClients() {
+        el.empty.classList.toggle("hidden", clients.length > 0);
+
+        el.rows.innerHTML = clients.map((client, index) => {
+            const name = client.clientName || "Unnamed app";
+            const mark = client.logoUri
+                ? `<img class="client-mark" src="${escapeHtml(client.logoUri)}" alt=""/>`
+                : `<div class="client-mark" aria-hidden="true">${escapeHtml(name.charAt(0))}</div>`;
+            return `
+                <div class="row">
+                    ${mark}
+                    <div class="row-main">
+                        <div class="row-name">${escapeHtml(name)}</div>
+                        <button class="copy-id" type="button" data-copy="${index}">
+                            <span class="id-text">${escapeHtml(client.clientId || "")}</span>
+                            <span class="copy-hint">Copy</span>
+                        </button>
+                    </div>
+                    <div class="row-facts">
+                        ${facts(client).map(f => `<span class="badge">${escapeHtml(f)}</span>`).join("")}
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn btn-secondary btn-xs" type="button" data-edit="${index}">Edit</button>
+                        <button class="btn btn-danger btn-xs" type="button" data-delete="${index}">Delete</button>
+                    </div>
+                </div>`;
+        }).join("");
+
+        el.rows.querySelectorAll("[data-edit]").forEach(btn => {
+            btn.addEventListener("click", () => openEdit(clients[Number(btn.dataset.edit)]));
+        });
+        el.rows.querySelectorAll("[data-delete]").forEach(btn => {
+            btn.addEventListener("click", () => deleteClient(clients[Number(btn.dataset.delete)]));
+        });
+        el.rows.querySelectorAll("[data-copy]").forEach(btn => {
+            btn.addEventListener("click", () => copyId(btn, clients[Number(btn.dataset.copy)]));
+        });
+    }
+
+    async function copyId(button, client) {
+        const hint = button.querySelector(".copy-hint");
+        try {
+            await navigator.clipboard.writeText(client.clientId || "");
+            hint.textContent = "Copied";
+            setTimeout(() => hint.textContent = "Copy", 1600);
+        } catch (_) {
+            hint.textContent = "Press Ctrl+C";
+        }
+    }
+
+    async function deleteClient(client) {
+        const name = client.clientName || "this app";
+        if (!confirm(`Delete ${name}? Anyone signing in through it will stop being able to.`)) return;
+        try {
+            const res = await fetch(API_BASE + "/" + encodeURIComponent(client.clientId), {
+                method: "DELETE",
+                credentials: "same-origin",
+                headers: csrfHeaders({Accept: "application/json"})
+            });
+            if (!res.ok) throw new Error(await problemText(res, "Couldn't delete that app. Try again."));
+            showStatus(el.status, "success", `${name} was deleted.`);
+            await loadClients();
+        } catch (err) {
+            showStatus(el.status, "error", err.message || "Couldn't delete that app. Try again.");
+        }
+    }
+
+    // ---- create and edit -----------------------------------------------------
+
+    function openCreate() {
+        formState.editingClientId = null;
+        formState.mode = "create";
+        el.formTitle.textContent = "Register an app";
+        el.formSub.textContent = "The client ID and secret go into the app's own configuration.";
+        el.submitBtn.textContent = "Register app";
+        fields.clientName.value = "";
+        fields.clientSecret.value = "";
+        fields.redirectUris.value = "";
+        fields.scopes.value = DEFAULT_SCOPES;
+        fields.accessTokenTtl.value = "900";
+        fields.refreshTokenTtl.value = "30";
+        fields.clientUri.value = "";
+        fields.logoUri.value = "";
+        el.dialogStatus.className = "alert alert-error hidden";
+        el.dialog.showModal();
+    }
+
+    function openEdit(client) {
+        formState.editingClientId = client.clientId;
+        formState.mode = "edit";
+        el.formTitle.textContent = client.clientName || "Edit app";
+        el.formSub.textContent = client.clientId;
+        el.submitBtn.textContent = "Save changes";
+        fields.clientName.value = client.clientName || "";
+        fields.clientSecret.value = client.clientSecret || "";
+        fields.redirectUris.value = (client.redirectUris || []).join("\n");
+        fields.scopes.value = (client.scopes || []).join("\n");
+        fields.accessTokenTtl.value = client.accessTokenTtlSeconds ?? 900;
+        fields.refreshTokenTtl.value = client.refreshTokenTtlDays ?? 30;
+        fields.clientUri.value = client.clientUri || "";
+        fields.logoUri.value = client.logoUri || "";
+        el.dialogStatus.className = "alert alert-error hidden";
+        el.dialog.showModal();
+    }
+
+    el.form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        el.dialogStatus.className = "alert alert-error hidden";
+        el.submitBtn.disabled = true;
+
+        const isEdit = formState.mode === "edit";
+        const payload = {
+            clientName: fields.clientName.value.trim(),
+            clientSecret: fields.clientSecret.value.trim() || null,
+            redirectUris: parseSet(fields.redirectUris.value),
+            scopes: parseSet(fields.scopes.value),
+            accessTokenTtlSeconds: parseInt(fields.accessTokenTtl.value, 10) || 900,
+            refreshTokenTtlDays: parseInt(fields.refreshTokenTtl.value, 10) || 30,
+            clientUri: fields.clientUri.value.trim() || null,
+            logoUri: fields.logoUri.value.trim() || null
+        };
+        if (isEdit) payload.clientId = formState.editingClientId;
+
+        try {
+            const res = await fetch(API_BASE, {
+                method: "POST",
+                headers: csrfHeaders({"Content-Type": "application/json", Accept: "application/json"}),
+                credentials: "same-origin",
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error(await problemText(res, "Couldn't save that app. Try again."));
+            el.dialog.close();
+            showStatus(el.status, "success", isEdit ? `${payload.clientName} was updated.` : `${payload.clientName} was registered.`);
+            await loadClients();
+        } catch (err) {
+            showStatus(el.dialogStatus, "error", err.message || "Couldn't save that app. Try again.");
+        } finally {
+            el.submitBtn.disabled = false;
+        }
+    });
+
+    el.newClientBtn.addEventListener("click", openCreate);
+    el.emptyNewBtn.addEventListener("click", openCreate);
+    el.cancelBtn.addEventListener("click", () => el.dialog.close());
+
+    loadClients();
+</script>
+</body>
+</html>

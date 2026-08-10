@@ -229,7 +229,7 @@ class EndpointSecurityIntegrationTest {
     fun `optional-auth endpoint still rejects an invalid token`() {
         // Endpoints that use optional authentication continue to validate a supplied token,
         // so an invalid token is rejected with 401.
-        mockMvc.get("/config") {
+        mockMvc.get("/admin/config") {
             accept = MediaType.APPLICATION_JSON
             header("Authorization", "Bearer invalid-token")
         }.andExpect {
