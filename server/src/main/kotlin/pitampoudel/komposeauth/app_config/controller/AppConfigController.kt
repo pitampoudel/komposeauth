@@ -12,6 +12,7 @@ import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.app_config.service.MasterKeyValidator
 import pitampoudel.komposeauth.core.config.UserContextService
+import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.user.service.UserService
 
 @Controller
@@ -58,6 +59,10 @@ class AppConfigController(
             Group(
                 title = "Security",
                 members = listOf("allowedAndroidSha256List", "corsAllowedOriginList")
+            ),
+            Group(
+                title = "Roles",
+                members = listOf("rolesCatalog")
             ),
             Group(
                 title = "SMS Provider",
@@ -109,6 +114,7 @@ class AppConfigController(
             when (property.name) {
                 "corsAllowedOriginList" -> "textarea"
                 "allowedAndroidSha256List" -> "textarea"
+                "rolesCatalog" -> "textarea"
                 "smsProvider" -> "select"
                 else -> null
             }
@@ -151,7 +157,7 @@ class AppConfigController(
         }
         val user = userContextService.authenticatedUserOrNull()
         if (user != null) {
-            if (!user.roles.any { it == "SUPER_ADMIN" }) {
+            if (!user.roles.any { it == Roles.SUPER_ADMIN }) {
                 throw AccessDeniedException("Only super admins can access configuration.")
             }
             return null

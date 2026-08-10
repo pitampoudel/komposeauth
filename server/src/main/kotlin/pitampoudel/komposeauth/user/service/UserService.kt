@@ -27,6 +27,7 @@ import pitampoudel.core.domain.isValidEmail
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.authorization.OAuth2AuthorizationDocumentRepository
 import pitampoudel.komposeauth.core.domain.Platform
+import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
@@ -41,6 +42,7 @@ import pitampoudel.komposeauth.organization.repository.OrganizationRepository
 import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.data.ProfileResponse
+import pitampoudel.komposeauth.user.data.RoleResponse
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.data.UserResponse
 import pitampoudel.komposeauth.user.entity.User
@@ -124,61 +126,89 @@ class UserService(
         return userRepository.findByIdIn(objectIds)
     }
 
-    fun listAdmins(page: Int, size: Int): Page<User> {
-        val pageable: Pageable = PageRequest.of(page, size)
-        return userRepository.findByRolesContaining("ADMIN", pageable)
+    /** Every grantable role, with how many users currently hold it. */
+    fun listRoles(): List<RoleResponse> {
+        return appConfigService.availableRoles().map { role ->
+            RoleResponse(
+                role = role,
+                userCount = userRepository.countByRolesContaining(role),
+                builtIn = role in Roles.BUILT_IN
+            )
+        }
     }
 
-    fun grantAdmin(actor: String, userId: String): User {
-        val id = try {
-            ObjectId(userId)
-        } catch (_: Exception) {
-            throw UsernameNotFoundException("Invalid user id: $userId")
-        }
-        val user = userRepository.findById(id).orElseThrow {
-            UsernameNotFoundException("User not found: $userId")
-        }
-        if (user.roles.contains("ADMIN")) return user
-        val updated = user.copy(roles = user.roles + "ADMIN")
-        val saved = userRepository.save(updated)
+    fun grantRole(actor: User, userId: String, role: String): User {
+        val normalized = requireManageableRole(actor, role)
+        val user = requireUser(userId)
+        if (user.roles.contains(normalized)) return user
+        val saved = userRepository.save(user.copy(roles = user.roles + normalized))
 
         roleChangeEmailNotifier.notify(
             target = saved,
             action = RoleChangeEmailNotifier.Action.GRANTED,
-            actor = actor
+            actor = actor.fullName,
+            role = normalized
         )
 
         return saved
     }
 
-    fun revokeAdmin(actor: String, userId: String): User {
+    fun revokeRole(actor: User, userId: String, role: String): User {
+        val normalized = requireManageableRole(actor, role)
+        val user = requireUser(userId)
+        if (!user.roles.contains(normalized)) return user
+        if (normalized in Roles.PROTECTED &&
+            userRepository.countByRolesContaining(normalized) <= 1
+        ) {
+            throw BadRequestException("Cannot remove the last $normalized")
+        }
+        val saved = userRepository.save(
+            user.copy(roles = user.roles.filterNot { it == normalized })
+        )
+
+        roleChangeEmailNotifier.notify(
+            target = saved,
+            action = RoleChangeEmailNotifier.Action.REVOKED,
+            actor = actor.fullName,
+            role = normalized
+        )
+
+        return saved
+    }
+
+    private fun requireUser(userId: String): User {
         val id = try {
             ObjectId(userId)
         } catch (_: Exception) {
             throw UsernameNotFoundException("Invalid user id: $userId")
         }
-        val user = userRepository.findById(id).orElseThrow {
+        return userRepository.findById(id).orElseThrow {
             UsernameNotFoundException("User not found: $userId")
         }
-        if (!user.roles.contains("ADMIN")) return user
-        val totalAdmins = userRepository.countByRolesContaining("ADMIN")
-        if (totalAdmins <= 1) {
-            throw BadRequestException("Cannot remove the last admin")
-        }
-        val updated = user.copy(roles = user.roles.filterNot { it == "ADMIN" })
-        val saved = userRepository.save(updated)
-
-
-        roleChangeEmailNotifier.notify(
-            target = saved,
-            action = RoleChangeEmailNotifier.Action.REVOKED,
-            actor = actor
-        )
-
-        return saved
     }
 
-    fun findUsersFlexible(ids: List<String>?, q: String?, page: Int, size: Int): Page<User> {
+    private fun requireManageableRole(actor: User, role: String): String {
+        val normalized = Roles.normalize(role)
+        if (normalized !in appConfigService.availableRoles()) {
+            throw BadRequestException(
+                "Unknown role: $normalized. Add it to the role catalog in app config first."
+            )
+        }
+        // SUPER_ADMIN gates access to app configuration and its secrets, so an ADMIN must not be
+        // able to hand it to themselves.
+        if (normalized == Roles.SUPER_ADMIN && !actor.roles.contains(Roles.SUPER_ADMIN)) {
+            throw AccessDeniedException("Only a ${Roles.SUPER_ADMIN} can manage the ${Roles.SUPER_ADMIN} role")
+        }
+        return normalized
+    }
+
+    fun findUsersFlexible(
+        ids: List<String>?,
+        q: String?,
+        role: String? = null,
+        page: Int,
+        size: Int
+    ): Page<User> {
         val pageSafe = if (page < 0) 0 else page
         val sizeCapped = when {
             size <= 0 -> 50
@@ -195,12 +225,14 @@ class UserService(
             return PageImpl(slice, pageable, all.size.toLong())
         }
 
-        val query = q?.trim()
-        if (!query.isNullOrEmpty()) {
-            val tokens = query.split("\\s+".toRegex()).filter { it.isNotEmpty() }
-            if (tokens.isNotEmpty()) {
-                return userRepository.search(tokens, pageable)
-            }
+        val tokens = q?.trim()
+            ?.split("\\s+".toRegex())
+            ?.filter { it.isNotEmpty() }
+            .orEmpty()
+        val roleFilter = role?.takeIf { it.isNotBlank() }?.let { Roles.normalize(it) }
+
+        if (tokens.isNotEmpty() || roleFilter != null) {
+            return userRepository.search(tokens, roleFilter, pageable)
         }
 
         return userRepository.findAll(pageable)
