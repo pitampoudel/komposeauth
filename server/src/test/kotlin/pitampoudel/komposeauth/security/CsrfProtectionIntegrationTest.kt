@@ -51,6 +51,29 @@ class CsrfProtectionIntegrationTest {
     private lateinit var securityFilterChainProxy: FilterChainProxy
 
     /**
+     * Walks the live requireCsrfProtectionMatcher, reporting each node's class and its verdict on
+     * [req]. The composed matcher is an And of the default method check and a Negated Or of the
+     * configured exemptions, so whichever node reads unexpectedly names the cause outright.
+     */
+    private fun describeMatcher(matcher: Any?, req: jakarta.servlet.http.HttpServletRequest): String {
+        if (matcher == null) return "null"
+        val name = matcher.javaClass.simpleName
+        val verdict = runCatching { (matcher as RequestMatcher).matches(req) }
+            .getOrElse { "err(${it.javaClass.simpleName})" }
+        fun field(vararg names: String): Any? = names.firstNotNullOfOrNull { n ->
+            runCatching { ReflectionTestUtils.getField(matcher, n) }.getOrNull()
+        }
+        val many = field("requestMatchers", "matchers") as? Collection<*>
+        val one = field("requestMatcher", "matcher")
+        val children = when {
+            many != null -> many.joinToString(", ") { describeMatcher(it, req) }
+            one != null -> describeMatcher(one, req)
+            else -> null
+        }
+        return if (children != null) "$name=$verdict[$children]" else "$name=$verdict"
+    }
+
+    /**
      * What the live CsrfFilter thinks about a request to [path]: whether it considers protection
      * required, and which repository it is consulting. Both are set at configuration time, so if
      * either is unexpected the cause is in WebSecurityConfig rather than in the request.
@@ -131,9 +154,14 @@ class CsrfProtectionIntegrationTest {
                     "(status ${response.status}). " +
                     "csrfFilterRan=$csrfFilterRan, " +
                     "requiresProtectionForThisRequest=$requiresProtectionHere, " +
-                    "resolvedException=${result.resolvedException}, " +
-                    "dispatcherType=${result.request.dispatcherType}. " +
-                    "Filter state: ${csrfFilterState("/${ApiEndpoints.UPDATE_PROFILE}")}"
+                    "resolvedException=${result.resolvedException}. " +
+                    "Matcher tree vs the real request: " +
+                    describeMatcher(
+                        securityFilterChainProxy.getFilters("/${ApiEndpoints.UPDATE_PROFILE}").orEmpty()
+                            .filterIsInstance<CsrfFilter>().firstOrNull()
+                            ?.let { ReflectionTestUtils.getField(it, "requireCsrfProtectionMatcher") },
+                        result.request
+                    )
         )
 
         // Deliberately only "not success". CsrfFilter runs before the bearer token in the cookie is
