@@ -10,7 +10,11 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.security.web.FilterChainProxy
+import org.springframework.security.web.csrf.CsrfFilter
+import org.springframework.security.web.util.matcher.RequestMatcher
+import org.springframework.test.util.ReflectionTestUtils
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
@@ -45,6 +49,27 @@ class CsrfProtectionIntegrationTest {
 
     @Autowired
     private lateinit var securityFilterChainProxy: FilterChainProxy
+
+    /**
+     * What the live CsrfFilter thinks about a request to [path]: whether it considers protection
+     * required, and which repository it is consulting. Both are set at configuration time, so if
+     * either is unexpected the cause is in WebSecurityConfig rather than in the request.
+     */
+    private fun csrfFilterState(path: String): String {
+        val filter = securityFilterChainProxy.getFilters(path).orEmpty()
+            .filterIsInstance<CsrfFilter>()
+            .firstOrNull() ?: return "no CsrfFilter in chain"
+        val probe = MockHttpServletRequest("POST", path).apply {
+            requestURI = path
+            servletPath = path
+        }
+        val matcher = ReflectionTestUtils.getField(filter, "requireCsrfProtectionMatcher") as? RequestMatcher
+        val repository = ReflectionTestUtils.getField(filter, "tokenRepository")
+        val handler = ReflectionTestUtils.getField(filter, "requestHandler")
+        return "requiresProtection=${matcher?.matches(probe)}, " +
+                "repository=${repository?.javaClass?.simpleName}, " +
+                "handler=${handler?.javaClass?.simpleName}"
+    }
 
     /** The security filters actually assembled for [path], in order. */
     private fun filtersFor(path: String): List<String> =
@@ -89,8 +114,9 @@ class CsrfProtectionIntegrationTest {
             "Forged",
             user.firstName,
             "forged write was applied — CSRF is not protecting this endpoint " +
-                    "(status ${response.status}); chain for the request was " +
-                    "${filtersFor("/${ApiEndpoints.UPDATE_PROFILE}")}"
+                    "(status ${response.status}). " +
+                    "Filter state: ${csrfFilterState("/${ApiEndpoints.UPDATE_PROFILE}")}. " +
+                    "Chain: ${filtersFor("/${ApiEndpoints.UPDATE_PROFILE}")}"
         )
 
         // Deliberately only "not success". CsrfFilter runs before the bearer token in the cookie is
