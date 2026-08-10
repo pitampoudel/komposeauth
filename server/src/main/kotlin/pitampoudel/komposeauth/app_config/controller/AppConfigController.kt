@@ -1,6 +1,8 @@
 package pitampoudel.komposeauth.app_config.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -14,12 +16,10 @@ import pitampoudel.komposeauth.app_config.service.MasterKeyValidator
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.controller.AdminShell
 import pitampoudel.komposeauth.core.domain.Roles
-import pitampoudel.komposeauth.user.service.UserService
 
 @Controller
 class AppConfigController(
     private val appConfigProvider: AppConfigProvider,
-    private val userService: UserService,
     private val masterKeyValidator: MasterKeyValidator,
     private val adminShell: AdminShell,
     val userContextService: UserContextService
@@ -137,10 +137,13 @@ class AppConfigController(
     fun form(
         model: Model,
         @RequestParam("key", required = false)
-        key: String?
+        key: String?,
+        request: HttpServletRequest,
+        response: HttpServletResponse
     ): String {
-        enforceConfigAccessOrRedirect(key = key)?.let { return it }
+        enforceConfigAccessOrRedirect(key = key, request = request)?.let { return it }
         val config = appConfigProvider.get()
+        noStore(response)
         adminShell.apply(model)
         model.addAttribute("config", config)
         model.addAttribute("fieldGroups", fieldGroups(config))
@@ -151,10 +154,13 @@ class AppConfigController(
     fun submit(
         @RequestParam("key", required = false) key: String?,
         @ModelAttribute form: AppConfig,
-        model: Model
+        model: Model,
+        request: HttpServletRequest,
+        response: HttpServletResponse
     ): String {
-        enforceConfigAccessOrRedirect(key = key)?.let { return it }
+        enforceConfigAccessOrRedirect(key = key, request = request)?.let { return it }
         val config = appConfigProvider.save(form)
+        noStore(response)
         adminShell.apply(model)
         model.addAttribute("config", config)
         model.addAttribute("fieldGroups", fieldGroups(config))
@@ -162,8 +168,24 @@ class AppConfigController(
         return "admin/config"
     }
 
-    private fun enforceConfigAccessOrRedirect(key: String?): String? {
-        if (userService.countUsers() == 0L || masterKeyValidator.isValid(key)) {
+    /** This page renders every secret the server holds; keep it out of caches and history. */
+    private fun noStore(response: HttpServletResponse) {
+        response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private")
+        response.setHeader("Pragma", "no-cache")
+        response.setHeader("Referrer-Policy", "no-referrer")
+    }
+
+    private fun enforceConfigAccessOrRedirect(key: String?, request: HttpServletRequest): String? {
+        // There is deliberately no "no users yet, let anyone in" bootstrap here. This page reads and
+        // writes every secret the server holds — SMTP password, Twilio token, Google client secret —
+        // so opening it to the internet for the window between deploy and first signup hands a fresh
+        // instance to whoever finds it first. The operator already has BASE64_ENCRYPTION_KEY, which
+        // is required to boot, so the master key below is always available to them for first-run.
+        //
+        // The key may also arrive as a header, so operators aren't forced to put it in a URL where
+        // it lands in access logs, proxy logs and browser history.
+        val suppliedKey = key ?: request.getHeader(MASTER_KEY_HEADER)
+        if (masterKeyValidator.isValid(suppliedKey)) {
             return null
         }
         val user = userContextService.authenticatedUserOrNull()
@@ -175,5 +197,9 @@ class AppConfigController(
         }
         // `/login` is the JSON login API, not a page; the browser sign-in page is /session-login.
         return "redirect:/session-login"
+    }
+
+    companion object {
+        const val MASTER_KEY_HEADER = "X-Master-Key"
     }
 }

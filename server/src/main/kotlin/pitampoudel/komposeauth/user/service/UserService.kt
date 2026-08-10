@@ -265,9 +265,33 @@ class UserService(
         return newUser
     }
 
-    fun updateUser(userId: ObjectId, req: UpdateProfileRequest): ProfileResponse {
+    /**
+     * @param requireReauthentication when true, changing the password or email of an account that
+     * already has a password requires the caller to supply that password. Reset-password flows pass
+     * false: possession of the emailed one-time token is the proof there.
+     */
+    fun updateUser(
+        userId: ObjectId,
+        req: UpdateProfileRequest,
+        requireReauthentication: Boolean = true
+    ): ProfileResponse {
         val existingUser = userRepository.findById(userId).orElse(null)
             ?: throw IllegalStateException("User not found")
+
+        if (requireReauthentication) {
+            val changesCredentials = req.password != null ||
+                    (req.email != null && req.email != existingUser.email)
+            val currentHash = existingUser.passwordHash
+            // A passwordless account (social or OTP sign-in) has nothing to check against; for one
+            // with a password, a hijacked session must not be enough to seize the account.
+            if (changesCredentials && currentHash != null) {
+                val supplied = req.currentPassword
+                if (supplied.isNullOrEmpty() || !passwordEncoder.matches(supplied, currentHash)) {
+                    throw AccessDeniedException("Current password is incorrect")
+                }
+            }
+        }
+
         val result = userRepository.save(
             existingUser.update(
                 req = req,

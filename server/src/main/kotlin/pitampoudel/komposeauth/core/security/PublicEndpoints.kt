@@ -23,7 +23,6 @@ object PublicEndpoints {
         "/${ApiEndpoints.LOGIN}",
         "/${ApiEndpoints.LOGOUT}",
         "/signup",
-        "/api/auth/**",
         "/${ApiEndpoints.LOGIN_OPTIONS}",
         "/${ApiEndpoints.VERIFY_EMAIL}",
         "/${ApiEndpoints.RESET_PASSWORD}",
@@ -46,6 +45,23 @@ object PublicEndpoints {
     fun purelyPublicRequestMatcher(): RequestMatcher {
         val builder = PathPatternRequestMatcher.withDefaults()
         val matchers = purelyPublicPatterns.map { builder.matcher(it) } +
+                builder.matcher(HttpMethod.POST, "/$THIRD_FACTOR_KYC")
+        return OrRequestMatcher(matchers)
+    }
+
+    /**
+     * Endpoints exempt from CSRF protection.
+     *
+     * These deliberately ignore ambient credentials — the bearer token resolver returns null for
+     * them — so a forged cross-site request carries no authority and there is nothing to protect.
+     * `/session-login` is *not* exempt: it is what establishes the session, and without a token an
+     * attacker can silently sign a victim into an account they control.
+     */
+    fun csrfExemptRequestMatcher(): RequestMatcher {
+        val builder = PathPatternRequestMatcher.withDefaults()
+        val matchers = purelyPublicPatterns
+            .filterNot { it == "/session-login" }
+            .map { builder.matcher(it) } +
                 builder.matcher(HttpMethod.POST, "/$THIRD_FACTOR_KYC")
         return OrRequestMatcher(matchers)
     }

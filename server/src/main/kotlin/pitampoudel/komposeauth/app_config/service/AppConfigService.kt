@@ -47,8 +47,20 @@ class AppConfigService(val appConfigProvider: AppConfigProvider) {
         return (Roles.BUILT_IN + configuredRoles()).distinct()
     }
 
+    /**
+     * Configured browser origins, trimmed and de-duplicated.
+     *
+     * A bare `*` is dropped: these origins are used for credentialed CORS, where matching every
+     * origin would let any site on the internet read authenticated responses. Narrower wildcard
+     * patterns, such as one scoped to the subdomains of a single host, are kept.
+     */
     fun corsAllowedOrigins(): List<String> {
-        return appConfigProvider.get().corsAllowedOriginList?.split(",").orEmpty()
+        return appConfigProvider.get().corsAllowedOriginList
+            ?.split(",", "\n")
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() && it != "*" }
+            ?.distinct()
+            .orEmpty()
     }
 
     fun webauthnAllowedOrigins(): Set<String> {

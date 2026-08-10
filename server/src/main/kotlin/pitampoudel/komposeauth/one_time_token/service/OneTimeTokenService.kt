@@ -1,7 +1,9 @@
 package pitampoudel.komposeauth.one_time_token.service
 
 import org.bson.types.ObjectId
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.web.server.ResponseStatusException
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.repository.OneTimeTokenRepository
@@ -18,6 +20,10 @@ class OneTimeTokenService(
     private val repo: OneTimeTokenRepository
 ) {
     private val encoder = Base64.getUrlEncoder().withoutPadding()
+
+    private companion object {
+        const val INVALID_TOKEN_MESSAGE = "This link is invalid or has expired. Request a new one."
+    }
 
     fun generateRefreshToken(userId: ObjectId, ttl: Duration = 30.days): String {
         return createToken(userId, OneTimeToken.Purpose.REFRESH_TOKEN, ttl)
@@ -59,11 +65,18 @@ class OneTimeTokenService(
         return raw
     }
 
+    /**
+     * A bad token is a client error, so these surface as 400 rather than falling through to the
+     * catch-all handler as a 500 (and paging whoever watches Sentry every time a reset link is
+     * clicked twice). All three cases share one message so the response can't be used to tell an
+     * unknown token from a spent one.
+     */
     fun findValidToken(rawToken: String, purpose: OneTimeToken.Purpose): OneTimeToken {
         val token = repo.findByTokenHashAndPurpose(hash(rawToken), purpose)
-            ?: throw IllegalArgumentException("Invalid or unknown token")
-        if (token.isConsumed()) throw IllegalStateException("Token already used")
-        if (token.isExpired()) throw IllegalStateException("Token expired")
+            ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, INVALID_TOKEN_MESSAGE)
+        if (token.isConsumed() || token.isExpired()) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, INVALID_TOKEN_MESSAGE)
+        }
         return token
     }
 

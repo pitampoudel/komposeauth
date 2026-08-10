@@ -45,6 +45,29 @@ class OAuth2PublicClientAuthProviderTest {
     }
 
     @Test
+    fun `rejects a confidential client that is not registered for the none method`() {
+        // Regression: this converter authenticates on client_id alone. If the provider doesn't
+        // insist the client is registered as public, a confidential client's secret becomes
+        // optional and the (non-secret) client_id is enough to mint tokens.
+        val confidential = RegisteredClient.withId(UUID.randomUUID().toString())
+            .clientId("confidential-client")
+            .clientSecret("{noop}super-secret")
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+            .authorizationGrantType(org.springframework.security.oauth2.core.AuthorizationGrantType.AUTHORIZATION_CODE)
+            .redirectUri("https://example.com")
+            .scope("openid")
+            .build()
+
+        val repo = FakeRegisteredClientRepository(mapOf("confidential-client" to confidential))
+        val sut = OAuth2PublicClientAuthProvider(repo)
+
+        val ex = assertThrows<OAuth2AuthenticationException> {
+            sut.authenticate(OAuth2PublicClientAuthToken("confidential-client"))
+        }
+        assertEquals(OAuth2ErrorCodes.INVALID_CLIENT, ex.error.errorCode)
+    }
+
+    @Test
     fun `authenticates public client when registered`() {
         val registered = RegisteredClient.withId(UUID.randomUUID().toString())
             .clientId("client")
