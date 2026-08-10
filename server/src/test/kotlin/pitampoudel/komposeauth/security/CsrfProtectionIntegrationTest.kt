@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.security
 
+import jakarta.servlet.http.Cookie
 import kotlinx.serialization.json.Json
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
@@ -8,18 +9,22 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.mock.web.MockHttpServletRequest
+import org.springframework.mock.web.MockServletContext
 import org.springframework.security.web.FilterChainProxy
 import org.springframework.security.web.csrf.CsrfFilter
 import org.springframework.security.web.util.matcher.RequestMatcher
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.util.ReflectionTestUtils
+import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.user.repository.UserRepository
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -50,125 +55,72 @@ class CsrfProtectionIntegrationTest {
     @Autowired
     private lateinit var securityFilterChainProxy: FilterChainProxy
 
-    /**
-     * Walks the live requireCsrfProtectionMatcher, reporting each node's class and its verdict on
-     * [req]. The composed matcher is an And of the default method check and a Negated Or of the
-     * configured exemptions, so whichever node reads unexpectedly names the cause outright.
-     */
-    private fun describeMatcher(matcher: Any?, req: jakarta.servlet.http.HttpServletRequest): String {
-        if (matcher == null) return "null"
-        val name = matcher.javaClass.simpleName
-        val verdict = runCatching { (matcher as RequestMatcher).matches(req) }
-            .getOrElse { "err(${it.javaClass.simpleName})" }
-        fun field(vararg names: String): Any? = names.firstNotNullOfOrNull { n ->
-            runCatching { ReflectionTestUtils.getField(matcher, n) }.getOrNull()
-        }
-        val many = field("requestMatchers", "matchers") as? Collection<*>
-        val one = field("requestMatcher", "matcher")
-        val children = when {
-            many != null -> many.joinToString(", ") { describeMatcher(it, req) }
-            one != null -> describeMatcher(one, req)
-            else -> null
-        }
-        return if (children != null) "$name=$verdict[$children]" else "$name=$verdict"
-    }
-
-    /**
-     * What the live CsrfFilter thinks about a request to [path]: whether it considers protection
-     * required, and which repository it is consulting. Both are set at configuration time, so if
-     * either is unexpected the cause is in WebSecurityConfig rather than in the request.
-     */
-    private fun csrfFilterState(path: String): String {
-        val filter = securityFilterChainProxy.getFilters(path).orEmpty()
+    /** The matcher the running CsrfFilter actually decides with. */
+    private fun liveCsrfMatcher(): RequestMatcher {
+        val filter = securityFilterChainProxy.getFilters("/${ApiEndpoints.UPDATE_PROFILE}").orEmpty()
             .filterIsInstance<CsrfFilter>()
-            .firstOrNull() ?: return "no CsrfFilter in chain"
-        val probe = MockHttpServletRequest("POST", path).apply {
-            requestURI = path
-            servletPath = path
-        }
-        val matcher = ReflectionTestUtils.getField(filter, "requireCsrfProtectionMatcher") as? RequestMatcher
-        val repository = ReflectionTestUtils.getField(filter, "tokenRepository")
-        val handler = ReflectionTestUtils.getField(filter, "requestHandler")
-        return "requiresProtection=${matcher?.matches(probe)}, " +
-                "repository=${repository?.javaClass?.simpleName}, " +
-                "handler=${handler?.javaClass?.simpleName}"
+            .first()
+        return ReflectionTestUtils.getField(filter, "requireCsrfProtectionMatcher") as RequestMatcher
     }
-
-    /** The security filters actually assembled for [path], in order. */
-    private fun filtersFor(path: String): List<String> =
-        securityFilterChainProxy.getFilters(path).orEmpty().map { it.javaClass.simpleName }
 
     @Test
-    fun `csrf filter is present in the chain that serves the api`() {
-        // Checked on its own so a missing filter reports itself directly, rather than showing up
-        // as the confusing "a forged write succeeded" further down.
-        val filters = filtersFor("/${ApiEndpoints.UPDATE_PROFILE}")
+    fun `a cookie-authenticated write still requires a csrf token`() {
+        // Guards a specific regression. OAuth2ResourceServerConfigurer registers a CSRF exemption for
+        // any request its BearerTokenResolver can pull a token from, and this application's resolver
+        // falls back to the access-token cookie — which silently exempted every cookie-authenticated
+        // request, the exact case CSRF is here to cover. Asserting against the live matcher catches
+        // that coming back even if the end-to-end request below is ever weakened.
+        val cookieAuthenticated = MockMvcRequestBuilders
+            .post("/${ApiEndpoints.UPDATE_PROFILE}")
+            .cookie(Cookie(ACCESS_TOKEN_COOKIE_NAME, "any-jwt"))
+            .buildRequest(MockServletContext())
+
         assertTrue(
-            filters.any { it == "CsrfFilter" },
-            "CsrfFilter is not in the chain for /${ApiEndpoints.UPDATE_PROFILE}; chain was: $filters"
+            liveCsrfMatcher().matches(cookieAuthenticated),
+            "a cookie-authenticated write must require a CSRF token"
         )
     }
 
     @Test
-    fun `cookie-authenticated write is rejected without a valid csrf token`() {
+    fun `a header-only bearer request stays exempt`() {
+        // Native and server-to-server clients authenticate with the header, which a browser will not
+        // attach cross-site, so demanding a token there would break them for no security gain.
+        val headerAuthenticated = MockMvcRequestBuilders
+            .post("/${ApiEndpoints.UPDATE_PROFILE}")
+            .header("Authorization", "Bearer any-jwt")
+            .buildRequest(MockServletContext())
+
+        assertFalse(
+            liveCsrfMatcher().matches(headerAuthenticated),
+            "a header-only bearer request should not need a CSRF token"
+        )
+    }
+
+    @Test
+    fun `cookie-authenticated write is rejected without a csrf token`() {
         val email = "csrf-reject@example.com"
         val userId = TestAuthHelpers.createUser(mockMvc, json, email)
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
-        // The same fully-wired client the rest of the suite uses, so the chain under test is the
-        // real one — but opting out of the automatic token, so this request carries none at all.
-        //
-        // An earlier version sent a deliberately invalid token instead. That does not work: csrf()
-        // *sets* the token parameter, so the harness's own token processor simply overwrote the bad
-        // value with a good one and the write sailed through, looking exactly like a security hole.
-        // Sending nothing cannot be undone by ordering.
-        val result = mockMvc.post("/${ApiEndpoints.UPDATE_PROFILE}") {
+        // Opts out of the harness's automatic token, so this request carries none at all — the
+        // position a cross-site caller is in. Sending a deliberately *invalid* token does not work:
+        // csrf() sets the token parameter, so whichever processor runs last decides its value.
+        val response = mockMvc.post("/${ApiEndpoints.UPDATE_PROFILE}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             header(TestConfig.OMIT_CSRF_TOKEN_HEADER, "true")
             cookie(cookie)
             content = """{"givenName":"Forged"}"""
-        }.andReturn()
-        val response = result.response
+        }.andReturn().response
 
-        // Did CsrfFilter actually execute for THIS request? It sets this attribute as its first
-        // action, before any decision, so its absence means the filter never ran — which would be a
-        // different problem entirely from the filter running and letting the request past.
-        val csrfFilterRan =
-            result.request.getAttribute("org.springframework.security.web.csrf.DeferredCsrfToken") != null
-        // And what the live matcher says about the real request, rather than a hand-made stand-in.
-        val requiresProtectionHere = (
-            securityFilterChainProxy.getFilters("/${ApiEndpoints.UPDATE_PROFILE}").orEmpty()
-                .filterIsInstance<CsrfFilter>().firstOrNull()
-                ?.let { ReflectionTestUtils.getField(it, "requireCsrfProtectionMatcher") as? RequestMatcher }
-                ?.matches(result.request)
-            )
-
-        // Checked first, because this is the property the protection exists for: whatever status
-        // the refusal is dressed up as, the forged write must not have landed.
+        // The property the protection exists for: the forged write must not have landed.
         val user = userRepository.findById(ObjectId(userId)).orElseThrow()
         assertNotEquals(
             "Forged",
             user.firstName,
-            "forged write was applied — CSRF is not protecting this endpoint " +
-                    "(status ${response.status}). " +
-                    "csrfFilterRan=$csrfFilterRan, " +
-                    "requiresProtectionForThisRequest=$requiresProtectionHere, " +
-                    "resolvedException=${result.resolvedException}. " +
-                    "Matcher tree vs the real request: " +
-                    describeMatcher(
-                        securityFilterChainProxy.getFilters("/${ApiEndpoints.UPDATE_PROFILE}").orEmpty()
-                            .filterIsInstance<CsrfFilter>().firstOrNull()
-                            ?.let { ReflectionTestUtils.getField(it, "requireCsrfProtectionMatcher") },
-                        result.request
-                    )
+            "forged write was applied (status ${response.status})"
         )
 
-        // Deliberately only "not success". CsrfFilter runs before the bearer token in the cookie is
-        // read, so the principal is still anonymous when the request is refused, and
-        // ExceptionTranslationFilter turns an anonymous access denial into "start authentication" —
-        // which lands as a 401 or, for a client the entry point decides to redirect, a 302. Pinning
-        // an exact code here tests Spring's error plumbing rather than this application's security.
         assertTrue(
             response.status !in 200..299,
             "forged write should not have succeeded, got ${response.status}"
@@ -191,6 +143,6 @@ class CsrfProtectionIntegrationTest {
         }
 
         val user = userRepository.findById(ObjectId(userId)).orElseThrow()
-        assertNotEquals("Forged", user.firstName)
+        assertEquals("Legitimate", user.firstName)
     }
 }

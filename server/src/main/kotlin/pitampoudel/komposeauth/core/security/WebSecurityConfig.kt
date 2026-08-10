@@ -21,10 +21,14 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.config.ObjectPostProcessor
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository
+import org.springframework.security.web.csrf.CsrfFilter
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy
+import org.springframework.security.web.util.matcher.AndRequestMatcher
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
+import org.springframework.security.web.util.matcher.OrRequestMatcher
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher
 import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.cors.CorsConfiguration
@@ -77,6 +81,32 @@ class WebSecurityConfig {
     }
 
     /**
+     * Exactly which requests must carry a CSRF token.
+     *
+     * This has to be forced onto the filter rather than merely configured, because
+     * `OAuth2ResourceServerConfigurer` quietly adds a `BearerTokenRequestMatcher` of its own to the
+     * CSRF exemptions. That matcher asks the [BearerTokenResolver] whether the request carries a
+     * token, and this application's resolver falls back to reading the access-token cookie — so
+     * every cookie-authenticated request was being exempted. Since that cookie is SameSite=None and
+     * rides along on cross-site requests, it exempted precisely the requests CSRF protection exists
+     * to stop. The exemption is sound for a real `Authorization` header, which a browser will not
+     * attach on its own; it is not sound for a cookie.
+     */
+    private fun csrfProtectionMatcher(): RequestMatcher {
+        val safeMethods = setOf("GET", "HEAD", "TRACE", "OPTIONS")
+        val stateChanging = RequestMatcher { request -> request.method !in safeMethods }
+        return AndRequestMatcher(
+            stateChanging,
+            NegatedRequestMatcher(
+                OrRequestMatcher(
+                    PublicEndpoints.csrfExemptRequestMatcher(),
+                    headerOnlyBearerRequest()
+                )
+            )
+        )
+    }
+
+    /**
      * A request that carries a bearer token in the `Authorization` header and no session or
      * access-token cookie cannot be forged cross-site: the browser will not attach that header on
      * its own. Native and server-to-server clients authenticate this way, so exempting them keeps
@@ -110,11 +140,19 @@ class WebSecurityConfig {
             // /update-profile, role grants — using a logged-in victim's credentials.
             .csrf { csrf ->
                 csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                    .csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler())
-                    .ignoringRequestMatchers(
-                        PublicEndpoints.csrfExemptRequestMatcher(),
-                        headerOnlyBearerRequest()
-                    )
+                csrf.csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler())
+                csrf.requireCsrfProtectionMatcher(csrfProtectionMatcher())
+                // Configuring the matcher above is not enough on its own: exemptions registered by
+                // other configurers are AND-NOT-ed onto whatever is set here, and the resource
+                // server registers one that matches any request carrying a token — including one
+                // read from the cookie. Post-processing runs after the filter has been built and
+                // its matcher assembled, so this is the last word on the subject.
+                csrf.withObjectPostProcessor(object : ObjectPostProcessor<CsrfFilter> {
+                    override fun <O : CsrfFilter> postProcess(filter: O): O {
+                        filter.setRequireCsrfProtectionMatcher(csrfProtectionMatcher())
+                        return filter
+                    }
+                })
             }
             .headers { headers ->
                 headers
