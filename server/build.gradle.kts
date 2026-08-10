@@ -114,6 +114,15 @@ kotlin {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    testLogging {
+        // Without this a CI failure reports only the exception type and a line number, which is not
+        // enough to tell a wrong assertion from a real defect — the message carries the detail.
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
 }
 
 tasks.named<BootJar>("bootJar") {

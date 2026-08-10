@@ -61,19 +61,25 @@ class CsrfProtectionIntegrationTest {
             with(csrf().useInvalidToken())
         }.andReturn().response
 
-        // A range rather than one code, deliberately: CsrfFilter runs before the bearer token in
-        // the cookie is read, so the principal is still anonymous when the request is refused, and
-        // ExceptionTranslationFilter answers an anonymous access denial by starting authentication
-        // (401) rather than reporting a forbidden action (403). Which one it is doesn't matter;
-        // that the write is refused does.
-        assertTrue(
-            response.status in 400..499,
-            "forged write should be refused, got ${response.status}"
+        // Checked first, because this is the property the protection exists for: whatever status
+        // the refusal is dressed up as, the forged write must not have landed.
+        val user = userRepository.findById(ObjectId(userId)).orElseThrow()
+        assertNotEquals(
+            "Forged",
+            user.firstName,
+            "forged write was applied — CSRF is not protecting this endpoint " +
+                    "(response status was ${response.status})"
         )
 
-        // The property that actually counts: the request changed nothing.
-        val user = userRepository.findById(ObjectId(userId)).orElseThrow()
-        assertNotEquals("Forged", user.firstName)
+        // Deliberately only "not success". CsrfFilter runs before the bearer token in the cookie is
+        // read, so the principal is still anonymous when the request is refused, and
+        // ExceptionTranslationFilter turns an anonymous access denial into "start authentication" —
+        // which lands as a 401 or, for a client the entry point decides to redirect, a 302. Pinning
+        // an exact code here tests Spring's error plumbing rather than this application's security.
+        assertTrue(
+            response.status !in 200..299,
+            "forged write should not have succeeded, got ${response.status}"
+        )
     }
 
     @Test
