@@ -99,13 +99,27 @@ class CsrfProtectionIntegrationTest {
         // *sets* the token parameter, so the harness's own token processor simply overwrote the bad
         // value with a good one and the write sailed through, looking exactly like a security hole.
         // Sending nothing cannot be undone by ordering.
-        val response = mockMvc.post("/${ApiEndpoints.UPDATE_PROFILE}") {
+        val result = mockMvc.post("/${ApiEndpoints.UPDATE_PROFILE}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
             header(TestConfig.OMIT_CSRF_TOKEN_HEADER, "true")
             cookie(cookie)
             content = """{"givenName":"Forged"}"""
-        }.andReturn().response
+        }.andReturn()
+        val response = result.response
+
+        // Did CsrfFilter actually execute for THIS request? It sets this attribute as its first
+        // action, before any decision, so its absence means the filter never ran — which would be a
+        // different problem entirely from the filter running and letting the request past.
+        val csrfFilterRan =
+            result.request.getAttribute("org.springframework.security.web.csrf.DeferredCsrfToken") != null
+        // And what the live matcher says about the real request, rather than a hand-made stand-in.
+        val requiresProtectionHere = (
+            securityFilterChainProxy.getFilters("/${ApiEndpoints.UPDATE_PROFILE}").orEmpty()
+                .filterIsInstance<CsrfFilter>().firstOrNull()
+                ?.let { ReflectionTestUtils.getField(it, "requireCsrfProtectionMatcher") as? RequestMatcher }
+                ?.matches(result.request)
+            )
 
         // Checked first, because this is the property the protection exists for: whatever status
         // the refusal is dressed up as, the forged write must not have landed.
@@ -115,8 +129,11 @@ class CsrfProtectionIntegrationTest {
             user.firstName,
             "forged write was applied — CSRF is not protecting this endpoint " +
                     "(status ${response.status}). " +
-                    "Filter state: ${csrfFilterState("/${ApiEndpoints.UPDATE_PROFILE}")}. " +
-                    "Chain: ${filtersFor("/${ApiEndpoints.UPDATE_PROFILE}")}"
+                    "csrfFilterRan=$csrfFilterRan, " +
+                    "requiresProtectionForThisRequest=$requiresProtectionHere, " +
+                    "resolvedException=${result.resolvedException}, " +
+                    "dispatcherType=${result.request.dispatcherType}. " +
+                    "Filter state: ${csrfFilterState("/${ApiEndpoints.UPDATE_PROFILE}")}"
         )
 
         // Deliberately only "not success". CsrfFilter runs before the bearer token in the cookie is
