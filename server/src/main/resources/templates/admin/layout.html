@@ -23,6 +23,9 @@
             --background: #f6f8fc;
             --foreground: #141e32;
             --surface: #ffffff;
+            /* What sits above the backdrop. A dialog has to read as a separate surface, and on a
+               near-black page dimming the backdrop further cannot do that on its own. */
+            --surface-raised: #ffffff;
             --surface-soft: #e9eef9;
             --muted: #4c5a72;
             --divider: color-mix(in oklab, var(--foreground) 8%, transparent);
@@ -43,6 +46,7 @@
                 --background: #0a1020;
                 --foreground: #e7ebf6;
                 --surface: #121b31;
+                --surface-raised: #222e4c;
                 --surface-soft: #1a2540;
                 --muted: #aab8d2;
                 --divider: color-mix(in oklab, var(--foreground) 12%, transparent);
@@ -418,14 +422,17 @@
         dialog {
             width: min(520px, calc(100vw - 32px));
             max-height: calc(100vh - 48px);
+            /* A modal dialog is centred by the browser's own `margin: auto`, which the reset above
+               would otherwise flatten to 0 and pin the dialog to the top-left corner. */
+            margin: auto;
             padding: 24px;
             border: none;
             border-radius: 24px;
-            background: var(--surface);
+            background: var(--surface-raised);
             color: var(--foreground);
         }
 
-        dialog::backdrop { background: color-mix(in oklab, #05070f 55%, transparent); }
+        dialog::backdrop { background: color-mix(in oklab, #05070f 68%, transparent); }
 
         .dialog-head { margin-bottom: 4px; }
 
