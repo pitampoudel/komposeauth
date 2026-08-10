@@ -45,8 +45,44 @@ docker run -p 80:8080 \
   pitampoudel/komposeauth:latest
 ```
 
-- After the container is running, open this page to configure everything else:
-  - http://localhost/admin/config
+- After the container is running, open the configuration page to set up everything else:
+  - http://localhost/admin/config?key=&lt;paste-your-base64-key&gt;
+
+  The `key` is the same `BASE64_ENCRYPTION_KEY` you started the container with. It is needed because
+  no account exists yet and this page reads and writes every secret the server holds — SMTP
+  password, SMS provider token, OAuth client secrets — so it is never open to an unauthenticated
+  visitor, not even on a fresh install. Once you have created an account and given it the `ADMIN`
+  role, signing in is enough and the key is no longer required.
+
+  To keep the key out of your browser history and any proxy logs, you can send it as a header
+  instead:
+
+  ```bash
+  curl -H "X-Master-Key: <paste-your-base64-key>" http://localhost/admin/config
+  ```
+
+#### Tell the server how it is reached
+
+The server needs to know whether anything stands between it and the internet, because
+`X-Forwarded-For` is sent by the caller and means nothing unless a proxy you control wrote it.
+
+**Behind a reverse proxy** (nginx, Cloudflare, a cloud load balancer) — set the number of hops:
+
+```bash
+  -e TRUSTED_PROXY_COUNT="1" \
+```
+
+That is how many proxies of your own a request passes through. Leave it at the default of `0` while
+proxied and every request looks like it came from the proxy, so one shared abuse budget locks all
+your users out at once — a mistake that announces itself. Count only proxies you control.
+
+**Exposed directly**, as in the quickstart above — leave `TRUSTED_PROXY_COUNT` unset and also turn
+off forwarded-header trust, which otherwise lets a caller choose the scheme and hostname the server
+believes it was reached at, and so the links it puts in verification emails:
+
+```bash
+  -e FORWARD_HEADERS_STRATEGY="none" \
+```
 
 ### 2) Add the SDK to your KMP project
 
@@ -139,6 +175,41 @@ val kycVm = koinViewModel<KycViewModel>()
 - For larger changes, consider opening an issue first to discuss direction
 
 ## Security
+
+### CSRF, and when you need to think about it
+
+State-changing requests must carry a CSRF token whenever they authenticate with a cookie, because a
+cookie is sent by the browser whether or not the page asking for it is yours.
+
+Most callers never notice:
+
+- **The KMP SDK, and anything else sending `Authorization: Bearer`** — exempt. A browser will not
+  attach that header to a cross-site request on its own, so there is nothing to forge.
+- **Pages this server renders**, including the admin console — the token is already in the form or
+  the page's `<meta name="_csrf">`.
+- **Signing in and resetting a password** — exempt, so a client can do these before it holds a token.
+
+You need to do something in one case: **a browser app on your own origin that authenticates with the
+access-token cookie.** Fetch a token once, then echo it back on every write:
+
+```js
+const { token, headerName } = await (
+  await fetch("https://your-auth-server/csrf", { credentials: "include" })
+).json();
+
+await fetch("https://your-auth-server/update-profile", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json", [headerName]: token },
+  body: JSON.stringify({ givenName: "Ada" }),
+});
+```
+
+Your app's origin must be listed under **CORS allowed origins** on the configuration page, or the
+browser will not let it read the token. Apps served from a subdomain of your configured relying party
+ID can also read the `XSRF-TOKEN` cookie directly and skip the fetch.
+
+### Reporting
 
 If you discover a security vulnerability, please email the maintainers or open a private security
 advisory. Avoid filing public issues with sensitive details.
