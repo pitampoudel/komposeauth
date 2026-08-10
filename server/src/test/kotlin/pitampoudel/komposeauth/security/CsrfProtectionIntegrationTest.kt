@@ -8,14 +8,10 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
-import org.springframework.test.web.servlet.setup.MockMvcBuilders
-import org.springframework.web.context.WebApplicationContext
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
@@ -45,45 +41,37 @@ class CsrfProtectionIntegrationTest {
     private lateinit var json: Json
 
     @Autowired
-    private lateinit var context: WebApplicationContext
-
-    @Autowired
     private lateinit var userRepository: UserRepository
 
-    /**
-     * A client built without [TestConfig]'s default request, so it sends no CSRF token at all —
-     * exactly the position of a cross-site caller, which cannot read one.
-     */
-    private fun clientWithoutCsrfToken(): MockMvc =
-        MockMvcBuilders.webAppContextSetup(context)
-            .apply<DefaultMockMvcBuilder>(springSecurity())
-            .build()
-
     @Test
-    fun `cookie-authenticated write is rejected without a csrf token`() {
+    fun `cookie-authenticated write is rejected without a valid csrf token`() {
         val email = "csrf-reject@example.com"
         val userId = TestAuthHelpers.createUser(mockMvc, json, email)
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
-        val response = clientWithoutCsrfToken().perform(
-            MockMvcRequestBuilders.post("/${ApiEndpoints.UPDATE_PROFILE}")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .cookie(cookie)
-                .content("""{"givenName":"Forged"}""")
-        ).andReturn().response
+        // Goes through the same fully-wired client as the rest of the suite, so the filter chain
+        // under test is the real one. The token is overridden with a bad value, standing in for a
+        // cross-site caller that cannot read the real one — the post-processor added here runs
+        // after the harness default, so this is the value that reaches the server.
+        val response = mockMvc.post("/${ApiEndpoints.UPDATE_PROFILE}") {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            cookie(cookie)
+            content = """{"givenName":"Forged"}"""
+            with(csrf().useInvalidToken())
+        }.andReturn().response
 
-        // Asserted as a range rather than one code on purpose: CsrfFilter runs before the bearer
-        // token in the cookie is read, so the principal is still anonymous when the request is
-        // refused, and ExceptionTranslationFilter answers an anonymous access denial by starting
-        // authentication (401) rather than reporting a forbidden action (403). Which of the two it
-        // is doesn't matter here; that the write is refused does.
+        // A range rather than one code, deliberately: CsrfFilter runs before the bearer token in
+        // the cookie is read, so the principal is still anonymous when the request is refused, and
+        // ExceptionTranslationFilter answers an anonymous access denial by starting authentication
+        // (401) rather than reporting a forbidden action (403). Which one it is doesn't matter;
+        // that the write is refused does.
         assertTrue(
             response.status in 400..499,
             "forged write should be refused, got ${response.status}"
         )
 
-        // The property that actually counts: the request did not change anything.
+        // The property that actually counts: the request changed nothing.
         val user = userRepository.findById(ObjectId(userId)).orElseThrow()
         assertNotEquals("Forged", user.firstName)
     }
