@@ -13,16 +13,7 @@ import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.data.ProfileResponse
 import pitampoudel.komposeauth.user.service.mapToProfileResponseDto
 
-/**
- * The root of the server, which two different callers reach for two different reasons.
- *
- * A client asking for JSON wants the signed-in user's profile, and still gets it. A browser wants
- * somewhere to be — and used to get the same JSON, which is where every sign-in that had nothing
- * better to resume ended up: a page of raw profile fields on a host the visitor never chose to
- * visit, with nothing on it to click. The two are told apart by `Accept` rather than by giving one
- * of them a different URL, because `/` is the address a browser lands on by default and the one
- * `SavedRequestAwareAuthenticationSuccessHandler` falls back to.
- */
+
 @Controller
 class HomeController(
     private val userContextService: UserContextService,
@@ -37,18 +28,7 @@ class HomeController(
         return ResponseEntity.ok(user.mapToProfileResponseDto(kycService.isVerified(user.id)))
     }
 
-    /**
-     * Where a signed-in browser is sent instead.
-     *
-     * An operator gets the console, which is the only thing on this server there is to look at.
-     * Anyone else is sent back to the product they signed in for, if its address is configured —
-     * this server holds nothing that concerns them, and saying so with a redirect beats saying it
-     * with a page nobody would read twice.
-     *
-     * The login page is the last resort. It is a poor destination for somebody already signed in,
-     * but it is a page rather than a payload, and it is reachable without any of the above being
-     * set — which is the state a fresh install is in.
-     */
+
     @GetMapping("/", produces = [MediaType.TEXT_HTML_VALUE])
     fun landing(): String {
         val user = userContextService.getUserFromAuthentication()
