@@ -3,11 +3,13 @@ package pitampoudel.komposeauth.core.security.csrf
 import io.mockk.every
 import io.mockk.mockk
 import jakarta.servlet.http.Cookie
+import org.apache.tomcat.util.http.Rfc6265CookieProcessor
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
@@ -36,8 +38,49 @@ class CrossOriginCsrfTokenRepositoryTest {
     @Test
     fun `is scoped to the configured domain so sibling origins can read it`() {
         // Matches the access-token cookie's reach. Without this the cookie is host-only, and an app
-        // on another subdomain can neither read the token nor have it sent.
-        assertEquals(".example.com", save(rpId = "example.com", secure = true).domain)
+        // on another subdomain can neither read the token nor have it sent. A bare domain already
+        // covers every subdomain — see the leading-dot case below for why it must stay bare.
+        assertEquals("example.com", save(rpId = "example.com", secure = true).domain)
+    }
+
+    @Test
+    fun `still reaches every subdomain without the leading dot`() {
+        // The question the dot appears to answer, and does not. RFC 6265 5.2.3 has the browser strip
+        // a leading dot while parsing, so `.example.com` and `example.com` produce the identical
+        // cookie-domain; 5.3 then clears host-only-flag for any non-empty Domain, and 5.1.3
+        // domain-match sends the cookie to the domain itself and anything ending in `.example.com`.
+        // Host-only is what you get by omitting Domain altogether — the null branch, not this one.
+        val header = Rfc6265CookieProcessor()
+            .generateHeader(save(rpId = "example.com", secure = true), MockHttpServletRequest())
+
+        assertTrue(
+            header.contains("Domain=example.com"),
+            "expected a Domain covering every subdomain, got: $header"
+        )
+    }
+
+    @Test
+    fun `writes a domain the servlet container will actually serialise`() {
+        // The one that was missing. MockHttpServletResponse stores whatever it is handed, so every
+        // assertion above passed while production threw: the real container runs the cookie through
+        // Rfc6265CookieProcessor, which rejects a leading dot as an empty first label. Written from
+        // inside CsrfAuthenticationStrategy on the OAuth callback, that IllegalArgumentException
+        // escaped the filter chain and became a whitelabel 500 on sign-in.
+        //
+        // So assert against the real processor rather than the mock's memory.
+        val processor = Rfc6265CookieProcessor()
+        listOf("example.com", "auth.example.co.uk", "https://example.com/", ".example.com").forEach { rpId ->
+            val cookie = save(rpId = rpId, secure = true)
+            val header = try {
+                processor.generateHeader(cookie, MockHttpServletRequest())
+            } catch (ex: IllegalArgumentException) {
+                fail<String>("rpId '$rpId' produced a domain the container refuses: ${ex.message}")
+            }
+            assertTrue(
+                header.contains("Domain=", ignoreCase = true),
+                "expected the cookie to still carry a domain for rpId '$rpId', got: $header"
+            )
+        }
     }
 
     @Test
@@ -74,13 +117,14 @@ class CrossOriginCsrfTokenRepositoryTest {
     @Test
     fun `salvages a relying party id written as a url`() {
         // Free text on a config form. Pasting the address is the obvious thing to do.
-        assertEquals(".example.com", save(rpId = "https://example.com/", secure = true).domain)
+        assertEquals("example.com", save(rpId = "https://example.com/", secure = true).domain)
     }
 
     @Test
-    fun `salvages a relying party id written with the leading dot of a cookie domain`() {
-        // `"." + rpId` made this `..example.com`, which ResponseCookie rejects outright.
-        assertEquals(".example.com", save(rpId = ".example.com", secure = true).domain)
+    fun `strips the leading dot a cookie domain conventionally carries`() {
+        // RFC 6265 dropped the dot: a bare Domain already covers every subdomain, and browsers strip
+        // a leading one anyway. Keeping it is not harmless — Tomcat rejects the grammar outright.
+        assertEquals("example.com", save(rpId = ".example.com", secure = true).domain)
     }
 
     @Test
