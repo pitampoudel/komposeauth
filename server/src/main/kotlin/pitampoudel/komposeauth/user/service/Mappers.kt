@@ -53,7 +53,8 @@ fun User.mapToResponseDto(kycVerified: Boolean): UserResponse {
         photoUrl = this.picture,
         createdAt = this.createdAt.toKotlinInstant(),
         updatedAt = this.updatedAt.toKotlinInstant(),
-        kycVerified = kycVerified
+        kycVerified = kycVerified,
+        roles = this.roles
     )
 }
 

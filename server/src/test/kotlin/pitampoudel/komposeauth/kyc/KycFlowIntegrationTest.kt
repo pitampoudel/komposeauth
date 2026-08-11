@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.user.repository.UserRepository
 import kotlin.test.assertTrue
 
@@ -45,7 +46,7 @@ class KycFlowIntegrationTest {
     }
 
     private fun grantAdmin(adminCookie: Cookie, userId: String) {
-        mockMvc.post("/admins/$userId") {
+        mockMvc.post("/${ApiEndpoints.USERS}/$userId/${ApiEndpoints.ROLES}/${Roles.ADMIN}") {
             accept = MediaType.APPLICATION_JSON
             cookie(adminCookie)
         }.andExpect {
@@ -159,7 +160,7 @@ class KycFlowIntegrationTest {
         )
 
         // Safety check: admin can still access (remains admin)
-        mockMvc.get("/admins") {
+        mockMvc.get("/${ApiEndpoints.ROLES}") {
             accept = MediaType.APPLICATION_JSON
             cookie(adminCookie)
         }.andExpect {

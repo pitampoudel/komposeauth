@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<!--
+  The shell every admin page is rendered into.
+
+  A page supplies five fragments — its <title>, the id of the nav entry to light up, its own
+  <style>, its <main> and its <script> — and inherits the chrome, the design tokens and the shared
+  component styles from here. Nothing below is page-specific.
+-->
+<html th:fragment="page(pageTitle, active, pageStyles, content, scripts)" lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}"/>
+    <title th:replace="${pageTitle}">Admin</title>
+    <style th:inline="css">
+        :root {
+            --brand: /*[(${brandColor})]*/ #3458d4;
+            --brand-strong: color-mix(in oklab, var(--brand) 82%, #000);
+            --on-brand: #ffffff;
+
+            --background: #f6f8fc;
+            --foreground: #141e32;
+            --surface: #ffffff;
+            /* What sits above the backdrop. A dialog has to read as a separate surface, and on a
+               near-black page dimming the backdrop further cannot do that on its own. */
+            --surface-raised: #ffffff;
+            --surface-soft: #e9eef9;
+            --muted: #4c5a72;
+            --divider: color-mix(in oklab, var(--foreground) 8%, transparent);
+
+            --danger-bg: color-mix(in oklab, #ef4444 10%, transparent);
+            --danger-text: #dc2626;
+            --danger-line: color-mix(in oklab, #ef4444 30%, transparent);
+            --ok-bg: color-mix(in oklab, #12c07e 12%, transparent);
+            --ok-text: #077a4f;
+
+            --rail: 248px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --brand-strong: color-mix(in oklab, var(--brand) 78%, #fff);
+
+                --background: #0a1020;
+                --foreground: #e7ebf6;
+                --surface: #121b31;
+                --surface-raised: #222e4c;
+                --surface-soft: #1a2540;
+                --muted: #aab8d2;
+                --divider: color-mix(in oklab, var(--foreground) 12%, transparent);
+
+                --danger-text: #f87171;
+                --ok-text: #7dffc8;
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            /* Airy, flat depth: tinted light instead of shadows or panel edges. */
+            background:
+                radial-gradient(circle at 8% 0%, color-mix(in oklab, var(--brand) 6%, transparent), transparent 46%),
+                var(--background);
+            color: var(--foreground);
+            font-family: "Space Grotesk", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* Display face where it's installed, then a serif fallback — no third-party font host. */
+        .font-display {
+            font-family: Fraunces, "Iowan Old Style", Georgia, serif;
+            letter-spacing: -0.01em;
+        }
+
+        /* Identifiers are content here — client IDs, key fingerprints, role names. */
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 0.92em;
+        }
+
+        a { color: inherit; }
+
+        /* ---- shell ---------------------------------------------------------- */
+
+        .app { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); min-height: 100vh; }
+
+        .rail {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 26px;
+            padding: 24px 14px 20px;
+            background: color-mix(in oklab, var(--surface-soft) 34%, transparent);
+        }
+
+        .rail-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            padding: 4px 10px 0;
+            text-decoration: none;
+        }
+
+        .brand-logo { width: 28px; height: 28px; border-radius: 9px; object-fit: cover; flex-shrink: 0; }
+
+        .brand-mark {
+            width: 28px;
+            height: 28px;
+            border-radius: 9px;
+            flex-shrink: 0;
+            background: color-mix(in oklab, var(--brand) 14%, transparent);
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .brand-text { min-width: 0; }
+
+        .brand-name {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .brand-role {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .rail-nav { display: flex; flex-direction: column; gap: 2px; }
+
+        .rail-heading {
+            padding: 12px 12px 6px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        /* Each entry carries the size of the thing it governs — the count is navigation, not trim. */
+        .rail-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--muted);
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .rail-link:hover { background: color-mix(in oklab, var(--surface-soft) 60%, transparent); color: var(--foreground); }
+
+        .rail-link[aria-current="page"] {
+            background: color-mix(in oklab, var(--brand) 11%, transparent);
+            color: var(--brand);
+            font-weight: 600;
+        }
+
+        .rail-link .count {
+            margin-left: auto;
+            font-size: 12px;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+            opacity: 0.7;
+        }
+
+        .rail-foot { margin-top: auto; padding: 14px 12px 0; border-top: 1px solid var(--divider); }
+
+        .viewer-name {
+            font-size: 13px;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .viewer-sub {
+            margin-top: 1px;
+            font-size: 12px;
+            color: var(--muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #signOut { margin-top: 10px; padding-left: 0; padding-right: 12px; }
+
+        .canvas { min-width: 0; }
+
+        main {
+            max-width: 940px;
+            padding: 40px 40px 96px;
+            animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        /* ---- page header ----------------------------------------------------- */
+
+        .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+
+        .eyebrow {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--brand);
+        }
+
+        h1 { font-size: 36px; line-height: 1.1; margin-top: 8px; font-weight: 600; }
+
+        .lede { margin-top: 8px; max-width: 54ch; font-size: 15px; color: var(--muted); }
+
+        section { margin-top: 44px; }
+
+        .section-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        h2 { font-size: 16px; font-weight: 600; }
+
+        .section-hint { font-size: 13px; color: var(--muted); }
+
+        .inline-link { color: var(--brand); font-weight: 600; text-decoration: none; }
+        .inline-link:hover { text-decoration: underline; }
+
+        /* ---- chips ------------------------------------------------------------ */
+
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .chip, .chip-static {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            border: none;
+            border-radius: 999px;
+            background: color-mix(in oklab, var(--surface-soft) 60%, transparent);
+            color: var(--foreground);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .chip { cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+
+        .chip:hover { background: var(--surface-soft); }
+
+        .chip[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); }
+
+        .share { font-weight: 500; opacity: 0.75; font-variant-numeric: tabular-nums; }
+
+        /* ---- controls -------------------------------------------------------- */
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            border-radius: 999px;
+            font-family: inherit;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+
+        .btn:disabled { cursor: not-allowed; opacity: 0.5; }
+
+        .btn-xs { padding: 6px 12px; font-size: 12px; }
+        .btn-sm { padding: 8px 16px; font-size: 13px; }
+        .btn-md { padding: 11px 20px; font-size: 14px; }
+
+        .btn-primary { background: var(--brand); color: var(--on-brand); }
+        .btn-primary:hover:not(:disabled) { background: var(--brand-strong); }
+
+        .btn-secondary { background: color-mix(in oklab, var(--surface-soft) 60%, transparent); color: var(--foreground); }
+        .btn-secondary:hover:not(:disabled) { background: var(--surface-soft); }
+
+        .btn-ghost { background: none; color: var(--muted); }
+        .btn-ghost:hover:not(:disabled) { background: color-mix(in oklab, var(--surface-soft) 50%, transparent); color: var(--foreground); }
+
+        /* The one sanctioned visible edge in the system. */
+        .btn-danger { background: none; border: 1px solid var(--danger-line); color: var(--danger-text); }
+        .btn-danger:hover:not(:disabled) { background: var(--danger-bg); }
+
+        label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 7px; }
+
+        label .hint { font-weight: 400; opacity: 0.85; }
+
+        input[type=text],
+        input[type=search],
+        input[type=email],
+        input[type=url],
+        input[type=password],
+        input[type=number],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px 14px;
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--foreground);
+            background: color-mix(in oklab, var(--surface-soft) 55%, transparent);
+            border: none;
+            border-radius: 12px;
+            outline: none;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type=search] { border-radius: 999px; height: 42px; padding: 0 16px; }
+
+        textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
+
+        select { appearance: none; cursor: pointer; }
+
+        input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.7; }
+
+        input:hover, textarea:hover, select:hover { background: var(--surface-soft); }
+
+        input:focus, textarea:focus, select:focus {
+            background: var(--surface-soft);
+            box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand) 50%, transparent);
+        }
+
+        /* ---- rows, badges, alerts -------------------------------------------- */
+
+        /* Rows separate by a faint divider and spacing — no cards, no panel edges. */
+        .rows { margin-top: 8px; }
+
+        .row { display: flex; align-items: center; gap: 14px; padding: 14px 4px; }
+
+        .row + .row { border-top: 1px solid var(--divider); }
+
+        .row-main { min-width: 0; flex: 1; }
+
+        .row-name { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .row-sub { margin-top: 2px; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .row-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+        .avatar {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            background: color-mix(in oklab, var(--brand) 12%, transparent);
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            background: color-mix(in oklab, var(--surface-soft) 70%, transparent);
+            color: var(--muted);
+        }
+
+        .badge-brand { background: color-mix(in oklab, var(--brand) 10%, transparent); color: var(--brand); }
+        .badge-ok { background: var(--ok-bg); color: var(--ok-text); }
+        .badge-none { color: var(--muted); opacity: 0.8; font-style: italic; background: none; padding-left: 0; }
+
+        .alert { padding: 12px 15px; border-radius: 16px; font-size: 13px; line-height: 1.5; }
+
+        .alert-error { background: var(--danger-bg); color: var(--danger-text); }
+        .alert-success { background: var(--ok-bg); color: var(--ok-text); }
+
+        .empty { padding: 40px 24px; text-align: center; }
+
+        .empty h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+
+        .empty p { font-size: 14px; color: var(--muted); max-width: 44ch; margin: 0 auto; }
+
+        .empty .btn { margin-top: 18px; }
+
+        /* ---- dialog ---------------------------------------------------------- */
+
+        dialog {
+            width: min(520px, calc(100vw - 32px));
+            max-height: calc(100vh - 48px);
+            /* A modal dialog is centred by the browser's own `margin: auto`, which the reset above
+               would otherwise flatten to 0 and pin the dialog to the top-left corner. */
+            margin: auto;
+            padding: 24px;
+            border: none;
+            border-radius: 24px;
+            background: var(--surface-raised);
+            color: var(--foreground);
+        }
+
+        dialog::backdrop { background: color-mix(in oklab, #05070f 68%, transparent); }
+
+        .dialog-head { margin-bottom: 4px; }
+
+        .dialog-title { font-size: 18px; font-weight: 600; }
+
+        .dialog-sub { margin-top: 2px; font-size: 13px; color: var(--muted); }
+
+        .dialog-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+
+        /* ---- utility --------------------------------------------------------- */
+
+        .hidden { display: none !important; }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+
+        .skip-link {
+            position: absolute;
+            left: 8px;
+            top: -60px;
+            z-index: 20;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: var(--brand);
+            color: var(--on-brand);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: top 0.2s;
+        }
+
+        .skip-link:focus { top: 8px; }
+
+        :focus-visible {
+            outline: 2px solid color-mix(in oklab, var(--brand) 50%, transparent);
+            outline-offset: 2px;
+        }
+
+        input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none; }
+
+        /* ---- responsive ------------------------------------------------------ */
+
+        /*
+          On a narrow screen the rail lies down into two bands: identity and sign-out on the first,
+          the section pills on the second. Only the pills scroll sideways, so sign-out never drifts
+          off the edge.
+        */
+        @media (max-width: 900px) {
+            .app { grid-template-columns: minmax(0, 1fr); }
+
+            .rail {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                height: auto;
+                flex-flow: row wrap;
+                align-items: center;
+                gap: 8px 14px;
+                padding: 8px 16px 10px;
+                background: color-mix(in oklab, var(--background) 88%, transparent);
+                backdrop-filter: blur(10px);
+                border-bottom: 1px solid var(--divider);
+            }
+
+            .rail-brand { order: 1; padding: 0; }
+            .rail-foot { order: 2; margin: 0 0 0 auto; padding: 0; border-top: none; }
+            .rail-nav {
+                order: 3;
+                flex: 0 0 100%;
+                flex-direction: row;
+                gap: 4px;
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+
+            .rail-nav::-webkit-scrollbar { display: none; }
+
+            .rail-heading { display: none; }
+            .rail-link { padding: 7px 13px; border-radius: 999px; white-space: nowrap; }
+            .rail-link .count { margin-left: 6px; }
+            .viewer-name, .viewer-sub { display: none; }
+            #signOut { margin-top: 0; padding-left: 12px; }
+
+            main { padding: 28px 20px 80px; }
+            h1 { font-size: 28px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { animation: none !important; transition: none !important; }
+        }
+    </style>
+    <style th:replace="${pageStyles}"></style>
+</head>
+<body>
+
+<a class="skip-link" href="#content">Skip to content</a>
+
+<div class="app">
+    <aside class="rail">
+        <a class="rail-brand" href="/admin">
+            <img th:if="${!logoUrl.isEmpty()}" th:src="${logoUrl}" class="brand-logo" alt=""/>
+            <span th:unless="${!logoUrl.isEmpty()}" class="brand-mark"
+                  th:text="${appName.isEmpty()} ? 'A' : ${appName.substring(0,1).toUpperCase()}">A</span>
+            <span class="brand-text">
+                <span class="brand-name" th:text="${appName.isEmpty()} ? 'Identity' : ${appName}">Identity</span>
+                <span class="brand-role">Admin</span>
+            </span>
+        </a>
+
+        <nav class="rail-nav" aria-label="Admin sections">
+            <span class="rail-heading">Console</span>
+
+            <a class="rail-link" href="/admin"
+               th:attr="aria-current=${active == 'overview'} ? 'page' : null">
+                Overview
+            </a>
+
+            <a class="rail-link" href="/admin/users"
+               th:attr="aria-current=${active == 'users'} ? 'page' : null">
+                People
+                <span class="count" th:text="${userCount}">0</span>
+            </a>
+
+            <a class="rail-link" href="/admin/clients"
+               th:attr="aria-current=${active == 'clients'} ? 'page' : null">
+                Applications
+                <span class="count" th:text="${clientCount}">0</span>
+            </a>
+
+            <a class="rail-link" href="/admin/config"
+               th:attr="aria-current=${active == 'config'} ? 'page' : null">
+                Configuration
+            </a>
+        </nav>
+
+        <div class="rail-foot">
+            <div th:if="${viewerName != null}">
+                <div class="viewer-name" th:text="${viewerName}">Signed in</div>
+                <div class="viewer-sub" th:text="${viewerSub}"></div>
+            </div>
+            <button th:if="${viewerName != null}" id="signOut" class="btn btn-ghost btn-sm" type="button">
+                Sign out
+            </button>
+        </div>
+    </aside>
+
+    <div class="canvas" id="content">
+        <main th:replace="${content}"></main>
+    </div>
+</div>
+
+<script>
+    // CSRF: the server issues a token per session; state-changing calls must echo it back.
+    const CSRF_TOKEN = document.querySelector('meta[name="_csrf"]')?.content;
+    const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+    function csrfHeaders(extra) {
+        const headers = Object.assign({}, extra || {});
+        if (CSRF_TOKEN && CSRF_HEADER) headers[CSRF_HEADER] = CSRF_TOKEN;
+        return headers;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, c => (
+            {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]
+        ));
+    }
+
+    /** Reads the message the API meant to be read, whatever shape the error came back in. */
+    async function problemText(res, fallback) {
+        const body = await res.json().catch(() => ({}));
+        return body.detail || body.message || body.title || fallback;
+    }
+
+    // Sign-out answers with JSON, so the page does the navigation rather than showing the payload.
+    document.getElementById("signOut")?.addEventListener("click", async function () {
+        this.disabled = true;
+        try {
+            await fetch("/logout", {method: "POST", credentials: "same-origin", headers: csrfHeaders()});
+        } finally {
+            window.location.href = "/session-login";
+        }
+    });
+</script>
+
+<th:block th:replace="${scripts}"></th:block>
+</body>
+</html>

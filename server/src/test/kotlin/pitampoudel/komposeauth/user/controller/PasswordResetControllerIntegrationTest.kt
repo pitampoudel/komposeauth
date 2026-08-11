@@ -37,15 +37,34 @@ class PasswordResetControllerIntegrationTest {
     private lateinit var oneTimeTokenService: OneTimeTokenService
 
 
+    /**
+     * The endpoint is public, so a caller must not be able to tell a registered address from an
+     * unregistered one — same status, same message either way.
+     */
     @Test
-    fun `sendResetLink returns error for non-existent email`() {
+    fun `sendResetLink does not reveal whether the email has an account`() {
+        val neutralMessage = "If that address has an account, a reset link is on its way."
+
         mockMvc.put("/${ApiEndpoints.RESET_PASSWORD}") {
             accept = MediaType.APPLICATION_JSON
             param("email", "nonexistent@example.com")
         }.andExpect {
-            status { isBadRequest() }
+            status { isOk() }
             content {
-                jsonPath("$.message") { value("No user with that email") }
+                jsonPath("$.message") { value(neutralMessage) }
+            }
+        }
+
+        val known = "reset-enumeration@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, known)
+
+        mockMvc.put("/${ApiEndpoints.RESET_PASSWORD}") {
+            accept = MediaType.APPLICATION_JSON
+            param("email", known)
+        }.andExpect {
+            status { isOk() }
+            content {
+                jsonPath("$.message") { value(neutralMessage) }
             }
         }
     }

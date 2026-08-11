@@ -17,6 +17,7 @@ import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.repository.UserRepository
 
@@ -76,11 +77,11 @@ class EndpointSecurityIntegrationTest {
     }
 
     @Test
-    fun `list admins requires ADMIN role`() {
+    fun `list roles requires ADMIN role`() {
         val userId = TestAuthHelpers.createUser(mockMvc, json, "regular-user-admins@example.com")
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, "regular-user-admins@example.com")
 
-        mockMvc.get("/admins") {
+        mockMvc.get("/${ApiEndpoints.ROLES}") {
             accept = MediaType.APPLICATION_JSON
             cookie(cookie)
         }.andExpect {
@@ -89,12 +90,12 @@ class EndpointSecurityIntegrationTest {
     }
 
     @Test
-    fun `grant admin requires ADMIN role`() {
+    fun `grant role requires ADMIN role`() {
         val targetUserId = TestAuthHelpers.createUser(mockMvc, json, "target-grant-security@example.com")
         val regularUserId = TestAuthHelpers.createUser(mockMvc, json, "regular-grant-security@example.com")
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, "regular-grant-security@example.com")
 
-        mockMvc.post("/admins/$targetUserId") {
+        mockMvc.post("/${ApiEndpoints.USERS}/$targetUserId/${ApiEndpoints.ROLES}/${Roles.ADMIN}") {
             accept = MediaType.APPLICATION_JSON
             cookie(cookie)
         }.andExpect {
@@ -103,12 +104,12 @@ class EndpointSecurityIntegrationTest {
     }
 
     @Test
-    fun `revoke admin requires ADMIN role`() {
+    fun `revoke role requires ADMIN role`() {
         val targetUserId = TestAuthHelpers.createUser(mockMvc, json, "target-revoke-security@example.com")
         val regularUserId = TestAuthHelpers.createUser(mockMvc, json, "regular-revoke-security@example.com")
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, "regular-revoke-security@example.com")
 
-        mockMvc.delete("/admins/$targetUserId") {
+        mockMvc.delete("/${ApiEndpoints.USERS}/$targetUserId/${ApiEndpoints.ROLES}/${Roles.ADMIN}") {
             accept = MediaType.APPLICATION_JSON
             cookie(cookie)
         }.andExpect {
@@ -168,7 +169,7 @@ class EndpointSecurityIntegrationTest {
             "admin-access@example.com"
         )
 
-        mockMvc.get("/admins") {
+        mockMvc.get("/${ApiEndpoints.ROLES}") {
             accept = MediaType.APPLICATION_JSON
             cookie(adminCookie)
         }.andExpect {
@@ -228,7 +229,7 @@ class EndpointSecurityIntegrationTest {
     fun `optional-auth endpoint still rejects an invalid token`() {
         // Endpoints that use optional authentication continue to validate a supplied token,
         // so an invalid token is rejected with 401.
-        mockMvc.get("/config") {
+        mockMvc.get("/admin/config") {
             accept = MediaType.APPLICATION_JSON
             header("Authorization", "Bearer invalid-token")
         }.andExpect {

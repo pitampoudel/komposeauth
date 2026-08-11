@@ -13,6 +13,7 @@ import org.mockito.kotlin.whenever
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.SlackNotifier
 import pitampoudel.komposeauth.user.entity.User
@@ -46,7 +47,12 @@ class AdminRoleChangeEmailNotifierTest {
             roles = emptyList()
         )
 
-        val ok = notifier.notify(target, RoleChangeEmailNotifier.Action.GRANTED, actor = null)
+        val ok = notifier.notify(
+            target,
+            RoleChangeEmailNotifier.Action.GRANTED,
+            actor = null,
+            role = Roles.ADMIN
+        )
         assertFalse(ok)
         verify(slackNotifier).send(any())
         verifyNoInteractions(emailService)
@@ -90,14 +96,19 @@ class AdminRoleChangeEmailNotifierTest {
             roles = emptyList()
         )
 
-        val ok = notifier.notify(target, RoleChangeEmailNotifier.Action.REVOKED, actor = "Test Admin")
+        val ok = notifier.notify(
+            target,
+            RoleChangeEmailNotifier.Action.REVOKED,
+            actor = "Test Admin",
+            role = "SUPPORT"
+        )
         assertTrue(ok)
 
         verify(slackNotifier).send(any())
         verify(emailService).sendHtmlMail(
             baseUrl = eq("https://example.com"),
             to = eq("target@example.com"),
-            subject = eq("Admin access revoked"),
+            subject = eq("SUPPORT access revoked"),
             template = eq("email/generic"),
             model = any()
         )

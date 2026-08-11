@@ -70,9 +70,15 @@ class UsersController(
     @GetMapping("/$USERS/{id}")
     @Operation(
         summary = "Get user by ID",
-        description = "Fetch a single user by their ID"
+        description = "Fetch a single user by their ID. Callers may read their own record; reading anyone else's requires admin rights or the ${SCOPE_READ_ANY_USER} scope."
     )
     @Parameter(name = "id", description = "User ID", required = true)
+    // The response carries email, phone number and roles. Without this, any account on the server —
+    // including one an attacker just signed up for — could walk the id space and harvest every
+    // user's contact details.
+    @PreAuthorize(
+        "hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_READ_ANY_USER') or #id == authentication.name"
+    )
     fun getUserById(@PathVariable id: String): ResponseEntity<UserResponse> {
         val user = userService.findUser(id) ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(user.mapToResponseDto(kycService.isVerified(user.id)))
@@ -81,17 +87,18 @@ class UsersController(
     @GetMapping("/$USERS")
     @Operation(
         summary = "Get users",
-        description = "Fetch users by optional filters: comma-separated IDs (ids), search query (q). If no filters provided, returns all users with pagination."
+        description = "Fetch users by optional filters: comma-separated IDs (ids), search query (q), role. If no filters provided, returns all users with pagination."
     )
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_READ_ANY_USER')")
     fun getUsers(
         @RequestParam(required = false) ids: String?,
         @RequestParam(required = false, name = "q") query: String?,
+        @RequestParam(required = false) role: String?,
         @RequestParam(required = false, defaultValue = "0") page: Int,
         @RequestParam(required = false, defaultValue = "50") size: Int
     ): ResponseEntity<PageResponse<UserResponse>> {
         val idList = ids?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
-        val usersPage = userService.findUsersFlexible(idList, query, page, size)
+        val usersPage = userService.findUsersFlexible(idList, query, role, page, size)
         val verifiedUserIds = kycService.verifiedUserIds(usersPage.content.map { it.id })
         val userResponses = usersPage.content.map { user ->
             user.mapToResponseDto(verifiedUserIds.contains(user.id))

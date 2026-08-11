@@ -1,6 +1,5 @@
 package pitampoudel.komposeauth.core.security
 
-import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -23,7 +22,6 @@ import org.springframework.security.oauth2.core.oidc.OidcUserInfo
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
-import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.token.*
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
@@ -173,10 +171,10 @@ class WebAuthorizationConfig {
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
         kycService: KycService,
-        securityContextRepository: HttpSessionSecurityContextRepository,
-        authorizationServerSettings: ObjectProvider<AuthorizationServerSettings>
+        securityContextRepository: HttpSessionSecurityContextRepository
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
+        val loginEntryPoint = LoginUrlAuthenticationEntryPoint("/session-login")
 
         authorizationServerConfigurer.clientAuthentication {
             it.authenticationConverter(OAuth2PublicClientAuthConverter())
@@ -189,6 +187,13 @@ class WebAuthorizationConfig {
 
         return http.securityMatcher(authorizationServerConfigurer.endpointsMatcher)
             .cors { }
+            // What OAuth2AuthorizationServerConfiguration.applyDefaultSecurity does for you; this
+            // chain is assembled by hand, so state it outright. The protocol endpoints authenticate
+            // the client per request (/oauth2/token is called by clients, not browsers), and a CSRF
+            // token requirement there would simply break them.
+            .csrf { csrf ->
+                csrf.ignoringRequestMatchers(authorizationServerConfigurer.endpointsMatcher)
+            }
             .with(authorizationServerConfigurer) { authorizationServer ->
                 authorizationServer.oidc {
                     it.userInfoEndpoint { userInfo ->
@@ -231,15 +236,10 @@ class WebAuthorizationConfig {
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
-            // Runs before the authorization check so that dropping the session authentication for
-            // `prompt=login` / `prompt=select_account` sends the request to the login entry point.
+            // Runs before the authorization check: `prompt=login` / `prompt=select_account` has to
+            // be turned into a trip through the login page before a code is issued.
             .addFilterBefore(
-                PromptReAuthenticationFilter(
-                    authorizationEndpointUri = authorizationServerSettings.ifAvailable
-                        ?.authorizationEndpoint
-                        ?: AuthorizationServerSettings.builder().build().authorizationEndpoint,
-                    securityContextRepository = securityContextRepository
-                ),
+                PromptReAuthenticationFilter(securityContextRepository, loginEntryPoint),
                 AuthorizationFilter::class.java
             )
             .authorizeHttpRequests { auth ->
@@ -248,7 +248,7 @@ class WebAuthorizationConfig {
             .exceptionHandling { exceptions ->
                 exceptions
                     .defaultAuthenticationEntryPointFor(
-                        LoginUrlAuthenticationEntryPoint("/session-login"),
+                        loginEntryPoint,
                         MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                     )
             }

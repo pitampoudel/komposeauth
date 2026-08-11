@@ -18,7 +18,6 @@ interface UserRepository : MongoRepository<User, ObjectId>, UserRepositoryCustom
     fun findByEmail(email: String): User?
     fun findByPhoneNumber(phoneNumber: String): User?
     fun findByIdIn(ids: List<ObjectId>): List<User>
-    fun findByRolesContaining(role: String, pageable: Pageable): Page<User>
     fun countByRolesContaining(role: String): Long
 
     fun findByUserName(value: String): User? {
@@ -33,16 +32,18 @@ interface UserRepository : MongoRepository<User, ObjectId>, UserRepositoryCustom
 }
 
 interface UserRepositoryCustom {
-    fun search(tokens: List<String>, pageable: Pageable): Page<User>
+    fun search(tokens: List<String>, role: String?, pageable: Pageable): Page<User>
 }
 
 class UserRepositoryImpl(
     private val mongoTemplate: MongoTemplate
 ) : UserRepositoryCustom {
-    override fun search(tokens: List<String>, pageable: Pageable): Page<User> {
-        if (tokens.isEmpty()) return Page.empty(pageable)
+    override fun search(tokens: List<String>, role: String?, pageable: Pageable): Page<User> {
+        val criteria = mutableListOf<Criteria>()
 
-        val criteriaPerToken = tokens.map { token ->
+        role?.let { criteria += Criteria.where("roles").`is`(it) }
+
+        tokens.mapTo(criteria) { token ->
             val regex = Pattern.compile(".*${Pattern.quote(token)}.*", Pattern.CASE_INSENSITIVE)
             Criteria().orOperator(
                 Criteria.where("firstName").regex(regex),
@@ -52,7 +53,9 @@ class UserRepositoryImpl(
             )
         }
 
-        val query = Query().addCriteria(Criteria().andOperator(*criteriaPerToken.toTypedArray()))
+        if (criteria.isEmpty()) return Page.empty(pageable)
+
+        val query = Query().addCriteria(Criteria().andOperator(*criteria.toTypedArray()))
         val total = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), User::class.java)
         val results = mongoTemplate.find(query.with(pageable), User::class.java)
 

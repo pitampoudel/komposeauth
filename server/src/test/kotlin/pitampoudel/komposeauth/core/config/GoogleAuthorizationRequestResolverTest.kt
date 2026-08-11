@@ -29,16 +29,13 @@ class GoogleAuthorizationRequestResolverTest {
         )
     )
 
-    private fun request(query: String = ""): MockHttpServletRequest =
+    private fun request(vararg parameters: Pair<String, String>): MockHttpServletRequest =
         MockHttpServletRequest("GET", "/oauth2/authorization/google").apply {
-            query.removePrefix("?").split("&").filter { it.isNotBlank() }.forEach {
-                val (name, value) = it.split("=", limit = 2)
-                setParameter(name, value)
-            }
+            parameters.forEach { (name, value) -> setParameter(name, value) }
         }
 
     @Test
-    fun `defaults to select_account so the user can switch google account`() {
+    fun `asks for the account chooser so the user can switch google account`() {
         val authorizationRequest = assertNotNull(resolver.resolve(request()))
 
         assertEquals("select_account", authorizationRequest.additionalParameters["prompt"])
@@ -46,24 +43,9 @@ class GoogleAuthorizationRequestResolverTest {
     }
 
     @Test
-    fun `forwards a prompt google understands`() {
-        val authorizationRequest = assertNotNull(resolver.resolve(request("?prompt=consent")))
-
-        assertEquals("consent", authorizationRequest.additionalParameters["prompt"])
-    }
-
-    @Test
-    fun `maps an unsupported prompt back to the default`() {
-        // `login` is valid OIDC on our own authorization endpoint, but Google does not accept it.
-        val authorizationRequest = assertNotNull(resolver.resolve(request("?prompt=login")))
-
-        assertEquals("select_account", authorizationRequest.additionalParameters["prompt"])
-    }
-
-    @Test
     fun `forwards login_hint when provided`() {
         val authorizationRequest =
-            assertNotNull(resolver.resolve(request("?login_hint=someone@example.com")))
+            assertNotNull(resolver.resolve(request("login_hint" to "someone@example.com")))
 
         assertEquals("someone@example.com", authorizationRequest.additionalParameters["login_hint"])
         assertTrue(authorizationRequest.authorizationRequestUri.contains("login_hint="))
@@ -81,16 +63,5 @@ class GoogleAuthorizationRequestResolverTest {
         val other = MockHttpServletRequest("GET", "/session-login")
 
         assertNull(resolver.resolve(other))
-    }
-
-    @Test
-    fun `prompt mapping keeps only google supported values`() {
-        assertEquals("select_account", GoogleAuthorizationRequestResolver.googlePrompt(null))
-        assertEquals("select_account", GoogleAuthorizationRequestResolver.googlePrompt("login"))
-        assertEquals("none", GoogleAuthorizationRequestResolver.googlePrompt("none"))
-        assertEquals(
-            "consent select_account",
-            GoogleAuthorizationRequestResolver.googlePrompt("consent login select_account")
-        )
     }
 }

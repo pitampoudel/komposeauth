@@ -29,7 +29,7 @@ class AppConfigControllerSecurityIntegrationTest {
         // Create a user to ensure countUsers() > 0.
         TestAuthHelpers.createUser(mockMvc, json, "config-test-1@example.com", password = "Password1")
 
-        mockMvc.get("/config")
+        mockMvc.get("/admin/config")
             .andExpect {
                 status { is3xxRedirection() }
             }
@@ -41,7 +41,7 @@ class AppConfigControllerSecurityIntegrationTest {
         TestAuthHelpers.createUser(mockMvc, json, "config-test-2@example.com", password = "Password1")
         val queryKey = TestConfig.testKey
 
-        mockMvc.get("/config") {
+        mockMvc.get("/admin/config") {
             param("key", queryKey)
         }.andExpect {
             status { isOk() }

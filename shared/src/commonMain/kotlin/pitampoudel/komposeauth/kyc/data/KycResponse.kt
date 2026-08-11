@@ -1,10 +1,13 @@
 package pitampoudel.komposeauth.kyc.data
 
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import pitampoudel.komposeauth.core.data.AddressInformation
 import pitampoudel.komposeauth.kyc.domain.DocumentType
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class KycResponse(
     val userId: String,
@@ -17,7 +20,12 @@ data class KycResponse(
      * Reasons a reviewer should look closer at a Third Factor submission — a failed verdict, a
      * bypassed step, a weak face match, or a document that disagrees with what the user declared.
      * Empty for manual submissions and for sessions where nothing stood out.
+     *
+     * Always encoded, even when empty — the server's [kotlinx.serialization.json.Json] leaves
+     * `encodeDefaults` off, so without this a clean submission would carry no field at all and a
+     * reviewer's client would read `undefined` instead of an empty list.
      */
+    @EncodeDefault
     val thirdFactorWarnings: List<String> = emptyList()
 ) {
 
