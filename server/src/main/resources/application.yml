@@ -23,10 +23,28 @@ logging:
 
 server:
   port: ${PORT:8080}
-  forward-headers-strategy: framework
+  # Whether to believe X-Forwarded-* when working out the request's scheme, host and client address.
+  # Correct behind a reverse proxy, which is the usual deployment and so the default. Set to `none`
+  # if the server is exposed directly: there is then no proxy rewriting those headers, so anything
+  # they contain came from the caller. The abuse limiter does not rely on this setting either way —
+  # it runs ahead of the filter and resolves the client address itself, from app.rate-limit
+  # .trusted-proxy-count below.
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:framework}
 
 app:
   base64-encryption-key: ${BASE64_ENCRYPTION_KEY}
+  rate-limit:
+    # Number of reverse proxies you run in front of this server, counted in from the right-hand end
+    # of X-Forwarded-For. 0 means it is reached directly and no forwarded header is believed — the
+    # only safe default, since that header is sent by the caller and, taken at face value, lets
+    # anyone give themselves a fresh rate-limit budget per request. Behind one proxy that appends to
+    # the header (nginx, a cloud load balancer, Cloud Run) set this to 1.
+    trusted-proxy-count: ${TRUSTED_PROXY_COUNT:0}
+    # Alternative for platforms whose edge replaces the forwarded header and publishes the client
+    # address under one of its own: X-Envoy-External-Address on Railway, Fly-Client-IP on Fly,
+    # CF-Connecting-IP behind Cloudflare. Set it and the value is used as-is, no hop counting.
+    # Only name a header your own edge writes — one it does not overwrite is just the caller talking.
+    client-ip-header: ${CLIENT_IP_HEADER:}
 
 management:
   otlp:

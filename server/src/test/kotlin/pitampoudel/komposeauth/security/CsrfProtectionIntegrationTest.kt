@@ -2,12 +2,15 @@ package pitampoudel.komposeauth.security
 
 import jakarta.servlet.http.Cookie
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockServletContext
 import org.springframework.security.web.FilterChainProxy
@@ -16,16 +19,19 @@ import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.util.ReflectionTestUtils
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.security.csrf.CrossOriginCsrfTokenRepository
 import pitampoudel.komposeauth.user.repository.UserRepository
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -144,5 +150,44 @@ class CsrfProtectionIntegrationTest {
 
         val user = userRepository.findById(ObjectId(userId)).orElseThrow()
         assertEquals("Legitimate", user.firstName)
+    }
+
+    @Test
+    fun `logout requires a csrf token`() {
+        val email = "csrf-logout@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email)
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
+
+        val response = mockMvc.post("/${ApiEndpoints.LOGOUT}") {
+            header(TestConfig.OMIT_CSRF_TOKEN_HEADER, "true")
+            cookie(cookie)
+        }.andReturn().response
+
+        assertTrue(
+            response.status !in 200..299,
+            "a forged logout should not succeed, got ${response.status}"
+        )
+    }
+
+    /**
+     * `/login` stays CSRF-exempt so native clients can sign in without first fetching a token, and
+     * is safe only because it will not read a body a cross-site form can produce. That is a property
+     * of how the endpoint parses its input rather than of the security configuration, so it is
+     * pinned here — otherwise switching to form binding would quietly open login CSRF.
+     */
+    @Test
+    fun `login refuses the body a cross-site form could send`() {
+        val response = mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            header(TestConfig.OMIT_CSRF_TOKEN_HEADER, "true")
+            contentType = MediaType.APPLICATION_FORM_URLENCODED
+            param("username", "victim@example.com")
+            param("password", "Password1")
+        }.andReturn().response
+
+        assertEquals(
+            HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),
+            response.status,
+            "a form-encoded login must be refused outright"
+        )
     }
 }

@@ -55,6 +55,12 @@ class TestConfig {
      * rejected. A real browser gets the token from the page it was served; tests have no page, so it
      * is supplied here rather than repeated at ~40 call sites. That the protection actually rejects
      * an untokened request is asserted directly in CsrfProtectionIntegrationTest.
+     *
+     * Note what this costs: `csrf()` does not merely add a token, it replaces the token repository
+     * on the shared filter chain with a session-backed stand-in, for good and for every later test
+     * sharing that context. So no test reached through this harness exercises the real cookie
+     * repository — CsrfTokenEndpointIntegrationTest takes a context of its own and opts out of this
+     * on every request in order to cover it.
      */
     @Bean
     fun csrfTokenOnEveryRequest(): MockMvcBuilderCustomizer = MockMvcBuilderCustomizer { builder ->
