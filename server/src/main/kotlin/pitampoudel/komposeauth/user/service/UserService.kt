@@ -376,6 +376,11 @@ class UserService(
         return result.mapToResponseDto(kycService.isVerified(result.id))
     }
 
+    /**
+     * For a raw ID token this server has to check itself — what a native client posts to the login
+     * API. The browser sign-in flow uses [findOrCreateVerifiedGoogleUser] instead; see the note
+     * there.
+     */
     fun findOrCreateUserByGoogleIdToken(idToken: String): User {
         val payload = validateGoogleIdToken(
             clientIds = listOfNotNull(
@@ -384,11 +389,27 @@ class UserService(
             ),
             idToken = idToken
         )
-        val profile = googleProfileFrom(payload)
-        val user = findOrCreateUser(baseUrl = null, req = profile)
+        return findOrCreateVerifiedGoogleUser(
+            profile = googleProfileFrom(payload),
+            emailVerified = payload.emailVerified == true
+        )
+    }
 
-        if (payload.emailVerified == true && !user.emailVerified) {
-            markEmailVerified(user, profile.email!!)
+    /**
+     * Provisioning from a Google profile whose token has already been verified.
+     *
+     * The browser sign-in flow comes in here. Spring Security's OIDC login checks the ID token's
+     * signature, issuer, audience, nonce and expiry — against a key set it caches — before the
+     * success handler runs, so verifying it a second time proved nothing and made every sign-in
+     * depend on a live call to Google's certificate endpoint. When that call was slow or failed,
+     * the visitor was told we couldn't sign them in, for a token that was perfectly good.
+     */
+    fun findOrCreateVerifiedGoogleUser(profile: CreateUserRequest, emailVerified: Boolean): User {
+        val user = findOrCreateUser(baseUrl = null, req = profile)
+        val email = profile.email
+
+        if (emailVerified && email != null && !user.emailVerified) {
+            markEmailVerified(user, email)
             return findUser(user.id.toHexString()) ?: user
         }
         return user

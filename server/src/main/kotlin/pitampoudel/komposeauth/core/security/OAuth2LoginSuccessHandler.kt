@@ -12,6 +12,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.stereotype.Component
+import pitampoudel.komposeauth.core.utils.googleProfileFromClaims
 import pitampoudel.komposeauth.user.service.UserService
 
 /**
@@ -63,10 +64,13 @@ class OAuth2LoginSuccessHandler(
         val oidcUser = oauth.principal as? OidcUser
             ?: return super.onAuthenticationSuccess(request, response, authentication)
 
-        val idTokenValue = oidcUser.idToken?.tokenValue
-        val user = if (!idTokenValue.isNullOrBlank()) {
-            userService.findOrCreateUserByGoogleIdToken(idTokenValue)
-        } else return super.onAuthenticationSuccess(request, response, authentication)
+        // The claims, not the raw token: the OIDC login filter has already verified the token they
+        // came from, and re-verifying it here put a live fetch of Google's certificates in front of
+        // every sign-in. See `UserService.findOrCreateVerifiedGoogleUser`.
+        val user = userService.findOrCreateVerifiedGoogleUser(
+            profile = googleProfileFromClaims(oidcUser.claims),
+            emailVerified = oidcUser.emailVerified == true
+        )
 
         val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
 

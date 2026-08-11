@@ -51,8 +51,9 @@ import kotlin.test.assertTrue
  * replayed into a code.
  *
  * Every filter on that path is the real one — only the provider's HTTP endpoints and the user
- * provisioning behind [UserService.findOrCreateUserByGoogleIdToken] are stubbed, since one needs
- * Google's servers and the other needs Google's signing keys.
+ * provisioning behind [UserService.findOrCreateVerifiedGoogleUser] are stubbed, the first because
+ * it needs Google's servers and the second to keep this about the sign-in path rather than the
+ * account it lands on.
  */
 @SpringBootTest(properties = ["spring.main.allow-bean-definition-overriding=true"])
 @ActiveProfiles("test")
@@ -130,7 +131,9 @@ class GoogleLoginReplayIntegrationTest {
     fun `signing in through the provider replays the authorization request instead of looping to login`() {
         val clientId = registerRelyingParty()
 
-        whenever(userService.findOrCreateUserByGoogleIdToken(any())).thenReturn(
+        // The handler provisions from the claims the OIDC filter has already verified, so this is
+        // the method it reaches for — nothing here re-checks the token against Google.
+        whenever(userService.findOrCreateVerifiedGoogleUser(any(), any())).thenReturn(
             User(
                 id = ObjectId.get(),
                 firstName = "Google",

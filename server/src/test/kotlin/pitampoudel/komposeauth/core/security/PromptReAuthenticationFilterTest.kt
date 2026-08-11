@@ -164,6 +164,28 @@ class PromptReAuthenticationFilterTest {
         assertTrue(sessionHoldsAuthentication(replay))
     }
 
+    /**
+     * Two tabs signing in at once. The second one to reach the login page must not cost the first
+     * one its place: both replays have been through the page, so neither is sent out again.
+     */
+    @Test
+    fun `sign-ins in flight alongside each other are each replayed once`() {
+        val session = MockHttpSession()
+        listOf("tab-a", "tab-b").forEach { state ->
+            val request = authorizeRequest("login", state = state).apply { setSession(session) }
+            authenticate(request)
+            filter.doFilter(request, MockHttpServletResponse(), MockFilterChain())
+        }
+
+        val replayA = authorizeRequest("login", state = "tab-a").apply { setSession(session) }
+        authenticate(replayA)
+        val responseA = MockHttpServletResponse()
+        filter.doFilter(replayA, responseA, MockFilterChain())
+
+        assertNull(responseA.redirectedUrl, "the first tab was sent out to sign in a second time")
+        assertTrue(sessionHoldsAuthentication(replayA))
+    }
+
     @Test
     fun `a different authorization request is prompted again`() {
         val session = MockHttpSession()
