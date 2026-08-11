@@ -46,9 +46,6 @@
 <main>
     <p class="eyebrow">Settings</p>
     <h1 class="font-display">Configuration</h1>
-    <p class="lede">
-        Every credential and switch this server runs on. Changes take effect as soon as you save.
-    </p>
 
     <div th:if="${saved}" class="alert alert-success" role="status" style="margin-top: 24px;">
         Configuration saved.
@@ -91,7 +88,6 @@
         </div>
 
         <div class="save-bar">
-            <span class="save-note">Secrets are stored as entered and never shown anywhere else.</span>
             <button class="btn btn-primary btn-md" type="submit">Save configuration</button>
         </div>
     </form>

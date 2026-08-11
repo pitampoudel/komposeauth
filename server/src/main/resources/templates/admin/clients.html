@@ -66,10 +66,6 @@
         <div>
             <p class="eyebrow">Applications</p>
             <h1 class="font-display">Apps that can ask for tokens</h1>
-            <p class="lede">
-                Each application registered here can send people to this server to sign in, and
-                exchange the result for a token.
-            </p>
         </div>
         <button class="btn btn-primary btn-md" type="button" id="newClientBtn">Register an app</button>
     </div>
@@ -81,7 +77,6 @@
 
         <div id="empty" class="empty hidden">
             <h3>No app is registered yet</h3>
-            <p>Register one to get a client ID and secret it can sign people in with.</p>
             <button class="btn btn-secondary btn-sm" type="button" id="emptyNewBtn">Register an app</button>
         </div>
     </section>
@@ -89,7 +84,7 @@
     <dialog id="clientDialog" aria-labelledby="formTitle">
         <div class="dialog-head">
             <div class="dialog-title" id="formTitle">Register an app</div>
-            <div class="dialog-sub" id="formSub">The client ID and secret go into the app's own configuration.</div>
+            <div class="dialog-sub" id="formSub"></div>
         </div>
 
         <form id="clientForm">

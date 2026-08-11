@@ -55,22 +55,13 @@
 <main>
     <p class="eyebrow">Access</p>
     <h1 class="font-display">People and roles</h1>
-    <p class="lede">
-        A role is how someone gets access. Assign one here; the names themselves come from your
-        configuration.
-    </p>
 
     <section>
         <div class="section-head">
             <h2>Roles</h2>
-            <span class="section-hint">Tap a role to see who holds it</span>
+            <a id="catalogHint" class="section-hint inline-link hidden" href="/admin/config">Add a role</a>
         </div>
         <div id="roleChips" class="chips" role="group" aria-label="Filter people by role"></div>
-        <p id="catalogHint" class="section-hint hidden" style="margin-top:12px;">
-            Only the built-in roles exist so far.
-            <a class="inline-link" href="/admin/config">Add your own in Configuration</a>
-            and they'll show up here.
-        </p>
     </section>
 
     <section>
@@ -234,7 +225,27 @@
         loadUsers();
     }
 
-    async function loadUsers() {
+    /**
+     * Re-runs the current query from the top, keeping however far the reader had paged in.
+     *
+     * Used after a role changes, where patching the cached row in place is not enough: the list on
+     * screen is the answer to a question ("who holds ADMIN?") that the change may have altered. Edit
+     * the cache instead and a person keeps their place in a filter they no longer match, above a
+     * total that no longer counts them.
+     */
+    async function reloadCurrentView() {
+        const pages = state.page;
+        state.page = 0;
+        state.loaded = [];
+        for (let p = 0; p <= pages; p++) {
+            state.page = p;
+            await loadUsers({render: p === pages});
+            if (!state.hasNext) break;
+        }
+    }
+
+    async function loadUsers(options) {
+        const render = !options || options.render !== false;
         el.rows.setAttribute("aria-busy", "true");
         const params = new URLSearchParams({page: String(state.page), size: String(PAGE_SIZE)});
         if (state.query) params.set("q", state.query);
@@ -263,7 +274,7 @@
             renderRoleChips();
         }
 
-        renderRows();
+        if (render) renderRows();
     }
 
     function renderRows() {
@@ -283,13 +294,11 @@
                 el.emptyTitle.textContent = state.role
                     ? `Nobody holds ${state.role} yet`
                     : "No one matches that";
-                el.emptyBody.textContent = state.role
-                    ? "Find the person below and give them the role from their row."
-                    : "Try a different name, email or phone number.";
+                el.emptyBody.textContent = state.role ? "" : "Try a different name, email or phone number.";
                 el.emptyClear.classList.remove("hidden");
             } else {
                 el.emptyTitle.textContent = "No one has signed in yet";
-                el.emptyBody.textContent = "The first person to sign in shows up here, and you can give them a role from their row.";
+                el.emptyBody.textContent = "";
                 el.emptyClear.classList.add("hidden");
             }
             return;
@@ -403,14 +412,13 @@
                 return;
             }
 
-            const updated = await res.json();
-            state.target = updated;
+            state.target = await res.json();
 
-            const index = state.loaded.findIndex(u => u.id === updated.id);
-            if (index >= 0) state.loaded[index] = updated;
-
+            // Both the catalog counts and the list itself can have moved, so re-ask rather than
+            // edit what is cached: under a role filter this is what takes a person out of a list
+            // they no longer belong in, and what keeps the total honest.
             await loadRoles();
-            renderRows();
+            await reloadCurrentView();
         } catch (_) {
             el.dialogStatus.textContent = "No connection. Check your network and try again.";
             el.dialogStatus.className = "alert alert-error";
