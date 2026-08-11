@@ -1,9 +1,11 @@
 package pitampoudel.komposeauth.core.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.sentry.Sentry
 import jakarta.servlet.DispatcherType
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -18,7 +20,9 @@ import org.springframework.security.authentication.LockedException
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException
 import org.springframework.security.web.DefaultRedirectStrategy
+import org.springframework.security.web.authentication.AuthenticationFailureHandler
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
@@ -165,6 +169,44 @@ class WebSecurityConfig {
         hasBearerHeader && !hasAmbientCredential
     }
 
+    /**
+     * Where a failed sign-in through Google or Apple lands, and the only place its cause is kept.
+     *
+     * Both halves of that were missing, and together they are the whole of what a visitor saw when
+     * the callback failed. Spring Security's default is `failureUrl(loginPage + "?error")`, and
+     * `OAuth2LoginConfigurer`'s idea of `loginPage` is its own `/login` — so the visitor was sent to
+     * `/login?error`, where the generated page (see the note at the call site) greeted them with
+     * "Invalid credentials" and a Google button. Pressing it went back to the provider, back to the
+     * failing callback, and back to that page: a closed loop, on a page this application never
+     * wrote, saying something untrue — nothing was wrong with their credentials.
+     *
+     * Meanwhile the reason was recorded nowhere. A failed sign-in is not an exception that escapes
+     * the chain, so [UnhandledErrorReportingFilter] never sees it, and the only trace Spring
+     * Security leaves is a `TRACE` line from a logger this application runs at `WARN`. An operator
+     * had a login loop and an empty log.
+     *
+     * So: back to the real login page, which explains itself and still offers the password form,
+     * with the provider's own error code logged and reported. The saved authorization request
+     * survives the trip — `/session-login` is public, so nothing overwrites it — and the relying
+     * party's sign-in resumes once the visitor gets in.
+     */
+    private fun providerLoginFailureHandler(): AuthenticationFailureHandler {
+        val log = LoggerFactory.getLogger("pitampoudel.komposeauth.core.security.oauth2")
+        val redirectStrategy = DefaultRedirectStrategy()
+        return AuthenticationFailureHandler { request, response, exception ->
+            // The code names the leg that failed — `authorization_request_not_found` for a lost
+            // session, `invalid_token_response` for the code exchange, `invalid_id_token`,
+            // `invalid_user_info_response` — which is the one thing needed to know where to look.
+            val code = (exception as? OAuth2AuthenticationException)?.error?.errorCode ?: "unknown"
+            log.error("Sign-in through an identity provider failed [{}]", code, exception)
+            Sentry.captureException(exception) { scope ->
+                scope.setTag("origin", "oauth2-login")
+                scope.setTag("oauth2.error", code)
+            }
+            redirectStrategy.sendRedirect(request, response, "/session-login?error=provider")
+        }
+    }
+
     @Bean
     @Order(2)
     fun securityFilterChain(
@@ -279,7 +321,15 @@ class WebSecurityConfig {
                     .permitAll()
             }
             .oauth2Login { oauth2 ->
+                // Naming the page here is not cosmetic. `OAuth2LoginConfigurer` keeps its own
+                // default of `/login` when it is not told otherwise, and since no page is *named*
+                // it also decides the application has none and switches on
+                // `DefaultLoginPageGeneratingFilter` to render one. That generated page is then
+                // served at `/login` — which `PublicEndpoints` makes public for the JSON login API
+                // — so the server hands out a second, unbranded sign-in page nobody wrote.
+                oauth2.loginPage("/session-login")
                 oauth2.successHandler(loginSuccessHandler)
+                oauth2.failureHandler(providerLoginFailureHandler())
                 oauth2.authorizationEndpoint { endpoint ->
                     endpoint.authorizationRequestResolver(authorizationRequestResolver)
                 }
