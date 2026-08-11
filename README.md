@@ -63,26 +63,48 @@ docker run -p 80:8080 \
 
 #### Tell the server how it is reached
 
-The server needs to know whether anything stands between it and the internet, because
-`X-Forwarded-For` is sent by the caller and means nothing unless a proxy you control wrote it.
+The abuse limits count per client address, and the server can only work out which address that is if
+it knows what stands between it and the internet. `X-Forwarded-For` is written by the caller as much
+as by any proxy, so entries are trustworthy only from the right-hand end inwards — and only as far
+in as the proxies you actually run. `TRUSTED_PROXY_COUNT` is how many that is.
 
-**Behind a reverse proxy** (nginx, Cloudflare, a cloud load balancer) — set the number of hops:
+Pick the line that matches your deployment:
+
+| Deployment | Setting |
+|---|---|
+| Cloud Run, App Runner, Fly, Render, Heroku — reached at the platform's own URL | `TRUSTED_PROXY_COUNT=1` |
+| Any of the above behind an external Application Load Balancer or CDN | `TRUSTED_PROXY_COUNT=2` |
+| Your own nginx / Caddy / Cloudflare in front | `TRUSTED_PROXY_COUNT=1` (add one per extra hop) |
+| Exposed directly, as in the quickstart above | leave unset, and also set `FORWARD_HEADERS_STRATEGY=none` |
+
+Count only proxies you control. Guessing **too high** is the safe direction — the server falls back
+to the connection's own peer address. Guessing **too low** attributes every request to your proxy, so
+one shared budget covers all your users and the limits refuse them together; the server logs a
+warning naming this setting when it detects that, rather than leaving you to work it out from a
+site-wide lockout.
+
+The last row is the only one that should turn off `FORWARD_HEADERS_STRATEGY`. Everywhere else it must
+stay at its default of `framework`, because that is what tells the server it was reached over HTTPS —
+without it, session cookies lose `Secure`, cross-site sign-in stops working, and verification emails
+carry `http://` links.
+
+##### Cloud Run
 
 ```bash
-  -e TRUSTED_PROXY_COUNT="1" \
+gcloud run deploy komposeauth \
+  --image pitampoudel/komposeauth:latest \
+  --set-env-vars MONGODB_URI="mongodb+srv://...",BASE64_ENCRYPTION_KEY="<your-base64-key>",TRUSTED_PROXY_COUNT=1
 ```
 
-That is how many proxies of your own a request passes through. Leave it at the default of `0` while
-proxied and every request looks like it came from the proxy, so one shared abuse budget locks all
-your users out at once — a mistake that announces itself. Count only proxies you control.
+Nothing else is needed: Cloud Run's front end appends the caller's address as the last
+`X-Forwarded-For` entry, which is the one this server reads, and sets `X-Forwarded-Proto: https` for
+the default `framework` strategy to pick up. Use `2` instead if you front the service with an
+external Application Load Balancer, which appends both the client address and its own forwarding
+rule.
 
-**Exposed directly**, as in the quickstart above — leave `TRUSTED_PROXY_COUNT` unset and also turn
-off forwarded-header trust, which otherwise lets a caller choose the scheme and hostname the server
-believes it was reached at, and so the links it puts in verification emails:
-
-```bash
-  -e FORWARD_HEADERS_STRATEGY="none" \
-```
+Scaling to several instances is already accounted for — sessions, OAuth2 authorizations and the
+abuse counters all live in MongoDB rather than in one container's memory, so limits hold across
+instances and survive cold starts.
 
 ### 2) Add the SDK to your KMP project
 

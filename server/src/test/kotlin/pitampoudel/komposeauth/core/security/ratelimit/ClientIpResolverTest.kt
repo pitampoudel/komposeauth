@@ -77,6 +77,41 @@ class ClientIpResolverTest {
     }
 
     @Test
+    fun `resolves a managed platform's client address from the last entry`() {
+        // Cloud Run and its equivalents append the caller's address as the final entry, so a service
+        // reached at the platform's own URL is one hop — and anything the caller put there itself is
+        // to the left of it.
+        val resolved = resolver(trustedProxyCount = 1).resolve(
+            request(peer = "169.254.8.130", forwardedFor = "attacker-supplied, 198.51.100.7")
+        )
+
+        assertEquals("198.51.100.7", resolved)
+    }
+
+    @Test
+    fun `resolves the client past a load balancer that appends its own address too`() {
+        // An external Application Load Balancer appends both the client it saw and its own
+        // forwarding rule, which is why that deployment is two hops rather than one.
+        val resolved = resolver(trustedProxyCount = 2).resolve(
+            request(peer = "169.254.8.130", forwardedFor = "198.51.100.7, 34.117.0.1")
+        )
+
+        assertEquals("198.51.100.7", resolved)
+    }
+
+    @Test
+    fun `still refuses to guess when no proxy is declared on a managed platform`() {
+        // The safe answer, not the useful one: every caller collapses onto the platform's own
+        // address and shares one budget. The resolver logs a warning naming the setting when it
+        // sees this, because the symptom otherwise points nowhere near the cause.
+        val resolved = resolver(trustedProxyCount = 0).resolve(
+            request(peer = "169.254.8.130", forwardedFor = "198.51.100.7")
+        )
+
+        assertEquals("169.254.8.130", resolved)
+    }
+
+    @Test
     fun `tolerates the spacing real proxies produce`() {
         val resolved = resolver(trustedProxyCount = 1).resolve(
             request(peer = "10.0.0.1", forwardedFor = "  1.1.1.1 ,   198.51.100.7  ")
