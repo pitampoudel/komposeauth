@@ -38,6 +38,9 @@
 
         .role-option input[type=checkbox]:disabled { cursor: not-allowed; opacity: 0.5; }
 
+        /* Held for the length of one request. Enough to read as busy, not enough to look disabled. */
+        .role-option.is-saving { opacity: 0.6; }
+
         .role-option-body { min-width: 0; flex: 1; }
 
         .role-option-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
@@ -360,40 +363,66 @@
         return null;
     }
 
+    /** Built once when the dialog opens. Afterwards only [syncRoleOptions] touches it. */
     function renderRoleOptions() {
-        const held = state.target.roles || [];
-
-        el.roleOptions.innerHTML = state.roles.map(role => {
-            const on = held.includes(role.role);
-            const blocked = optionBlockedReason(role, on);
-            const why = blocked
-                ? `<div class="role-option-why">${escapeHtml(blocked)}</div>`
-                : `<div class="role-option-why">${role.userCount} ${plural(role.userCount, "person holds", "people hold")} this</div>`;
-            return `
-                <label class="role-option">
-                    <input type="checkbox" data-role="${escapeHtml(role.role)}"
-                           ${on ? "checked" : ""} ${blocked ? "disabled" : ""}/>
+        el.roleOptions.innerHTML = state.roles.map(role => `
+                <label class="role-option" data-role-row="${escapeHtml(role.role)}">
+                    <input type="checkbox" data-role="${escapeHtml(role.role)}"/>
                     <span class="role-option-body">
                         <span class="role-option-name">
                             ${escapeHtml(role.role)}
                             ${role.builtIn ? '<span class="badge">Built in</span>' : ""}
                         </span>
-                        ${why}
+                        <span class="role-option-why"></span>
                     </span>
-                </label>`;
-        }).join("");
+                </label>`).join("");
 
         el.roleOptions.querySelectorAll("input[type=checkbox]").forEach(box => {
             box.addEventListener("change", () => toggleRole(box));
+        });
+        syncRoleOptions();
+    }
+
+    /**
+     * Brings the options up to date without replacing them.
+     *
+     * Rebuilding the markup here is what made a click feel ignored: the element under the pointer
+     * was thrown away and replaced by one built from state that had not caught up yet, so the tick
+     * the browser had already drawn vanished and came back a round trip later. Writing to the nodes
+     * that are already there leaves the control the reader is touching alone.
+     *
+     * @param skipRole the checkbox mid-flight, whose position is the reader's and not ours to set.
+     */
+    function syncRoleOptions(skipRole) {
+        const held = state.target.roles || [];
+
+        state.roles.forEach(role => {
+            const row = el.roleOptions.querySelector(`[data-role-row="${CSS.escape(role.role)}"]`);
+            if (!row) return;
+            const box = row.querySelector("input[type=checkbox]");
+            const on = held.includes(role.role);
+            const blocked = optionBlockedReason(role, on);
+
+            if (role.role !== skipRole) {
+                box.checked = on;
+                box.disabled = Boolean(blocked);
+            }
+            row.querySelector(".role-option-why").textContent = blocked
+                ? blocked
+                : `${role.userCount} ${plural(role.userCount, "person holds", "people hold")} this`;
         });
     }
 
     async function toggleRole(box) {
         const role = box.dataset.role;
         const grant = box.checked;
-        const boxes = el.roleOptions.querySelectorAll("input[type=checkbox]");
 
-        boxes.forEach(b => b.disabled = true);
+        // The browser has already drawn the tick, and that is the feedback. Nothing here undoes it
+        // unless the server refuses. Only this one control is held, and only against a second click
+        // landing before the first has been answered — disabling the whole list made every toggle
+        // look like the dialog had frozen.
+        box.disabled = true;
+        box.closest(".role-option").classList.add("is-saving");
         el.dialogStatus.className = "alert alert-error hidden";
 
         try {
@@ -404,6 +433,7 @@
             });
 
             if (!res.ok) {
+                box.checked = !grant;
                 el.dialogStatus.textContent = await problemText(
                     res,
                     grant ? "Couldn't give that role. Try again." : "Couldn't remove that role. Try again."
@@ -413,20 +443,38 @@
             }
 
             state.target = await res.json();
+            syncRoleOptions(role);
 
-            // Both the catalog counts and the list itself can have moved, so re-ask rather than
-            // edit what is cached: under a role filter this is what takes a person out of a list
-            // they no longer belong in, and what keeps the total honest.
-            await loadRoles();
-            await reloadCurrentView();
+            // The counts and the list behind the dialog have moved too, but nobody is waiting on
+            // them: they are refreshed without the dialog holding still for the round trips.
+            refreshBehindDialog();
         } catch (_) {
+            box.checked = !grant;
             el.dialogStatus.textContent = "No connection. Check your network and try again.";
             el.dialogStatus.className = "alert alert-error";
         } finally {
-            // Rebuilt from state either way: on success it reflects the new roles, on failure it
-            // puts the checkbox back where it was.
-            renderRoleOptions();
+            box.disabled = false;
+            box.closest(".role-option").classList.remove("is-saving");
         }
+    }
+
+    /**
+     * Catches the page up after a role changes: the catalog counts, and the list itself — which
+     * under a role filter is what takes a person out of a list they no longer belong in.
+     *
+     * Deliberately not awaited by the caller. When it lands, the dialog's counts are brought up to
+     * date in place if it is still open.
+     */
+    function refreshBehindDialog() {
+        return loadRoles()
+            .then(reloadCurrentView)
+            .then(() => {
+                if (el.dialog.open) syncRoleOptions();
+            })
+            .catch(() => {
+                // The role change itself succeeded and has already been reflected; a failure to
+                // re-read the list is reported by whichever loader hit it.
+            });
     }
 
     // ---- wiring --------------------------------------------------------------
