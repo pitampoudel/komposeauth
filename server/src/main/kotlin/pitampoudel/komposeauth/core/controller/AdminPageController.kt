@@ -80,45 +80,29 @@ class AdminPageController(
     private fun isSet(value: String?) = !value.isNullOrBlank()
 
     private fun signInMethods(config: AppConfig): List<ConsoleCheck> = listOf(
-        ConsoleCheck(
-            name = "Password",
-            ready = true,
-            detail = "Built in. Anyone with an email address or phone number on their account."
-        ),
+        ConsoleCheck(name = "Password", ready = true, detail = "Built in"),
         ConsoleCheck(
             name = "Google",
             ready = isSet(config.googleAuthClientId),
-            detail = if (isSet(config.googleAuthClientId)) {
-                "Signing in through the Google client set under OAuth."
-            } else {
-                "Add a Google client ID under OAuth to turn this on."
-            }
+            detail = if (isSet(config.googleAuthClientId)) "Client ID set" else "Needs a client ID"
         ),
         ConsoleCheck(
             name = "Apple",
             ready = isSet(config.appleAuthClientId),
-            detail = if (isSet(config.appleAuthClientId)) {
-                "Signing in through the Apple client set under OAuth."
-            } else {
-                "Add an Apple client ID under OAuth to turn this on."
-            }
+            detail = if (isSet(config.appleAuthClientId)) "Client ID set" else "Needs a client ID"
         ),
         ConsoleCheck(
             name = "Passkeys",
             ready = isSet(config.rpId),
-            detail = if (isSet(config.rpId)) {
-                "Registered against ${config.rpId}."
-            } else {
-                "Set a relying party ID under Support & Platform to turn this on."
-            }
+            detail = if (isSet(config.rpId)) config.rpId.orEmpty() else "Needs a relying party ID"
         ),
         ConsoleCheck(
             name = "One-time code by text",
             ready = isSet(config.smsProvider),
             detail = if (isSet(config.smsProvider)) {
-                "Codes go out through ${providerName(config.smsProvider)}."
+                providerName(config.smsProvider)
             } else {
-                "Choose an SMS provider to turn this on."
+                "Needs an SMS provider"
             }
         )
     )
@@ -127,19 +111,15 @@ class AdminPageController(
         ConsoleCheck(
             name = "Email",
             ready = isSet(config.smtpHost),
-            detail = if (isSet(config.smtpHost)) {
-                "Sent through ${config.smtpHost}."
-            } else {
-                "Verification links and password resets cannot go out until SMTP is set."
-            }
+            detail = if (isSet(config.smtpHost)) config.smtpHost.orEmpty() else "Needs an SMTP host"
         ),
         ConsoleCheck(
             name = "Text messages",
             ready = isSet(config.smsProvider),
             detail = if (isSet(config.smsProvider)) {
-                "Sent through ${providerName(config.smsProvider)}."
+                providerName(config.smsProvider)
             } else {
-                "No provider is selected, so one-time codes cannot be sent."
+                "Needs an SMS provider"
             }
         )
     )

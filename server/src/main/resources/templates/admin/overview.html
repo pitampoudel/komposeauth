@@ -17,15 +17,10 @@
 <main>
     <p class="eyebrow" th:text="${appName.isEmpty()} ? 'Identity' : ${appName}">Identity</p>
     <h1 class="font-display posture" th:text="${postureLine}">Who can get in.</h1>
-    <p class="lede">
-        Everything this server lets through the door, in one place. Change any of it from
-        <a href="/admin/config" class="inline-link">Configuration</a>.
-    </p>
-
     <section>
         <div class="section-head">
             <h2>Ways in</h2>
-            <span class="section-hint">How people prove who they are</span>
+            <a class="section-hint inline-link" href="/admin/config">Configure</a>
         </div>
         <div class="rows">
             <div class="row" th:each="check : ${signInMethods}">
@@ -42,7 +37,7 @@
     <section>
         <div class="section-head">
             <h2>Delivery</h2>
-            <span class="section-hint">Codes, verification links and password resets travel this way</span>
+            <a class="section-hint inline-link" href="/admin/config">Configure</a>
         </div>
         <div class="rows">
             <div class="row" th:each="check : ${deliveryChannels}">
@@ -67,11 +62,6 @@
                 <span class="share" th:text="${role.userCount}">0</span>
             </span>
         </div>
-        <p class="section-hint" style="margin-top: 12px;" th:if="${!hasCustomRoles}">
-            Only the built-in roles exist so far.
-            <a class="inline-link" href="/admin/config">Add your own in Configuration</a>
-            and they become grantable here.
-        </p>
     </section>
 </main>
 
