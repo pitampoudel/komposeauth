@@ -17,6 +17,7 @@ import org.springframework.security.authentication.DisabledException
 import org.springframework.security.authentication.LockedException
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver
 import org.springframework.security.web.DefaultRedirectStrategy
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
@@ -173,7 +174,8 @@ class WebSecurityConfig {
         bearerTokenResolver: BearerTokenResolver,
         loginSuccessHandler: OAuth2LoginSuccessHandler,
         appConfigService: AppConfigService,
-        csrfTokenRepository: CrossOriginCsrfTokenRepository
+        csrfTokenRepository: CrossOriginCsrfTokenRepository,
+        authorizationRequestResolver: OAuth2AuthorizationRequestResolver
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -278,6 +280,9 @@ class WebSecurityConfig {
             }
             .oauth2Login { oauth2 ->
                 oauth2.successHandler(loginSuccessHandler)
+                oauth2.authorizationEndpoint { endpoint ->
+                    endpoint.authorizationRequestResolver(authorizationRequestResolver)
+                }
             }
             .authorizeHttpRequests { auth ->
                 auth

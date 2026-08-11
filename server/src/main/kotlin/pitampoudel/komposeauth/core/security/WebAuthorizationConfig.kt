@@ -27,6 +27,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.access.intercept.AuthorizationFilter
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
@@ -169,9 +170,11 @@ class WebAuthorizationConfig {
         http: HttpSecurity,
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
-        kycService: KycService
+        kycService: KycService,
+        securityContextRepository: HttpSessionSecurityContextRepository
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
+        val loginEntryPoint = LoginUrlAuthenticationEntryPoint("/session-login")
 
         authorizationServerConfigurer.clientAuthentication {
             it.authenticationConverter(OAuth2PublicClientAuthConverter())
@@ -233,13 +236,19 @@ class WebAuthorizationConfig {
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
+            // Runs before the authorization check: `prompt=login` / `prompt=select_account` has to
+            // be turned into a trip through the login page before a code is issued.
+            .addFilterBefore(
+                PromptReAuthenticationFilter(securityContextRepository, loginEntryPoint),
+                AuthorizationFilter::class.java
+            )
             .authorizeHttpRequests { auth ->
                 auth.anyRequest().authenticated()
             }
             .exceptionHandling { exceptions ->
                 exceptions
                     .defaultAuthenticationEntryPointFor(
-                        LoginUrlAuthenticationEntryPoint("/session-login"),
+                        loginEntryPoint,
                         MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                     )
             }
