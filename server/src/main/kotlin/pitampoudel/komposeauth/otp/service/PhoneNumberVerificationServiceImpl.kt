@@ -8,7 +8,6 @@ import pitampoudel.komposeauth.otp.entity.Otp
 import pitampoudel.komposeauth.otp.repository.OtpRepository
 import java.time.Duration
 import java.time.Instant
-import kotlin.random.Random
 
 class PhoneNumberVerificationServiceImpl(
     private val smsService: SmsService,
@@ -26,7 +25,7 @@ class PhoneNumberVerificationServiceImpl(
                 "OTP already sent. Please wait ${resendCooldown.seconds} seconds before requesting again."
             )
         }
-        val otp = generateOtp()
+        val otp = OtpGenerator.next()
         otpRepository.save(
             Otp(
                 receiver = phoneNumber,
@@ -50,9 +49,5 @@ class PhoneNumberVerificationServiceImpl(
             return true
         }
         return false
-    }
-
-    private fun generateOtp(): String {
-        return Random.nextInt(100000, 999999).toString()
     }
 }

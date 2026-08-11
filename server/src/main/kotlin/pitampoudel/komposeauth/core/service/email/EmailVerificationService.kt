@@ -5,7 +5,7 @@ import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.otp.entity.Otp
 import pitampoudel.komposeauth.otp.repository.OtpRepository
-import kotlin.random.Random
+import pitampoudel.komposeauth.otp.service.OtpGenerator
 
 @Service
 class EmailVerificationService(
@@ -14,7 +14,7 @@ class EmailVerificationService(
     private val appConfigService: AppConfigService,
 ) {
     fun initiate(email: String, baseUrl: String): Boolean {
-        val otp = generateOtp()
+        val otp = OtpGenerator.next()
         otpRepository.save(
             Otp(
                 receiver = email,
@@ -44,10 +44,6 @@ class EmailVerificationService(
             return true
         }
         return false
-    }
-
-    private fun generateOtp(): String {
-        return Random.nextInt(100000, 999999).toString()
     }
 }
 
