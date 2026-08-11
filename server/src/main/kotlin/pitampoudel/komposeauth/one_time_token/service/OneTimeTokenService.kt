@@ -1,6 +1,11 @@
 package pitampoudel.komposeauth.one_time_token.service
 
 import org.bson.types.ObjectId
+import org.springframework.data.mongodb.core.FindAndModifyOptions
+import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
@@ -17,7 +22,8 @@ import kotlin.time.Duration.Companion.hours
 
 @Service
 class OneTimeTokenService(
-    private val repo: OneTimeTokenRepository
+    private val repo: OneTimeTokenRepository,
+    private val mongoTemplate: MongoTemplate
 ) {
     private val encoder = Base64.getUrlEncoder().withoutPadding()
 
@@ -86,9 +92,38 @@ class OneTimeTokenService(
         return encoder.encodeToString(digest)
     }
 
+    /**
+     * Spends a token, and does it in one step so that exactly one caller can.
+     *
+     * The read-then-write this replaces did not make a token single-use, only single-use *eventually*:
+     * two requests arriving together both read `consumedAt == null`, both decided the token was good,
+     * and both wrote their own timestamp over the other's. What each one then did with that answer is
+     * the part that matters — a `REFRESH_TOKEN` is redeemed here for a fresh access token and a fresh
+     * refresh token, so a leaked one could be redeemed as many times as it was presented at once, and
+     * a reset link could set the password twice from two different submissions.
+     *
+     * `findAndModify` moves the "is it still unspent?" test into the same document update that spends
+     * it, which the server performs atomically per document. The loser of the race matches nothing —
+     * `consumedAt` is no longer null by the time its query runs — and gets the same 400 as any other
+     * spent link, which is what it should have got all along.
+     *
+     * Expiry is folded into the query for the same reason. Comparing `expiresAt` in Kotlin against a
+     * document that Mongo may drop under its TTL index mid-flight leaves a window; comparing it in
+     * the query does not.
+     */
     fun consume(rawToken: String, purpose: OneTimeToken.Purpose): OneTimeToken {
-        val token = findValidToken(rawToken, purpose)
-        val consumed = token.copy(consumedAt = Instant.now())
-        return repo.save(consumed)
+        val now = Instant.now()
+        val query = Query(
+            Criteria.where("tokenHash").`is`(hash(rawToken))
+                .and("purpose").`is`(purpose)
+                .and("consumedAt").`is`(null)
+                .and("expiresAt").gt(now)
+        )
+        return mongoTemplate.findAndModify(
+            query,
+            Update().set("consumedAt", now),
+            FindAndModifyOptions.options().returnNew(true),
+            OneTimeToken::class.java
+        ) ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, INVALID_TOKEN_MESSAGE)
     }
 }
