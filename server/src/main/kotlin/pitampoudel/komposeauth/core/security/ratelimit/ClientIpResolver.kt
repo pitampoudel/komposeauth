@@ -25,15 +25,38 @@ import java.util.concurrent.atomic.AtomicBoolean
  * The count cannot be guessed, only declared: see [RateLimitProperties.trustedProxyCount]. It
  * defaults to 0, which trusts nothing and uses the peer address of the TCP connection — always
  * truthful, and correct for a server exposed directly.
+ *
+ * That is one of two arrangements, though, and they want opposite things. The reasoning above holds
+ * where the edge *preserves* what the caller sent and appends after it — Cloud Run, a GCP load
+ * balancer, a typical nginx. Other edges *strip* the header and rewrite it, so nothing of the
+ * caller's survives and the client address is the leftmost entry rather than an offset from the
+ * right; Railway works this way. Counting hops on such a platform is not merely unnecessary, it
+ * reads the wrong end of the list.
+ *
+ * Rather than encode a table of platform behaviours that will go stale, those edges are served by
+ * [RateLimitProperties.clientIpHeader]: name the single-value header the platform guarantees and it
+ * is used verbatim, no positions involved. That is the better answer wherever one is offered,
+ * because it does not depend on the shape of a list this server cannot see the provenance of.
  */
 @Component
 class ClientIpResolver(private val properties: RateLimitProperties) {
 
     private val log = LoggerFactory.getLogger(javaClass)
     private val warnedAboutUndeclaredProxy = AtomicBoolean(false)
+    private val warnedAboutMissingHeader = AtomicBoolean(false)
 
     fun resolve(request: HttpServletRequest): String {
         val peer = request.remoteAddr?.takeIf { it.isNotBlank() } ?: UNKNOWN
+
+        val guaranteedHeader = properties.clientIpHeader?.takeIf { it.isNotBlank() }
+        if (guaranteedHeader != null) {
+            val stated = request.getHeader(guaranteedHeader)?.trim()?.takeIf { it.isNotEmpty() }
+            if (stated != null) return stated
+            // Configured but absent: the name is wrong, or this request reached us without passing
+            // the edge that writes it. Either way there is nothing to trust, so fall through to the
+            // rules below rather than invent an answer.
+            warnAboutMissingHeader(guaranteedHeader, peer)
+        }
 
         val hops = properties.trustedProxyCount
         if (hops <= 0) {
@@ -84,6 +107,17 @@ class ClientIpResolver(private val properties: RateLimitProperties) {
                     "own URL, 2 behind an external Application Load Balancer.",
             peer,
             FORWARDED_FOR
+        )
+    }
+
+    private fun warnAboutMissingHeader(headerName: String, peer: String) {
+        if (!warnedAboutMissingHeader.compareAndSet(false, true)) return
+        log.warn(
+            "app.rate-limit.client-ip-header names '{}', but requests are not carrying it — " +
+                    "counting against '{}' instead. Either the header name is wrong for this " +
+                    "platform, or the service can be reached without passing the edge that writes it.",
+            headerName,
+            peer
         )
     }
 

@@ -10,9 +10,13 @@ import org.springframework.mock.web.MockHttpServletRequest
  */
 class ClientIpResolverTest {
 
-    private fun resolver(trustedProxyCount: Int) = ClientIpResolver(
-        RateLimitProperties().apply { this.trustedProxyCount = trustedProxyCount }
-    )
+    private fun resolver(trustedProxyCount: Int = 0, clientIpHeader: String? = null) =
+        ClientIpResolver(
+            RateLimitProperties().apply {
+                this.trustedProxyCount = trustedProxyCount
+                this.clientIpHeader = clientIpHeader
+            }
+        )
 
     private fun request(peer: String, forwardedFor: String? = null) =
         MockHttpServletRequest().apply {
@@ -109,6 +113,44 @@ class ClientIpResolverTest {
         )
 
         assertEquals("169.254.8.130", resolved)
+    }
+
+    @Test
+    fun `prefers a platform header that carries the client address on its own`() {
+        // Railway, Fly and Cloudflare replace what the caller sent rather than appending to it, and
+        // publish the address they observed under their own name. One value, no positions to count.
+        val request = request(peer = "10.0.0.1", forwardedFor = "forged, also-forged").apply {
+            addHeader("X-Envoy-External-Address", "198.51.100.7")
+        }
+
+        assertEquals(
+            "198.51.100.7",
+            resolver(clientIpHeader = "X-Envoy-External-Address").resolve(request)
+        )
+    }
+
+    @Test
+    fun `ignores the hop count once a platform header is named`() {
+        // The two are alternatives, not layers. Counting into a list the edge has already replaced
+        // would read the wrong end of it.
+        val request = request(peer = "10.0.0.1", forwardedFor = "198.51.100.7, 10.0.0.9").apply {
+            addHeader("Fly-Client-IP", "203.0.113.4")
+        }
+
+        assertEquals(
+            "203.0.113.4",
+            resolver(trustedProxyCount = 2, clientIpHeader = "Fly-Client-IP").resolve(request)
+        )
+    }
+
+    @Test
+    fun `falls back rather than inventing one when the named header is absent`() {
+        // Wrong header name, or a request that reached us without passing the edge that writes it.
+        // Neither is a reason to start believing X-Forwarded-For.
+        val resolved = resolver(clientIpHeader = "Fly-Client-IP")
+            .resolve(request(peer = "203.0.113.9", forwardedFor = "1.2.3.4"))
+
+        assertEquals("203.0.113.9", resolved)
     }
 
     @Test

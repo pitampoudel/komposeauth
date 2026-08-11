@@ -68,20 +68,36 @@ it knows what stands between it and the internet. `X-Forwarded-For` is written b
 as by any proxy, so entries are trustworthy only from the right-hand end inwards — and only as far
 in as the proxies you actually run. `TRUSTED_PROXY_COUNT` is how many that is.
 
-Pick the line that matches your deployment:
+Hosting platforms do this in one of two ways, and they need opposite settings.
+
+**Some edges publish the client address under a header of their own.** Name it and it's used as-is —
+no counting, nothing of the caller's mixed in. Prefer this wherever it's offered:
+
+| Platform | Setting |
+|---|---|
+| Railway | `CLIENT_IP_HEADER=X-Envoy-External-Address` |
+| Fly.io | `CLIENT_IP_HEADER=Fly-Client-IP` |
+| Behind Cloudflare | `CLIENT_IP_HEADER=CF-Connecting-IP` |
+
+**Other edges append to `X-Forwarded-For`**, leaving whatever the caller sent to the left of their
+own entries. There, count hops in from the right:
 
 | Deployment | Setting |
 |---|---|
-| Cloud Run, App Runner, Fly, Render, Heroku — reached at the platform's own URL | `TRUSTED_PROXY_COUNT=1` |
-| Any of the above behind an external Application Load Balancer or CDN | `TRUSTED_PROXY_COUNT=2` |
-| Your own nginx / Caddy / Cloudflare in front | `TRUSTED_PROXY_COUNT=1` (add one per extra hop) |
-| Exposed directly, as in the quickstart above | leave unset, and also set `FORWARD_HEADERS_STRATEGY=none` |
+| Google Cloud Run, at its own `run.app` URL | `TRUSTED_PROXY_COUNT=1` |
+| Behind a GCP external Application Load Balancer | `TRUSTED_PROXY_COUNT=2` |
+| Your own nginx / Caddy in front | `TRUSTED_PROXY_COUNT=1`, plus one per extra hop |
+| Exposed directly, as in the quickstart above | leave both unset, and set `FORWARD_HEADERS_STRATEGY=none` |
 
 Count only proxies you control. Guessing **too high** is the safe direction — the server falls back
 to the connection's own peer address. Guessing **too low** attributes every request to your proxy, so
-one shared budget covers all your users and the limits refuse them together; the server logs a
-warning naming this setting when it detects that, rather than leaving you to work it out from a
-site-wide lockout.
+one shared budget covers all your users and the limits refuse them together.
+
+If your platform isn't listed, don't guess: check its documentation for which header carries the
+client address and whether the edge overwrites it. Getting it wrong is not cosmetic — trusting a
+header the edge does *not* overwrite means callers simply nominate who gets counted, and the limits
+stop working entirely. The server logs a warning naming the relevant setting when it can tell
+something is off, but it cannot detect every case.
 
 The last row is the only one that should turn off `FORWARD_HEADERS_STRATEGY`. Everywhere else it must
 stay at its default of `framework`, because that is what tells the server it was reached over HTTPS —
