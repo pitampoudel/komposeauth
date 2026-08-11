@@ -75,7 +75,7 @@ no counting, nothing of the caller's mixed in. Prefer this wherever it's offered
 
 | Platform | Setting |
 |---|---|
-| Railway | `CLIENT_IP_HEADER=X-Envoy-External-Address` |
+| Railway | `CLIENT_IP_HEADER=X-Real-IP` |
 | Fly.io | `CLIENT_IP_HEADER=Fly-Client-IP` |
 | Behind Cloudflare | `CLIENT_IP_HEADER=CF-Connecting-IP` |
 
@@ -93,11 +93,25 @@ Count only proxies you control. Guessing **too high** is the safe direction — 
 to the connection's own peer address. Guessing **too low** attributes every request to your proxy, so
 one shared budget covers all your users and the limits refuse them together.
 
-If your platform isn't listed, don't guess: check its documentation for which header carries the
-client address and whether the edge overwrites it. Getting it wrong is not cosmetic — trusting a
-header the edge does *not* overwrite means callers simply nominate who gets counted, and the limits
-stop working entirely. The server logs a warning naming the relevant setting when it can tell
-something is off, but it cannot detect every case.
+Getting this wrong is not cosmetic: trust a header the edge does *not* overwrite and callers simply
+nominate who gets counted, so the limits stop working while still appearing to be on. The server logs
+a warning naming the relevant setting when it can tell something is off, but it cannot detect every
+case.
+
+##### Checking it, rather than trusting the table
+
+Providers change, they disagree with their own documentation, and putting a CDN in front changes the
+answer again. Once deployed, sign in as an admin and call:
+
+```bash
+curl https://your-auth-server/admin/client-ip -H "Cookie: <your session>"
+```
+
+It reports the address the limits are currently counting you as, how that was decided, and every
+client-address header the request actually carried. Call it from a phone on mobile data — somewhere
+the public address is unmistakably yours — and set `CLIENT_IP_HEADER` to whichever header came back
+holding it. If instead `X-Forwarded-For` *ends* with your address, count its position from the right
+and use `TRUSTED_PROXY_COUNT`.
 
 The last row is the only one that should turn off `FORWARD_HEADERS_STRATEGY`. Everywhere else it must
 stay at its default of `framework`, because that is what tells the server it was reached over HTTPS —
