@@ -20,7 +20,8 @@ class RateLimitConfig {
     fun rateLimitClock(): Clock = Clock.systemUTC()
 
     /**
-     * Registered ahead of everything, including [ForwardedHeaderFilter] below.
+     * Registered ahead of everything that touches the request, including [ForwardedHeaderFilter]
+     * below.
      *
      * Two reasons, and the second is the load-bearing one. Throttled requests are turned away before
      * any password hashing or SMS provider call happens; and the limiter gets to see the request as
@@ -28,6 +29,10 @@ class RateLimitConfig {
      * `ForwardedHeaderFilter` has overwritten `remoteAddr` with the header's leftmost entry and
      * stripped the header away. That entry is chosen by whoever sent the request, so a limiter
      * reading it counts a different "client" on every attempt. See [ClientIpResolver].
+     *
+     * One notch in from the very front, which is claimed by the unhandled-error reporter — that one
+     * reads nothing and decides nothing, it only wraps the chain so a failure in here is reported
+     * rather than swallowed.
      */
     @Bean
     fun rateLimitFilterRegistration(
@@ -38,7 +43,7 @@ class RateLimitConfig {
         val registration = FilterRegistrationBean(
             RateLimitFilter(rateLimiter, properties, clientIpResolver)
         )
-        registration.order = Ordered.HIGHEST_PRECEDENCE
+        registration.order = Ordered.HIGHEST_PRECEDENCE + 10
         registration.addUrlPatterns("/*")
         return registration
     }
