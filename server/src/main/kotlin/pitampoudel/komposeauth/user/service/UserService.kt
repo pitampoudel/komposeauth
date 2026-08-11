@@ -31,6 +31,7 @@ import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
+import pitampoudel.komposeauth.core.utils.googleProfileFrom
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
@@ -382,18 +383,11 @@ class UserService(
             ),
             idToken = idToken
         )
-        val user = findOrCreateUser(
-            baseUrl = null,
-            CreateUserRequest(
-                email = payload["email"] as String,
-                firstName = payload["given_name"] as String,
-                lastName = payload["family_name"] as String?,
-                photoUrl = payload["picture"] as? String
-            )
-        )
+        val profile = googleProfileFrom(payload)
+        val user = findOrCreateUser(baseUrl = null, req = profile)
 
-        if (payload["email_verified"] as? Boolean == true && !user.emailVerified) {
-            markEmailVerified(user, payload["email"] as String)
+        if (payload.emailVerified == true && !user.emailVerified) {
+            markEmailVerified(user, profile.email!!)
             return findUser(user.id.toHexString()) ?: user
         }
         return user
@@ -417,7 +411,9 @@ class UserService(
             )
         )
 
-        if (claims.getBooleanClaim("email_verified") && !user.emailVerified) {
+        // `== true` rather than a bare call: the claim is optional, and unboxing a null Boolean here
+        // would throw the same way the Google path did.
+        if (claims.getBooleanClaim("email_verified") == true && !user.emailVerified) {
             markEmailVerified(user, email)
             return findUser(user.id.toHexString()) ?: user
         }

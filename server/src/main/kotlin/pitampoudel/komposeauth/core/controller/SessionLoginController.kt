@@ -25,10 +25,16 @@ class SessionLoginController(private val appConfigService: AppConfigService) {
         if (error != null) {
             model.addAttribute(
                 "error",
-                if (error == "locked") {
-                    "This account has been deactivated. Contact support to get it reopened."
-                } else {
-                    "That email or password didn't match. Check them and try again, or reset your password."
+                when (error) {
+                    "locked" ->
+                        "This account has been deactivated. Contact support to get it reopened."
+                    // Sign-in through Google or Apple got as far as the provider and failed on the
+                    // way back, so nothing about the password is worth mentioning — and there is
+                    // nothing the visitor can fix by retyping it.
+                    "provider" ->
+                        "We couldn't finish signing you in with that account. Try again, or use your email and password."
+                    else ->
+                        "That email or password didn't match. Check them and try again, or reset your password."
                 }
             )
         }
