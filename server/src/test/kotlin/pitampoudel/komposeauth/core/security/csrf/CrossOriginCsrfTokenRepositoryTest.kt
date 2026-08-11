@@ -72,6 +72,31 @@ class CrossOriginCsrfTokenRepositoryTest {
     }
 
     @Test
+    fun `salvages a relying party id written as a url`() {
+        // Free text on a config form. Pasting the address is the obvious thing to do.
+        assertEquals(".example.com", save(rpId = "https://example.com/", secure = true).domain)
+    }
+
+    @Test
+    fun `salvages a relying party id written with the leading dot of a cookie domain`() {
+        // `"." + rpId` made this `..example.com`, which ResponseCookie rejects outright.
+        assertEquals(".example.com", save(rpId = ".example.com", secure = true).domain)
+    }
+
+    @Test
+    fun `falls back to host-only rather than throwing on a domain it cannot use`() {
+        // The failure being prevented: ResponseCookie validates the domain and throws, and because
+        // cookies are written inside a filter that exception escapes every handler and turns each
+        // affected page into a whitelabel 500 — including the config page holding the typo.
+        listOf("not a domain", "-example.com", "example..com", "@@@").forEach { bad ->
+            assertNull(
+                save(rpId = bad, secure = true).domain,
+                "expected a host-only cookie for rpId '$bad' rather than a thrown request"
+            )
+        }
+    }
+
+    @Test
     fun `issues a different token every time`() {
         val repo = repository("example.com")
         val request = MockHttpServletRequest()

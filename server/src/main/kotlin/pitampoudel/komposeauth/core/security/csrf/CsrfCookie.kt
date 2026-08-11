@@ -3,6 +3,7 @@ package pitampoudel.komposeauth.core.security.csrf
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseCookie
 import org.springframework.security.web.csrf.CsrfToken
 import org.springframework.security.web.csrf.CsrfTokenRepository
@@ -12,6 +13,10 @@ import org.springframework.web.util.WebUtils
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import java.security.SecureRandom
 import java.util.Base64
+import java.util.concurrent.atomic.AtomicBoolean
+
+private val cookieDomainLog = LoggerFactory.getLogger("pitampoudel.komposeauth.core.security.csrf")
+private val warnedAboutRpId = AtomicBoolean(false)
 
 /**
  * The domain the auth cookies are scoped to, or null for a host-only cookie.
@@ -20,9 +25,42 @@ import java.util.Base64
  * literal string `.null` in that case — a domain no browser accepts, so the cookie was dropped and
  * cookie sign-in silently did nothing. A host-only cookie is the right fallback: it works, it is
  * simply not shared with subdomains.
+ *
+ * Everything else here is about not letting a typo take the site down. `rpId` is free text on a
+ * configuration form, and `ResponseCookie` *validates* what it is given — a value pasted as a URL,
+ * or written with the leading dot a cookie domain conventionally has, yields `.https://host` or
+ * `..host` and throws `IllegalArgumentException`. Thrown while writing a cookie, that lands inside a
+ * servlet filter, where no exception handler can reach it, and every page it touches becomes a
+ * whitelabel 500 — including the configuration page where the mistake could have been corrected.
+ * So normalise what can be salvaged, refuse the rest by falling back to a host-only cookie, and say
+ * so once in the log.
  */
-fun authCookieDomain(appConfigService: AppConfigService): String? =
-    appConfigService.rpId()?.takeIf { it.isNotBlank() }?.let { ".$it" }
+fun authCookieDomain(appConfigService: AppConfigService): String? {
+    val configured = appConfigService.rpId()?.trim()?.takeIf { it.isNotBlank() } ?: return null
+
+    val host = configured
+        .substringAfter("://")      // pasted as a URL
+        .substringBefore('/')       // trailing path
+        .substringBefore(':')       // port
+        .trim('.')                  // leading dot, which is added back below
+        .lowercase()
+
+    if (host.isEmpty() || !VALID_DOMAIN.matches(host)) {
+        if (warnedAboutRpId.compareAndSet(false, true)) {
+            cookieDomainLog.warn(
+                "Relying party ID '{}' is not usable as a cookie domain, so sign-in cookies will " +
+                        "not be shared with subdomains. Set it to a bare hostname such as " +
+                        "'example.com' — no scheme, port or path.",
+                configured
+            )
+        }
+        return null
+    }
+    return ".$host"
+}
+
+/** Letters, digits, dots and hyphens, with no empty or hyphen-edged label — what a cookie may name. */
+private val VALID_DOMAIN = Regex("[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*")
 
 /**
  * Issues the CSRF cookie with the same reach as the access-token cookie.
