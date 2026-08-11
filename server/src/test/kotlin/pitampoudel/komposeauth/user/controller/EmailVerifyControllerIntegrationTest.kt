@@ -146,6 +146,53 @@ class EmailVerifyControllerIntegrationTest {
         }
     }
 
+    /**
+     * The endpoint that mails the verification link, at the path it is documented at.
+     *
+     * It used to answer `POST /` — a bare `@PostMapping` with no class-level `@RequestMapping` to
+     * hang off — so there was no way to ask for a verification email at all, and `POST` to the root
+     * of the auth server quietly sent one instead.
+     */
+    @Test
+    fun `sendVerificationEmail is served at the verify-email path`() {
+        val email = "verify-send@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email)
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
+
+        mockMvc.post("/${ApiEndpoints.VERIFY_EMAIL}") {
+            cookie(cookie)
+        }.andExpect {
+            status { isOk() }
+        }
+    }
+
+    /**
+     * The other half of the same fix. `/verify-email` is public so the emailed link can be followed
+     * without credentials, and "public" here means the bearer resolver returns null and no
+     * authentication is attempted — which for the POST would leave the handler with no idea who to
+     * write to. It is public for GET only.
+     */
+    @Test
+    fun `sendVerificationEmail refuses an anonymous caller`() {
+        mockMvc.post("/${ApiEndpoints.VERIFY_EMAIL}").andExpect {
+            status { isUnauthorized() }
+        }
+    }
+
+    /** And nothing answers POST at the root any more. */
+    @Test
+    fun `posting to the root is not a way to send a verification email`() {
+        val email = "verify-root@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email)
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
+
+        mockMvc.post("/") {
+            cookie(cookie)
+        }.andExpect {
+            status { isMethodNotAllowed() }
+        }
+    }
+
     @Test
     fun `verifyEmail succeeds with valid token`() {
         val email = "verify-token@example.com"

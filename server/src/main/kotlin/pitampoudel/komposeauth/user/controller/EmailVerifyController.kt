@@ -31,8 +31,14 @@ class EmailVerifyController(
         summary = "Send verification email (link-based)",
         description = "Sends an email with a verification link to the currently authenticated user's email address."
     )
-    @PostMapping
-    @GetMapping("/$VERIFY_EMAIL")
+    // One mapping, and on the path this endpoint is documented at. It carried two annotations —
+    // a bare `@PostMapping` and a `@GetMapping` for this path — and Spring resolves a handler
+    // through a single merged `@RequestMapping`, so the second was silently dropped rather than
+    // added. What survived was the pathless one, which with no class-level `@RequestMapping` to
+    // hang off resolves to the context root: the endpoint answered `POST /` and nothing at all
+    // answered `POST /verify-email`. Had the `@GetMapping` won instead, it would have collided
+    // with [verifyEmail] below and the application would not have started.
+    @PostMapping("/$VERIFY_EMAIL")
     fun sendVerificationEmail(request: HttpServletRequest): ResponseEntity<MessageResponse> {
         val user = userContextService.getUserFromAuthentication()
 

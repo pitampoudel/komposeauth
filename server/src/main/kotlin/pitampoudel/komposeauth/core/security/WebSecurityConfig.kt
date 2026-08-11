@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseCookie
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
@@ -42,7 +41,6 @@ import org.springframework.web.util.UriComponentsBuilder
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
-import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.security.csrf.CrossOriginCsrfTokenRepository
 import pitampoudel.komposeauth.core.security.csrf.authCookieDomain
@@ -336,9 +334,13 @@ class WebSecurityConfig {
             }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers(*PublicEndpoints.purelyPublicPatterns.toTypedArray()).permitAll()
+                    // The same matcher the bearer token resolver and the CSRF exemptions are built
+                    // from, rather than a second reading of the list. A path that is public for one
+                    // method only has to be public for that method in all three places, and going
+                    // through `requestMatchers(String...)` here would have dropped the method and
+                    // opened it for every method.
+                    .requestMatchers(PublicEndpoints.purelyPublicRequestMatcher()).permitAll()
                     .requestMatchers(*PublicEndpoints.optionalAuthPatterns.toTypedArray()).permitAll()
-                    .requestMatchers(HttpMethod.POST, "/$THIRD_FACTOR_KYC").permitAll()
                     .requestMatchers(
                         "/v3/api-docs/**",
                         "/swagger-ui.html",

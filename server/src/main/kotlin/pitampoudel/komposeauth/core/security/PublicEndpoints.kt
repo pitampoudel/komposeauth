@@ -10,29 +10,45 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
 
 object PublicEndpoints {
 
+    /**
+     * A public path, and the method it is public for.
+     *
+     * [method] is null wherever the whole path is open. Naming one matters where a path serves both
+     * an anonymous visitor and a signed-in one: `/verify-email` is reached by clicking a link in an
+     * email, which carries no credentials, but the same path is also how a signed-in user *asks* for
+     * that email — and "public" there does not merely relax the authorization check, it stops
+     * authentication being attempted at all (see [purelyPublicRequestMatcher] and its use by the
+     * bearer token resolver), so the caller would arrive anonymous and the handler could not tell
+     * who to write to.
+     */
+    data class PublicPath(val pattern: String, val method: HttpMethod? = null)
+
     /** Fully public paths: authentication is never attempted; an invalid token is ignored. */
-    val purelyPublicPatterns: List<String> = listOf(
-        "/css/**",
-        "/js/**",
-        "/img/**",
-        "/lib/**",
-        "/favicon.ico",
-        "/assets/**",
-        "/session-login",
-        "/oauth2/jwks",
+    val purelyPublicPaths: List<PublicPath> = listOf(
+        PublicPath("/css/**"),
+        PublicPath("/js/**"),
+        PublicPath("/img/**"),
+        PublicPath("/lib/**"),
+        PublicPath("/favicon.ico"),
+        PublicPath("/assets/**"),
+        PublicPath("/session-login"),
+        PublicPath("/oauth2/jwks"),
         // Handing out a CSRF token requires no authority, and a browser app needs one before it can
         // make its first authenticated write.
-        "/csrf",
-        "/${ApiEndpoints.LOGIN}",
-        "/${ApiEndpoints.LOGOUT}",
-        "/signup",
-        "/${ApiEndpoints.LOGIN_OPTIONS}",
-        "/${ApiEndpoints.VERIFY_EMAIL}",
-        "/${ApiEndpoints.RESET_PASSWORD}",
-        "/reset-password",
-        "/countries.json",
-        "/.well-known/**",
-        "/setup"
+        PublicPath("/csrf"),
+        PublicPath("/${ApiEndpoints.LOGIN}"),
+        PublicPath("/${ApiEndpoints.LOGOUT}"),
+        PublicPath("/signup"),
+        PublicPath("/${ApiEndpoints.LOGIN_OPTIONS}"),
+        // GET only: following the emailed link. Requesting the email is a POST to the same path and
+        // has to know who is asking.
+        PublicPath("/${ApiEndpoints.VERIFY_EMAIL}", HttpMethod.GET),
+        PublicPath("/${ApiEndpoints.RESET_PASSWORD}"),
+        PublicPath("/reset-password"),
+        PublicPath("/countries.json"),
+        PublicPath("/.well-known/**"),
+        PublicPath("/setup"),
+        PublicPath("/$THIRD_FACTOR_KYC", HttpMethod.POST)
     )
 
     /** Public paths that use optional authentication: a supplied token is still validated. */
@@ -44,12 +60,8 @@ object PublicEndpoints {
         "/users"
     )
 
-    fun purelyPublicRequestMatcher(): RequestMatcher {
-        val builder = PathPatternRequestMatcher.withDefaults()
-        val matchers = purelyPublicPatterns.map { builder.matcher(it) } +
-                builder.matcher(HttpMethod.POST, "/$THIRD_FACTOR_KYC")
-        return OrRequestMatcher(matchers)
-    }
+    fun purelyPublicRequestMatcher(): RequestMatcher =
+        OrRequestMatcher(purelyPublicPaths.map(::matcherFor))
 
     /**
      * Paths that stay public but must still carry a CSRF token, because a forged call to them has a
@@ -79,12 +91,18 @@ object PublicEndpoints {
      * asserted in `CsrfProtectionIntegrationTest`, since it is a property of how `/login` parses its
      * body and would otherwise be silently lost if that ever changed.
      */
-    fun csrfExemptRequestMatcher(): RequestMatcher {
+    fun csrfExemptRequestMatcher(): RequestMatcher = OrRequestMatcher(
+        purelyPublicPaths
+            .filterNot { it.pattern in csrfProtectedPublicPatterns }
+            .map(::matcherFor)
+    )
+
+    private fun matcherFor(path: PublicPath): RequestMatcher {
         val builder = PathPatternRequestMatcher.withDefaults()
-        val matchers = purelyPublicPatterns
-            .filterNot { it in csrfProtectedPublicPatterns }
-            .map { builder.matcher(it) } +
-                builder.matcher(HttpMethod.POST, "/$THIRD_FACTOR_KYC")
-        return OrRequestMatcher(matchers)
+        return if (path.method == null) {
+            builder.matcher(path.pattern)
+        } else {
+            builder.matcher(path.method, path.pattern)
+        }
     }
 }
