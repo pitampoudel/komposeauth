@@ -34,7 +34,9 @@ fun OAuth2Client.toRegisteredClient(): RegisteredClient {
         )
         .tokenSettings(
             TokenSettings.builder()
-                .reuseRefreshTokens(false)
+                // Reuse (Spring's default) rather than rotate: a server-rendered client asks for
+                // the session several times per page load, each time from the same cookie, and a
+                // single-use refresh token can only answer the first of them.
                 .refreshTokenTimeToLive(Duration.ofDays(this.refreshTokenTtlDays))
                 .accessTokenTimeToLive(Duration.ofSeconds(this.accessTokenTtlSeconds))
                 .build()
