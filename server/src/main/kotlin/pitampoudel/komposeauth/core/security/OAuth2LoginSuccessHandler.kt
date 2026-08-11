@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.core.security
 
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -26,7 +27,32 @@ class OAuth2LoginSuccessHandler(
     private val securityContextRepository: HttpSessionSecurityContextRepository
 ) : SavedRequestAwareAuthenticationSuccessHandler() {
 
+    private val log = LoggerFactory.getLogger(javaClass)
+
+    /**
+     * Anything thrown from here reaches the servlet container, not the exception handlers.
+     *
+     * This runs inside the sign-in filter, so `@ControllerAdvice` never sees it: the visitor gets a
+     * whitelabel 500 on the OAuth callback URL, naming no cause, and the operator gets a stack trace
+     * only if they happen to be reading logs at the time. Neither says "sign-in failed". Turn it
+     * into the same outcome as any other failed sign-in — back to the page, with the reason logged
+     * against the provider it came from.
+     */
     override fun onAuthenticationSuccess(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        authentication: Authentication
+    ) {
+        try {
+            establishSession(request, response, authentication)
+        } catch (ex: Exception) {
+            val provider = (authentication as? OAuth2AuthenticationToken)?.authorizedClientRegistrationId
+            log.error("Could not complete sign-in through '{}'", provider ?: "oauth2", ex)
+            response.sendRedirect("/session-login?error=provider")
+        }
+    }
+
+    private fun establishSession(
         request: HttpServletRequest,
         response: HttpServletResponse,
         authentication: Authentication
