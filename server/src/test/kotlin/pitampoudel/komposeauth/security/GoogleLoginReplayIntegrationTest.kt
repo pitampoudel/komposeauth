@@ -41,6 +41,7 @@ import java.security.MessageDigest
 import java.time.Instant
 import java.util.Base64
 import java.util.UUID
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -72,11 +73,16 @@ class GoogleLoginReplayIntegrationTest {
 
     private val redirectUri = "https://rp.example.com/callback"
 
-    private var sessionCookie: Cookie? = null
+    /** The browser's cookie jar: whatever a response sets is sent back on the next request. */
+    private val cookies = linkedMapOf<String, Cookie>()
 
-    private fun rememberSession(result: MvcResult) {
-        result.response.getCookie(SESSION_COOKIE)?.let {
-            sessionCookie = if (it.maxAge == 0 || it.value.isNullOrEmpty()) null else it
+    private fun rememberCookies(result: MvcResult) {
+        result.response.cookies.forEach { cookie ->
+            if (cookie.maxAge == 0 || cookie.value.isNullOrEmpty()) {
+                cookies.remove(cookie.name)
+            } else {
+                cookies[cookie.name] = cookie
+            }
         }
     }
 
@@ -86,10 +92,10 @@ class GoogleLoginReplayIntegrationTest {
      */
     private fun follow(url: String): MvcResult {
         val result = mockMvc.get(URI.create(UriComponentsBuilder.fromUriString(url).build().toUriString())) {
-            sessionCookie?.let { cookie(it) }
+            cookies.values.takeIf { it.isNotEmpty() }?.let { cookie(*it.toTypedArray()) }
             accept = MediaType.TEXT_HTML
         }.andReturn()
-        rememberSession(result)
+        rememberCookies(result)
         return result
     }
 
@@ -207,6 +213,108 @@ class GoogleLoginReplayIntegrationTest {
             target.endsWith("/session-login?error=provider"),
             "a failed provider sign-in should return to the login page with a reason, but went to $target"
         )
+    }
+
+    /**
+     * A visitor who arrived from an application is in the middle of that application's sign-in.
+     * When it cannot be finished, the answer belongs to the application — as an OAuth error at its
+     * own redirect URI — rather than to a page of this server that the visitor never asked for.
+     */
+    @Test
+    fun `a sign-in that fails after an application sent the visitor here goes back to it`() {
+        val clientId = registerRelyingParty()
+
+        follow("/oauth2/authorize?${authorizeQuery(clientId)}")
+        val callback = follow("/login/oauth2/code/google?code=stub-code&state=never-issued")
+
+        assertEquals(
+            "$redirectUri?error=server_error&state=rp-state",
+            callback.response.redirectedUrl
+        )
+    }
+
+    /** Declining at the provider is not a fault, and the application should not be told it was. */
+    @Test
+    fun `declining at the provider is reported to the application as access_denied`() {
+        val clientId = registerRelyingParty()
+
+        follow("/oauth2/authorize?${authorizeQuery(clientId)}")
+        val toProvider = assertNotNull(
+            follow("/oauth2/authorization/google").response.redirectedUrl,
+            "no redirect to the provider"
+        )
+        val state = assertNotNull(
+            UriComponentsBuilder.fromUriString(toProvider).build().queryParams.getFirst("state")
+        )
+
+        val callback = follow(
+            UriComponentsBuilder.fromPath("/login/oauth2/code/google")
+                .queryParam("error", "access_denied")
+                .queryParam("state", URLDecoder.decode(state, StandardCharsets.UTF_8))
+                .encode()
+                .toUriString()
+        )
+
+        assertEquals(
+            "$redirectUri?error=access_denied&state=rp-state",
+            callback.response.redirectedUrl
+        )
+    }
+
+    /**
+     * The saved authorization request lives in the session, which is the thing that goes missing in
+     * every case worth recovering from. Signing in still has to end at the application: without the
+     * cookie that outlives it, this landed on `/`, which answers JSON.
+     */
+    @Test
+    fun `a sign-in whose saved request has gone still ends at the application`() {
+        val clientId = registerRelyingParty()
+        whenever(userService.findOrCreateVerifiedGoogleUser(any(), any())).thenReturn(
+            User(
+                id = ObjectId.get(),
+                firstName = "Google",
+                lastName = "User",
+                email = "google-user@example.com",
+                emailVerified = true,
+                phoneNumber = null,
+                roles = listOf("USER")
+            )
+        )
+
+        follow("/oauth2/authorize?${authorizeQuery(clientId)}")
+
+        // The session drops while the visitor is away at the provider, taking the saved request
+        // with it. What they were doing is remembered outside it too.
+        cookies.remove(SESSION_COOKIE)
+
+        val toProvider = assertNotNull(
+            follow("/oauth2/authorization/google").response.redirectedUrl,
+            "no redirect to the provider"
+        )
+        StubProvider.nonceHash = UriComponentsBuilder.fromUriString(toProvider)
+            .build().queryParams.getFirst("nonce")
+        val state = assertNotNull(
+            UriComponentsBuilder.fromUriString(toProvider).build().queryParams.getFirst("state")
+        )
+
+        val callback = follow(
+            UriComponentsBuilder.fromPath("/login/oauth2/code/google")
+                .queryParam("code", "stub-code")
+                .queryParam("state", URLDecoder.decode(state, StandardCharsets.UTF_8))
+                .encode()
+                .toUriString()
+        )
+        val afterLogin = assertNotNull(
+            callback.response.redirectedUrl,
+            "callback returned ${callback.response.status} instead of a redirect"
+        )
+        assertTrue(
+            afterLogin.contains("/oauth2/authorize"),
+            "a signed-in visitor should be put back on the authorization request, but went to $afterLogin"
+        )
+
+        val target = assertNotNull(follow(afterLogin).response.redirectedUrl)
+        assertTrue(target.startsWith("$redirectUri?code="), "was $target")
     }
 
     /** The other half: with the login page named, there is no generated one left to land on. */

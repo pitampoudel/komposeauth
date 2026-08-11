@@ -25,8 +25,9 @@ import pitampoudel.komposeauth.user.service.UserService
 @Component
 class OAuth2LoginSuccessHandler(
     private val userService: UserService,
-    private val securityContextRepository: HttpSessionSecurityContextRepository
-) : SavedRequestAwareAuthenticationSuccessHandler() {
+    private val securityContextRepository: HttpSessionSecurityContextRepository,
+    private val relyingPartyReturn: RelyingPartyReturn
+) : ReturnToRelyingPartyHandler(relyingPartyReturn) {
 
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -36,8 +37,8 @@ class OAuth2LoginSuccessHandler(
      * This runs inside the sign-in filter, so `@ControllerAdvice` never sees it: the visitor gets a
      * whitelabel 500 on the OAuth callback URL, naming no cause, and the operator gets a stack trace
      * only if they happen to be reading logs at the time. Neither says "sign-in failed". Turn it
-     * into the same outcome as any other failed sign-in — back to the page, with the reason logged
-     * against the provider it came from.
+     * into the same outcome as any other failed sign-in — back to whoever sent them, with the
+     * reason logged against the provider it came from.
      */
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
@@ -49,7 +50,13 @@ class OAuth2LoginSuccessHandler(
         } catch (ex: Exception) {
             val provider = (authentication as? OAuth2AuthenticationToken)?.authorizedClientRegistrationId
             log.error("Could not complete sign-in through '{}'", provider ?: "oauth2", ex)
-            response.sendRedirect("/session-login?error=provider")
+            // The visitor is in the middle of an application's sign-in, not visiting this one, so
+            // the failure belongs to that application. `server_error` is what RFC 6749 §4.1.2.1
+            // calls this: the request was well formed and we could not honour it.
+            response.sendRedirect(
+                relyingPartyReturn.errorRedirect(request, response, "server_error")
+                    ?: "/session-login?error=provider"
+            )
         }
     }
 

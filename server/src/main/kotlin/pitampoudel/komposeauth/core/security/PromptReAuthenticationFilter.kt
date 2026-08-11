@@ -59,7 +59,9 @@ class PromptReAuthenticationFilter(
     }
 
     private fun requiresReAuthentication(request: HttpServletRequest): Boolean {
-        if (request.requestURI != request.contextPath + AUTHORIZATION_ENDPOINT) return false
+        if (request.requestURI !=
+            request.contextPath + RelyingPartyReturn.AUTHORIZATION_ENDPOINT
+        ) return false
 
         // `prompt` is a space-delimited list of values (OIDC Core 3.1.2.1). `none` is deliberately
         // left alone: Spring Authorization Server already implements it per spec.
@@ -107,8 +109,6 @@ class PromptReAuthenticationFilter(
         request.getParameter("state") ?: request.queryString.orEmpty()
 
     companion object {
-        const val AUTHORIZATION_ENDPOINT = "/oauth2/authorize"
-
         private const val PROMPT_PARAMETER = "prompt"
         private const val HANDLED_PROMPT_ATTRIBUTE = "pitampoudel.komposeauth.HANDLED_PROMPT"
 

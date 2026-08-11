@@ -186,12 +186,16 @@ class WebSecurityConfig {
      * Security leaves is a `TRACE` line from a logger this application runs at `WARN`. An operator
      * had a login loop and an empty log.
      *
-     * So: back to the real login page, which explains itself and still offers the password form,
-     * with the provider's own error code logged and reported. The saved authorization request
-     * survives the trip — `/session-login` is public, so nothing overwrites it — and the relying
-     * party's sign-in resumes once the visitor gets in.
+     * So: back to the application that sent the visitor here, since that is where a sign-in they
+     * did not finish belongs — and only failing that to the real login page, which explains itself
+     * and still offers the password form. Either way the provider's own error code is logged and
+     * reported. The saved authorization request survives the trip to the login page —
+     * `/session-login` is public, so nothing overwrites it — and the relying party's sign-in
+     * resumes once the visitor gets in.
      */
-    private fun providerLoginFailureHandler(): AuthenticationFailureHandler {
+    private fun providerLoginFailureHandler(
+        relyingPartyReturn: RelyingPartyReturn
+    ): AuthenticationFailureHandler {
         val log = LoggerFactory.getLogger("pitampoudel.komposeauth.core.security.oauth2")
         val redirectStrategy = DefaultRedirectStrategy()
         return AuthenticationFailureHandler { request, response, exception ->
@@ -204,7 +208,19 @@ class WebSecurityConfig {
                 scope.setTag("origin", "oauth2-login")
                 scope.setTag("oauth2.error", code)
             }
-            redirectStrategy.sendRedirect(request, response, "/session-login?error=provider")
+            // Someone who declined at the provider has not hit a fault, and telling the relying
+            // party otherwise would have it report one. `access_denied` is the answer RFC 6749
+            // §4.1.2.1 reserves for exactly that, and it is the code the provider used to say so.
+            val returned = relyingPartyReturn.errorRedirect(
+                request,
+                response,
+                if (code == "access_denied") "access_denied" else "server_error"
+            )
+            redirectStrategy.sendRedirect(
+                request,
+                response,
+                returned ?: "/session-login?error=provider"
+            )
         }
     }
 
@@ -218,7 +234,8 @@ class WebSecurityConfig {
         loginSuccessHandler: OAuth2LoginSuccessHandler,
         appConfigService: AppConfigService,
         csrfTokenRepository: CrossOriginCsrfTokenRepository,
-        authorizationRequestResolver: OAuth2AuthorizationRequestResolver
+        authorizationRequestResolver: OAuth2AuthorizationRequestResolver,
+        relyingPartyReturn: RelyingPartyReturn
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -311,6 +328,9 @@ class WebSecurityConfig {
                 formLogin
                     .loginPage("/session-login")
                     .loginProcessingUrl("/session-login")
+                    // Signing in with a password ends where signing in with a provider does: at the
+                    // application that asked for it, not on this server's root.
+                    .successHandler(ReturnToRelyingPartyHandler(relyingPartyReturn))
                     // A locked account and a wrong password are different problems with different
                     // fixes, so the page needs to tell them apart.
                     .failureHandler { request, response, exception ->
@@ -332,7 +352,7 @@ class WebSecurityConfig {
                 // — so the server hands out a second, unbranded sign-in page nobody wrote.
                 oauth2.loginPage("/session-login")
                 oauth2.successHandler(loginSuccessHandler)
-                oauth2.failureHandler(providerLoginFailureHandler())
+                oauth2.failureHandler(providerLoginFailureHandler(relyingPartyReturn))
                 oauth2.authorizationEndpoint { endpoint ->
                     endpoint.authorizationRequestResolver(authorizationRequestResolver)
                 }

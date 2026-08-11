@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.server.authorization.token.*
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
+import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.access.intercept.AuthorizationFilter
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
@@ -171,10 +172,22 @@ class WebAuthorizationConfig {
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
         kycService: KycService,
-        securityContextRepository: HttpSessionSecurityContextRepository
+        securityContextRepository: HttpSessionSecurityContextRepository,
+        relyingPartyReturn: RelyingPartyReturn
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
-        val loginEntryPoint = LoginUrlAuthenticationEntryPoint("/session-login")
+
+        // Everything that interrupts an authorization request to sign the visitor in goes through
+        // here — the exception handling below and the prompt filter both — so this is the one place
+        // that knows what they were in the middle of, and the place to write it down. Without it,
+        // an interruption they never get back from ends on this server's own root. See
+        // [RelyingPartyReturn].
+        val loginEntryPoint = LoginUrlAuthenticationEntryPoint("/session-login").let { entryPoint ->
+            AuthenticationEntryPoint { request, response, authException ->
+                relyingPartyReturn.remember(request, response)
+                entryPoint.commence(request, response, authException)
+            }
+        }
 
         authorizationServerConfigurer.clientAuthentication {
             it.authenticationConverter(OAuth2PublicClientAuthConverter())
