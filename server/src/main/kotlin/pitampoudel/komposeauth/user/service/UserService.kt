@@ -257,7 +257,8 @@ class UserService(
                     "message" to "Please click the button below to verify your email address and continue using our service.",
                     "actionUrl" to if (!newUser.emailVerified) oneTimeTokenService.generateEmailVerificationLink(
                         userId = newUser.id,
-                        baseUrl = baseUrl
+                        baseUrl = baseUrl,
+                        email = newUser.email
                     ) else null,
                     "actionText" to "Verify Email"
                 )

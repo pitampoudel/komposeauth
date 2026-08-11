@@ -20,9 +20,12 @@ import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.otp.repository.OtpRepository
 import pitampoudel.komposeauth.user.data.SendOtpRequest
+import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 import pitampoudel.komposeauth.user.domain.OtpType
 import pitampoudel.komposeauth.user.repository.UserRepository
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.time.Duration.Companion.minutes
 
 @SpringBootTest
@@ -151,12 +154,7 @@ class EmailVerifyControllerIntegrationTest {
         val email = "verify-token@example.com"
         val userId = TestAuthHelpers.createUser(mockMvc, json, email)
 
-        // Create a valid one-time token for email verification
-        val token = oneTimeTokenService.createToken(
-            userId = ObjectId(userId),
-            purpose = OneTimeToken.Purpose.VERIFY_EMAIL,
-            ttl = 1.minutes
-        )
+        val token = verificationToken(userId, email)
 
         mockMvc.get("/${ApiEndpoints.VERIFY_EMAIL}") {
             param("token", token)
@@ -164,6 +162,65 @@ class EmailVerifyControllerIntegrationTest {
             status { is3xxRedirection() }
         }
     }
+
+    /**
+     * A link speaks for the address it was sent to, and for no other.
+     *
+     * `User.update` drops `emailVerified` when the address changes, which is right — nobody has
+     * shown they can read mail at the new one. But `verifyEmail` used to mark whatever address the
+     * account held at click time, so an outstanding link put the flag straight back, now attached to
+     * an address its holder had never demonstrated reaching. Since `emailVerified` rides in the
+     * access token and the OIDC `emailVerified` claim, a relying party keying accounts on a verified
+     * address would have taken that at face value.
+     */
+    @Test
+    fun `a link cannot verify an address it was not sent to`() {
+        val original = "binding-original@example.com"
+        val swapped = "binding-swapped@example.com"
+        val userId = TestAuthHelpers.createUser(mockMvc, json, original)
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, original)
+
+        // The link goes out to the address the account holds now.
+        val token = verificationToken(userId, original)
+
+        // Then the address is changed. Verification is correctly dropped along with it.
+        mockMvc.post("/${ApiEndpoints.UPDATE_PROFILE}") {
+            cookie(cookie)
+            contentType = MediaType.APPLICATION_JSON
+            content = json.encodeToString(
+                UpdateProfileRequest.serializer(),
+                UpdateProfileRequest(email = swapped, currentPassword = "Password1")
+            )
+        }.andExpect { status { isOk() } }
+
+        val afterSwap = userRepository.findById(ObjectId(userId)).orElseThrow()
+        assertEquals(swapped, afterSwap.email)
+        assertFalse(afterSwap.emailVerified, "changing the address should drop verification")
+
+        // The old link is now stale. It proves the original address, which the account no longer
+        // holds, and it must not vouch for the new one.
+        mockMvc.get("/${ApiEndpoints.VERIFY_EMAIL}") {
+            param("token", token)
+        }.andExpect {
+            status { is4xxClientError() }
+        }
+
+        val afterClick = userRepository.findById(ObjectId(userId)).orElseThrow()
+        assertEquals(swapped, afterClick.email, "the stale link must not revert the address")
+        assertFalse(
+            afterClick.emailVerified,
+            "an address nobody proved they can read was marked verified"
+        )
+    }
+
+    /** A link issued the way the application issues one, with the address recorded on the token. */
+    private fun verificationToken(userId: String, email: String): String =
+        oneTimeTokenService.generateEmailVerificationLink(
+            userId = ObjectId(userId),
+            ttl = 1.minutes,
+            baseUrl = "http://localhost",
+            email = email
+        ).substringAfter("token=")
 
     @Test
     fun `verifyEmail fails with invalid token`() {
