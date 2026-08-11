@@ -44,6 +44,22 @@ class CrossOriginCsrfTokenRepositoryTest {
     }
 
     @Test
+    fun `still reaches every subdomain without the leading dot`() {
+        // The question the dot appears to answer, and does not. RFC 6265 5.2.3 has the browser strip
+        // a leading dot while parsing, so `.example.com` and `example.com` produce the identical
+        // cookie-domain; 5.3 then clears host-only-flag for any non-empty Domain, and 5.1.3
+        // domain-match sends the cookie to the domain itself and anything ending in `.example.com`.
+        // Host-only is what you get by omitting Domain altogether — the null branch, not this one.
+        val header = Rfc6265CookieProcessor()
+            .generateHeader(save(rpId = "example.com", secure = true), MockHttpServletRequest())
+
+        assertTrue(
+            header.contains("Domain=example.com"),
+            "expected a Domain covering every subdomain, got: $header"
+        )
+    }
+
+    @Test
     fun `writes a domain the servlet container will actually serialise`() {
         // The one that was missing. MockHttpServletResponse stores whatever it is handed, so every
         // assertion above passed while production threw: the real container runs the cookie through
