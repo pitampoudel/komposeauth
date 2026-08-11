@@ -45,6 +45,7 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.security.csrf.CrossOriginCsrfTokenRepository
+import pitampoudel.komposeauth.core.security.csrf.EagerCsrfTokenFilter
 import pitampoudel.komposeauth.core.security.csrf.authCookieDomain
 
 @Configuration
@@ -248,6 +249,8 @@ class WebSecurityConfig {
                     }
                 })
             }
+            // Settles the token while the response can still carry its cookie. See the filter.
+            .addFilterAfter(EagerCsrfTokenFilter(), CsrfFilter::class.java)
             .headers { headers ->
                 headers
                     .frameOptions { it.deny() }
