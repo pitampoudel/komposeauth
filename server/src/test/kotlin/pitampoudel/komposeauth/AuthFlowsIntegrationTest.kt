@@ -130,14 +130,18 @@ class AuthFlowsIntegrationTest {
 
     @Test
     fun `verify email consumes token and flips emailVerified`() {
-        val userId = createUser("verify-me@example.com")
+        val email = "verify-me@example.com"
+        val userId = createUser(email)
         val userObjId = org.bson.types.ObjectId(userId)
 
-        val token = oneTimeTokenService.createToken(
+        // Issued the way the application issues it, so the address the link speaks for is recorded
+        // on the token. A hand-built token names no address and is refused as a stale link.
+        val token = oneTimeTokenService.generateEmailVerificationLink(
             userId = userObjId,
-            purpose = OneTimeToken.Purpose.VERIFY_EMAIL,
-            ttl = 1.hours
-        )
+            ttl = 1.hours,
+            baseUrl = "http://localhost",
+            email = email
+        ).substringAfter("token=")
 
         mockMvc.get("/${ApiEndpoints.VERIFY_EMAIL}") {
             param("token", token)

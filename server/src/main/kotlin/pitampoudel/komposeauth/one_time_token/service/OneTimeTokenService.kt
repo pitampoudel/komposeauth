@@ -30,10 +30,19 @@ class OneTimeTokenService(
 
     }
 
+    /**
+     * @param email the address the link is being sent to, recorded on the token so that clicking it
+     * verifies *that* address rather than whatever the account happens to hold on arrival.
+     */
     fun generateEmailVerificationLink(
-        userId: ObjectId, ttl: Duration = 24.hours, baseUrl: String
+        userId: ObjectId, ttl: Duration = 24.hours, baseUrl: String, email: String
     ): String {
-        val token = createToken(userId, OneTimeToken.Purpose.VERIFY_EMAIL, ttl)
+        val token = createToken(
+            userId = userId,
+            purpose = OneTimeToken.Purpose.VERIFY_EMAIL,
+            ttl = ttl,
+            subject = email.lowercase()
+        )
         return "${baseUrl}/${ApiEndpoints.VERIFY_EMAIL}?token=$token"
     }
 
@@ -46,7 +55,12 @@ class OneTimeTokenService(
         return "$baseUrl/${ApiEndpoints.RESET_PASSWORD}?token=$token"
     }
 
-    fun createToken(userId: ObjectId, purpose: OneTimeToken.Purpose, ttl: Duration): String {
+    fun createToken(
+        userId: ObjectId,
+        purpose: OneTimeToken.Purpose,
+        ttl: Duration,
+        subject: String? = null
+    ): String {
         fun newRandomToken(): String {
             val bytes = ByteArray(32)
             SecureRandom().nextBytes(bytes)
@@ -59,7 +73,8 @@ class OneTimeTokenService(
             userId = userId,
             purpose = purpose,
             tokenHash = hash(raw),
-            expiresAt = now.plusSeconds(ttl.inWholeSeconds)
+            expiresAt = now.plusSeconds(ttl.inWholeSeconds),
+            subject = subject
         )
         repo.save(entity)
         return raw

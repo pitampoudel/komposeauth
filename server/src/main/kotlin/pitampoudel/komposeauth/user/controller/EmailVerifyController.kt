@@ -43,7 +43,8 @@ class EmailVerifyController(
 
         val link = oneTimeTokenService.generateEmailVerificationLink(
             userId = user.id,
-            baseUrl = findServerUrl(request)
+            baseUrl = findServerUrl(request),
+            email = user.email
         )
 
         val sent = emailService.sendHtmlMail(
@@ -75,9 +76,32 @@ class EmailVerifyController(
         val user = userService.findUser(stored.userId.toHexString())
             ?: throw BadRequestException("User not found")
 
-        userService.markEmailVerified(user, user.email!!)
+        // Verify the address the link was sent to, which is not necessarily the one the account
+        // holds now. Reading `user.email` here instead meant the link proved nothing about the
+        // address it ended up marking verified: change the address after the mail is sent and
+        // `User.update` correctly drops `emailVerified`, but clicking the old link put it straight
+        // back — now attached to an address whose mailbox nobody had demonstrated reaching.
+        val address = stored.subject
+            ?: throw BadRequestException(STALE_LINK_MESSAGE)
+        if (!address.equals(user.email, ignoreCase = true)) {
+            throw BadRequestException(STALE_LINK_MESSAGE)
+        }
+
+        userService.markEmailVerified(user, address)
 
         return RedirectView("${appConfigService.getConfig().websiteUrl}?emailVerified=true")
+    }
+
+    private companion object {
+        /**
+         * Covers both a link whose address has since been replaced and one issued before the address
+         * was recorded on the token at all. The second only exists for as long as the tokens
+         * outstanding at deploy time take to expire, and the alternative — trusting the account's
+         * current address when the token does not name one — is the behaviour being fixed.
+         */
+        const val STALE_LINK_MESSAGE =
+            "This verification link was sent to a different address than the one on your account now. " +
+                    "Request a new one."
     }
 
 
