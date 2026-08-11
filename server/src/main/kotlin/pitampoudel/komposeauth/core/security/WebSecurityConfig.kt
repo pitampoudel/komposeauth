@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseCookie
@@ -32,6 +33,7 @@ import org.springframework.security.web.util.matcher.NegatedRequestMatcher
 import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.util.UriComponentsBuilder
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
@@ -61,24 +63,63 @@ class WebSecurityConfig {
         response.addHeader("Set-Cookie", clearCookie.toString())
     }
 
+    /**
+     * Cross-origin rules, and deliberately nothing to say about same-origin traffic.
+     *
+     * Two ways this used to lock an operator out of their own server, both of which ended as a bare
+     * "Invalid CORS request":
+     *
+     * Handing back a configuration whose allow-list is empty is not the same as having no opinion —
+     * it is an instruction to refuse every origin. Once `corsAllowedOrigins()` began discarding a
+     * bare `*`, which it must, since matching every origin for credentialed requests lets any site
+     * read authenticated responses, an operator who had configured exactly that was left with an
+     * empty list and so a server that turned away anything carrying an `Origin`. Returning null
+     * instead leaves CORS unmanaged: same-origin requests are untouched, and cross-origin ones are
+     * refused by the browser for want of the headers, which is the right default before anything is
+     * configured.
+     *
+     * The server's own origin is then always allowed, whatever the list says. Spring decides
+     * same-origin by comparing scheme, host and port against the request's own — so a proxy that
+     * terminates TLS without a usable `X-Forwarded-Proto` makes the page's `https://` origin look
+     * foreign to a server that believes it is on `http://`, and the console starts refusing its own
+     * form posts. Comparing hosts alone is enough to prevent that: an origin on this very host is
+     * not a cross-site caller in any sense that matters here.
+     */
     @Bean
     fun corsConfigurationSource(appConfigService: AppConfigService): CorsConfigurationSource {
-        return CorsConfigurationSource {
+        return CorsConfigurationSource { request ->
+            val configured = appConfigService.corsAllowedOrigins()
+            val ownOrigin = request.getHeader(HttpHeaders.ORIGIN)
+                ?.takeIf { sameHostAsServer(it, request) }
+
+            val origins = (configured + listOfNotNull(ownOrigin)).distinct()
+            if (origins.isEmpty()) {
+                // No opinion, rather than "refuse everyone".
+                return@CorsConfigurationSource null
+            }
+
             val configuration = CorsConfiguration()
-            val origins = appConfigService.corsAllowedOrigins()
             if (origins.any { it.contains("*") }) {
                 configuration.allowedOriginPatterns = origins
             } else {
                 configuration.allowedOrigins = origins
             }
             configuration.allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-            // Safe to reflect: the origin allowlist above is what actually gates access, and it is
+            // Safe to reflect: the origin allow-list above is what actually gates access, and it is
             // never `*` while credentials are allowed.
             configuration.allowedHeaders = listOf("*")
             configuration.allowCredentials = true
             configuration.maxAge = 1800L
             configuration
         }
+    }
+
+    /** Whether [origin] names this very server, ignoring scheme and port. See the note above. */
+    private fun sameHostAsServer(origin: String, request: HttpServletRequest): Boolean {
+        val originHost = runCatching {
+            UriComponentsBuilder.fromUriString(origin).build().host
+        }.getOrNull() ?: return false
+        return originHost.equals(request.serverName, ignoreCase = true)
     }
 
     /**
