@@ -43,12 +43,6 @@ class SessionLoginController(private val appConfigService: AppConfigService) {
                 when (error) {
                     "locked" ->
                         "This account has been deactivated. Contact support to get it reopened."
-                    // The sign-in outlived the session holding it — see the handler for
-                    // `authorization_request_not_found` in `WebSecurityConfig`. Nothing failed and
-                    // nothing was refused, so say only that it timed out. The relying party's own
-                    // request went with the session, so signing in here ends up on this server's
-                    // home page rather than back where they started, which is why the message
-                    // mentions returning to the app.
                     "expired" ->
                         "That sign-in took too long and expired. Start it again below, or go back to the app you came from and sign in from there."
                     // Sign-in through Google or Apple got as far as the provider and failed on the

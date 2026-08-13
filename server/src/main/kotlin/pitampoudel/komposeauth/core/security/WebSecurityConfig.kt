@@ -204,17 +204,6 @@ class WebSecurityConfig {
             val code = (exception as? OAuth2AuthenticationException)?.error?.errorCode ?: "unknown"
 
             if (code == "authorization_request_not_found") {
-                // Nothing went wrong on the way back. The visitor spent longer at the provider than
-                // their session lived for — picking an account, fetching a second factor, or simply
-                // leaving the tab — so the authorization request that would have matched this
-                // callback had already been discarded, along with the relying party's own request
-                // waiting behind it. See `server.servlet.session.timeout`, which is the length of
-                // that window.
-                //
-                // So: no stack trace and no alert, because nothing here is broken and there is
-                // nothing for an operator to fix; and a message on the login page that says the
-                // attempt expired rather than blaming the account. Starting again works, and lands
-                // on the provider's account chooser a second time.
                 log.info("A sign-in returned from the provider after its session had expired")
                 redirectStrategy.sendRedirect(request, response, "/session-login?error=expired")
                 return@AuthenticationFailureHandler
