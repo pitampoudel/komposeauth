@@ -23,6 +23,20 @@ logging:
 
 server:
   port: ${PORT:8080}
+  servlet:
+    session:
+      # How long a browser session may sit idle before the store discards it.
+      #
+      # This is not only how long somebody stays signed in — it is also the window a sign-in has to
+      # complete in. Sending a visitor to Google leaves the authorization request in their session,
+      # and if the session is gone by the time they come back there is nothing here to match the
+      # callback against, so the sign-in fails outright. The framework default of 30 minutes is
+      # under the time somebody plausibly spends picking an account, finding a phone for a second
+      # factor, or leaving the tab while they do something else.
+      #
+      # Shorten it if sessions on shared machines are the bigger worry; the cookie carrying the
+      # session is dropped when the browser closes either way.
+      timeout: ${SESSION_TIMEOUT:24h}
   # Whether to believe X-Forwarded-* when working out the request's scheme, host and client address.
   # Correct behind a reverse proxy, which is the usual deployment and so the default. Set to `none`
   # if the server is exposed directly: there is then no proxy rewriting those headers, so anything

@@ -190,15 +190,36 @@ class WebSecurityConfig {
      * with the provider's own error code logged and reported. The saved authorization request
      * survives the trip — `/session-login` is public, so nothing overwrites it — and the relying
      * party's sign-in resumes once the visitor gets in.
+     *
+     * One code is handled apart from the rest, `authorization_request_not_found`; the reason is at
+     * the branch itself.
      */
     private fun providerLoginFailureHandler(): AuthenticationFailureHandler {
         val log = LoggerFactory.getLogger("pitampoudel.komposeauth.core.security.oauth2")
         val redirectStrategy = DefaultRedirectStrategy()
         return AuthenticationFailureHandler { request, response, exception ->
-            // The code names the leg that failed — `authorization_request_not_found` for a lost
-            // session, `invalid_token_response` for the code exchange, `invalid_id_token`,
-            // `invalid_user_info_response` — which is the one thing needed to know where to look.
+            // The code names the leg that failed — `invalid_token_response` for the code exchange,
+            // `invalid_id_token`, `invalid_user_info_response` — which is the one thing needed to
+            // know where to look.
             val code = (exception as? OAuth2AuthenticationException)?.error?.errorCode ?: "unknown"
+
+            if (code == "authorization_request_not_found") {
+                // Nothing went wrong on the way back. The visitor spent longer at the provider than
+                // their session lived for — picking an account, fetching a second factor, or simply
+                // leaving the tab — so the authorization request that would have matched this
+                // callback had already been discarded, along with the relying party's own request
+                // waiting behind it. See `server.servlet.session.timeout`, which is the length of
+                // that window.
+                //
+                // So: no stack trace and no alert, because nothing here is broken and there is
+                // nothing for an operator to fix; and a message on the login page that says the
+                // attempt expired rather than blaming the account. Starting again works, and lands
+                // on the provider's account chooser a second time.
+                log.info("A sign-in returned from the provider after its session had expired")
+                redirectStrategy.sendRedirect(request, response, "/session-login?error=expired")
+                return@AuthenticationFailureHandler
+            }
+
             log.error("Sign-in through an identity provider failed [{}]", code, exception)
             Sentry.captureException(exception) { scope ->
                 scope.setTag("origin", "oauth2-login")
