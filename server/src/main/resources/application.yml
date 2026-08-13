@@ -23,6 +23,9 @@ logging:
 
 server:
   port: ${PORT:8080}
+  servlet:
+    session:
+      timeout: ${SESSION_TIMEOUT:24h}
   # Whether to believe X-Forwarded-* when working out the request's scheme, host and client address.
   # Correct behind a reverse proxy, which is the usual deployment and so the default. Set to `none`
   # if the server is exposed directly: there is then no proxy rewriting those headers, so anything

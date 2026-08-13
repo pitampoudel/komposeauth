@@ -43,6 +43,8 @@ class SessionLoginController(private val appConfigService: AppConfigService) {
                 when (error) {
                     "locked" ->
                         "This account has been deactivated. Contact support to get it reopened."
+                    "expired" ->
+                        "That sign-in took too long and expired. Start it again below, or go back to the app you came from and sign in from there."
                     // Sign-in through Google or Apple got as far as the provider and failed on the
                     // way back, so nothing about the password is worth mentioning — and there is
                     // nothing the visitor can fix by retyping it.
