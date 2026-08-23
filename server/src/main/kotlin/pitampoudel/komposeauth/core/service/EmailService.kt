@@ -2,6 +2,8 @@ package pitampoudel.komposeauth.core.service
 
 import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.mail.javamail.MimeMessageHelper
@@ -9,12 +11,24 @@ import org.springframework.stereotype.Service
 import org.thymeleaf.TemplateEngine
 import org.thymeleaf.context.Context
 import pitampoudel.komposeauth.app_config.service.AppConfigService
+import java.time.Duration
 
 @Service
 class EmailService(
     private val appConfigService: AppConfigService,
     private val templateEngine: TemplateEngine,
+    /**
+     * How long a send may spend connecting, waiting or writing before it gives up. See where it is
+     * applied below for why leaving it to JavaMail is not an option, and `app.mail.timeout` in
+     * `application.yml` for the deployment knob.
+     */
+    @Value("\${app.mail.timeout:15s}") private val mailTimeout: Duration,
 ) {
+
+    private val log = LoggerFactory.getLogger(javaClass)
+
+    /** The mail host, for the log. The recipient and the body are deliberately not logged. */
+    private fun host(): String = appConfigService.getConfig().smtpHost ?: "no configured host"
 
     private fun javaMailSender(): JavaMailSender {
         val impl = JavaMailSenderImpl()
@@ -27,6 +41,17 @@ class EmailService(
         props["mail.smtp.from"] = appConfigService.getConfig().smtpFromEmail
         props["mail.smtp.auth"] = !appConfigService.getConfig().smtpUsername.isNullOrBlank()
         props["mail.smtp.starttls.enable"] = "true"
+        // Without these three, a send blocks forever. JavaMail's default for all of them is 0,
+        // which means "wait indefinitely", and a mail host that drops packets rather than refusing
+        // them -- an SMTP port filtered by the platform, a provider rate-limiting by going quiet --
+        // never gives the socket anything to react to. The catch below never fires, because nothing
+        // is ever thrown; the request thread is simply pinned, and it is pinned for good rather
+        // than for the length of the request, so each one costs the server a thread permanently.
+        // The visitor sees a page that spins until a proxy somewhere gives up on it.
+        val timeoutMillis = mailTimeout.toMillis().coerceAtLeast(1).toString()
+        props["mail.smtp.connectiontimeout"] = timeoutMillis
+        props["mail.smtp.timeout"] = timeoutMillis
+        props["mail.smtp.writetimeout"] = timeoutMillis
         return impl
     }
 
@@ -77,6 +102,10 @@ class EmailService(
             sender.send(message)
             true
         } catch (e: Exception) {
+            // Swallowed silently until now, which left a failing mail host looking like nothing at
+            // all: callers only see `false`, and the one that logs it says which user it was for
+            // and nothing about why.
+            log.error("Could not send '{}' mail to a recipient via {}", template, host(), e)
             false
         }
     }

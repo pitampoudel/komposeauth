@@ -3,11 +3,18 @@ package pitampoudel.komposeauth.core.service
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.app_config.entity.AppConfig
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -16,6 +23,54 @@ class EmailServiceTest {
 
     @Autowired
     private lateinit var emailService: EmailService
+
+    @Autowired
+    private lateinit var appConfigProvider: AppConfigProvider
+
+    /**
+     * A mail host that accepts the connection and then says nothing -- which is what a filtered
+     * SMTP port or a provider rate-limiting by going quiet looks like from here, and the case
+     * JavaMail waits out forever unless it is told not to.
+     *
+     * This is the regression: with no `mail.smtp.timeout` the send never returns, the request
+     * thread is pinned permanently rather than for the length of the request, and the visitor
+     * watches a page spin until a proxy somewhere gives up. Nothing is thrown, so the `catch` in
+     * `sendHtmlMail` never runs and nothing is logged either.
+     */
+    @Test
+    @Timeout(value = 30, unit = TimeUnit.SECONDS)
+    fun `a mail host that accepts and then goes silent fails instead of hanging`() {
+        ServerSocket(0, 1, InetAddress.getLoopbackAddress()).use { silentHost ->
+            // Accept, then hold the connection open without sending the greeting an SMTP client waits for.
+            val accepting = thread(isDaemon = true) {
+                runCatching { while (true) silentHost.accept() }
+            }
+            val previous = appConfigProvider.get()
+            try {
+                appConfigProvider.save(
+                    AppConfig(
+                        smtpHost = silentHost.inetAddress.hostAddress,
+                        smtpPort = silentHost.localPort,
+                        smtpFromEmail = "no-reply@example.com"
+                    )
+                )
+
+                val result = emailService.sendHtmlMail(
+                    baseUrl = "http://localhost:8080",
+                    to = "someone@example.com",
+                    subject = "Timeout Test",
+                    template = "email/generic",
+                    model = mapOf("recipientName" to "Test")
+                )
+
+                assertFalse(result, "a silent mail host should fail the send, not succeed")
+            } finally {
+                // Shared context: put the configuration back for whatever runs next.
+                appConfigProvider.save(previous.copy())
+                accepting.interrupt()
+            }
+        }
+    }
 
     @Test
     fun `sendHtmlMail does not throw exception with valid parameters`() {

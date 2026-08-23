@@ -33,6 +33,7 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher
+import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
@@ -40,6 +41,7 @@ import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.service.UserService
+import java.time.Duration
 import java.time.Instant
 import java.util.*
 import javax.security.auth.login.AccountNotFoundException
@@ -47,11 +49,31 @@ import javax.security.auth.login.AccountNotFoundException
 @Configuration
 @EnableWebSecurity
 class WebAuthorizationConfig {
+
+    private companion object {
+        /** Reaching a third party at all. Short: a host that is not answering is not going to. */
+        val OUTBOUND_CONNECT_TIMEOUT: Duration = Duration.ofSeconds(10)
+
+        /** Waiting for its answer, once it has accepted the connection. */
+        val OUTBOUND_READ_TIMEOUT: Duration = Duration.ofSeconds(15)
+    }
+
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
+    /**
+     * Every outbound call this application makes through a `RestTemplate` -- SMS providers, Twilio
+     * Verify -- goes through this one, so the timeouts belong here. A bare `RestTemplate()` has
+     * none at all: a provider that accepts the connection and then goes quiet pins the request
+     * thread for good, and the visitor waiting on the other end sees a page that never settles.
+     */
     @Bean
-    fun restTemplate(): RestTemplate = RestTemplate()
+    fun restTemplate(): RestTemplate = RestTemplate(
+        SimpleClientHttpRequestFactory().apply {
+            setConnectTimeout(OUTBOUND_CONNECT_TIMEOUT)
+            setReadTimeout(OUTBOUND_READ_TIMEOUT)
+        }
+    )
 
     @Bean
     fun securityContextRepository() = HttpSessionSecurityContextRepository()

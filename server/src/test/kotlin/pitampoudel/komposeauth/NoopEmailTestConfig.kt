@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Primary
 import org.thymeleaf.TemplateEngine
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.EmailService
+import java.time.Duration
 
 @TestConfiguration(proxyBeanMethods = false)
 class NoopEmailTestConfig {
@@ -14,7 +15,7 @@ class NoopEmailTestConfig {
     fun noopEmailService(
         appConfigService: AppConfigService,
         templateEngine: TemplateEngine
-    ): EmailService = object : EmailService(appConfigService, templateEngine) {
+    ): EmailService = object : EmailService(appConfigService, templateEngine, Duration.ofSeconds(2)) {
         override fun sendHtmlMail(
             baseUrl: String,
             to: String,

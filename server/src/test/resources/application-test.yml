@@ -4,3 +4,7 @@
 app:
   rate-limit:
     enabled: false
+  # The suite has no mail server, so every send has to fail on a timeout. Kept short so the tests
+  # that assert it fails *promptly* do not spend the production window waiting.
+  mail:
+    timeout: 2s

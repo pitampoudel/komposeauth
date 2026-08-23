@@ -36,6 +36,14 @@ server:
 
 app:
   base64-encryption-key: ${BASE64_ENCRYPTION_KEY}
+  mail:
+    # How long a single mail send may spend connecting, waiting for the server to speak, or writing
+    # before it gives up. JavaMail's own default for all three is "wait indefinitely", which is not
+    # a timeout at all: a host that drops packets instead of refusing them -- a platform that
+    # filters outbound SMTP, a provider that rate-limits by going quiet -- pins the request thread
+    # for good, and mail is sent inline with sign-up and password-reset requests, so the visitor
+    # gets a page that spins until some proxy in between gives up on it.
+    timeout: ${MAIL_TIMEOUT:15s}
   rate-limit:
     # Number of reverse proxies you run in front of this server, counted in from the right-hand end
     # of X-Forwarded-For. 0 means it is reached directly and no forwarded header is believed — the
