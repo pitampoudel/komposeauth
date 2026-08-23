@@ -82,9 +82,16 @@ class HomeControllerIntegrationTest {
         }
     }
 
-    /** And a client asking for JSON is unaffected, which is what the split is for. */
+    /**
+     * And a client asking for JSON is unaffected, which is what the split is for.
+     *
+     * A visitor with no console to be sent to gets a page rather than a redirect. It used to be a
+     * redirect to `/session-login`, which is where a successful sign-in with no saved request
+     * ended up -- and from there back to `/`, and round again. So what is asserted is both halves:
+     * no profile payload, and not the login page.
+     */
     @Test
-    fun `a browser at the root is never handed the profile payload`() {
+    fun `a browser at the root is never handed the profile payload, nor sent back to sign in`() {
         val email = "home-html-user@example.com"
         TestAuthHelpers.createUser(mockMvc, json, email)
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
@@ -93,11 +100,18 @@ class HomeControllerIntegrationTest {
             accept = MediaType.TEXT_HTML
             cookie(cookie)
         }.andExpect {
-            status { is3xxRedirection() }
+            status { isOk() }
         }.andReturn()
 
-        assert(!result.response.contentAsString.contains("givenName")) {
-            "the root answered a browser with profile JSON: ${result.response.contentAsString.take(200)}"
+        val body = result.response.contentAsString
+        assert(!body.contains("givenName")) {
+            "the root answered a browser with profile JSON: ${body.take(200)}"
+        }
+        assert(result.response.redirectedUrl?.contains("session-login") != true) {
+            "a signed-in visitor was sent back to the login page, which is the loop"
+        }
+        assert(!body.contains("name=\"password\"")) {
+            "the root rendered the sign-in form to somebody who is already signed in"
         }
     }
 
