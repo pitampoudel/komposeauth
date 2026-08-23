@@ -59,13 +59,18 @@ class HomeControllerIntegrationTest {
     }
 
     /**
-     * A browser asking for the root gets somewhere to be, not the JSON above.
+     * A browser asking for the root gets a page, not the JSON above — and that holds for an admin
+     * too.
      *
      * This is where a sign-in with nothing to resume lands, and it used to answer with the visitor's
-     * own profile as raw fields — on a host they never chose to visit, with nothing to click.
+     * own profile as raw fields, on a host they never chose to visit. The root does not branch on
+     * who is asking: an admin reaches the console by going to `/admin`, not by being bounced there
+     * from a page whose whole job is to say the sign-in worked. Asserted with the account that has
+     * somewhere else it could plausibly be sent, because that is the one a redirect would be added
+     * back for.
      */
     @Test
-    fun `a browser at the root is sent to the console`() {
+    fun `a browser at the root gets the landing page, admin or not`() {
         val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(
             mockMvc,
             json,
@@ -73,12 +78,18 @@ class HomeControllerIntegrationTest {
             "home-html-admin@example.com"
         )
 
-        mockMvc.get("/") {
+        val result = mockMvc.get("/") {
             accept = MediaType.TEXT_HTML
             cookie(adminCookie)
         }.andExpect {
-            status { is3xxRedirection() }
-            redirectedUrl("/admin")
+            status { isOk() }
+        }.andReturn()
+
+        assert(result.response.redirectedUrl == null) {
+            "the root redirected an admin to ${result.response.redirectedUrl} instead of answering"
+        }
+        assert(!result.response.contentAsString.contains("givenName")) {
+            "the root answered a browser with profile JSON: ${result.response.contentAsString.take(200)}"
         }
     }
 
