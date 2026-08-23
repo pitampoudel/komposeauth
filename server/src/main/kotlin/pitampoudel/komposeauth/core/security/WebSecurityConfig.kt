@@ -273,6 +273,22 @@ class WebSecurityConfig {
                     .contentSecurityPolicy {
                         // The bundled Thymeleaf pages use inline script/style, so those stay allowed;
                         // everything else is same-origin only and the pages cannot be framed.
+                        //
+                        // `form-action` is deliberately absent, and has to be. Signing in with a
+                        // password is a form POST, and the response to it is the whole point of an
+                        // authorization server: a redirect on to `/oauth2/authorize`, which redirects
+                        // again to the relying party's `redirect_uri` — another origin by definition,
+                        // and for a native client not even an http one. Firefox and Safari apply
+                        // `form-action` to every hop of a form submission's redirect chain (Chromium
+                        // stops at the action URL), so `form-action 'self'` let the POST through,
+                        // established the session, and then silently killed the navigation that was
+                        // meant to carry the visitor back to the app. The page simply sat there with
+                        // its button reading "Signing in…", and only ever for visitors who arrived
+                        // from a relying party — signing in directly here redirects to `/`, which is
+                        // same-origin and so was allowed, and "Continue with Google" is a link rather
+                        // than a form and was never in scope. There is no value that fixes this:
+                        // redirect URIs are per-client, registered at runtime, and may use a private
+                        // scheme, so the directive cannot name them.
                         it.policyDirectives(
                             "default-src 'self'; " +
                                     "script-src 'self' 'unsafe-inline'; " +
@@ -281,7 +297,6 @@ class WebSecurityConfig {
                                     "connect-src 'self'; " +
                                     "object-src 'none'; " +
                                     "base-uri 'self'; " +
-                                    "form-action 'self'; " +
                                     "frame-ancestors 'none'"
                         )
                     }
