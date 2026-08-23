@@ -123,18 +123,59 @@ carry `http://` links.
 ```bash
 gcloud run deploy komposeauth \
   --image pitampoudel/komposeauth:latest \
-  --set-env-vars MONGODB_URI="mongodb+srv://...",BASE64_ENCRYPTION_KEY="<your-base64-key>",TRUSTED_PROXY_COUNT=1
+  --set-env-vars MONGODB_URI="mongodb+srv://...",BASE64_ENCRYPTION_KEY="<your-base64-key>",TRUSTED_PROXY_COUNT=1 \
+  --min-instances 0 \
+  --concurrency 40 \
+  --cpu 1 --memory 1Gi \
+  --cpu-boost \
+  --startup-probe httpGet.path=/actuator/health/readiness,httpGet.port=8080,initialDelaySeconds=4,periodSeconds=2,timeoutSeconds=2,failureThreshold=45
 ```
 
-Nothing else is needed: Cloud Run's front end appends the caller's address as the last
-`X-Forwarded-For` entry, which is the one this server reads, and sets `X-Forwarded-Proto: https` for
-the default `framework` strategy to pick up. Use `2` instead if you front the service with an
+`scripts/deploy-cloud-run.sh` does all of this from `deploy-targets.json`, which is worth using once
+you have more than one target.
+
+`TRUSTED_PROXY_COUNT=1` is what Cloud Run needs: its front end appends the caller's address as the
+last `X-Forwarded-For` entry, which is the one this server reads, and sets `X-Forwarded-Proto: https`
+for the default `framework` strategy to pick up. Use `2` instead if you front the service with an
 external Application Load Balancer, which appends both the client address and its own forwarding
 rule.
 
 Scaling to several instances is already accounted for — sessions, OAuth2 authorizations and the
 abuse counters all live in MongoDB rather than in one container's memory, so limits hold across
 instances and survive cold starts.
+
+###### Scaling to zero
+
+`--min-instances 0` costs nothing while nobody is signing in, at the price of a cold start on the
+next request. The rest of the flags above are there to keep that cold start short, and two of them
+carry most of the weight:
+
+- **`--cpu-boost`** grants extra CPU until the container reports ready. That window is exactly what a
+  JVM spends classloading and refreshing a Spring context, and it is the largest single improvement
+  available here.
+- **`--startup-probe`** on `/actuator/health/readiness` replaces the default, which is a TCP check
+  against the port. Tomcat binds the port partway through startup, well before the schema migrations
+  and the app-config warm-up have run, so the default check reports ready while the instance still
+  cannot answer — and the first request of every cold start then queues behind the rest of startup.
+  `/actuator/health/readiness` turns green on `ApplicationReadyEvent`, which is after both.
+
+The health endpoint is the one part of Actuator reachable without signing in, because a probe has no
+credentials to offer. It reports a bare `{"status":"UP"}`: no component breakdown, and nothing else
+under `/actuator` is exposed.
+
+`--concurrency` should stay at or below `TOMCAT_MAX_THREADS` (40 by default). Set it higher and
+requests queue inside the container, where Cloud Run cannot see them and so will not scale out.
+
+Two things happen inside the image for the same reason. Indexes are created once per database by a
+recorded migration rather than re-asserted on every context refresh, which is what
+`spring.data.mongodb.auto-index-creation` would do — about thirty round trips to your cluster on each
+cold start. And the MongoDB connection pool opens `app.mongo.min-pool-size` sockets during startup,
+while the CPU boost is still in effect, so the first request does not pay for a TLS handshake and
+authentication against a cluster in another region.
+
+If you deploy somewhere without an equivalent of `--cpu-boost`, or your cluster is far from your
+region, measure before assuming zero is right. `minInstances: 1` in `deploy-targets.json` is the
+escape hatch, and it is the only one of these settings that costs money.
 
 ### 2) Add the SDK to your KMP project
 
