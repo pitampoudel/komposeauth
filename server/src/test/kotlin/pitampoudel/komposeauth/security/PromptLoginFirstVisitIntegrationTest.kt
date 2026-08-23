@@ -17,6 +17,8 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.app_config.entity.AppConfig
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
 import pitampoudel.komposeauth.user.repository.UserRepository
@@ -46,6 +48,7 @@ class PromptLoginFirstVisitIntegrationTest {
     @Autowired private lateinit var mockMvc: MockMvc
     @Autowired private lateinit var json: Json
     @Autowired private lateinit var userRepository: UserRepository
+    @Autowired private lateinit var appConfigProvider: AppConfigProvider
 
     private val redirectUri = "https://rp.example.com/callback"
     private val password = "Password1"
@@ -172,6 +175,67 @@ class PromptLoginFirstVisitIntegrationTest {
             status { isOk() }
             jsonPath("$.access_token") { exists() }
             jsonPath("$.id_token") { exists() }
+        }
+    }
+
+    /**
+     * The same flow with Google configured, which is how every real deployment runs and how the
+     * previous test does *not*: with no provider credentials, `googleEnabled` is false and the
+     * login page never consults the pending authorization request at all. Configured, it does —
+     * and an `idp` it does not find must leave the password form standing rather than handing the
+     * visitor to the provider.
+     */
+    @Test
+    fun `a password sign-in still completes when Google is configured`() {
+        appConfigProvider.save(
+            AppConfig(
+                googleAuthClientId = "test-google-client-id",
+                googleAuthClientSecret = "test-google-client-secret"
+            )
+        )
+        try {
+            val clientId = createClient("google-on-admin@example.com")
+            val email = "google-on-user@example.com"
+            TestAuthHelpers.createUser(mockMvc, json, email, password)
+
+            var url: String? = authorizeUrl(clientId)
+            var signIns = 0
+            var callback: String? = null
+            val trail = mutableListOf<String>()
+
+            var hops = 0
+            while (url != null && hops++ < MAX_HOPS) {
+                val result = follow(url)
+                val location = result.response.redirectedUrl
+                trail += "GET $url -> ${result.response.status} ${location ?: "(page)"}"
+
+                assertTrue(
+                    location?.contains("/oauth2/authorization/google") != true,
+                    "a password sign-in was handed to the provider: $trail"
+                )
+
+                if (location != null && location.startsWith(redirectUri)) {
+                    callback = location
+                    break
+                }
+                if (location != null) {
+                    url = location
+                    continue
+                }
+
+                assertEquals(200, result.response.status, "unexpected page in the sign-in flow: $trail")
+                signIns++
+                val login = submitLogin(email)
+                trail += "POST /session-login -> ${login.response.status} ${login.response.redirectedUrl}"
+                url = login.response.redirectedUrl
+            }
+
+            assertNotNull(callback, "the sign-in never reached the relying party: $trail")
+            assertTrue(callback.contains("?code="), "was $callback")
+            assertEquals(1, signIns, "the visitor was asked to sign in $signIns times: $trail")
+        } finally {
+            // Shared context: leave the configuration as it was found.
+            appConfigProvider.save(AppConfig())
         }
     }
 
