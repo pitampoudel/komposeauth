@@ -30,20 +30,6 @@ class HomeController(
     }
 
 
-    /**
-     * Where a signed-in visitor lands when nothing else claimed them.
-     *
-     * The fallback used to be `/session-login`, which is a loop with no way out and no error to
-     * explain it. `SavedRequestAwareAuthenticationSuccessHandler` sends a successful sign-in here
-     * whenever the session holds no saved request -- a bookmarked login page, a stale tab, a
-     * visitor who reached `/session-login` any way other than through `/oauth2/authorize` -- so a
-     * correct password redirected to `/`, `/` redirected back to the login page, and the form
-     * rendered again. Submitting it once more did exactly the same thing. Nothing failed, so
-     * nothing was ever said; it simply looked like signing in did not work.
-     *
-     * So the fallback is a page rather than a redirect. It is a dead end either way -- there is
-     * genuinely nowhere else to send them -- but it is one that says so.
-     */
     @GetMapping("/", produces = [MediaType.TEXT_HTML_VALUE])
     fun landing(model: Model): String {
         val user = userContextService.getUserFromAuthentication()
