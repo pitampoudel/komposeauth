@@ -129,6 +129,32 @@ class PromptReAuthenticationFilterTest {
         assertNotNull(SecurityContextHolder.getContext().authentication)
     }
 
+    /**
+     * The first visit from a relying party that always sends `prompt=login`. Nobody is signed in
+     * yet, so there is nothing to re-authenticate — and the sign-in the chain is about to ask for
+     * is the one `prompt` wanted. Recording it here is what stops the replay that follows from
+     * costing the visitor a second sign-in.
+     */
+    @Test
+    fun `a first visit with no session is let through and not prompted again on replay`() {
+        val session = MockHttpSession()
+        val first = authorizeRequest("login").apply { setSession(session) }
+        val firstResponse = MockHttpServletResponse()
+        filter.doFilter(first, firstResponse, MockFilterChain())
+
+        assertNull(firstResponse.redirectedUrl, "an anonymous visitor was redirected by the filter")
+
+        // They sign in, and the saved authorization request is replayed against the same session.
+        val replay = authorizeRequest("login").apply { setSession(session) }
+        authenticate(replay)
+        val response = MockHttpServletResponse()
+        filter.doFilter(replay, response, MockFilterChain())
+
+        assertNull(response.redirectedUrl, "the visitor was sent to sign in a second time")
+        assertNotNull(SecurityContextHolder.getContext().authentication)
+        assertTrue(sessionHoldsAuthentication(replay))
+    }
+
     @Test
     fun `anonymous authentication is left alone`() {
         val request = authorizeRequest("login")

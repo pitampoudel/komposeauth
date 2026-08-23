@@ -23,6 +23,12 @@ import org.springframework.web.filter.OncePerRequestFilter
  *
  * That replay still carries `prompt`, so the request's `state` is remembered in the session and
  * the replay is let through instead of clearing the fresh authentication and looping forever.
+ *
+ * A visitor who arrives with no session at all is remembered just the same, and let through. There
+ * is nobody to re-authenticate, and the chain is about to send them to the login page on its own —
+ * which is the whole of what `prompt=login` asks for. Not recording it cost every first-time
+ * sign-in a second one: the visitor signed in, the replay came back looking like an authorization
+ * request that had never been through the page, and they were sent to sign in all over again.
  */
 class PromptReAuthenticationFilter(
     private val securityContextRepository: SecurityContextRepository,
@@ -37,12 +43,18 @@ class PromptReAuthenticationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        if (!requiresReAuthentication(request)) {
+        if (!carriesReAuthenticationPrompt(request) || alreadyHandled(request)) {
             filterChain.doFilter(request, response)
             return
         }
 
         rememberHandled(request)
+
+        if (!isSignedIn()) {
+            // Nothing to sign out of, and the login page is where the chain is taking them anyway.
+            filterChain.doFilter(request, response)
+            return
+        }
 
         // Emptying the context removes it from the session without discarding the session itself —
         // the saved authorization request and the marker above have to survive.
@@ -58,22 +70,25 @@ class PromptReAuthenticationFilter(
         )
     }
 
-    private fun requiresReAuthentication(request: HttpServletRequest): Boolean {
+    /** An authorization request asking, one way or another, for a fresh sign-in. */
+    private fun carriesReAuthenticationPrompt(request: HttpServletRequest): Boolean {
         if (request.requestURI != request.contextPath + AUTHORIZATION_ENDPOINT) return false
 
         // `prompt` is a space-delimited list of values (OIDC Core 3.1.2.1). `none` is deliberately
         // left alone: Spring Authorization Server already implements it per spec.
         val prompt = request.getParameter(PROMPT_PARAMETER)?.split(" ").orEmpty()
-        if (prompt.none { it == "login" || it == "select_account" }) return false
+        return prompt.any { it == "login" || it == "select_account" }
+    }
 
-        val authentication = SecurityContextHolder.getContext().authentication
-        if (authentication == null ||
-            !authentication.isAuthenticated ||
-            trustResolver.isAnonymous(authentication)
-        ) return false
-
+    /** Whether this very authorization request has already been sent through the login page. */
+    private fun alreadyHandled(request: HttpServletRequest): Boolean {
         val session = request.getSession(false) ?: return false
-        return promptKey(request) !in handled(session)
+        return promptKey(request) in handled(session)
+    }
+
+    private fun isSignedIn(): Boolean {
+        val authentication = SecurityContextHolder.getContext().authentication ?: return false
+        return authentication.isAuthenticated && !trustResolver.isAnonymous(authentication)
     }
 
     /**

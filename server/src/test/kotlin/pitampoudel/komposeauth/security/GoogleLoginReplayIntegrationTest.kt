@@ -192,6 +192,11 @@ class GoogleLoginReplayIntegrationTest {
      * "Invalid credentials" and offered a Google button that led straight back into the same
      * failure. Nothing about that page was this application's, and nothing about the message was
      * true.
+     *
+     * A `state` this server never issued is the shape a sign-in takes when the session holding it
+     * has gone, so the reason it carries back is `expired` rather than the generic `provider` —
+     * see the two branches in `WebSecurityConfig`. What is asserted here is the same either way:
+     * the real login page, with a reason on it.
      */
     @Test
     fun `a failed provider sign-in returns to the real login page rather than looping`() {
@@ -204,7 +209,7 @@ class GoogleLoginReplayIntegrationTest {
             "callback returned ${callback.response.status} instead of a redirect"
         )
         assertTrue(
-            target.endsWith("/session-login?error=provider"),
+            target.endsWith("/session-login?error=expired"),
             "a failed provider sign-in should return to the login page with a reason, but went to $target"
         )
     }
