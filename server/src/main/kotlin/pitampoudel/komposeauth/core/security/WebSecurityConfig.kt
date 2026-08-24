@@ -72,23 +72,6 @@ class WebSecurityConfig {
         response.addHeader("Set-Cookie", clearCookie.toString())
     }
 
-    /**
-     * Which requests are worth remembering across a sign-in.
-     *
-     * Spring's default is close, but it saves the landing page, and there the saved request is a
-     * single slot in the session that the last unauthenticated request wins. A visitor sent here by
-     * a relying party who then touches the root — a second tab, a bookmark, a link back to this
-     * host — had their authorization request replaced by `/`, so signing in took them to `/`: a page
-     * saying the sign-in worked, shown to somebody whose relying party heard nothing and would ask
-     * them to sign in all over again.
-     *
-     * Saving `/` cannot achieve anything even when it is the only thing saved, because `/` is where
-     * a sign-in with an empty cache already goes. All it can do is displace a request that had
-     * somewhere to be. So: everything the login page would replay, which is a browser navigating to
-     * a page, and not the one page that is the fallback anyway. Anything answered with a 401 instead
-     * of the login page (see `exceptionHandling` below) is never replayed and so never worth
-     * keeping.
-     */
     @Bean
     fun requestCache(): RequestCache {
         val worthResuming = AndRequestMatcher(
@@ -99,28 +82,7 @@ class WebSecurityConfig {
         return HttpSessionRequestCache().apply { setRequestMatcher(worthResuming) }
     }
 
-    /**
-     * Cross-origin rules, and deliberately nothing to say about same-origin traffic.
-     *
-     * Two ways this used to lock an operator out of their own server, both of which ended as a bare
-     * "Invalid CORS request":
-     *
-     * Handing back a configuration whose allow-list is empty is not the same as having no opinion —
-     * it is an instruction to refuse every origin. Once `corsAllowedOrigins()` began discarding a
-     * bare `*`, which it must, since matching every origin for credentialed requests lets any site
-     * read authenticated responses, an operator who had configured exactly that was left with an
-     * empty list and so a server that turned away anything carrying an `Origin`. Returning null
-     * instead leaves CORS unmanaged: same-origin requests are untouched, and cross-origin ones are
-     * refused by the browser for want of the headers, which is the right default before anything is
-     * configured.
-     *
-     * The server's own origin is then always allowed, whatever the list says. Spring decides
-     * same-origin by comparing scheme, host and port against the request's own — so a proxy that
-     * terminates TLS without a usable `X-Forwarded-Proto` makes the page's `https://` origin look
-     * foreign to a server that believes it is on `http://`, and the console starts refusing its own
-     * form posts. Comparing hosts alone is enough to prevent that: an origin on this very host is
-     * not a cross-site caller in any sense that matters here.
-     */
+
     @Bean
     fun corsConfigurationSource(appConfigService: AppConfigService): CorsConfigurationSource {
         return CorsConfigurationSource { request ->
