@@ -27,6 +27,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache
+import org.springframework.security.web.savedrequest.RequestCache
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.config.ObjectPostProcessor
 import org.springframework.security.web.csrf.CsrfFilter
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler
@@ -67,6 +70,33 @@ class WebSecurityConfig {
             .domain(authCookieDomain(appConfigService))
             .build()
         response.addHeader("Set-Cookie", clearCookie.toString())
+    }
+
+    /**
+     * Which requests are worth remembering across a sign-in.
+     *
+     * Spring's default is close, but it saves the landing page, and there the saved request is a
+     * single slot in the session that the last unauthenticated request wins. A visitor sent here by
+     * a relying party who then touches the root — a second tab, a bookmark, a link back to this
+     * host — had their authorization request replaced by `/`, so signing in took them to `/`: a page
+     * saying the sign-in worked, shown to somebody whose relying party heard nothing and would ask
+     * them to sign in all over again.
+     *
+     * Saving `/` cannot achieve anything even when it is the only thing saved, because `/` is where
+     * a sign-in with an empty cache already goes. All it can do is displace a request that had
+     * somewhere to be. So: everything the login page would replay, which is a browser navigating to
+     * a page, and not the one page that is the fallback anyway. Anything answered with a 401 instead
+     * of the login page (see `exceptionHandling` below) is never replayed and so never worth
+     * keeping.
+     */
+    @Bean
+    fun requestCache(): RequestCache {
+        val worthResuming = AndRequestMatcher(
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/**"),
+            MediaTypeRequestMatcher(MediaType.TEXT_HTML),
+            NegatedRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/"))
+        )
+        return HttpSessionRequestCache().apply { setRequestMatcher(worthResuming) }
     }
 
     /**

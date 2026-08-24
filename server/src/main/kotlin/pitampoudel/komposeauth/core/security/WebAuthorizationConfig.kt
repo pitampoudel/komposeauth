@@ -29,7 +29,6 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.access.intercept.AuthorizationFilter
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
-import org.springframework.security.web.context.SecurityContextHolderFilter
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
@@ -172,8 +171,7 @@ class WebAuthorizationConfig {
         securityContextRepository: HttpSessionSecurityContextRepository
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
-        val loginPage = "/session-login"
-        val loginEntryPoint = LoginUrlAuthenticationEntryPoint(loginPage)
+        val loginEntryPoint = LoginUrlAuthenticationEntryPoint("/session-login")
 
         authorizationServerConfigurer.clientAuthentication {
             it.authenticationConverter(OAuth2PublicClientAuthConverter())
@@ -235,13 +233,6 @@ class WebAuthorizationConfig {
             .sessionManagement { sessions ->
                 sessions.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
-            // Outermost, so it sees the response whichever of the two below sends the visitor to
-            // the login page — the authorization check, or the prompt filter, which commences the
-            // entry point itself and never reaches the rest of the chain.
-            .addFilterBefore(
-                PendingAuthorizationFilter(loginPage),
-                SecurityContextHolderFilter::class.java
-            )
             // Runs before the authorization check: `prompt=login` / `prompt=select_account` has to
             // be turned into a trip through the login page before a code is issued.
             .addFilterBefore(
