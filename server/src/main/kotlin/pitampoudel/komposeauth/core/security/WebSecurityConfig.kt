@@ -27,6 +27,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache
+import org.springframework.security.web.savedrequest.RequestCache
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.config.ObjectPostProcessor
 import org.springframework.security.web.csrf.CsrfFilter
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler
@@ -69,28 +72,17 @@ class WebSecurityConfig {
         response.addHeader("Set-Cookie", clearCookie.toString())
     }
 
-    /**
-     * Cross-origin rules, and deliberately nothing to say about same-origin traffic.
-     *
-     * Two ways this used to lock an operator out of their own server, both of which ended as a bare
-     * "Invalid CORS request":
-     *
-     * Handing back a configuration whose allow-list is empty is not the same as having no opinion —
-     * it is an instruction to refuse every origin. Once `corsAllowedOrigins()` began discarding a
-     * bare `*`, which it must, since matching every origin for credentialed requests lets any site
-     * read authenticated responses, an operator who had configured exactly that was left with an
-     * empty list and so a server that turned away anything carrying an `Origin`. Returning null
-     * instead leaves CORS unmanaged: same-origin requests are untouched, and cross-origin ones are
-     * refused by the browser for want of the headers, which is the right default before anything is
-     * configured.
-     *
-     * The server's own origin is then always allowed, whatever the list says. Spring decides
-     * same-origin by comparing scheme, host and port against the request's own — so a proxy that
-     * terminates TLS without a usable `X-Forwarded-Proto` makes the page's `https://` origin look
-     * foreign to a server that believes it is on `http://`, and the console starts refusing its own
-     * form posts. Comparing hosts alone is enough to prevent that: an origin on this very host is
-     * not a cross-site caller in any sense that matters here.
-     */
+    @Bean
+    fun requestCache(): RequestCache {
+        val worthResuming = AndRequestMatcher(
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/**"),
+            MediaTypeRequestMatcher(MediaType.TEXT_HTML),
+            NegatedRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/"))
+        )
+        return HttpSessionRequestCache().apply { setRequestMatcher(worthResuming) }
+    }
+
+
     @Bean
     fun corsConfigurationSource(appConfigService: AppConfigService): CorsConfigurationSource {
         return CorsConfigurationSource { request ->
