@@ -71,14 +71,15 @@ class RealContainerLoginIntegrationTest {
         return clientId
     }
 
-    private fun authorizeUrl(clientId: String): String {
+    private fun authorizeUrl(clientId: String, prompt: String? = "login"): String {
         val challenge = Base64.getUrlEncoder().withoutPadding().encodeToString(
             MessageDigest.getInstance("SHA-256").digest(codeVerifier.toByteArray())
         )
         fun enc(v: String) = URLEncoder.encode(v, StandardCharsets.UTF_8)
         return base() + "/oauth2/authorize?response_type=code&client_id=$clientId" +
                 "&redirect_uri=${enc(redirectUri)}&scope=openid&state=state-1" +
-                "&code_challenge=$challenge&code_challenge_method=S256&prompt=login"
+                "&code_challenge=$challenge&code_challenge_method=S256" +
+                (prompt?.let { "&prompt=$it" } ?: "")
     }
 
     /**
@@ -156,6 +157,108 @@ class RealContainerLoginIntegrationTest {
             url = if (location.startsWith("http")) location else base() + location
         }
         println("=== AFTER SIGN-IN TRAIL ===" + trail.joinToString(System.lineSeparator(), prefix = System.lineSeparator()))
+    }
+
+    /**
+     * The same sign-in, with one detour: the visitor opens the root — a second tab, a bookmark, a
+     * link back to this host — after being sent to the login page and before filling it in.
+     *
+     * That is enough to lose the relying party. The saved request is a single slot in the session,
+     * and every unauthenticated request overwrites it, so the root replaces the authorization
+     * request with itself; the sign-in then goes to the root, which said "You're signed in — head
+     * back to the app you came from". Nothing had gone wrong that a visitor could see, and nothing
+     * had gone right: the relying party was never told, and going back to it starts the whole
+     * sign-in again.
+     *
+     * Only the arriving-of-their-own-accord case is allowed to end on that page, and
+     * `a browser at the root gets the landing page` is where that is held down.
+     */
+    @Test
+    fun `a detour to the root does not lose the relying party`() {
+        redirectUri = "http://localhost:$port/rp-callback"
+        val clientId = registerClient()
+        val email = "detour-to-root@example.com"
+        userService.createUser(
+            null,
+            CreateUserRequest(
+                firstName = "Detoured",
+                lastName = "User",
+                email = email,
+                password = password,
+                confirmPassword = password
+            )
+        )
+
+        val cookies = CookieManager(null, CookiePolicy.ACCEPT_ALL)
+        val http = HttpClient.newBuilder()
+            .cookieHandler(cookies)
+            .followRedirects(HttpClient.Redirect.NEVER)
+            .build()
+
+        fun get(url: String): HttpResponse<String> = http.send(
+            HttpRequest.newBuilder(URI.create(url)).header("Accept", "text/html").GET().build(),
+            HttpResponse.BodyHandlers.ofString()
+        )
+
+        val trail = mutableListOf<String>()
+        fun record(what: String, response: HttpResponse<String>): String? {
+            val location = response.headers().firstValue("location").orElse(null)
+            trail += "$what -> ${response.statusCode()} ${location ?: "(page)"}"
+            assertTrue(
+                !response.body().contains("You're signed in"),
+                "the sign-in ended on the landing page instead of at the relying party: $trail"
+            )
+            return location
+        }
+
+        // 1. The relying party sends them to the authorization endpoint, and on to the login page.
+        val toLogin = record("GET /oauth2/authorize", get(authorizeUrl(clientId, prompt = null)))
+        assertNotNull(toLogin, "the authorization request did not send an anonymous visitor anywhere")
+        assertTrue(toLogin.contains("/session-login"), "was $toLogin")
+
+        // 2. The detour. This is the request that overwrites the authorization request.
+        record("GET /", get(base() + "/"))
+
+        // 3. Back to the login page, and in.
+        val page = get(base() + "/session-login")
+        val csrf = Regex("""name="_csrf" value="([^"]+)"""").find(page.body())?.groupValues?.get(1)
+        assertNotNull(csrf, "the login page carried no CSRF token")
+
+        fun enc(v: String) = URLEncoder.encode(v, StandardCharsets.UTF_8)
+        val login = http.send(
+            HttpRequest.newBuilder(URI.create(base() + "/session-login"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .header("Accept", "text/html")
+                .POST(
+                    HttpRequest.BodyPublishers.ofString(
+                        "username=${enc(email)}&password=${enc(password)}&_csrf=${enc(csrf)}"
+                    )
+                )
+                .build(),
+            HttpResponse.BodyHandlers.ofString()
+        )
+        var location = record("POST /session-login", login)
+        assertTrue(location?.contains("error") != true, "the sign-in was rejected: $trail")
+
+        // 4. Wherever it leads, it has to end at the relying party with a code.
+        var callback: String? = null
+        var hops = 0
+        while (location != null && hops++ < 6) {
+            if (location.startsWith(redirectUri)) {
+                callback = location
+                break
+            }
+            val url = if (location.startsWith("http")) location else base() + location
+            assertTrue(
+                !url.contains("/session-login"),
+                "a completed sign-in was sent back to the login page: $trail"
+            )
+            location = record("GET ${url.removePrefix(base())}", get(url))
+        }
+
+        println("=== DETOUR TRAIL ===" + trail.joinToString(System.lineSeparator(), prefix = System.lineSeparator()))
+        assertNotNull(callback, "the sign-in never reached the relying party: $trail")
+        assertTrue(callback.contains("?code="), "was $callback")
     }
 
     @Test
