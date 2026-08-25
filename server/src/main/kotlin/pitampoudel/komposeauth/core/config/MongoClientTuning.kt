@@ -11,17 +11,7 @@ import org.springframework.context.annotation.Configuration
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-/**
- * How this server talks to MongoDB over the wire.
- *
- * The driver's own defaults assume a long-lived process on a machine of its own. This one is
- * neither: on a serverless platform scaled to zero the process is created to serve one request and
- * torn down again, so anything the driver would normally amortise over hours of uptime is paid on
- * the request a user is waiting for. The two that matter are the size of the pool, which is a
- * hundred sockets by default and far more than a one-vCPU container will ever open, and the
- * server-selection timeout, which is thirty seconds — long enough that a misconfigured URI reads as
- * a hang rather than an error.
- */
+
 @ConfigurationProperties(prefix = "app.mongo")
 data class MongoConnectionProperties(
     /**

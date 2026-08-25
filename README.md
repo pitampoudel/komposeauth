@@ -46,7 +46,7 @@ docker run -p 80:8080 \
 ```
 
 - After the container is running, open the configuration page to set up everything else:
-  - http://localhost/admin/config?key=&lt;paste-your-base64-key&gt;
+    - http://localhost/admin/config?key=&lt;paste-your-base64-key&gt;
 
   The `key` is the same `BASE64_ENCRYPTION_KEY` you started the container with. It is needed because
   no account exists yet and this page reads and writes every secret the server holds — SMTP
@@ -73,21 +73,21 @@ Hosting platforms do this in one of two ways, and they need opposite settings.
 **Some edges publish the client address under a header of their own.** Name it and it's used as-is —
 no counting, nothing of the caller's mixed in. Prefer this wherever it's offered:
 
-| Platform | Setting |
-|---|---|
-| Railway | `CLIENT_IP_HEADER=X-Real-IP` |
-| Fly.io | `CLIENT_IP_HEADER=Fly-Client-IP` |
+| Platform          | Setting                             |
+|-------------------|-------------------------------------|
+| Railway           | `CLIENT_IP_HEADER=X-Real-IP`        |
+| Fly.io            | `CLIENT_IP_HEADER=Fly-Client-IP`    |
 | Behind Cloudflare | `CLIENT_IP_HEADER=CF-Connecting-IP` |
 
 **Other edges append to `X-Forwarded-For`**, leaving whatever the caller sent to the left of their
 own entries. There, count hops in from the right:
 
-| Deployment | Setting |
-|---|---|
-| Google Cloud Run, at its own `run.app` URL | `TRUSTED_PROXY_COUNT=1` |
-| Behind a GCP external Application Load Balancer | `TRUSTED_PROXY_COUNT=2` |
-| Your own nginx / Caddy in front | `TRUSTED_PROXY_COUNT=1`, plus one per extra hop |
-| Exposed directly, as in the quickstart above | leave both unset, and set `FORWARD_HEADERS_STRATEGY=none` |
+| Deployment                                      | Setting                                                   |
+|-------------------------------------------------|-----------------------------------------------------------|
+| Google Cloud Run, at its own `run.app` URL      | `TRUSTED_PROXY_COUNT=1`                                   |
+| Behind a GCP external Application Load Balancer | `TRUSTED_PROXY_COUNT=2`                                   |
+| Your own nginx / Caddy in front                 | `TRUSTED_PROXY_COUNT=1`, plus one per extra hop           |
+| Exposed directly, as in the quickstart above    | leave both unset, and set `FORWARD_HEADERS_STRATEGY=none` |
 
 Count only proxies you control. Guessing **too high** is the safe direction — the server falls back
 to the connection's own peer address. Guessing **too low** attributes every request to your proxy, so
@@ -144,39 +144,6 @@ Scaling to several instances is already accounted for — sessions, OAuth2 autho
 abuse counters all live in MongoDB rather than in one container's memory, so limits hold across
 instances and survive cold starts.
 
-###### Scaling to zero
-
-`--min-instances 0` costs nothing while nobody is signing in, at the price of a cold start on the
-next request. The rest of the flags above are there to keep that cold start short, and two of them
-carry most of the weight:
-
-- **`--cpu-boost`** grants extra CPU until the container reports ready. That window is exactly what a
-  JVM spends classloading and refreshing a Spring context, and it is the largest single improvement
-  available here.
-- **`--startup-probe`** on `/actuator/health/readiness` replaces the default, which is a TCP check
-  against the port. Tomcat binds the port partway through startup, well before the schema migrations
-  and the app-config warm-up have run, so the default check reports ready while the instance still
-  cannot answer — and the first request of every cold start then queues behind the rest of startup.
-  `/actuator/health/readiness` turns green on `ApplicationReadyEvent`, which is after both.
-
-The health endpoint is the one part of Actuator reachable without signing in, because a probe has no
-credentials to offer. It reports a bare `{"status":"UP"}`: no component breakdown, and nothing else
-under `/actuator` is exposed.
-
-`--concurrency` should stay at or below `TOMCAT_MAX_THREADS` (40 by default). Set it higher and
-requests queue inside the container, where Cloud Run cannot see them and so will not scale out.
-
-Two things happen inside the image for the same reason. Indexes are created once per database by a
-recorded migration rather than re-asserted on every context refresh, which is what
-`spring.data.mongodb.auto-index-creation` would do — about thirty round trips to your cluster on each
-cold start. And the MongoDB connection pool opens `app.mongo.min-pool-size` sockets during startup,
-while the CPU boost is still in effect, so the first request does not pay for a TLS handshake and
-authentication against a cluster in another region.
-
-If you deploy somewhere without an equivalent of `--cpu-boost`, or your cluster is far from your
-region, measure before assuming zero is right. `minInstances: 1` in `deploy-targets.json` is the
-escape hatch, and it is the only one of these settings that costs money.
-
 ### 2) Add the SDK to your KMP project
 
 Shared module (optional and also included already on client module)
@@ -194,6 +161,7 @@ implementation("io.github.pitampoudel:komposeauth-client:x.x.x")
 ```
 
 HttpClient example (at each platform)
+
 ```kotlin
 val httpClient = HttpClient {
     installKomposeAuth(
@@ -206,6 +174,7 @@ val httpClient = HttpClient {
 ```
 
 Initialize SDK
+
 ```kotlin
 initializeKomposeAuth(
     httpClient = httpClient
@@ -286,15 +255,15 @@ You need to do something in one case: **a browser app on your own origin that au
 access-token cookie.** Fetch a token once, then echo it back on every write:
 
 ```js
-const { token, headerName } = await (
-  await fetch("https://your-auth-server/csrf", { credentials: "include" })
+const {token, headerName} = await (
+    await fetch("https://your-auth-server/csrf", {credentials: "include"})
 ).json();
 
 await fetch("https://your-auth-server/update-profile", {
-  method: "POST",
-  credentials: "include",
-  headers: { "Content-Type": "application/json", [headerName]: token },
-  body: JSON.stringify({ givenName: "Ada" }),
+    method: "POST",
+    credentials: "include",
+    headers: {"Content-Type": "application/json", [headerName]: token},
+    body: JSON.stringify({givenName: "Ada"}),
 });
 ```
 

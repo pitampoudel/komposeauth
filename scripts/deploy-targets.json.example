@@ -5,24 +5,6 @@
     "region": "us-central1",
 
     "//trustedProxyCount": "Optional, defaults to 1. Proxies of your own in front of the container: 1 for a service reached at its run.app URL, 2 behind an external Application Load Balancer. Too low and every caller shares one abuse budget.",
-    "trustedProxyCount": 1,
-
-    "//minInstances": "Optional, defaults to 0 -- the service scales to zero and costs nothing while idle. The image and the deploy flags are tuned so the resulting cold start stays acceptable; set 1 only if you have measured it and it is not.",
-    "minInstances": 0,
-
-    "//maxInstances": "Optional, defaults to 10. A ceiling on spend, and on how many connections the fleet can open against your MongoDB cluster at once (each instance opens up to app.mongo.max-pool-size).",
-    "maxInstances": 10,
-
-    "//concurrency": "Optional, defaults to 40. Requests one instance serves at a time. Keep it at or below TOMCAT_MAX_THREADS, or requests queue inside the container where Cloud Run cannot see them and will not scale out.",
-    "concurrency": 40,
-
-    "//cpu": "Optional, defaults to 1. Cold start gets extra CPU from --cpu-boost regardless, so this sizes steady-state serving.",
-    "cpu": 1,
-
-    "//memory": "Optional, defaults to 1Gi. Below 512Mi the JVM spends its time in GC; the buildpack's memory calculator sizes the heap from whatever is set here.",
-    "memory": "1Gi",
-
-    "//jvmThreadCount": "Optional, defaults to 100. What the buildpack's memory calculator assumes about thread count when reserving stack space; its own default of 250 withholds over a hundred megabytes from the heap that this server never uses. Raise it, never lower it below the real count -- too low is an OOM kill.",
-    "jvmThreadCount": 100
+    "trustedProxyCount": 1
   }
 ]
