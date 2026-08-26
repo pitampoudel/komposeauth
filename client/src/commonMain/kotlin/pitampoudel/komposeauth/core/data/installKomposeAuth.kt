@@ -27,7 +27,9 @@ import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.login.domain.AuthPreferences
 import pitampoudel.komposeauth.core.domain.Config
+import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.ResponseType
+import pitampoudel.komposeauth.core.domain.currentPlatform
 import pitampoudel.komposeauth.user.data.Credential
 
 internal fun HttpClientConfig<*>.installKomposeAuth(
@@ -63,7 +65,19 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
         )
         return ipv4Regex.matches(host)
     }
-    install(HttpCookies)
+    // Only the web target signs in with the access-token cookie (`LoginUser` is the only caller
+    // that ever passes `ResponseType.COOKIE`); every other platform authenticates purely with the
+    // bearer token in `Authorization`. Installing the cookie jar unconditionally used to make a
+    // native client pick up and resend *any* cookie the server set — including the session cookie
+    // `/login-options` creates to hold the WebAuthn challenge, which has nothing to do with
+    // authentication. Once that was in the jar, every later bearer-authenticated write (send-otp,
+    // verify-otp, update-profile, ...) stopped qualifying as a header-only bearer request on the
+    // server, which then demands a CSRF token this client never fetches — a permanent 403 for the
+    // rest of the app's lifetime. Native platforms have no legitimate use for any cookie, so they
+    // simply don't keep one.
+    if (currentPlatform() == Platform.WEB) {
+        install(HttpCookies)
+    }
     install(ContentNegotiation) {
         json(
             Json {
