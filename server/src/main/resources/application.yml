@@ -3,13 +3,6 @@ spring:
     name: "komposeauth"
   mongodb:
     uri: ${MONGODB_URI}
-  data:
-    mongodb:
-      # Off, because what it does is re-issue every `createIndex` this codebase declares -- around
-      # thirty of them -- on each context refresh, which on a scale-to-zero service means a user
-      # waits through them on every cold start. MongoIndexMigration does the same work from the same
-      # annotations, once per database. Set INDEX_ON_STARTUP=true to hand the job back to Spring Data.
-      auto-index-creation: ${INDEX_ON_STARTUP:false}
   jmx:
     enabled: false
   lifecycle:
