@@ -31,7 +31,6 @@ for i in $(seq 0 $((ENTRY_COUNT - 1))); do
   # exposed directly but would make every caller here share one abuse budget. Stating it per target
   # keeps that fact in the repo rather than in console state nobody can see.
   TRUSTED_PROXY_COUNT=$(jq -r ".[$i].trustedProxyCount // 1" "$TARGETS_FILE")
-
   [[ "$SERVICE" == "null" || "$PROJECT" == "null" || "$REGION" == "null" ]] && {
     exit 1
   }
@@ -43,5 +42,6 @@ for i in $(seq 0 $((ENTRY_COUNT - 1))); do
     --project "$PROJECT" \
     --region "$REGION" \
     --image "$IMAGE_DIGEST" \
-    --update-env-vars "TRUSTED_PROXY_COUNT=$TRUSTED_PROXY_COUNT"
+    --update-env-vars "TRUSTED_PROXY_COUNT=$TRUSTED_PROXY_COUNT,BPL_JVM_THREAD_COUNT=100" \
+    --startup-probe "httpGet.path=/actuator/health/readiness,httpGet.port=8080,initialDelaySeconds=4,periodSeconds=2,timeoutSeconds=2,failureThreshold=45"
 done

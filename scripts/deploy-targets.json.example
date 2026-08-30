@@ -4,7 +4,7 @@
     "project": "my-gcp-project",
     "region": "us-central1",
 
-    "//": "Optional, defaults to 1. Proxies of your own in front of the container: 1 for a service reached at its run.app URL, 2 behind an external Application Load Balancer. Too low and every caller shares one abuse budget.",
+    "//trustedProxyCount": "Optional, defaults to 1. Proxies of your own in front of the container: 1 for a service reached at its run.app URL, 2 behind an external Application Load Balancer. Too low and every caller shares one abuse budget.",
     "trustedProxyCount": 1
   }
 ]

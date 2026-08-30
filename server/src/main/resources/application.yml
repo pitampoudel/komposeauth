@@ -3,11 +3,12 @@ spring:
     name: "komposeauth"
   mongodb:
     uri: ${MONGODB_URI}
-  data:
-    mongodb:
-      auto-index-creation: true
   jmx:
     enabled: false
+  lifecycle:
+    # Bounds `server.shutdown: graceful` below. Cloud Run's own grace period before SIGKILL is 10
+    # seconds by default, so finish inside it rather than being killed mid-drain.
+    timeout-per-shutdown-phase: ${SHUTDOWN_GRACE_PERIOD:8s}
   web:
     error:
       include-exception: false
@@ -33,6 +34,20 @@ server:
   # it runs ahead of the filter and resolves the client address itself, from app.rate-limit
   # .trusted-proxy-count below.
   forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:framework}
+  # Cloud Run sends SIGTERM and then waits before killing the container. Without this the servlet
+  # container drops in-flight requests at that signal, which on a scale-to-zero service is a routine
+  # event rather than a rare one: every idle timeout and every revision rollout ends this way.
+  shutdown: graceful
+  tomcat:
+    threads:
+      # A Cloud Run instance is one or two vCPUs serving at most `--concurrency` requests at a time.
+      # Tomcat's default 200 workers size a pool for a much larger machine; each is a platform thread
+      # with its own stack, so the default costs memory and startup work that this container never
+      # gets to use. Keep the ceiling near the concurrency setting the service is deployed with.
+      max: ${TOMCAT_MAX_THREADS:40}
+      # Started eagerly, while Cloud Run's startup CPU boost is still in effect, so the first
+      # requests after a cold start do not each pay to create their own worker.
+      min-spare: ${TOMCAT_MIN_SPARE_THREADS:10}
 
 app:
   base64-encryption-key: ${BASE64_ENCRYPTION_KEY}
@@ -50,6 +65,35 @@ app:
     client-ip-header: ${CLIENT_IP_HEADER:}
 
 management:
+  endpoints:
+    web:
+      exposure:
+        # Health only. The rest of actuator reports configuration, environment and beans, and this
+        # server holds provider secrets; it is also reachable on the same port as everything else,
+        # because Cloud Run routes exactly one.
+        include: health
+  endpoint:
+    health:
+      # Status alone, to no-one in particular: the readiness path is unauthenticated so that Cloud
+      # Run's startup probe can reach it, and component detail would then be public too.
+      show-details: never
+      show-components: never
+      probes:
+        # Splits health into /actuator/health/liveness and /actuator/health/readiness. Readiness is
+        # the one worth probing: it reports ACCEPTING_TRAFFIC only after ApplicationReadyEvent, which
+        # is to say after the migration runner and the Sentry/app-config warm-up have finished. The
+        # servlet container binds its port well before that, so the TCP probe Cloud Run uses by
+        # default goes green while the instance still cannot serve anything.
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+    # A cold start must not be held up by a round trip to the mail server, and mail being down is
+    # not a reason for Cloud Run to replace an instance that can still sign people in.
+    mail:
+      enabled: false
   otlp:
     metrics:
       export:

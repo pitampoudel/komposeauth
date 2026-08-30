@@ -46,7 +46,7 @@ docker run -p 80:8080 \
 ```
 
 - After the container is running, open the configuration page to set up everything else:
-  - http://localhost/admin/config?key=&lt;paste-your-base64-key&gt;
+    - http://localhost/admin/config?key=&lt;paste-your-base64-key&gt;
 
   The `key` is the same `BASE64_ENCRYPTION_KEY` you started the container with. It is needed because
   no account exists yet and this page reads and writes every secret the server holds — SMTP
@@ -73,21 +73,21 @@ Hosting platforms do this in one of two ways, and they need opposite settings.
 **Some edges publish the client address under a header of their own.** Name it and it's used as-is —
 no counting, nothing of the caller's mixed in. Prefer this wherever it's offered:
 
-| Platform | Setting |
-|---|---|
-| Railway | `CLIENT_IP_HEADER=X-Real-IP` |
-| Fly.io | `CLIENT_IP_HEADER=Fly-Client-IP` |
+| Platform          | Setting                             |
+|-------------------|-------------------------------------|
+| Railway           | `CLIENT_IP_HEADER=X-Real-IP`        |
+| Fly.io            | `CLIENT_IP_HEADER=Fly-Client-IP`    |
 | Behind Cloudflare | `CLIENT_IP_HEADER=CF-Connecting-IP` |
 
 **Other edges append to `X-Forwarded-For`**, leaving whatever the caller sent to the left of their
 own entries. There, count hops in from the right:
 
-| Deployment | Setting |
-|---|---|
-| Google Cloud Run, at its own `run.app` URL | `TRUSTED_PROXY_COUNT=1` |
-| Behind a GCP external Application Load Balancer | `TRUSTED_PROXY_COUNT=2` |
-| Your own nginx / Caddy in front | `TRUSTED_PROXY_COUNT=1`, plus one per extra hop |
-| Exposed directly, as in the quickstart above | leave both unset, and set `FORWARD_HEADERS_STRATEGY=none` |
+| Deployment                                      | Setting                                                   |
+|-------------------------------------------------|-----------------------------------------------------------|
+| Google Cloud Run, at its own `run.app` URL      | `TRUSTED_PROXY_COUNT=1`                                   |
+| Behind a GCP external Application Load Balancer | `TRUSTED_PROXY_COUNT=2`                                   |
+| Your own nginx / Caddy in front                 | `TRUSTED_PROXY_COUNT=1`, plus one per extra hop           |
+| Exposed directly, as in the quickstart above    | leave both unset, and set `FORWARD_HEADERS_STRATEGY=none` |
 
 Count only proxies you control. Guessing **too high** is the safe direction — the server falls back
 to the connection's own peer address. Guessing **too low** attributes every request to your proxy, so
@@ -123,12 +123,20 @@ carry `http://` links.
 ```bash
 gcloud run deploy komposeauth \
   --image pitampoudel/komposeauth:latest \
-  --set-env-vars MONGODB_URI="mongodb+srv://...",BASE64_ENCRYPTION_KEY="<your-base64-key>",TRUSTED_PROXY_COUNT=1
+  --set-env-vars MONGODB_URI="mongodb+srv://...",BASE64_ENCRYPTION_KEY="<your-base64-key>",TRUSTED_PROXY_COUNT=1 \
+  --min-instances 0 \
+  --concurrency 40 \
+  --cpu 1 --memory 1Gi \
+  --cpu-boost \
+  --startup-probe httpGet.path=/actuator/health/readiness,httpGet.port=8080,initialDelaySeconds=4,periodSeconds=2,timeoutSeconds=2,failureThreshold=45
 ```
 
-Nothing else is needed: Cloud Run's front end appends the caller's address as the last
-`X-Forwarded-For` entry, which is the one this server reads, and sets `X-Forwarded-Proto: https` for
-the default `framework` strategy to pick up. Use `2` instead if you front the service with an
+`scripts/deploy-cloud-run.sh` does all of this from `deploy-targets.json`, which is worth using once
+you have more than one target.
+
+`TRUSTED_PROXY_COUNT=1` is what Cloud Run needs: its front end appends the caller's address as the
+last `X-Forwarded-For` entry, which is the one this server reads, and sets `X-Forwarded-Proto: https`
+for the default `framework` strategy to pick up. Use `2` instead if you front the service with an
 external Application Load Balancer, which appends both the client address and its own forwarding
 rule.
 
@@ -153,6 +161,7 @@ implementation("io.github.pitampoudel:komposeauth-client:x.x.x")
 ```
 
 HttpClient example (at each platform)
+
 ```kotlin
 val httpClient = HttpClient {
     installKomposeAuth(
@@ -165,6 +174,7 @@ val httpClient = HttpClient {
 ```
 
 Initialize SDK
+
 ```kotlin
 initializeKomposeAuth(
     httpClient = httpClient
@@ -245,15 +255,15 @@ You need to do something in one case: **a browser app on your own origin that au
 access-token cookie.** Fetch a token once, then echo it back on every write:
 
 ```js
-const { token, headerName } = await (
-  await fetch("https://your-auth-server/csrf", { credentials: "include" })
+const {token, headerName} = await (
+    await fetch("https://your-auth-server/csrf", {credentials: "include"})
 ).json();
 
 await fetch("https://your-auth-server/update-profile", {
-  method: "POST",
-  credentials: "include",
-  headers: { "Content-Type": "application/json", [headerName]: token },
-  body: JSON.stringify({ givenName: "Ada" }),
+    method: "POST",
+    credentials: "include",
+    headers: {"Content-Type": "application/json", [headerName]: token},
+    body: JSON.stringify({givenName: "Ada"}),
 });
 ```
 

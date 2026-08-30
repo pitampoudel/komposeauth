@@ -32,7 +32,14 @@ object PublicEndpoints {
         "/reset-password",
         "/countries.json",
         "/.well-known/**",
-        "/setup"
+        "/setup",
+        // Container health probes. The platform runs these before anything has signed in and with no
+        // credentials to offer, so behind authentication they answer 401 and the probe reads that as
+        // a dead instance. Only `health` is exposed over HTTP (see management.endpoints in
+        // application.yml) and it is configured to report a bare status, so this discloses nothing
+        // beyond whether the server is up -- which is already observable by asking it for a page.
+        "/actuator/health",
+        "/actuator/health/**"
     )
 
     /** Public paths that use optional authentication: a supplied token is still validated. */
