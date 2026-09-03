@@ -91,7 +91,23 @@ class OtpVerifyController(
     ): UserResponse {
         val user = userContextService.getUserFromAuthentication()
         return if (request.type == OtpType.PHONE) {
-            userService.verifyPhoneNumber(user.id, request.username, request.otp)
+            /*
+             * Parsed to E.164 here exactly as `sendOtp` does above, because the number is the key the
+             * code was filed under.
+             *
+             * A client that asks for a code on "9812345678" and then verifies the same string it
+             * showed the user was looking up an OTP that was stored as "+9779812345678" — no record,
+             * so a correct code came back "invalid or expired", and any client that did send the E.164
+             * form on both legs stored a number whose spelling depended on which screen wrote it.
+             * Normalising both ends makes the two calls agree whatever the user typed.
+             */
+            val parsedPhone = parsePhoneNumber(null, request.username)
+                ?: throw IllegalArgumentException("Invalid phone number format")
+            val phoneNumber = parsedPhone.fullNumberInE164Format
+            // The same rule the send leg enforces: a number that already belongs to somebody else is
+            // not yours to attach, whichever leg you arrive on.
+            enforceSelfRequest(currentUser = user, targetUsername = phoneNumber)
+            userService.verifyPhoneNumber(user.id, phoneNumber, request.otp)
         } else {
             userService.verifyEmail(user.id, request.username, request.otp)
         }
