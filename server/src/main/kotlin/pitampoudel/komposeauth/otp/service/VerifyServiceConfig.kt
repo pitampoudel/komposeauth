@@ -6,6 +6,7 @@ import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.sms.SamayaSmsService
 import pitampoudel.komposeauth.core.service.sms.SparrowSmsService
+import pitampoudel.komposeauth.core.service.sms.WhatsAppSmsService
 import pitampoudel.komposeauth.otp.repository.OtpRepository
 
 @Configuration
@@ -48,6 +49,19 @@ class VerifyServiceConfig {
                     otpRepository = otpRepository,
                     appConfigService = appConfigService,
                     smsService = SparrowSmsService(
+                        appConfigService = appConfigService,
+                        restTemplate = restTemplate
+                    )
+                )
+            }
+
+            "whatsapp" -> if (config.whatsappAccessToken.isNullOrBlank() || config.whatsappPhoneNumberId.isNullOrBlank()) {
+                NoOpPhoneNumberVerificationService()
+            } else {
+                PhoneNumberVerificationServiceImpl(
+                    otpRepository = otpRepository,
+                    appConfigService = appConfigService,
+                    smsService = WhatsAppSmsService(
                         appConfigService = appConfigService,
                         restTemplate = restTemplate
                     )

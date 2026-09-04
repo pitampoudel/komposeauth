@@ -76,7 +76,9 @@ class AppConfigController(
                     "twilioVerifyServiceSid",
                     "samayeApiKey",
                     "sparrowApiToken",
-                    "sparrowFromNumber"
+                    "sparrowFromNumber",
+                    "whatsappAccessToken",
+                    "whatsappPhoneNumberId"
                 )
             ),
             Group(
@@ -106,7 +108,8 @@ class AppConfigController(
                     ConfigFieldGroup.ConfigField.SelectOption("", "None"),
                     ConfigFieldGroup.ConfigField.SelectOption("twilio", "Twilio"),
                     ConfigFieldGroup.ConfigField.SelectOption("samaye", "Samaye"),
-                    ConfigFieldGroup.ConfigField.SelectOption("sparrow", "Sparrow")
+                    ConfigFieldGroup.ConfigField.SelectOption("sparrow", "Sparrow"),
+                    ConfigFieldGroup.ConfigField.SelectOption("whatsapp", "WhatsApp")
                 )
 
                 else -> null

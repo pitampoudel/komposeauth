@@ -53,8 +53,24 @@ class AppConfigCleanTest {
         val samayeConfig = AppConfig(smsProvider = "samaye")
         assertEquals("samaye", samayeConfig.clean().smsProvider)
 
+        val whatsappConfig = AppConfig(smsProvider = "whatsapp")
+        assertEquals("whatsapp", whatsappConfig.clean().smsProvider)
+
         val emptyConfig = AppConfig(smsProvider = "")
         assertNull(emptyConfig.clean().smsProvider)
+    }
+
+    @Test
+    fun `clean normalizes blank whatsapp fields to null`() {
+        val config = AppConfig(
+            whatsappAccessToken = "  ",
+            whatsappPhoneNumberId = ""
+        )
+
+        val cleaned = config.clean()
+
+        assertNull(cleaned.whatsappAccessToken)
+        assertNull(cleaned.whatsappPhoneNumberId)
     }
 }
 

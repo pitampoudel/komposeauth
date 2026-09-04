@@ -56,7 +56,7 @@ data class AppConfig(
     var rolesCatalog: String? = null,
 
     // SMS Provider Configuration
-    var smsProvider: String? = null, // "twilio", "samaye", "sparrow", or null for none
+    var smsProvider: String? = null, // "twilio", "samaye", "sparrow", "whatsapp", or null for none
 
     var twilioAccountSid: String? = null,
     var twilioAuthToken: String? = null,
@@ -82,6 +82,10 @@ data class AppConfig(
     // Third-party SMS provider (Sparrow) API key
     var sparrowApiToken: String? = null,
     var sparrowFromNumber: String? = null,
+
+    // WhatsApp Business Cloud API
+    var whatsappAccessToken: String? = null,
+    var whatsappPhoneNumberId: String? = null,
 
     // Third-factor KYC
     @field:URL(message = "Third-factor URL must be a valid URL")
@@ -135,6 +139,8 @@ data class AppConfig(
         if (samayeApiKey.isNullOrBlank()) samayeApiKey = null
         if (sparrowApiToken.isNullOrBlank()) sparrowApiToken = null
         if (sparrowFromNumber.isNullOrBlank()) sparrowFromNumber = null
+        if (whatsappAccessToken.isNullOrBlank()) whatsappAccessToken = null
+        if (whatsappPhoneNumberId.isNullOrBlank()) whatsappPhoneNumberId = null
         if (thirdFactorUrl.isNullOrBlank()) thirdFactorUrl = null
         if (thirdFactorSecretKey.isNullOrBlank()) thirdFactorSecretKey = null
         if (thirdFactorToken.isNullOrBlank()) thirdFactorToken = null

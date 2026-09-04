@@ -81,6 +81,21 @@ class VerifyServiceConfigTest {
     }
 
     @Test
+    fun `verifyService returns PhoneNumberVerificationServiceImpl when smsProvider is whatsapp`() {
+        whenever(mockAppConfigProvider.get()).thenReturn(
+            AppConfig(
+                smsProvider = "whatsapp",
+                whatsappAccessToken = "token123",
+                whatsappPhoneNumberId = "1234567890"
+            )
+        )
+
+        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+
+        assertTrue(service is PhoneNumberVerificationServiceImpl)
+    }
+
+    @Test
     fun `verifyService returns NoOpPhoneNumberVerificationService when smsProvider is null`() {
         whenever(mockAppConfigProvider.get()).thenReturn(
             AppConfig(
@@ -144,6 +159,21 @@ class VerifyServiceConfigTest {
             AppConfig(
                 smsProvider = "sparrow",
                 sparrowApiToken = null
+            )
+        )
+
+        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+
+        assertTrue(service is NoOpPhoneNumberVerificationService)
+    }
+
+    @Test
+    fun `verifyService returns NoOpPhoneNumberVerificationService when whatsapp selected but credentials missing`() {
+        whenever(mockAppConfigProvider.get()).thenReturn(
+            AppConfig(
+                smsProvider = "whatsapp",
+                whatsappAccessToken = null,
+                whatsappPhoneNumberId = "1234567890"
             )
         )
 
