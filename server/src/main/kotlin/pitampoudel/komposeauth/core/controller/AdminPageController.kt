@@ -128,6 +128,7 @@ class AdminPageController(
         "twilio" -> "Twilio"
         "samaye" -> "Samaye"
         "sparrow" -> "Sparrow"
+        "whatsapp" -> "WhatsApp"
         else -> provider.orEmpty()
     }
 }
