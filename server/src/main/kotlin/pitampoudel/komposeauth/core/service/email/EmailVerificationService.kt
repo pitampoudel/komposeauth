@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.core.service.email
 
 import org.springframework.stereotype.Service
+import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.otp.entity.Otp
@@ -13,7 +14,7 @@ class EmailVerificationService(
     private val emailService: EmailService,
     private val appConfigService: AppConfigService,
 ) {
-    fun initiate(email: String, baseUrl: String): Boolean {
+    fun initiate(email: String, baseUrl: String): MessageResponse {
         val otp = OtpGenerator.next()
         otpRepository.save(
             Otp(
@@ -21,7 +22,7 @@ class EmailVerificationService(
                 otp = otp
             )
         )
-        return emailService.sendHtmlMail(
+        val sent = emailService.sendHtmlMail(
             baseUrl = baseUrl,
             to = email,
             subject = "Your ${appConfigService.getConfig().name} verification code",
@@ -31,6 +32,11 @@ class EmailVerificationService(
                 "recipientName" to "User",
             )
         )
+        return if (sent) {
+            MessageResponse("An OTP has just been sent to $email")
+        } else {
+            MessageResponse("Failed to send an OTP to $email")
+        }
     }
 
     fun verify(email: String, code: String): Boolean {

@@ -6,6 +6,8 @@ import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.client.postForObject
+import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -25,14 +27,15 @@ class TwilioPhoneNumberVerificationService(
         return headers
     }
 
-    override fun initiate(phoneNumber: String) {
+    override fun initiate(phoneNumber: String): MessageResponse {
         val verifySid = appConfigService.getConfig().twilioVerifyServiceSid
         val url = "https://verify.twilio.com/v2/Services/$verifySid/Verifications"
         val formData: MultiValueMap<String, String> = LinkedMultiValueMap()
         formData.add("To", phoneNumber)
         formData.add("Channel", "sms")
         val entity = HttpEntity(formData, basicHeaders())
-        restTemplate.postForObject(url, entity, String::class.java)
+        restTemplate.postForObject<String>(url, entity)
+        return MessageResponse("An OTP has just been sent to $phoneNumber")
     }
 
 

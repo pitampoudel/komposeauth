@@ -2,8 +2,10 @@ package pitampoudel.komposeauth.otp.service
 
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
+import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.sms.SmsService
+import pitampoudel.komposeauth.core.service.sms.WhatsAppSmsService
 import pitampoudel.komposeauth.otp.entity.Otp
 import pitampoudel.komposeauth.otp.repository.OtpRepository
 import java.time.Duration
@@ -15,7 +17,7 @@ class PhoneNumberVerificationServiceImpl(
     private val appConfigService: AppConfigService
 ) : PhoneNumberVerificationService {
 
-    override fun initiate(phoneNumber: String) {
+    override fun initiate(phoneNumber: String): MessageResponse {
         val resendCooldown = Duration.ofSeconds(60)
         val now = Instant.now()
         val recentOtp = otpRepository.findByReceiverOrderByCreatedAtDesc(phoneNumber).firstOrNull()
@@ -36,6 +38,10 @@ class PhoneNumberVerificationServiceImpl(
             phoneNumber = phoneNumber,
             message = "Your OTP for ${appConfigService.getConfig().name} is $otp"
         )
+        return when (smsService) {
+            is WhatsAppSmsService -> MessageResponse("An OTP has just been sent to $phoneNumber via WhatsApp")
+            else -> MessageResponse("An OTP has just been sent to $phoneNumber")
+        }
     }
 
     override fun verify(phoneNumber: String, code: String): Boolean {
