@@ -63,6 +63,10 @@ class AppConfigController(
                 members = listOf("allowedAndroidSha256List", "corsAllowedOriginList")
             ),
             Group(
+                title = "Rate Limiting",
+                members = listOf("trustedProxyCount", "clientIpHeader")
+            ),
+            Group(
                 title = "Roles",
                 members = listOf("rolesCatalog")
             ),

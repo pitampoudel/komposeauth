@@ -50,6 +50,39 @@ data class AppConfig(
     var corsAllowedOriginList: String? = null,
 
     /**
+     * How many reverse proxies of your own stand between the internet and this server.
+     *
+     * Set this to the real number, or the abuse limits below can be walked straight past. It is
+     * what tells [pitampoudel.komposeauth.core.security.ratelimit.ClientIpResolver] how far in
+     * from the right of `X-Forwarded-For` the genuine client address sits — everything to the
+     * left of that came from the caller and means nothing.
+     *
+     * 0 (the default) means the server is reached directly and no forwarded header is believed at
+     * all. One proxy — nginx, Cloudflare, a cloud load balancer — is 1. Getting this *too high* is
+     * the safe direction to be wrong in: the resolver falls back to the connection's own peer
+     * address. Getting it too low attributes traffic to your proxy, and a single global bucket will
+     * lock everybody out at once, so the mistake shows itself immediately.
+     *
+     * Setting this above 0 also requires `server.forward-headers-strategy: framework`, since that is
+     * what makes the rest of the application see the client's scheme and host.
+     */
+    var trustedProxyCount: Int? = null,
+
+    /**
+     * Name of a header the platform guarantees, holding the client address on its own.
+     *
+     * Some edges do not merely append to `X-Forwarded-For`, they *replace* what the caller sent and
+     * publish the address they observed under a header of their own — `X-Envoy-External-Address` on
+     * Railway, `Fly-Client-IP` on Fly, `CF-Connecting-IP` behind Cloudflare. Where that is offered it
+     * is the better signal: one value, written by the edge, with no positions to count and nothing
+     * of the caller's left in it. [trustedProxyCount] is then unnecessary and is not consulted.
+     *
+     * Only set this for a header your own edge writes. Naming one the platform does not overwrite
+     * makes the limits worthless, because then the caller is simply telling you who to count.
+     */
+    var clientIpHeader: String? = null,
+
+    /**
      * Comma- or newline-separated role names that may be granted to users, on top of the
      * built-in [pitampoudel.komposeauth.core.domain.Roles.BUILT_IN] roles.
      */
@@ -118,6 +151,8 @@ data class AppConfig(
         if (appleAuthClientId.isNullOrBlank()) appleAuthClientId = null
         if (allowedAndroidSha256List.isNullOrBlank()) allowedAndroidSha256List = null
         if (corsAllowedOriginList.isNullOrBlank()) corsAllowedOriginList = null
+        if (clientIpHeader.isNullOrBlank()) clientIpHeader = null
+        if ((trustedProxyCount ?: 0) <= 0) trustedProxyCount = null
         if (rolesCatalog.isNullOrBlank()) rolesCatalog = null
         if (smsProvider.isNullOrBlank()) smsProvider = null
         if (twilioAccountSid.isNullOrBlank()) twilioAccountSid = null

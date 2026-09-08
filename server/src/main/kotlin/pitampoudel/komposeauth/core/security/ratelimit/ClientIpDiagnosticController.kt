@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 
 /**
  * Shows what this server actually receives, so the abuse limits can be configured from observation
@@ -17,14 +18,14 @@ import org.springframework.web.bind.annotation.RestController
  * still appearing to be on.
  *
  * Call this from a phone on mobile data, somewhere the address is unmistakably yours and not your
- * network's, and set `app.rate-limit.client-ip-header` to whichever header came back holding it.
- * Admin-only: it reveals the shape of the request chain, which is not secret but is nobody else's
- * business.
+ * network's, and set the client IP header in the app configuration to whichever header came back
+ * holding it. Admin-only: it reveals the shape of the request chain, which is not secret but is
+ * nobody else's business.
  */
 @RestController
 class ClientIpDiagnosticController(
     private val clientIpResolver: ClientIpResolver,
-    private val properties: RateLimitProperties
+    private val appConfigService: AppConfigService
 ) {
 
     data class ClientIpDiagnosis(
@@ -47,7 +48,7 @@ class ClientIpDiagnosticController(
                 "public address you know, and see which header actually carries it."
     )
     fun diagnose(request: HttpServletRequest): ClientIpDiagnosis {
-        val configuredHeader = properties.clientIpHeader?.takeIf { it.isNotBlank() }
+        val configuredHeader = appConfigService.clientIpHeader()
 
         val received = CANDIDATE_HEADERS
             .mapNotNull { name -> request.getHeader(name)?.let { name to it } }
@@ -60,8 +61,8 @@ class ClientIpDiagnosticController(
             configuredHeader != null ->
                 "client-ip-header '$configuredHeader' is configured but absent from this request"
 
-            properties.trustedProxyCount > 0 ->
-                "entry ${properties.trustedProxyCount} from the right of X-Forwarded-For"
+            appConfigService.trustedProxyCount() > 0 ->
+                "entry ${appConfigService.trustedProxyCount()} from the right of X-Forwarded-For"
 
             else -> "the connection's peer address; no proxy is declared"
         }
@@ -72,9 +73,10 @@ class ClientIpDiagnosticController(
             connectionPeer = request.remoteAddr.orEmpty(),
             received = received,
             hint = "If 'countedAs' is not the public address you called from, pick the header under " +
-                    "'received' that does hold it and set CLIENT_IP_HEADER to its name. If none does, " +
-                    "and X-Forwarded-For ends with your address, set TRUSTED_PROXY_COUNT to its " +
-                    "position counting from the right instead."
+                    "'received' that does hold it and set the client IP header in the app configuration " +
+                    "to its name. If none does, and X-Forwarded-For ends with your address, set the " +
+                    "trusted proxy count in the app configuration to its position counting from the " +
+                    "right instead."
         )
     }
 

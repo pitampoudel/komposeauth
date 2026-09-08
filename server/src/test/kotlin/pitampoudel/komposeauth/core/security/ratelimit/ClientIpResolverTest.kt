@@ -2,7 +2,10 @@ package pitampoudel.komposeauth.core.security.ratelimit
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 import org.springframework.mock.web.MockHttpServletRequest
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 
 /**
  * These are the cases that decide whether the abuse limits can be walked past, so they are written
@@ -10,13 +13,13 @@ import org.springframework.mock.web.MockHttpServletRequest
  */
 class ClientIpResolverTest {
 
-    private fun resolver(trustedProxyCount: Int = 0, clientIpHeader: String? = null) =
-        ClientIpResolver(
-            RateLimitProperties().apply {
-                this.trustedProxyCount = trustedProxyCount
-                this.clientIpHeader = clientIpHeader
-            }
-        )
+    private fun resolver(trustedProxyCount: Int = 0, clientIpHeader: String? = null): ClientIpResolver {
+        val appConfigService: AppConfigService = mock {
+            on { trustedProxyCount() } doReturn trustedProxyCount
+            on { clientIpHeader() } doReturn clientIpHeader
+        }
+        return ClientIpResolver(appConfigService)
+    }
 
     private fun request(peer: String, forwardedFor: String? = null) =
         MockHttpServletRequest().apply {

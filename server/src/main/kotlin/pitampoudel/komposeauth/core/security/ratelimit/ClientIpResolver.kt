@@ -3,6 +3,7 @@ package pitampoudel.komposeauth.core.security.ratelimit
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -22,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * `ForwardedHeaderFilter` does, and so what `remoteAddr` gives you under
  * `server.forward-headers-strategy: framework` — reads the one entry the attacker fully controls.
  *
- * The count cannot be guessed, only declared: see [RateLimitProperties.trustedProxyCount]. It
+ * The count cannot be guessed, only declared: see [AppConfigService.trustedProxyCount]. It
  * defaults to 0, which trusts nothing and uses the peer address of the TCP connection — always
  * truthful, and correct for a server exposed directly.
  *
@@ -34,12 +35,12 @@ import java.util.concurrent.atomic.AtomicBoolean
  * reads the wrong end of the list.
  *
  * Rather than encode a table of platform behaviours that will go stale, those edges are served by
- * [RateLimitProperties.clientIpHeader]: name the single-value header the platform guarantees and it
+ * [AppConfigService.clientIpHeader]: name the single-value header the platform guarantees and it
  * is used verbatim, no positions involved. That is the better answer wherever one is offered,
  * because it does not depend on the shape of a list this server cannot see the provenance of.
  */
 @Component
-class ClientIpResolver(private val properties: RateLimitProperties) {
+class ClientIpResolver(private val appConfigService: AppConfigService) {
 
     private val log = LoggerFactory.getLogger(javaClass)
     private val warnedAboutUndeclaredProxy = AtomicBoolean(false)
@@ -48,7 +49,7 @@ class ClientIpResolver(private val properties: RateLimitProperties) {
     fun resolve(request: HttpServletRequest): String {
         val peer = request.remoteAddr?.takeIf { it.isNotBlank() } ?: UNKNOWN
 
-        val guaranteedHeader = properties.clientIpHeader?.takeIf { it.isNotBlank() }
+        val guaranteedHeader = appConfigService.clientIpHeader()
         if (guaranteedHeader != null) {
             val stated = request.getHeader(guaranteedHeader)?.trim()?.takeIf { it.isNotEmpty() }
             if (stated != null) return stated
@@ -58,7 +59,7 @@ class ClientIpResolver(private val properties: RateLimitProperties) {
             warnAboutMissingHeader(guaranteedHeader, peer)
         }
 
-        val hops = properties.trustedProxyCount
+        val hops = appConfigService.trustedProxyCount()
         if (hops <= 0) {
             warnIfActuallyProxied(request, peer)
             return peer
@@ -102,9 +103,9 @@ class ClientIpResolver(private val properties: RateLimitProperties) {
             "Abuse limits are counting requests against '{}', which is not a public client address, " +
                     "on requests that carry {}. This server appears to be behind a proxy that has not " +
                     "been declared, so every caller shares one budget and the limits will refuse all " +
-                    "of them at once. Set app.rate-limit.trusted-proxy-count (TRUSTED_PROXY_COUNT) to " +
-                    "the number of proxies in front of it — 1 for a Cloud Run service reached at its " +
-                    "own URL, 2 behind an external Application Load Balancer.",
+                    "of them at once. Set the trusted proxy count in the app configuration to the number of " +
+                    "proxies in front of it — 1 for a Cloud Run service reached at its own URL, 2 " +
+                    "behind an external Application Load Balancer.",
             peer,
             FORWARDED_FOR
         )
@@ -113,7 +114,7 @@ class ClientIpResolver(private val properties: RateLimitProperties) {
     private fun warnAboutMissingHeader(headerName: String, peer: String) {
         if (!warnedAboutMissingHeader.compareAndSet(false, true)) return
         log.warn(
-            "app.rate-limit.client-ip-header names '{}', but requests are not carrying it — " +
+            "The configured client IP header names '{}', but requests are not carrying it — " +
                     "counting against '{}' instead. Either the header name is wrong for this " +
                     "platform, or the service can be reached without passing the edge that writes it.",
             headerName,

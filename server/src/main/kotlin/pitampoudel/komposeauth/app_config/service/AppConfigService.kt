@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.app_config.service
 
 import org.springframework.stereotype.Service
+import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.webauthn.utils.WebAuthnUtils.androidOrigin
@@ -69,5 +70,9 @@ class AppConfigService(val appConfigProvider: AppConfigProvider) {
         }.orEmpty().toSet() + corsAllowedOrigins()
     }
 
+    /** How many reverse proxies of our own sit in front of this server. See [AppConfig.trustedProxyCount]. */
+    fun trustedProxyCount(): Int = appConfigProvider.get().trustedProxyCount ?: 0
 
+    /** Name of the platform header that carries the client address on its own, if any is configured. */
+    fun clientIpHeader(): String? = appConfigProvider.get().clientIpHeader?.takeIf { it.isNotBlank() }
 }
