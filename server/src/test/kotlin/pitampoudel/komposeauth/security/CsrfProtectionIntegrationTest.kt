@@ -170,6 +170,40 @@ class CsrfProtectionIntegrationTest {
     }
 
     /**
+     * Asking for a verification code is a step in signing up, taken before the caller has any token
+     * to present. A browser app doing it carries cookies, so it is not a header-only bearer request
+     * either — which left it demanding a CSRF token nobody had fetched, and answering 403 to every
+     * attempt. Pinned against the live matcher so the exemption cannot quietly go away again.
+     */
+    @Test
+    fun `sending a verification code does not require a csrf token`() {
+        val untokened = MockMvcRequestBuilders
+            .post("/${ApiEndpoints.SEND_OTP}")
+            .buildRequest(MockServletContext())
+
+        assertFalse(
+            liveCsrfMatcher().matches(untokened),
+            "asking for a verification code must not require a CSRF token"
+        )
+    }
+
+    @Test
+    fun `send-otp without a csrf token is not refused`() {
+        val response = mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
+            header(TestConfig.OMIT_CSRF_TOKEN_HEADER, "true")
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = """{"username":"otp-csrf@example.com","type":"EMAIL"}"""
+        }.andReturn().response
+
+        assertNotEquals(
+            HttpStatus.FORBIDDEN.value(),
+            response.status,
+            "send-otp was refused for want of a CSRF token: ${response.contentAsString}"
+        )
+    }
+
+    /**
      * `/login` stays CSRF-exempt so native clients can sign in without first fetching a token, and
      * is safe only because it will not read a body a cross-site form can produce. That is a property
      * of how the endpoint parses its input rather than of the security configuration, so it is

@@ -7,7 +7,9 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.test.web.servlet.get
+import org.springframework.web.cors.CorsConfigurationSource
 import pitampoudel.komposeauth.TestConfig
 import kotlin.test.assertTrue
 
@@ -26,6 +28,9 @@ class CorsConfigurationIntegrationTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
+
+    @Autowired
+    private lateinit var corsConfigurationSource: CorsConfigurationSource
 
     @Test
     fun `a request from the server's own origin is never refused`() {
@@ -48,6 +53,57 @@ class CorsConfigurationIntegrationTest {
     }
 
     @Test
+    fun `the server's own origin is recognised from the Host header too`() {
+        // `serverName` is only right where the proxy sends X-Forwarded-Host and the framework is
+        // reading it. Where it is not — a proxy that forwards neither, or FORWARD_HEADERS_STRATEGY
+        // set to none — the server saw its own container name, decided the console's origin was
+        // foreign, and refused the configuration page's own form post outright with "Invalid CORS
+        // request". Which deployments that hit came down to how their proxy was set up, so the same
+        // build saved fine in one place and answered a CORS error in another.
+        val request = MockHttpServletRequest("POST", "/admin/config").apply {
+            serverName = "internal-container.local"
+            addHeader("Host", "auth.example.com")
+            addHeader("Origin", "https://auth.example.com")
+        }
+
+        assertTrue(
+            "https://auth.example.com" in allowedOriginsFor(request),
+            "the server did not recognise the origin naming the host it was addressed at"
+        )
+    }
+
+    @Test
+    fun `the server's own origin is recognised from X-Forwarded-Host too`() {
+        val request = MockHttpServletRequest("POST", "/admin/config").apply {
+            serverName = "internal-container.local"
+            addHeader("Host", "internal-container.local")
+            addHeader("X-Forwarded-Host", "auth.example.com")
+            addHeader("Origin", "https://auth.example.com")
+        }
+
+        assertTrue(
+            "https://auth.example.com" in allowedOriginsFor(request),
+            "the server did not recognise the origin the proxy says it was reached at"
+        )
+    }
+
+    @Test
+    fun `an origin that names neither the server nor an allowed host is still not ours`() {
+        // The counterpart to the two cases above: widening what counts as "our own host" must not
+        // turn into reflecting whatever an Origin header claims.
+        val request = MockHttpServletRequest("GET", "/users").apply {
+            serverName = "auth.example.com"
+            addHeader("Host", "auth.example.com")
+            addHeader("Origin", "https://evil.example.com")
+        }
+
+        assertTrue(
+            "https://evil.example.com" !in allowedOriginsFor(request),
+            "a foreign origin was reflected back as allowed"
+        )
+    }
+
+    @Test
     fun `no configured origins means no opinion, not refuse everyone`() {
         // Nothing is configured in the test profile, which is the state of a fresh install. An empty
         // allow-list used to mean "refuse every origin", so the first request carrying an Origin --
@@ -61,5 +117,10 @@ class CorsConfigurationIntegrationTest {
             !response.contentAsString.contains("Invalid CORS request"),
             "unconfigured CORS must not hard-refuse; got: ${response.contentAsString}"
         )
+    }
+
+    private fun allowedOriginsFor(request: MockHttpServletRequest): List<String> {
+        val configuration = corsConfigurationSource.getCorsConfiguration(request) ?: return emptyList()
+        return configuration.allowedOrigins.orEmpty() + configuration.allowedOriginPatterns.orEmpty()
     }
 }

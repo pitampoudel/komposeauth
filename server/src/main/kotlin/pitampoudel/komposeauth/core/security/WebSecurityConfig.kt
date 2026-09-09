@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.boot.web.servlet.FilterRegistrationBean
+import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -41,6 +43,7 @@ import org.springframework.security.web.util.matcher.NegatedRequestMatcher
 import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.filter.CorsFilter
 import org.springframework.web.util.UriComponentsBuilder
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
@@ -112,12 +115,79 @@ class WebSecurityConfig {
         }
     }
 
-    /** Whether [origin] names this very server, ignoring scheme and port. See the note above. */
+    /**
+     * The same CORS decision as the security chain's, taken early enough to be on every response.
+     *
+     * `.cors { }` below installs this inside the Spring Security chain, which is registered late —
+     * after the abuse limiter, which sits at the very front by design so a throttled request is
+     * turned away before anything expensive happens. A 429 therefore left without a single
+     * `Access-Control-Allow-*` header, and a browser cannot read a response it was not allowed to
+     * read: the app saw an opaque CORS failure rather than "too many requests", with nothing to say
+     * a limit had been hit. That is the difference between a legible error and a mystery, and it
+     * shows up exactly where the limiter is most likely to misfire — behind a proxy whose hop count
+     * has not been declared, where one bucket holds every caller at once.
+     *
+     * Deciding twice is free: `DefaultCorsProcessor` returns immediately if the response already
+     * carries `Access-Control-Allow-Origin`, so the chain's own filter simply finds the work done.
+     */
+    @Bean
+    fun corsFilterRegistration(
+        corsConfigurationSource: CorsConfigurationSource
+    ): FilterRegistrationBean<CorsFilter> {
+        val registration = FilterRegistrationBean(CorsFilter(corsConfigurationSource))
+        // Ahead of the rate limiter at HIGHEST_PRECEDENCE + 10, behind the error reporter at
+        // HIGHEST_PRECEDENCE, which only wraps the chain.
+        registration.order = Ordered.HIGHEST_PRECEDENCE + 5
+        registration.addUrlPatterns("/*")
+        return registration
+    }
+
+    /**
+     * Whether [origin] names this very server, ignoring scheme and port. See the note above.
+     *
+     * Three answers to the question "what host is this server reached at", because no single one
+     * of them is available everywhere. `serverName` is the right one and is what `ForwardedHeaderFilter`
+     * rewrites from `X-Forwarded-Host` — but only where the proxy sends that header and
+     * `server.forward-headers-strategy` is left at `framework`. Where it is not, `serverName` is
+     * the container's internal name, so the console's own origin looked foreign to it: with an
+     * allow-list configured for the app's front end and not for the console, Spring's CORS
+     * processor refused the configuration page's own form post outright with "Invalid CORS
+     * request". The setting that would have fixed it was on the page that could no longer be
+     * saved, and the whole thing depended on how the deployment's proxy was set up — which is why
+     * the same build saved fine in one place and failed with a CORS error in another.
+     *
+     * `Host` and `X-Forwarded-Host` are the other two, and for this question they are sound ones:
+     * both name the authority the browser addressed, and neither can be set by a page. `Host` is a
+     * forbidden header name, and `X-Forwarded-Host` is not CORS-safelisted — a scripted request
+     * carrying one is preflighted, and the preflight does not carry it, so the check below never
+     * sees an attacker's value on a request that could still be allowed. Reading them costs nothing
+     * where they are absent and settles the case where `serverName` alone is wrong.
+     */
     private fun sameHostAsServer(origin: String, request: HttpServletRequest): Boolean {
         val originHost = runCatching {
             UriComponentsBuilder.fromUriString(origin).build().host
         }.getOrNull() ?: return false
-        return originHost.equals(request.serverName, ignoreCase = true)
+        return ownHostCandidates(request).any { originHost.equals(it, ignoreCase = true) }
+    }
+
+    /** Every name this request suggests the server was reached at. */
+    private fun ownHostCandidates(request: HttpServletRequest): List<String> = listOfNotNull(
+        request.serverName,
+        hostOf(request.getHeader(HttpHeaders.HOST)),
+        // A list when several proxies appended to it; the leftmost is the one the browser addressed.
+        hostOf(request.getHeader("X-Forwarded-Host")?.substringBefore(','))
+    )
+
+    /** The host named by an authority such as `Host`, with any port stripped. */
+    private fun hostOf(authority: String?): String? {
+        val host = authority?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        // IPv6 literals are bracketed, so the colon that separates the port is the one after `]`.
+        val portSeparator = if (host.startsWith("[")) {
+            host.indexOf(':', host.indexOf(']').takeIf { it >= 0 } ?: 0)
+        } else {
+            host.indexOf(':')
+        }
+        return if (portSeparator > 0) host.substring(0, portSeparator) else host
     }
 
     /**

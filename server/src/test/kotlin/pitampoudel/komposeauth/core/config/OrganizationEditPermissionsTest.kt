@@ -50,6 +50,29 @@ class OrganizationEditPermissionsTest {
     }
 
     @Test
+    fun `super admin can edit any organization`() {
+        // SUPER_ADMIN is a superset of ADMIN, so anywhere ADMIN opens a door it opens the same one.
+        val superAdmin = user(roles = listOf("SUPER_ADMIN"))
+        val org = Organization(
+            name = "Acme",
+            email = "acme@example.com",
+            logoUrl = null,
+            country = null,
+            state = null,
+            city = null,
+            addressLine1 = null,
+            addressLine2 = null,
+            phoneNumber = null,
+            registrationNo = null,
+            description = null,
+            website = null,
+            userIds = emptyList()
+        )
+
+        assertTrue(canEditOrganization(org, superAdmin))
+    }
+
+    @Test
     fun `member can edit when their id is present`() {
         val memberId = ObjectId.get()
         val member = user(memberId)
