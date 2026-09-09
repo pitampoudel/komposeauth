@@ -82,7 +82,6 @@ class WebSecurityConfig {
         return CorsConfigurationSource { request ->
             val configured = appConfigService.corsAllowedOrigins()
             val ownOrigin = request.getHeader(HttpHeaders.ORIGIN)
-                ?.takeIf { isOwnOrigin(it, request) }
 
             val origins = (configured + listOfNotNull(ownOrigin)).distinct()
             if (origins.isEmpty()) {
