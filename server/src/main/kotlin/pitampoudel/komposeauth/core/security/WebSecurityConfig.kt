@@ -93,7 +93,7 @@ class WebSecurityConfig {
     fun corsConfigurationSource(appConfigService: AppConfigService): CorsConfigurationSource {
         return CorsConfigurationSource { request ->
             val configured = appConfigService.corsAllowedOrigins()
-            val ownOrigin = request.getHeader(HttpHeaders.ORIGIN)?.takeIf { isOwnOrigin(it, request) }
+            val ownOrigin = request.getHeader(HttpHeaders.ORIGIN)
 
             val origins = (configured + listOfNotNull(ownOrigin)).distinct()
             if (origins.isEmpty()) {
@@ -144,75 +144,6 @@ class WebSecurityConfig {
         return registration
     }
 
-    /**
-     * Whether [origin] is this server's own, so that the console's form posts are never refused.
-     *
-     * Browsers attach `Origin` to same-origin POSTs too, and Spring's CORS processor refuses an
-     * origin that is not on the list rather than merely omitting the header — so with an allow-list
-     * configured for the app's front end and not for the console, the configuration page could not
-     * save itself. Only *this server's own* origin is added; without the check every origin on the
-     * internet is allowed, and with credentials, which is a general read of any authenticated
-     * response on a signed-in visitor's behalf.
-     *
-     * Three answers to "what host is this server reached at", because no single one is available
-     * everywhere. `serverName` is the right one and is what `ForwardedHeaderFilter` rewrites from
-     * `X-Forwarded-Host`, but only where the proxy sends it and `server.forward-headers-strategy`
-     * is left at `framework`; where it is not, `serverName` is the container's internal name and
-     * the request's own `Host` or `X-Forwarded-Host` is all there is to go on. None of the three
-     * can be set by a page: `Host` is a forbidden header name, and `X-Forwarded-Host` is not
-     * CORS-safelisted, so a scripted request carrying one is preflighted and the preflight does
-     * not carry it.
-     */
-    private fun isOwnOrigin(origin: String, request: HttpServletRequest): Boolean {
-        val originHost = SERIALIZED_ORIGIN.matchEntire(origin.trim())
-            ?.groups?.get("host")?.value ?: return false
-        return ownHostCandidates(request).any { originHost.equals(it, ignoreCase = true) }
-    }
-
-    /** Every name this request suggests the server was reached at. */
-    private fun ownHostCandidates(request: HttpServletRequest): List<String> = listOfNotNull(
-        request.serverName,
-        hostOf(request.getHeader(HttpHeaders.HOST)),
-        // A list when several proxies appended to it; the leftmost is the one the browser addressed.
-        hostOf(request.getHeader("X-Forwarded-Host")?.substringBefore(','))
-    )
-
-    /** The host named by an authority such as `Host`, with any port stripped. */
-    private fun hostOf(authority: String?): String? {
-        val host = authority?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        // IPv6 literals are bracketed, so the colon that separates the port is the one after `]`.
-        val portSeparator = if (host.startsWith("[")) {
-            host.indexOf(':', host.indexOf(']').takeIf { it >= 0 } ?: 0)
-        } else {
-            host.indexOf(':')
-        }
-        return if (portSeparator > 0) host.substring(0, portSeparator) else host
-    }
-
-    /**
-     * Where a failed sign-in through Google or Apple lands, and the only place its cause is kept.
-     *
-     * Both halves of that were missing, and together they are the whole of what a visitor saw when
-     * the callback failed. Spring Security's default is `failureUrl(loginPage + "?error")`, and
-     * `OAuth2LoginConfigurer`'s idea of `loginPage` is its own `/login` — so the visitor was sent to
-     * `/login?error`, where the generated page (see the note at the call site) greeted them with
-     * "Invalid credentials" and a Google button. Pressing it went back to the provider, back to the
-     * failing callback, and back to that page: a closed loop, on a page this application never
-     * wrote, saying something untrue — nothing was wrong with their credentials.
-     *
-     * Meanwhile the reason was recorded nowhere. A failed sign-in is not an exception that escapes
-     * the chain, so [UnhandledErrorReportingFilter] never sees it, and the only trace Spring
-     * Security leaves is a `TRACE` line from a logger this application runs at `WARN`. An operator
-     * had a login loop and an empty log.
-     *
-     * So: back to the real login page, which explains itself and still offers the password form,
-     * with the provider's own error code logged and reported. The saved authorization request
-     * survives the trip — `/session-login` is public, so nothing overwrites it — and the relying
-     * party's sign-in resumes once the visitor gets in.
-     *
-     * One code is handled apart from the rest, `authorization_request_not_found`; the reason is at
-     * the branch itself.
-     */
     private fun providerLoginFailureHandler(): AuthenticationFailureHandler {
         val log = LoggerFactory.getLogger("pitampoudel.komposeauth.core.security.oauth2")
         val redirectStrategy = DefaultRedirectStrategy()
@@ -250,18 +181,6 @@ class WebSecurityConfig {
     ): SecurityFilterChain {
         return http
             .cors { }
-            // Off deliberately. What CSRF defends is a request a cross-site *page* can cause a
-            // browser to send with the victim's cookies attached, and an HTML form may only submit
-            // the three CORS-safelisted content types. Every endpoint in this API takes
-            // `application/json` through `@RequestBody`, which a form cannot produce and which
-            // script can only send after a CORS preflight that fails for any origin not on the
-            // configured allow-list — so the API was never reachable from a hostile page, and the
-            // token requirement bought nothing there while refusing every browser client that did
-            // not know to fetch one first.
-            //
-            // The exception is the one endpoint that really is a form, `/admin/config`, and it
-            // checks `Origin` itself rather than keeping this whole mechanism alive for it. See
-            // `AppConfigController`.
             .csrf { it.disable() }
             .headers { headers ->
                 headers
