@@ -25,7 +25,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.core.security.csrf.CrossOriginCsrfTokenRepository
 import pitampoudel.komposeauth.user.repository.UserRepository
 import kotlin.test.assertEquals
@@ -61,6 +63,9 @@ class CsrfProtectionIntegrationTest {
     @Autowired
     private lateinit var securityFilterChainProxy: FilterChainProxy
 
+    @Autowired
+    private lateinit var appConfigService: AppConfigService
+
     /** The matcher the running CsrfFilter actually decides with. */
     private fun liveCsrfMatcher(): RequestMatcher {
         val filter = securityFilterChainProxy.getFilters("/${ApiEndpoints.UPDATE_PROFILE}").orEmpty()
@@ -70,21 +75,51 @@ class CsrfProtectionIntegrationTest {
     }
 
     @Test
-    fun `a cookie-authenticated write still requires a csrf token`() {
+    fun `a cookie-authenticated form write still requires a csrf token`() {
         // Guards a specific regression. OAuth2ResourceServerConfigurer registers a CSRF exemption for
         // any request its BearerTokenResolver can pull a token from, and this application's resolver
         // falls back to the access-token cookie — which silently exempted every cookie-authenticated
         // request, the exact case CSRF is here to cover. Asserting against the live matcher catches
         // that coming back even if the end-to-end request below is ever weakened.
         val cookieAuthenticated = MockMvcRequestBuilders
-            .post("/${ApiEndpoints.UPDATE_PROFILE}")
+            .post("/admin/config")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
             .cookie(Cookie(ACCESS_TOKEN_COOKIE_NAME, "any-jwt"))
             .buildRequest(MockServletContext())
 
         assertTrue(
             liveCsrfMatcher().matches(cookieAuthenticated),
-            "a cookie-authenticated write must require a CSRF token"
+            "a cookie-authenticated form write must require a CSRF token"
         )
+    }
+
+    @Test
+    fun `the cookie-authenticated JSON API does not require a csrf token`() {
+        // The other half of the rule, and the one that was an outage rather than a hole. This
+        // server's own browser client authenticates with the access-token cookie and never fetches a
+        // token, so every one of these came back 403. A cross-site form cannot produce
+        // `application/json`, and script that sets it is stopped by the CORS preflight, so nothing
+        // is given up by letting them through.
+        listOf(
+            ApiEndpoints.SEND_OTP,
+            ApiEndpoints.VERIFY_OTP,
+            ApiEndpoints.UPDATE_PROFILE,
+            ApiEndpoints.KYC_PERSONAL_INFO,
+            ApiEndpoints.KYC_DOCUMENTS,
+            ApiEndpoints.KYC_ADDRESS,
+            ApiEndpoints.ORGANIZATIONS
+        ).forEach { endpoint ->
+            val jsonWrite = MockMvcRequestBuilders
+                .post("/$endpoint")
+                .contentType(MediaType.APPLICATION_JSON)
+                .cookie(Cookie(ACCESS_TOKEN_COOKIE_NAME, "any-jwt"))
+                .buildRequest(MockServletContext())
+
+            assertFalse(
+                liveCsrfMatcher().matches(jsonWrite),
+                "/$endpoint demanded a CSRF token a JSON client has no way to know it needs"
+            )
+        }
     }
 
     @Test
@@ -92,7 +127,8 @@ class CsrfProtectionIntegrationTest {
         // Native and server-to-server clients authenticate with the header, which a browser will not
         // attach cross-site, so demanding a token there would break them for no security gain.
         val headerAuthenticated = MockMvcRequestBuilders
-            .post("/${ApiEndpoints.UPDATE_PROFILE}")
+            .post("/admin/config")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
             .header("Authorization", "Bearer any-jwt")
             .buildRequest(MockServletContext())
 
@@ -103,33 +139,37 @@ class CsrfProtectionIntegrationTest {
     }
 
     @Test
-    fun `cookie-authenticated write is rejected without a csrf token`() {
+    fun `a forged form write is still rejected without a csrf token`() {
+        // Pointed at the configuration page deliberately: it is the one @ModelAttribute endpoint in
+        // the server, it reads and writes every secret this server holds, and being a real form post
+        // it is the one thing here a cross-site page could actually drive. If CSRF protects anything,
+        // it protects this.
         val email = "csrf-reject@example.com"
         val userId = TestAuthHelpers.createUser(mockMvc, json, email)
+        val superAdmin = userRepository.findById(ObjectId(userId)).orElseThrow()
+        userRepository.save(superAdmin.copy(roles = listOf(Roles.SUPER_ADMIN)))
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
+
+        val before = appConfigService.getConfig().name
 
         // Opts out of the harness's automatic token, so this request carries none at all — the
         // position a cross-site caller is in. Sending a deliberately *invalid* token does not work:
         // csrf() sets the token parameter, so whichever processor runs last decides its value.
-        val response = mockMvc.post("/${ApiEndpoints.UPDATE_PROFILE}") {
-            contentType = MediaType.APPLICATION_JSON
-            accept = MediaType.APPLICATION_JSON
+        val response = mockMvc.post("/admin/config") {
+            contentType = MediaType.APPLICATION_FORM_URLENCODED
             header(TestConfig.OMIT_CSRF_TOKEN_HEADER, "true")
             cookie(cookie)
-            content = """{"givenName":"Forged"}"""
+            param("name", "Forged")
         }.andReturn().response
-
-        // The property the protection exists for: the forged write must not have landed.
-        val user = userRepository.findById(ObjectId(userId)).orElseThrow()
-        assertNotEquals(
-            "Forged",
-            user.firstName,
-            "forged write was applied (status ${response.status})"
-        )
 
         assertTrue(
             response.status !in 200..299,
-            "forged write should not have succeeded, got ${response.status}"
+            "forged configuration save should not have succeeded, got ${response.status}"
+        )
+        assertNotEquals(
+            "Forged",
+            appConfigService.getConfig().name,
+            "forged configuration save was applied (was ${before}, status ${response.status})"
         )
     }
 
@@ -153,12 +193,15 @@ class CsrfProtectionIntegrationTest {
     }
 
     @Test
-    fun `logout requires a csrf token`() {
+    fun `a form-shaped logout requires a csrf token`() {
+        // A cross-site <form action="/logout"> sends form-encoded and is the forgeable shape; the
+        // client's own JSON logout is not, and is exempt.
         val email = "csrf-logout@example.com"
         TestAuthHelpers.createUser(mockMvc, json, email)
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
 
         val response = mockMvc.post("/${ApiEndpoints.LOGOUT}") {
+            contentType = MediaType.APPLICATION_FORM_URLENCODED
             header(TestConfig.OMIT_CSRF_TOKEN_HEADER, "true")
             cookie(cookie)
         }.andReturn().response
@@ -169,26 +212,8 @@ class CsrfProtectionIntegrationTest {
         )
     }
 
-    /**
-     * Asking for a verification code is a step in signing up, taken before the caller has any token
-     * to present. A browser app doing it carries cookies, so it is not a header-only bearer request
-     * either — which left it demanding a CSRF token nobody had fetched, and answering 403 to every
-     * attempt. Pinned against the live matcher so the exemption cannot quietly go away again.
-     */
     @Test
-    fun `sending a verification code does not require a csrf token`() {
-        val untokened = MockMvcRequestBuilders
-            .post("/${ApiEndpoints.SEND_OTP}")
-            .buildRequest(MockServletContext())
-
-        assertFalse(
-            liveCsrfMatcher().matches(untokened),
-            "asking for a verification code must not require a CSRF token"
-        )
-    }
-
-    @Test
-    fun `send-otp without a csrf token is not refused`() {
+    fun `a JSON write without a csrf token is not refused`() {
         val response = mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
             header(TestConfig.OMIT_CSRF_TOKEN_HEADER, "true")
             contentType = MediaType.APPLICATION_JSON

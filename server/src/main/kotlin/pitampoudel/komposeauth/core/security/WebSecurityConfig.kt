@@ -38,7 +38,6 @@ import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy
 import org.springframework.security.web.util.matcher.AndRequestMatcher
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
-import org.springframework.security.web.util.matcher.OrRequestMatcher
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher
 import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.cors.CorsConfiguration
@@ -51,6 +50,7 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.security.csrf.CrossOriginCsrfTokenRepository
+import pitampoudel.komposeauth.core.security.csrf.CsrfProtectionPolicy
 import pitampoudel.komposeauth.core.security.csrf.EagerCsrfTokenFilter
 import pitampoudel.komposeauth.core.security.csrf.authCookieDomain
 
@@ -191,7 +191,7 @@ class WebSecurityConfig {
     }
 
     /**
-     * Exactly which requests must carry a CSRF token.
+     * Exactly which requests must carry a CSRF token — see [CsrfProtectionPolicy] for the rule.
      *
      * This has to be forced onto the filter rather than merely configured, because
      * `OAuth2ResourceServerConfigurer` quietly adds a `BearerTokenRequestMatcher` of its own to the
@@ -202,35 +202,7 @@ class WebSecurityConfig {
      * to stop. The exemption is sound for a real `Authorization` header, which a browser will not
      * attach on its own; it is not sound for a cookie.
      */
-    private fun csrfProtectionMatcher(): RequestMatcher {
-        val safeMethods = setOf("GET", "HEAD", "TRACE", "OPTIONS")
-        val stateChanging = RequestMatcher { request -> request.method !in safeMethods }
-        return AndRequestMatcher(
-            stateChanging,
-            NegatedRequestMatcher(
-                OrRequestMatcher(
-                    PublicEndpoints.csrfExemptRequestMatcher(),
-                    headerOnlyBearerRequest()
-                )
-            )
-        )
-    }
-
-    /**
-     * A request that carries a bearer token in the `Authorization` header and no session or
-     * access-token cookie cannot be forged cross-site: the browser will not attach that header on
-     * its own. Native and server-to-server clients authenticate this way, so exempting them keeps
-     * CSRF protection focused on the cookie-authenticated browser surface where it actually applies.
-     */
-    private fun headerOnlyBearerRequest(): RequestMatcher = RequestMatcher { request ->
-        val hasBearerHeader = request.getHeader("Authorization")
-            ?.startsWith("Bearer ", ignoreCase = true) == true
-        val cookieNames = request.cookies?.map { it.name }.orEmpty()
-        val hasAmbientCredential = cookieNames.any {
-            it == ACCESS_TOKEN_COOKIE_NAME || it == "JSESSIONID" || it == "SESSION"
-        }
-        hasBearerHeader && !hasAmbientCredential
-    }
+    private fun csrfProtectionMatcher(): RequestMatcher = CsrfProtectionPolicy.matcher()
 
     /**
      * Where a failed sign-in through Google or Apple lands, and the only place its cause is kept.
