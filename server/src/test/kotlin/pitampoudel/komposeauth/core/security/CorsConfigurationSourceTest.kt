@@ -7,6 +7,7 @@ import org.springframework.web.cors.CorsUtils
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import kotlin.test.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -40,10 +41,10 @@ class CorsConfigurationSourceTest {
     fun `a wildcard origin is expressed as a pattern`() {
         // allowedOrigins rejects patterns outright when credentials are allowed; allowedOriginPatterns
         // is the field that accepts them.
-        val configuration = configurationFor("https://*.example.com")
+        val configuration = assertNotNull(configurationFor("https://*.example.com"))
 
-        assertTrue(configuration?.allowedOriginPatterns?.contains("https://*.example.com") == true)
-        assertTrue(configuration?.allowedOrigins.isNullOrEmpty())
+        assertTrue("https://*.example.com" in configuration.allowedOriginPatterns.orEmpty())
+        assertTrue(configuration.allowedOrigins.isNullOrEmpty())
     }
 
     @Test
