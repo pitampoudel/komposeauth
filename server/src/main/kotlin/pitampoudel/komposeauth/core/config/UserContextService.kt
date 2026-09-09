@@ -5,6 +5,7 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.stereotype.Service
+import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.organization.entity.Organization
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.service.UserService
@@ -41,7 +42,8 @@ class UserContextService(val userService: UserService) {
     }
 }
 
-fun User.isAdmin() = roles.contains("ADMIN")
+/** SUPER_ADMIN is a strict superset of ADMIN, the same way the granted-authority hierarchy has it. */
+fun User.isAdmin() = roles.any { it == Roles.ADMIN || it == Roles.SUPER_ADMIN }
 
 fun canEditOrganization(organization: Organization, user: User): Boolean {
     return if (user.isAdmin()) true

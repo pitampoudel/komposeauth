@@ -8,8 +8,9 @@ import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.boot.web.servlet.FilterRegistrationBean
+import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseCookie
@@ -30,26 +31,18 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache
 import org.springframework.security.web.savedrequest.RequestCache
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
-import org.springframework.security.config.ObjectPostProcessor
-import org.springframework.security.web.csrf.CsrfFilter
-import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy
 import org.springframework.security.web.util.matcher.AndRequestMatcher
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
-import org.springframework.security.web.util.matcher.OrRequestMatcher
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher
-import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
-import org.springframework.web.util.UriComponentsBuilder
+import org.springframework.web.filter.CorsFilter
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
-import pitampoudel.komposeauth.core.security.csrf.CrossOriginCsrfTokenRepository
-import pitampoudel.komposeauth.core.security.csrf.EagerCsrfTokenFilter
-import pitampoudel.komposeauth.core.security.csrf.authCookieDomain
 
 @Configuration
 @EnableWebSecurity
@@ -83,109 +76,68 @@ class WebSecurityConfig {
     }
 
 
+    /**
+     * The origins an operator configured, and nothing added at request time.
+     *
+     * Same-origin requests are Spring's job: `CorsUtils.isCorsRequest` compares the `Origin`
+     * header's scheme, host and port against the request's own and reports false when they agree,
+     * so the console's own form posts never reach this list. That comparison uses what the
+     * application sees, which behind a proxy means `server.forward-headers-strategy` and an edge
+     * that sends `X-Forwarded-Proto` and `X-Forwarded-Host` — the setting to check if a deployment
+     * has its own posts refused.
+     */
     @Bean
     fun corsConfigurationSource(appConfigService: AppConfigService): CorsConfigurationSource {
-        return CorsConfigurationSource { request ->
-            val configured = appConfigService.corsAllowedOrigins()
-            val ownOrigin = request.getHeader(HttpHeaders.ORIGIN)
-                ?.takeIf { sameHostAsServer(it, request) }
-
-            val origins = (configured + listOfNotNull(ownOrigin)).distinct()
+        return CorsConfigurationSource {
+            val origins = appConfigService.corsAllowedOrigins()
             if (origins.isEmpty()) {
                 // No opinion, rather than "refuse everyone".
                 return@CorsConfigurationSource null
             }
 
-            val configuration = CorsConfiguration()
-            if (origins.any { it.contains("*") }) {
-                configuration.allowedOriginPatterns = origins
-            } else {
-                configuration.allowedOrigins = origins
+            CorsConfiguration().apply {
+                if (origins.any { it.contains("*") }) {
+                    allowedOriginPatterns = origins
+                } else {
+                    allowedOrigins = origins
+                }
+                allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                // Safe to reflect: the configured allow-list gates access, and it is never `*`
+                // while credentials are allowed.
+                allowedHeaders = listOf("*")
+                allowCredentials = true
+                maxAge = 1800L
             }
-            configuration.allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-            // Safe to reflect: the origin allow-list above is what actually gates access, and it is
-            // never `*` while credentials are allowed.
-            configuration.allowedHeaders = listOf("*")
-            configuration.allowCredentials = true
-            configuration.maxAge = 1800L
-            configuration
         }
     }
 
-    /** Whether [origin] names this very server, ignoring scheme and port. See the note above. */
-    private fun sameHostAsServer(origin: String, request: HttpServletRequest): Boolean {
-        val originHost = runCatching {
-            UriComponentsBuilder.fromUriString(origin).build().host
-        }.getOrNull() ?: return false
-        return originHost.equals(request.serverName, ignoreCase = true)
+    /**
+     * The same CORS decision as the security chain's, taken early enough to be on every response.
+     *
+     * `.cors { }` below installs this inside the Spring Security chain, which is registered late —
+     * after the abuse limiter, which sits at the very front by design so a throttled request is
+     * turned away before anything expensive happens. A 429 therefore left without a single
+     * `Access-Control-Allow-*` header, and a browser cannot read a response it was not allowed to
+     * read: the app saw an opaque CORS failure rather than "too many requests", with nothing to say
+     * a limit had been hit. That is the difference between a legible error and a mystery, and it
+     * shows up exactly where the limiter is most likely to misfire — behind a proxy whose hop count
+     * has not been declared, where one bucket holds every caller at once.
+     *
+     * Deciding twice is free: `DefaultCorsProcessor` returns immediately if the response already
+     * carries `Access-Control-Allow-Origin`, so the chain's own filter simply finds the work done.
+     */
+    @Bean
+    fun corsFilterRegistration(
+        corsConfigurationSource: CorsConfigurationSource
+    ): FilterRegistrationBean<CorsFilter> {
+        val registration = FilterRegistrationBean(CorsFilter(corsConfigurationSource))
+        // Ahead of the rate limiter at HIGHEST_PRECEDENCE + 10, behind the error reporter at
+        // HIGHEST_PRECEDENCE, which only wraps the chain.
+        registration.order = Ordered.HIGHEST_PRECEDENCE + 5
+        registration.addUrlPatterns("/*")
+        return registration
     }
 
-    /**
-     * Exactly which requests must carry a CSRF token.
-     *
-     * This has to be forced onto the filter rather than merely configured, because
-     * `OAuth2ResourceServerConfigurer` quietly adds a `BearerTokenRequestMatcher` of its own to the
-     * CSRF exemptions. That matcher asks the [BearerTokenResolver] whether the request carries a
-     * token, and this application's resolver falls back to reading the access-token cookie — so
-     * every cookie-authenticated request was being exempted. Since that cookie is SameSite=None and
-     * rides along on cross-site requests, it exempted precisely the requests CSRF protection exists
-     * to stop. The exemption is sound for a real `Authorization` header, which a browser will not
-     * attach on its own; it is not sound for a cookie.
-     */
-    private fun csrfProtectionMatcher(): RequestMatcher {
-        val safeMethods = setOf("GET", "HEAD", "TRACE", "OPTIONS")
-        val stateChanging = RequestMatcher { request -> request.method !in safeMethods }
-        return AndRequestMatcher(
-            stateChanging,
-            NegatedRequestMatcher(
-                OrRequestMatcher(
-                    PublicEndpoints.csrfExemptRequestMatcher(),
-                    headerOnlyBearerRequest()
-                )
-            )
-        )
-    }
-
-    /**
-     * A request that carries a bearer token in the `Authorization` header and no session or
-     * access-token cookie cannot be forged cross-site: the browser will not attach that header on
-     * its own. Native and server-to-server clients authenticate this way, so exempting them keeps
-     * CSRF protection focused on the cookie-authenticated browser surface where it actually applies.
-     */
-    private fun headerOnlyBearerRequest(): RequestMatcher = RequestMatcher { request ->
-        val hasBearerHeader = request.getHeader("Authorization")
-            ?.startsWith("Bearer ", ignoreCase = true) == true
-        val cookieNames = request.cookies?.map { it.name }.orEmpty()
-        val hasAmbientCredential = cookieNames.any {
-            it == ACCESS_TOKEN_COOKIE_NAME || it == "JSESSIONID" || it == "SESSION"
-        }
-        hasBearerHeader && !hasAmbientCredential
-    }
-
-    /**
-     * Where a failed sign-in through Google or Apple lands, and the only place its cause is kept.
-     *
-     * Both halves of that were missing, and together they are the whole of what a visitor saw when
-     * the callback failed. Spring Security's default is `failureUrl(loginPage + "?error")`, and
-     * `OAuth2LoginConfigurer`'s idea of `loginPage` is its own `/login` — so the visitor was sent to
-     * `/login?error`, where the generated page (see the note at the call site) greeted them with
-     * "Invalid credentials" and a Google button. Pressing it went back to the provider, back to the
-     * failing callback, and back to that page: a closed loop, on a page this application never
-     * wrote, saying something untrue — nothing was wrong with their credentials.
-     *
-     * Meanwhile the reason was recorded nowhere. A failed sign-in is not an exception that escapes
-     * the chain, so [UnhandledErrorReportingFilter] never sees it, and the only trace Spring
-     * Security leaves is a `TRACE` line from a logger this application runs at `WARN`. An operator
-     * had a login loop and an empty log.
-     *
-     * So: back to the real login page, which explains itself and still offers the password form,
-     * with the provider's own error code logged and reported. The saved authorization request
-     * survives the trip — `/session-login` is public, so nothing overwrites it — and the relying
-     * party's sign-in resumes once the visitor gets in.
-     *
-     * One code is handled apart from the rest, `authorization_request_not_found`; the reason is at
-     * the branch itself.
-     */
     private fun providerLoginFailureHandler(): AuthenticationFailureHandler {
         val log = LoggerFactory.getLogger("pitampoudel.komposeauth.core.security.oauth2")
         val redirectStrategy = DefaultRedirectStrategy()
@@ -219,40 +171,11 @@ class WebSecurityConfig {
         bearerTokenResolver: BearerTokenResolver,
         loginSuccessHandler: OAuth2LoginSuccessHandler,
         appConfigService: AppConfigService,
-        csrfTokenRepository: CrossOriginCsrfTokenRepository,
         authorizationRequestResolver: OAuth2AuthorizationRequestResolver
     ): SecurityFilterChain {
         return http
             .cors { }
-            // Session and access-token cookies are ambient authority, and the access-token cookie is
-            // deliberately SameSite=None so it crosses sites. With CSRF off, any page on the internet
-            // could drive a form-encoded POST — /config (every secret this server holds),
-            // /update-profile, role grants — using a logged-in victim's credentials.
-            .csrf { csrf ->
-                // Scoped and same-site-configured to match the access-token cookie, so browser apps
-                // on sibling origins can actually obtain a token. See the repository's own notes.
-                csrf.csrfTokenRepository(csrfTokenRepository)
-                // Spring's default handler. It masks the token with a fresh random pad on each
-                // render, so the value in a page's markup differs every time and cannot be recovered
-                // by measuring the size of a compressed response (BREACH). Everything that submits a
-                // token here — Thymeleaf forms, the console's fetch calls, /csrf — takes it from the
-                // rendered value rather than the cookie, so the masking is transparent to all of them.
-                csrf.csrfTokenRequestHandler(XorCsrfTokenRequestAttributeHandler())
-                csrf.requireCsrfProtectionMatcher(csrfProtectionMatcher())
-                // Configuring the matcher above is not enough on its own: exemptions registered by
-                // other configurers are AND-NOT-ed onto whatever is set here, and the resource
-                // server registers one that matches any request carrying a token — including one
-                // read from the cookie. Post-processing runs after the filter has been built and
-                // its matcher assembled, so this is the last word on the subject.
-                csrf.withObjectPostProcessor(object : ObjectPostProcessor<CsrfFilter> {
-                    override fun <O : CsrfFilter> postProcess(filter: O): O {
-                        filter.setRequireCsrfProtectionMatcher(csrfProtectionMatcher())
-                        return filter
-                    }
-                })
-            }
-            // Settles the token while the response can still carry its cookie. See the filter.
-            .addFilterAfter(EagerCsrfTokenFilter(), CsrfFilter::class.java)
+            .csrf { it.disable() }
             .headers { headers ->
                 headers
                     .frameOptions { it.deny() }

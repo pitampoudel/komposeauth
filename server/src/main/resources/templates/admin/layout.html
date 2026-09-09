@@ -11,8 +11,6 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}"/>
     <title th:replace="${pageTitle}">Admin</title>
     <style th:inline="css">
         :root {
@@ -591,16 +589,6 @@
 </div>
 
 <script>
-    // CSRF: the server issues a token per session; state-changing calls must echo it back.
-    const CSRF_TOKEN = document.querySelector('meta[name="_csrf"]')?.content;
-    const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.content;
-
-    function csrfHeaders(extra) {
-        const headers = Object.assign({}, extra || {});
-        if (CSRF_TOKEN && CSRF_HEADER) headers[CSRF_HEADER] = CSRF_TOKEN;
-        return headers;
-    }
-
     function escapeHtml(value) {
         return String(value ?? "").replace(/[&<>"']/g, c => (
             {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]
@@ -617,7 +605,7 @@
     document.getElementById("signOut")?.addEventListener("click", async function () {
         this.disabled = true;
         try {
-            await fetch("/logout", {method: "POST", credentials: "same-origin", headers: csrfHeaders()});
+            await fetch("/logout", {method: "POST", credentials: "same-origin", headers: {Accept: "application/json"}});
         } finally {
             window.location.href = "/session-login";
         }

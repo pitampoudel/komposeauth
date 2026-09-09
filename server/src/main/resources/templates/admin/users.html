@@ -429,7 +429,7 @@
             const res = await fetch(`/users/${encodeURIComponent(state.target.id)}/roles/${encodeURIComponent(role)}`, {
                 method: grant ? "POST" : "DELETE",
                 credentials: "same-origin",
-                headers: csrfHeaders({Accept: "application/json"})
+                headers: {Accept: "application/json"}
             });
 
             if (!res.ok) {

@@ -120,9 +120,7 @@ class RealContainerLoginIntegrationTest {
         )
 
         // Straight to the login page: nothing saved the way an authorization request would have.
-        val page = get(base() + "/session-login")
-        val csrf = Regex("""name="_csrf" value="([^"]+)"""").find(page.body())?.groupValues?.get(1)
-        assertNotNull(csrf, "the login page carried no CSRF token")
+        get(base() + "/session-login")
 
         fun enc(v: String) = URLEncoder.encode(v, StandardCharsets.UTF_8)
         val login = http.send(
@@ -130,7 +128,7 @@ class RealContainerLoginIntegrationTest {
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .header("Accept", "text/html")
                 .POST(HttpRequest.BodyPublishers.ofString(
-                    "username=${enc(email)}&password=${enc(password)}&_csrf=${enc(csrf)}"
+                    "username=${enc(email)}&password=${enc(password)}"
                 ))
                 .build(),
             HttpResponse.BodyHandlers.ofString()
@@ -220,9 +218,7 @@ class RealContainerLoginIntegrationTest {
         record("GET /", get(base() + "/"))
 
         // 3. Back to the login page, and in.
-        val page = get(base() + "/session-login")
-        val csrf = Regex("""name="_csrf" value="([^"]+)"""").find(page.body())?.groupValues?.get(1)
-        assertNotNull(csrf, "the login page carried no CSRF token")
+        get(base() + "/session-login")
 
         fun enc(v: String) = URLEncoder.encode(v, StandardCharsets.UTF_8)
         val login = http.send(
@@ -231,7 +227,7 @@ class RealContainerLoginIntegrationTest {
                 .header("Accept", "text/html")
                 .POST(
                     HttpRequest.BodyPublishers.ofString(
-                        "username=${enc(email)}&password=${enc(password)}&_csrf=${enc(csrf)}"
+                        "username=${enc(email)}&password=${enc(password)}"
                     )
                 )
                 .build(),
@@ -289,9 +285,9 @@ class RealContainerLoginIntegrationTest {
             HttpResponse.BodyHandlers.ofString()
         )
 
-        fun postLogin(csrf: String): HttpResponse<String> {
+        fun postLogin(): HttpResponse<String> {
             fun enc(v: String) = URLEncoder.encode(v, StandardCharsets.UTF_8)
-            val form = "username=${enc(email)}&password=${enc(password)}&_csrf=${enc(csrf)}"
+            val form = "username=${enc(email)}&password=${enc(password)}"
             return http.send(
                 HttpRequest.newBuilder(URI.create(base() + "/session-login"))
                     .header("Content-Type", "application/x-www-form-urlencoded")
@@ -323,11 +319,9 @@ class RealContainerLoginIntegrationTest {
             }
 
             assertEquals(200, response.statusCode(), "unexpected page: $trail")
-            val csrf = Regex("""name="_csrf" value="([^"]+)"""").find(response.body())?.groupValues?.get(1)
-            assertNotNull(csrf, "the login page carried no CSRF token: $trail")
 
             signIns++
-            val login = postLogin(csrf)
+            val login = postLogin()
             val next = login.headers().firstValue("location").orElse(null)
             trail += "POST /session-login -> ${login.statusCode()} $next"
             assertTrue(

@@ -321,7 +321,6 @@
         <p th:if="${error}" class="alert alert-error" role="alert" aria-live="assertive" th:text="${error}"></p>
 
         <form id="login-form" th:action="@{/session-login}" method="post">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" th:if="${_csrf != null}"/>
 
             <div class="field">
                 <label for="username">Email or phone</label>

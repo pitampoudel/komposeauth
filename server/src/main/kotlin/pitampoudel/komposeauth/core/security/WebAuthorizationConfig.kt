@@ -184,13 +184,9 @@ class WebAuthorizationConfig {
 
         return http.securityMatcher(authorizationServerConfigurer.endpointsMatcher)
             .cors { }
-            // What OAuth2AuthorizationServerConfiguration.applyDefaultSecurity does for you; this
-            // chain is assembled by hand, so state it outright. The protocol endpoints authenticate
-            // the client per request (/oauth2/token is called by clients, not browsers), and a CSRF
-            // token requirement there would simply break them.
-            .csrf { csrf ->
-                csrf.ignoringRequestMatchers(authorizationServerConfigurer.endpointsMatcher)
-            }
+            // The protocol endpoints authenticate the client on every request — /oauth2/token is
+            // called by clients, not browsers — so there is no ambient authority here to forge.
+            .csrf { it.disable() }
             .with(authorizationServerConfigurer) { authorizationServer ->
                 authorizationServer.oidc {
                     it.userInfoEndpoint { userInfo ->
