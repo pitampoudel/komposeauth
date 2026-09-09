@@ -101,6 +101,41 @@ class OwnOriginCorsTest {
     }
 
     @Test
+    fun `only a serialized origin can name us`() {
+        // An `Origin` is scheme, host and optional port and nothing else, and a browser never sends
+        // anything else. Handing these to a URI parser answered `auth.example.com` for the first
+        // two, and the value that comes back is echoed in Access-Control-Allow-Origin.
+        listOf(
+            "//auth.example.com",                 // no scheme
+            "https://auth.example.com/../../x",   // a path
+            "https://auth.example.com#@evil.com", // a fragment
+            "https://evil.com@auth.example.com",  // userinfo
+            "auth.example.com",                   // a bare host
+            "null"                                // sandboxed iframe, data: URL
+        ).forEach { origin ->
+            val allowed = allowedFor(
+                request(serverName = "auth.example.com", host = "auth.example.com", origin = origin),
+                "https://app.example.com"
+            )
+            assertTrue(origin !in allowed, "'$origin' was taken for this server's own origin")
+        }
+    }
+
+    @Test
+    fun `userinfo never lets another host pass as ours`() {
+        val allowed = allowedFor(
+            request(
+                serverName = "auth.example.com",
+                host = "auth.example.com",
+                origin = "https://auth.example.com@evil.com"
+            ),
+            "https://app.example.com"
+        )
+
+        assertTrue("https://auth.example.com@evil.com" !in allowed, "allowed: $allowed")
+    }
+
+    @Test
     fun `a configured origin is still allowed`() {
         val allowed = allowedFor(
             request(

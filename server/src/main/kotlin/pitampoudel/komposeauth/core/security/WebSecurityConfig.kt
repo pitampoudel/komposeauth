@@ -50,6 +50,18 @@ import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 @EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
 class WebSecurityConfig {
 
+    private companion object {
+        /**
+         * scheme "://" host [ ":" port ] — all RFC 6454 allows a serialized origin to be, and all a
+         * browser ever sends. Matched rather than parsed as a URI: a URI parser also accepts
+         * userinfo, paths and fragments and answers with a host anyway, so `//host` and
+         * `https://host/../x` both came back as this server's own.
+         */
+        val SERIALIZED_ORIGIN = Regex(
+            """[A-Za-z][A-Za-z0-9+.\-]*://(?<host>\[[0-9A-Fa-f:.]+]|[A-Za-z0-9._\-]+)(?::\d{1,5})?"""
+        )
+    }
+
     private fun clearTokenCookie(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -81,7 +93,7 @@ class WebSecurityConfig {
     fun corsConfigurationSource(appConfigService: AppConfigService): CorsConfigurationSource {
         return CorsConfigurationSource { request ->
             val configured = appConfigService.corsAllowedOrigins()
-            val ownOrigin = request.getHeader(HttpHeaders.ORIGIN)
+            val ownOrigin = request.getHeader(HttpHeaders.ORIGIN)?.takeIf { isOwnOrigin(it, request) }
 
             val origins = (configured + listOfNotNull(ownOrigin)).distinct()
             if (origins.isEmpty()) {
@@ -130,6 +142,51 @@ class WebSecurityConfig {
         registration.order = Ordered.HIGHEST_PRECEDENCE + 5
         registration.addUrlPatterns("/*")
         return registration
+    }
+
+    /**
+     * Whether [origin] is this server's own, so that the console's form posts are never refused.
+     *
+     * Browsers attach `Origin` to same-origin POSTs too, and Spring's CORS processor refuses an
+     * origin that is not on the list rather than merely omitting the header — so with an allow-list
+     * configured for the app's front end and not for the console, the configuration page could not
+     * save itself. Only *this server's own* origin is added; without the check every origin on the
+     * internet is allowed, and with credentials, which is a general read of any authenticated
+     * response on a signed-in visitor's behalf.
+     *
+     * Three answers to "what host is this server reached at", because no single one is available
+     * everywhere. `serverName` is the right one and is what `ForwardedHeaderFilter` rewrites from
+     * `X-Forwarded-Host`, but only where the proxy sends it and `server.forward-headers-strategy`
+     * is left at `framework`; where it is not, `serverName` is the container's internal name and
+     * the request's own `Host` or `X-Forwarded-Host` is all there is to go on. None of the three
+     * can be set by a page: `Host` is a forbidden header name, and `X-Forwarded-Host` is not
+     * CORS-safelisted, so a scripted request carrying one is preflighted and the preflight does
+     * not carry it.
+     */
+    private fun isOwnOrigin(origin: String, request: HttpServletRequest): Boolean {
+        val originHost = SERIALIZED_ORIGIN.matchEntire(origin.trim())
+            ?.groups?.get("host")?.value ?: return false
+        return ownHostCandidates(request).any { originHost.equals(it, ignoreCase = true) }
+    }
+
+    /** Every name this request suggests the server was reached at. */
+    private fun ownHostCandidates(request: HttpServletRequest): List<String> = listOfNotNull(
+        request.serverName,
+        hostOf(request.getHeader(HttpHeaders.HOST)),
+        // A list when several proxies appended to it; the leftmost is the one the browser addressed.
+        hostOf(request.getHeader("X-Forwarded-Host")?.substringBefore(','))
+    )
+
+    /** The host named by an authority such as `Host`, with any port stripped. */
+    private fun hostOf(authority: String?): String? {
+        val host = authority?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        // IPv6 literals are bracketed, so the colon that separates the port is the one after `]`.
+        val portSeparator = if (host.startsWith("[")) {
+            host.indexOf(':', host.indexOf(']').takeIf { it >= 0 } ?: 0)
+        } else {
+            host.indexOf(':')
+        }
+        return if (portSeparator > 0) host.substring(0, portSeparator) else host
     }
 
     /**
