@@ -2,7 +2,6 @@ package pitampoudel.komposeauth.core.security
 
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpHeaders
-import org.springframework.web.util.UriComponentsBuilder
 
 /**
  * Whether [origin] names the host this request was addressed to, ignoring scheme and port.
@@ -17,11 +16,28 @@ import org.springframework.web.util.UriComponentsBuilder
  * the preflight does not carry it.
  */
 fun isOwnOrigin(origin: String, request: HttpServletRequest): Boolean {
-    val originHost = runCatching {
-        UriComponentsBuilder.fromUriString(origin).build().host
-    }.getOrNull() ?: return false
+    val originHost = hostOfOrigin(origin) ?: return false
     return ownHostCandidates(request).any { originHost.equals(it, ignoreCase = true) }
 }
+
+/**
+ * The host named by a serialized origin, or null if the value is not one.
+ *
+ * Matched against the grammar rather than handed to a URI parser. An `Origin` is not a URI: RFC 6454
+ * serializes it as scheme, host and optional port and nothing else — no userinfo, no path, no query,
+ * no fragment — and a browser never sends anything else. A general parser accepts all of those and
+ * answers with a host anyway, so `//auth.example.com` and `https://auth.example.com/../../x` both
+ * came back as this server's own origin. Neither is reachable from a browser, so neither was a way
+ * in; matching the real grammar simply means there is nothing to reason about, and no URL-shaped
+ * value built out of a request header for a scanner to trip over.
+ */
+private fun hostOfOrigin(origin: String): String? =
+    SERIALIZED_ORIGIN.matchEntire(origin.trim())?.groups?.get("host")?.value
+
+/** scheme "://" host [ ":" port ] — a bracketed IPv6 literal, or a name of letters, digits, dots and hyphens. */
+private val SERIALIZED_ORIGIN = Regex(
+    """[A-Za-z][A-Za-z0-9+.\-]*://(?<host>\[[0-9A-Fa-f:.]+]|[A-Za-z0-9._\-]+)(?::\d{1,5})?"""
+)
 
 /**
  * Whether this request was sent by a page on some other site.

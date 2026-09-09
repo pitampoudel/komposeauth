@@ -76,4 +76,41 @@ class RequestOriginTest {
     fun `an unparseable Origin is refused`() {
         assertTrue(isCrossOriginRequest(request(origin = "not a url")))
     }
+
+    /**
+     * An `Origin` is not a URI. RFC 6454 serializes it as scheme, host and optional port and nothing
+     * else, and a browser never sends anything else — so anything that is not that shape is refused
+     * outright rather than having a host pulled out of it. Handing these to a general URI parser
+     * answered `auth.example.com` for the first two.
+     */
+    @Test
+    fun `only a serialized origin can name us`() {
+        listOf(
+            "//auth.example.com",                 // no scheme
+            "https://auth.example.com/../../x",   // a path
+            "https://auth.example.com#@evil.com", // a fragment
+            "https://evil.com@auth.example.com",  // userinfo
+            "auth.example.com",                   // a bare host
+            "null"                                // sandboxed iframe, data: URL
+        ).forEach { origin ->
+            assertTrue(
+                isCrossOriginRequest(request(origin = origin)),
+                "'$origin' is not a serialized origin and must not be taken for ours"
+            )
+        }
+    }
+
+    @Test
+    fun `userinfo never lets another host pass as ours`() {
+        assertTrue(isCrossOriginRequest(request(origin = "https://auth.example.com@evil.com")))
+    }
+
+    @Test
+    fun `an IPv6 origin is understood`() {
+        assertFalse(
+            isCrossOriginRequest(
+                request(serverName = "[::1]", host = "[::1]:8080", origin = "http://[::1]:8080")
+            )
+        )
+    }
 }
