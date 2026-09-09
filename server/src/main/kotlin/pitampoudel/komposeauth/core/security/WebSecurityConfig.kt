@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseCookie
@@ -50,18 +49,6 @@ import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 @EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
 class WebSecurityConfig {
 
-    private companion object {
-        /**
-         * scheme "://" host [ ":" port ] — all RFC 6454 allows a serialized origin to be, and all a
-         * browser ever sends. Matched rather than parsed as a URI: a URI parser also accepts
-         * userinfo, paths and fragments and answers with a host anyway, so `//host` and
-         * `https://host/../x` both came back as this server's own.
-         */
-        val SERIALIZED_ORIGIN = Regex(
-            """[A-Za-z][A-Za-z0-9+.\-]*://(?<host>\[[0-9A-Fa-f:.]+]|[A-Za-z0-9._\-]+)(?::\d{1,5})?"""
-        )
-    }
-
     private fun clearTokenCookie(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -89,31 +76,38 @@ class WebSecurityConfig {
     }
 
 
+    /**
+     * The origins an operator configured, and nothing added at request time.
+     *
+     * Same-origin requests are Spring's job: `CorsUtils.isCorsRequest` compares the `Origin`
+     * header's scheme, host and port against the request's own and reports false when they agree,
+     * so the console's own form posts never reach this list. That comparison uses what the
+     * application sees, which behind a proxy means `server.forward-headers-strategy` and an edge
+     * that sends `X-Forwarded-Proto` and `X-Forwarded-Host` — the setting to check if a deployment
+     * has its own posts refused.
+     */
     @Bean
     fun corsConfigurationSource(appConfigService: AppConfigService): CorsConfigurationSource {
-        return CorsConfigurationSource { request ->
-            val configured = appConfigService.corsAllowedOrigins()
-            val ownOrigin = request.getHeader(HttpHeaders.ORIGIN)
-
-            val origins = (configured + listOfNotNull(ownOrigin)).distinct()
+        return CorsConfigurationSource {
+            val origins = appConfigService.corsAllowedOrigins()
             if (origins.isEmpty()) {
                 // No opinion, rather than "refuse everyone".
                 return@CorsConfigurationSource null
             }
 
-            val configuration = CorsConfiguration()
-            if (origins.any { it.contains("*") }) {
-                configuration.allowedOriginPatterns = origins
-            } else {
-                configuration.allowedOrigins = origins
+            CorsConfiguration().apply {
+                if (origins.any { it.contains("*") }) {
+                    allowedOriginPatterns = origins
+                } else {
+                    allowedOrigins = origins
+                }
+                allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                // Safe to reflect: the configured allow-list gates access, and it is never `*`
+                // while credentials are allowed.
+                allowedHeaders = listOf("*")
+                allowCredentials = true
+                maxAge = 1800L
             }
-            configuration.allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-            // Safe to reflect: the origin allow-list above is what actually gates access, and it is
-            // never `*` while credentials are allowed.
-            configuration.allowedHeaders = listOf("*")
-            configuration.allowCredentials = true
-            configuration.maxAge = 1800L
-            configuration
         }
     }
 
