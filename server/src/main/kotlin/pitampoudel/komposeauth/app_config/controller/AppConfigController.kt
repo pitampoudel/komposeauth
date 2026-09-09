@@ -15,6 +15,7 @@ import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.app_config.service.MasterKeyValidator
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.controller.AdminShell
+import pitampoudel.komposeauth.core.security.isCrossOriginRequest
 import pitampoudel.komposeauth.core.domain.Roles
 
 @Controller
@@ -160,6 +161,7 @@ class AppConfigController(
         response: HttpServletResponse
     ): String {
         enforceConfigAccessOrRedirect(key = key, request = request)?.let { return it }
+        rejectCrossOriginSubmission(request)
         val config = appConfigProvider.save(form)
         noStore(response)
         adminShell.apply(model)
@@ -167,6 +169,25 @@ class AppConfigController(
         model.addAttribute("fieldGroups", fieldGroups(config))
         model.addAttribute("saved", true)
         return "admin/config"
+    }
+
+    /**
+     * The one place this server still needs a CSRF defence, and all it needs is this.
+     *
+     * Site-wide CSRF protection is off: every other endpoint takes `application/json`, which a
+     * cross-site form cannot produce and script cannot send without a CORS preflight. This one is
+     * the exception — it binds a plain `@ModelAttribute`, so a form on any page in the world could
+     * post to it, and the access-token cookie is `SameSite=None` and would ride along. What it
+     * would overwrite is every secret this server holds, and because the binding covers the whole
+     * object a forged post does not merely steal, it wipes.
+     *
+     * A browser attaches `Origin` to every cross-site POST and a page cannot forge or suppress it,
+     * so checking it is enough, and is the whole of what a token was doing here.
+     */
+    private fun rejectCrossOriginSubmission(request: HttpServletRequest) {
+        if (isCrossOriginRequest(request)) {
+            throw AccessDeniedException("Configuration can only be saved from this server's own pages.")
+        }
     }
 
     /** This page renders every secret the server holds; keep it out of caches and history. */

@@ -32,27 +32,18 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache
 import org.springframework.security.web.savedrequest.RequestCache
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
-import org.springframework.security.config.ObjectPostProcessor
-import org.springframework.security.web.csrf.CsrfFilter
-import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy
 import org.springframework.security.web.util.matcher.AndRequestMatcher
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher
-import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.filter.CorsFilter
-import org.springframework.web.util.UriComponentsBuilder
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.THIRD_FACTOR_KYC
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
-import pitampoudel.komposeauth.core.security.csrf.CrossOriginCsrfTokenRepository
-import pitampoudel.komposeauth.core.security.csrf.CsrfProtectionPolicy
-import pitampoudel.komposeauth.core.security.csrf.EagerCsrfTokenFilter
-import pitampoudel.komposeauth.core.security.csrf.authCookieDomain
 
 @Configuration
 @EnableWebSecurity
@@ -91,7 +82,7 @@ class WebSecurityConfig {
         return CorsConfigurationSource { request ->
             val configured = appConfigService.corsAllowedOrigins()
             val ownOrigin = request.getHeader(HttpHeaders.ORIGIN)
-                ?.takeIf { sameHostAsServer(it, request) }
+                ?.takeIf { isOwnOrigin(it, request) }
 
             val origins = (configured + listOfNotNull(ownOrigin)).distinct()
             if (origins.isEmpty()) {
@@ -141,68 +132,6 @@ class WebSecurityConfig {
         registration.addUrlPatterns("/*")
         return registration
     }
-
-    /**
-     * Whether [origin] names this very server, ignoring scheme and port. See the note above.
-     *
-     * Three answers to the question "what host is this server reached at", because no single one
-     * of them is available everywhere. `serverName` is the right one and is what `ForwardedHeaderFilter`
-     * rewrites from `X-Forwarded-Host` — but only where the proxy sends that header and
-     * `server.forward-headers-strategy` is left at `framework`. Where it is not, `serverName` is
-     * the container's internal name, so the console's own origin looked foreign to it: with an
-     * allow-list configured for the app's front end and not for the console, Spring's CORS
-     * processor refused the configuration page's own form post outright with "Invalid CORS
-     * request". The setting that would have fixed it was on the page that could no longer be
-     * saved, and the whole thing depended on how the deployment's proxy was set up — which is why
-     * the same build saved fine in one place and failed with a CORS error in another.
-     *
-     * `Host` and `X-Forwarded-Host` are the other two, and for this question they are sound ones:
-     * both name the authority the browser addressed, and neither can be set by a page. `Host` is a
-     * forbidden header name, and `X-Forwarded-Host` is not CORS-safelisted — a scripted request
-     * carrying one is preflighted, and the preflight does not carry it, so the check below never
-     * sees an attacker's value on a request that could still be allowed. Reading them costs nothing
-     * where they are absent and settles the case where `serverName` alone is wrong.
-     */
-    private fun sameHostAsServer(origin: String, request: HttpServletRequest): Boolean {
-        val originHost = runCatching {
-            UriComponentsBuilder.fromUriString(origin).build().host
-        }.getOrNull() ?: return false
-        return ownHostCandidates(request).any { originHost.equals(it, ignoreCase = true) }
-    }
-
-    /** Every name this request suggests the server was reached at. */
-    private fun ownHostCandidates(request: HttpServletRequest): List<String> = listOfNotNull(
-        request.serverName,
-        hostOf(request.getHeader(HttpHeaders.HOST)),
-        // A list when several proxies appended to it; the leftmost is the one the browser addressed.
-        hostOf(request.getHeader("X-Forwarded-Host")?.substringBefore(','))
-    )
-
-    /** The host named by an authority such as `Host`, with any port stripped. */
-    private fun hostOf(authority: String?): String? {
-        val host = authority?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        // IPv6 literals are bracketed, so the colon that separates the port is the one after `]`.
-        val portSeparator = if (host.startsWith("[")) {
-            host.indexOf(':', host.indexOf(']').takeIf { it >= 0 } ?: 0)
-        } else {
-            host.indexOf(':')
-        }
-        return if (portSeparator > 0) host.substring(0, portSeparator) else host
-    }
-
-    /**
-     * Exactly which requests must carry a CSRF token — see [CsrfProtectionPolicy] for the rule.
-     *
-     * This has to be forced onto the filter rather than merely configured, because
-     * `OAuth2ResourceServerConfigurer` quietly adds a `BearerTokenRequestMatcher` of its own to the
-     * CSRF exemptions. That matcher asks the [BearerTokenResolver] whether the request carries a
-     * token, and this application's resolver falls back to reading the access-token cookie — so
-     * every cookie-authenticated request was being exempted. Since that cookie is SameSite=None and
-     * rides along on cross-site requests, it exempted precisely the requests CSRF protection exists
-     * to stop. The exemption is sound for a real `Authorization` header, which a browser will not
-     * attach on its own; it is not sound for a cookie.
-     */
-    private fun csrfProtectionMatcher(): RequestMatcher = CsrfProtectionPolicy.matcher()
 
     /**
      * Where a failed sign-in through Google or Apple lands, and the only place its cause is kept.
@@ -261,40 +190,23 @@ class WebSecurityConfig {
         bearerTokenResolver: BearerTokenResolver,
         loginSuccessHandler: OAuth2LoginSuccessHandler,
         appConfigService: AppConfigService,
-        csrfTokenRepository: CrossOriginCsrfTokenRepository,
         authorizationRequestResolver: OAuth2AuthorizationRequestResolver
     ): SecurityFilterChain {
         return http
             .cors { }
-            // Session and access-token cookies are ambient authority, and the access-token cookie is
-            // deliberately SameSite=None so it crosses sites. With CSRF off, any page on the internet
-            // could drive a form-encoded POST — /config (every secret this server holds),
-            // /update-profile, role grants — using a logged-in victim's credentials.
-            .csrf { csrf ->
-                // Scoped and same-site-configured to match the access-token cookie, so browser apps
-                // on sibling origins can actually obtain a token. See the repository's own notes.
-                csrf.csrfTokenRepository(csrfTokenRepository)
-                // Spring's default handler. It masks the token with a fresh random pad on each
-                // render, so the value in a page's markup differs every time and cannot be recovered
-                // by measuring the size of a compressed response (BREACH). Everything that submits a
-                // token here — Thymeleaf forms, the console's fetch calls, /csrf — takes it from the
-                // rendered value rather than the cookie, so the masking is transparent to all of them.
-                csrf.csrfTokenRequestHandler(XorCsrfTokenRequestAttributeHandler())
-                csrf.requireCsrfProtectionMatcher(csrfProtectionMatcher())
-                // Configuring the matcher above is not enough on its own: exemptions registered by
-                // other configurers are AND-NOT-ed onto whatever is set here, and the resource
-                // server registers one that matches any request carrying a token — including one
-                // read from the cookie. Post-processing runs after the filter has been built and
-                // its matcher assembled, so this is the last word on the subject.
-                csrf.withObjectPostProcessor(object : ObjectPostProcessor<CsrfFilter> {
-                    override fun <O : CsrfFilter> postProcess(filter: O): O {
-                        filter.setRequireCsrfProtectionMatcher(csrfProtectionMatcher())
-                        return filter
-                    }
-                })
-            }
-            // Settles the token while the response can still carry its cookie. See the filter.
-            .addFilterAfter(EagerCsrfTokenFilter(), CsrfFilter::class.java)
+            // Off deliberately. What CSRF defends is a request a cross-site *page* can cause a
+            // browser to send with the victim's cookies attached, and an HTML form may only submit
+            // the three CORS-safelisted content types. Every endpoint in this API takes
+            // `application/json` through `@RequestBody`, which a form cannot produce and which
+            // script can only send after a CORS preflight that fails for any origin not on the
+            // configured allow-list — so the API was never reachable from a hostile page, and the
+            // token requirement bought nothing there while refusing every browser client that did
+            // not know to fetch one first.
+            //
+            // The exception is the one endpoint that really is a form, `/admin/config`, and it
+            // checks `Origin` itself rather than keeping this whole mechanism alive for it. See
+            // `AppConfigController`.
+            .csrf { it.disable() }
             .headers { headers ->
                 headers
                     .frameOptions { it.deny() }

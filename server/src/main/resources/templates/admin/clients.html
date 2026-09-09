@@ -263,7 +263,7 @@
             const res = await fetch(API_BASE + "/" + encodeURIComponent(client.clientId), {
                 method: "DELETE",
                 credentials: "same-origin",
-                headers: csrfHeaders({Accept: "application/json"})
+                headers: {Accept: "application/json"}
             });
             if (!res.ok) throw new Error(await problemText(res, "Couldn't delete that app. Try again."));
             showStatus(el.status, "success", `${name} was deleted.`);
@@ -332,7 +332,7 @@
         try {
             const res = await fetch(API_BASE, {
                 method: "POST",
-                headers: csrfHeaders({"Content-Type": "application/json", Accept: "application/json"}),
+                headers: {"Content-Type": "application/json", Accept: "application/json"},
                 credentials: "same-origin",
                 body: JSON.stringify(payload)
             });
