@@ -4,8 +4,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl
-import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler
-import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler
 import pitampoudel.komposeauth.core.domain.Roles
 
 /**
@@ -33,16 +31,4 @@ class RoleHierarchyConfig {
     fun roleHierarchy(): RoleHierarchy = RoleHierarchyImpl.withDefaultRolePrefix()
         .role(Roles.SUPER_ADMIN).implies(Roles.ADMIN)
         .build()
-
-    /**
-     * `@PreAuthorize` builds its own expression handler, and the one it defaults to has no
-     * hierarchy. Declaring it here is what carries [roleHierarchy] into method security, where
-     * nearly every rule in this application lives.
-     */
-    @Bean
-    fun methodSecurityExpressionHandler(
-        roleHierarchy: RoleHierarchy
-    ): MethodSecurityExpressionHandler = DefaultMethodSecurityExpressionHandler().apply {
-        setRoleHierarchy(roleHierarchy)
-    }
 }

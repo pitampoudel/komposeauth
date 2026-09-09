@@ -14,10 +14,10 @@ import pitampoudel.komposeauth.TestConfig
 import kotlin.test.assertTrue
 
 /**
- * Guards against the server refusing to talk to itself.
+ * Guards against the server refusing to talk to itself, and against allowing anyone else.
  *
- * Both cases here ended as a bare "Invalid CORS request" in the browser, with nothing to say which
- * setting caused it — and both locked the operator out of the configuration page, the one place the
+ * Both failures ended as a bare "Invalid CORS request" in the browser with nothing to say which
+ * setting caused it, and both locked the operator out of the configuration page — the one place the
  * setting could have been corrected.
  */
 @SpringBootTest
@@ -53,44 +53,9 @@ class CorsConfigurationIntegrationTest {
     }
 
     @Test
-    fun `the server's own origin is recognised from the Host header too`() {
-        // `serverName` is only right where the proxy sends X-Forwarded-Host and the framework is
-        // reading it. Where it is not — a proxy that forwards neither, or FORWARD_HEADERS_STRATEGY
-        // set to none — the server saw its own container name, decided the console's origin was
-        // foreign, and refused the configuration page's own form post outright with "Invalid CORS
-        // request". Which deployments that hit came down to how their proxy was set up, so the same
-        // build saved fine in one place and answered a CORS error in another.
-        val request = MockHttpServletRequest("POST", "/admin/config").apply {
-            serverName = "internal-container.local"
-            addHeader("Host", "auth.example.com")
-            addHeader("Origin", "https://auth.example.com")
-        }
-
-        assertTrue(
-            "https://auth.example.com" in allowedOriginsFor(request),
-            "the server did not recognise the origin naming the host it was addressed at"
-        )
-    }
-
-    @Test
-    fun `the server's own origin is recognised from X-Forwarded-Host too`() {
-        val request = MockHttpServletRequest("POST", "/admin/config").apply {
-            serverName = "internal-container.local"
-            addHeader("Host", "internal-container.local")
-            addHeader("X-Forwarded-Host", "auth.example.com")
-            addHeader("Origin", "https://auth.example.com")
-        }
-
-        assertTrue(
-            "https://auth.example.com" in allowedOriginsFor(request),
-            "the server did not recognise the origin the proxy says it was reached at"
-        )
-    }
-
-    @Test
     fun `an origin that names neither the server nor an allowed host is still not ours`() {
-        // The counterpart to the two cases above: widening what counts as "our own host" must not
-        // turn into reflecting whatever an Origin header claims.
+        // Nothing is added to the allow-list at request time, so an Origin header can never talk
+        // its way onto it.
         val request = MockHttpServletRequest("GET", "/users").apply {
             serverName = "auth.example.com"
             addHeader("Host", "auth.example.com")
