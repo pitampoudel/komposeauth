@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * The [StorageService] everything is handed: new files go to the store `storageProvider` names (or
  * the only bucket configured; neither cloud is a default, see [AppConfig.resolvedStorageProvider]),
- * and a stored address is deleted from whichever store it names.
+ * and a delete goes to that same store.
  *
  * Files are never copied between the two. One written to either store before a switch stays there
  * and is still read from its own address, so both stores' settings stay while any files are left.
