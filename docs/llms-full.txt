@@ -1,0 +1,724 @@
+# komposeauth integration guide (for LLMs and developers)
+
+> How to sign users in to a frontend application with a komposeauth server, and how to protect a backend
+> (resource server) with the tokens it issues. Every statement here is taken from the server's source code;
+> file references are given so you can check them. Served by every running komposeauth instance at
+> `/llms-full.txt` (index at `/llms.txt`).
+
+Throughout this guide `https://auth.example.com` stands for the public base URL of the komposeauth server and
+`https://api.example.com` for your own backend. Replace both.
+
+---
+
+## 1. What komposeauth is
+
+- A **Spring Authorization Server** (OAuth 2.1 + OpenID Connect 1.0) backed by MongoDB, packaged as the Docker
+  image `pitampoudel/komposeauth`.
+- It signs **RS256 JWT access tokens**. Resource servers validate them locally with the public keys at
+  `/oauth2/jwks`; they do not need to call the auth server per request.
+- Sign-in methods: email or phone + password, Google, Apple (ID token), passkeys (WebAuthn), and one-time codes
+  sent by SMS/WhatsApp or email. Users are created automatically on first Google, Apple or OTP sign-in.
+- It also stores user profiles, roles, KYC records and organizations, exposed through a JSON API.
+- A **Kotlin Multiplatform client SDK** (`io.github.pitampoudel:komposeauth-client`) wraps the API for
+  Android, iOS, desktop and web Compose apps.
+
+There are two independent ways for a frontend to get a token. Pick one per app:
+
+| Approach | Use it for | Endpoint |
+|---|---|---|
+| **A. OAuth 2.1 authorization code + PKCE** (standard OIDC) | Any web SPA, server-rendered web app, native mobile app or third-party app. Works with any certified OIDC client library. The user signs in on the auth server's hosted login page. | `/oauth2/authorize`, `/oauth2/token` |
+| **B. First-party JSON login API** | Your own apps that render their own login UI (the KMP SDK uses this). | `POST /login` |
+
+Both produce JWTs signed by the same key, so a resource server validates them the same way (section 5).
+
+---
+
+## 2. Server facts you need before writing code
+
+### 2.1 Discovery and protocol endpoints
+
+| Purpose | Path | Auth |
+|---|---|---|
+| OIDC discovery document | `GET /.well-known/openid-configuration` | public |
+| OAuth metadata | `GET /.well-known/oauth-authorization-server` | public |
+| Authorization endpoint | `GET /oauth2/authorize` | browser session (redirects to `/session-login`) |
+| Token endpoint | `POST /oauth2/token` (form-encoded) | `client_id` |
+| JSON Web Key Set | `GET /oauth2/jwks` | public |
+| OIDC UserInfo | `GET /userinfo` | Bearer access token with `openid` scope |
+| Token revocation | `POST /oauth2/revoke` | client |
+| Token introspection | `POST /oauth2/introspect` | client |
+| Hosted login page | `GET /session-login` | public |
+
+Always read the actual URLs from the discovery document instead of hard-coding them when your library supports
+discovery.
+
+### 2.2 The issuer (`iss`)
+
+The server has no fixed issuer setting. The issuer is derived from each request's scheme, host and port
+(`core/utils/ServerUtils.kt`, Spring Authorization Server defaults), so it equals the public URL the client used,
+e.g. `https://auth.example.com` with no trailing slash. Consequences:
+
+- Behind a proxy the server must see the original scheme and host (`FORWARD_HEADERS_STRATEGY=framework`, the
+  default, and a proxy that sends `X-Forwarded-Proto`/`X-Forwarded-Host`). Otherwise `iss` becomes
+  `http://internal-host:8080` and validation fails.
+- Always reach the auth server by one canonical public URL, from browsers and from backends alike.
+
+### 2.3 Registering an OAuth client (needed for approach A)
+
+An administrator registers clients, either on the admin console at `https://auth.example.com/admin/clients`, or
+through the API with an ADMIN token:
+
+```http
+POST /oauth2/clients
+Authorization: Bearer <admin access token>
+Content-Type: application/json
+
+{
+  "clientName": "My Web App",
+  "redirectUris": ["https://app.example.com/callback", "http://localhost:5173/callback"],
+  "accessTokenTtlSeconds": 900,
+  "refreshTokenTtlDays": 30,
+  "scopes": ["openid", "profile", "email"]
+}
+```
+
+Response (the secret is generated when you omit `clientSecret`):
+
+```json
+{
+  "clientName": "My Web App",
+  "clientId": "66f1c0e4a1b2c3d4e5f60718",
+  "clientSecret": "...64 hex chars...",
+  "redirectUris": ["https://app.example.com/callback", "http://localhost:5173/callback"],
+  "clientUri": null,
+  "logoUri": null,
+  "scopes": ["openid", "profile", "email"],
+  "accessTokenTtlSeconds": 900,
+  "refreshTokenTtlDays": 30
+}
+```
+
+What every registered client gets (`oauth_clients/dto/Mappers.kt`):
+
+- Grant types: `authorization_code`, `refresh_token`, `client_credentials`.
+- Client authentication methods: `none` (public) and `client_secret_post`.
+- **PKCE is required** (`requireProofKey = true`). Every authorization request must carry `code_challenge` and
+  `code_challenge_method=S256`, including from server-side apps.
+- No consent screen (`requireAuthorizationConsent = false`).
+- `redirect_uri` must match a registered URI exactly.
+- `accessTokenTtlSeconds` is at least 60; `refreshTokenTtlDays` at least 1.
+- `clientId` is a 24-character MongoDB ObjectId hex string. If you supply one it must be in that format.
+- If `scopes` is omitted it defaults to `openid profile email offline_access user.read.any`. `user.read.any`
+  lets the client read **every** user's record (section 6). Only grant it to trusted backend clients; pass an
+  explicit `scopes` list for browser and mobile apps.
+
+### 2.4 CORS and cookies
+
+- Browser apps calling the auth server from another origin (token endpoint, `/login`, `/me`, ...) must have their
+  origin listed under **CORS allowed origins** on the configuration page `https://auth.example.com/admin/config`.
+  Wildcard patterns such as `https://*.example.com` are accepted. Credentials are allowed.
+- The access-token cookie is named `access_token`, is `HttpOnly`, `Secure` + `SameSite=None` over HTTPS, and is
+  scoped to the **relying party ID** (`rpId` on the configuration page, e.g. `example.com`), so it is shared with
+  every subdomain of that domain. Without an `rpId` it is host-only.
+- The server's security filter chains currently have CSRF protection disabled
+  (`core/security/WebSecurityConfig.kt`), so no CSRF token is needed for cookie-authenticated writes.
+
+---
+
+## 3. Frontend integration
+
+### 3.1 Approach A: authorization code + PKCE (recommended for web and third-party apps)
+
+Flow:
+
+1. Generate `code_verifier` (43-128 random URL-safe characters) and `code_challenge = BASE64URL(SHA256(verifier))`.
+2. Redirect the browser to:
+   ```
+   https://auth.example.com/oauth2/authorize
+     ?response_type=code
+     &client_id=<clientId>
+     &redirect_uri=<registered redirect uri, URL-encoded>
+     &scope=openid%20profile%20email
+     &state=<random>
+     &nonce=<random>
+     &code_challenge=<challenge>
+     &code_challenge_method=S256
+   ```
+   Optional parameters:
+   - `prompt=login` or `prompt=select_account`: force the login page even if the user already has a session
+     on the auth server (use for "switch account"). `prompt=none`: fail with `login_required` instead of showing a
+     page.
+   - `idp=google`: skip the login page and send the user straight to Google (only if Google is configured).
+3. The user signs in on `/session-login` (password, Google, and whatever else the operator enabled). The server
+   redirects to `redirect_uri?code=...&state=...`. Check `state`.
+4. Exchange the code (form-encoded POST):
+   ```http
+   POST /oauth2/token
+   Content-Type: application/x-www-form-urlencoded
+
+   grant_type=authorization_code&code=<code>&redirect_uri=<same uri>&client_id=<clientId>&code_verifier=<verifier>
+   ```
+   Response:
+   ```json
+   {
+     "access_token": "eyJ...",
+     "token_type": "Bearer",
+     "expires_in": 899,
+     "scope": "openid profile email",
+     "id_token": "eyJ..."
+   }
+   ```
+5. Send `Authorization: Bearer <access_token>` to your resource servers.
+
+Client authentication at the token endpoint: whenever the form contains `client_id`, the server authenticates the
+request as a **public client** (`core/providers/OAuth2PublicClientAuthConverter.kt`), so a browser app never needs
+the client secret. Never ship the client secret in browser or mobile code.
+
+Refresh tokens: because token requests are authenticated as public clients, Spring Authorization Server does not
+return a `refresh_token` from the authorization-code exchange. Do not build logic that depends on one. When the
+access token expires, run the authorize redirect again: the user still has a session on the auth server
+(24 hours by default, `SESSION_TIMEOUT`), so it completes without a login page. `prompt=none` makes that
+explicit. Iframe-based silent renew does not work because the server forbids framing. If you need long-lived
+sessions without redirects, use approach B, whose refresh tokens last 30 days.
+
+Logout: clear your own tokens, then end the auth server session with the `end_session_endpoint` from the discovery
+document (RP-initiated logout, pass `id_token_hint` and a `post_logout_redirect_uri`) or with `GET /logout` on the
+auth server using the browser's session.
+
+#### Example: SPA with `oidc-client-ts`
+
+```ts
+import { UserManager, WebStorageStateStore } from "oidc-client-ts";
+
+export const auth = new UserManager({
+  authority: "https://auth.example.com",          // discovery is read from /.well-known/openid-configuration
+  client_id: "66f1c0e4a1b2c3d4e5f60718",
+  redirect_uri: `${window.location.origin}/callback`,
+  post_logout_redirect_uri: window.location.origin,
+  response_type: "code",                           // PKCE S256 is automatic
+  scope: "openid profile email",
+  automaticSilentRenew: false,                     // iframes are blocked; re-run signinRedirect instead
+  userStore: new WebStorageStateStore({ store: window.sessionStorage }),
+});
+
+// Login button
+await auth.signinRedirect();
+
+// /callback route
+const user = await auth.signinRedirectCallback();
+
+// Calling your API
+const current = await auth.getUser();
+if (!current || current.expired) {
+  await auth.signinRedirect();                     // completes silently while the auth-server session lives
+} else {
+  await fetch("https://api.example.com/orders", {
+    headers: { Authorization: `Bearer ${current.access_token}` },
+  });
+}
+```
+
+The SPA's origin must be in the CORS allow-list, because `oidc-client-ts` fetches the discovery document, the JWKS
+and the token endpoint from the browser.
+
+#### Example: server-rendered app (Next.js / Express / Django / Rails)
+
+Use your framework's OIDC client (Auth.js, `openid-client`, `authlib`, `omniauth_openid_connect`, ...) with:
+
+- issuer / authority: `https://auth.example.com`
+- client id: the registered `clientId`
+- PKCE enabled with S256 (required even for server-side apps)
+- token endpoint auth method: `none` (or `client_secret_post`; the server treats both as public)
+- scopes: `openid profile email`
+- keep the access token in the server-side session and forward it as `Authorization: Bearer` when calling APIs.
+
+Auth.js (NextAuth) provider:
+
+```ts
+{
+  id: "komposeauth",
+  name: "komposeauth",
+  type: "oidc",
+  issuer: "https://auth.example.com",
+  clientId: process.env.KOMPOSEAUTH_CLIENT_ID,
+  client: { token_endpoint_auth_method: "none" },
+  checks: ["pkce", "state", "nonce"],
+  authorization: { params: { scope: "openid profile email" } },
+}
+```
+
+#### Example: native mobile apps (AppAuth for Android/iOS, `expo-auth-session`, `flutter_appauth`)
+
+Register a redirect URI with a private scheme, e.g. `com.example.app:/oauth2redirect`, and configure the library
+with the discovery URL, the `clientId`, that redirect URI, scopes `openid profile email` and PKCE (on by default in
+these libraries). Private-scheme redirects are supported. Kotlin Multiplatform apps should use the SDK instead
+(section 3.3).
+
+### 3.2 Approach B: the first-party JSON login API
+
+`POST /login?responseType=<TOKEN|COOKIE|SESSION>` with a JSON body. The body is a tagged union discriminated by
+`"type"` (`shared/.../user/data/Credential.kt`):
+
+| `type` | Fields | Notes |
+|---|---|---|
+| `USERNAME_PASSWORD` | `username`, `password`, optional `countryNameCode` | `username` is an email or phone number; `countryNameCode` (e.g. `"NP"`) lets a local phone number be parsed. |
+| `OTP` | `username`, `otp` | Code previously sent with `POST /send-otp`. Creates the user if new. |
+| `GOOGLE_ID` | `idToken` | A Google ID token for the Google client ID the server is configured with. |
+| `APPLE_ID` | `idToken` | A Sign in with Apple ID token. |
+| `AUTH_CODE` | `platform` (`WEB`, `DESKTOP`, `ANDROID`, `IOS`), `code`, `redirectUri` | A Google OAuth authorization code; the server exchanges it. |
+| `PUBLIC_KEY` | `authenticationResponseJson` | WebAuthn assertion (see below). |
+| `REFRESH_TOKEN` | `refreshToken` | A refresh token returned earlier by this endpoint. |
+
+`responseType`:
+
+- `TOKEN`: body is `{"access_token","token_type":"Bearer","expires_in":86400,"refresh_token"}`. Use this for
+  mobile, desktop and any app that stores tokens itself.
+- `COOKIE` (the default): sets the HttpOnly `access_token` cookie and returns the user profile. Use this for a
+  browser app on a subdomain of the relying-party ID; call with `credentials: "include"`.
+- `SESSION`: creates a server session on the auth server and returns the profile.
+
+Tokens from `/login` last 24 hours. The refresh token lasts 30 days and is **single-use**: each refresh returns a
+new access token and a new refresh token; store the new one and discard the old. Presenting a spent refresh token
+returns 400.
+
+```bash
+# Password login, tokens in the body
+curl -X POST 'https://auth.example.com/login?responseType=TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"USERNAME_PASSWORD","username":"ada@example.com","password":"correct horse"}'
+
+# Refresh
+curl -X POST 'https://auth.example.com/login?responseType=TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"REFRESH_TOKEN","refreshToken":"<refresh_token>"}'
+```
+
+```ts
+// Browser app on app.example.com with rpId = example.com: cookie login
+await fetch("https://auth.example.com/login?responseType=COOKIE", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ type: "USERNAME_PASSWORD", username, password }),
+});
+// Later requests to *.example.com send the cookie; resource servers can read it (section 5.7).
+```
+
+One-time code sign-in:
+
+```bash
+curl -X POST https://auth.example.com/send-otp -H 'Content-Type: application/json' \
+  -d '{"username":"+9779812345678","type":"PHONE"}'        # or "type":"EMAIL" with an email address
+curl -X POST 'https://auth.example.com/login?responseType=TOKEN' -H 'Content-Type: application/json' \
+  -d '{"type":"OTP","username":"+9779812345678","otp":"123456"}'
+```
+
+Passkey sign-in: `GET /login-options?platform=WEB` returns `{"googleClientId", "publicKeyAuthOptionsJson"}` and
+stores the WebAuthn challenge in a session cookie. Pass `publicKeyAuthOptionsJson` to
+`navigator.credentials.get()`, then post the serialized result as
+`{"type":"PUBLIC_KEY","authenticationResponseJson":"..."}` to `/login` **with the same cookie**
+(`credentials: "include"`). Registering a passkey for a signed-in user: `POST /webauthn/register/options`, then
+`POST /webauthn/register` with `{"publicKey": ...}`.
+
+Logout: `GET` or `POST /logout` clears the cookie and the server session. Bearer-token apps simply delete their
+stored tokens.
+
+Error responses are RFC 7807 problem details (`{"type","title","status","detail"}`): 400 for malformed input or a
+bad/spent token or OTP, 401 for a missing, expired or invalid bearer token, 403 for wrong credentials, a
+deactivated account or insufficient rights, 409 for a duplicate email/phone, 429 when rate limited.
+
+### 3.3 Kotlin Multiplatform / Compose Multiplatform apps: use the SDK
+
+```kotlin
+// build.gradle.kts
+implementation("io.github.pitampoudel:komposeauth-client:<version>")   // includes komposeauth-shared
+```
+
+```kotlin
+val httpClient = HttpClient {
+    installKomposeAuth(
+        // Android overload takes a Context first: installKomposeAuth(context, authServerUrl, resourceServerUrls)
+        authServerUrl = "https://auth.example.com",
+        resourceServerUrls = listOf("https://api.example.com")
+    )
+}
+initializeKomposeAuth(httpClient = httpClient)   // registers Koin modules and ViewModels
+```
+
+What the SDK does (`client/.../core/data/installKomposeAuth.kt`): persists tokens, adds
+`Authorization: Bearer` to requests whose host is the auth server or one of `resourceServerUrls`, refreshes on 401
+with the `REFRESH_TOKEN` credential, and clears tokens when the refresh is rejected. Use `LoginViewModel` with
+`rememberKmpCredentialManager()` for Google/passkey sign-in, `OtpViewModel` for codes, `ProfileViewModel`,
+`KycViewModel`, and `rememberCurrentUser()` for the signed-in user. Your resource servers only have to validate the
+bearer token.
+
+### 3.4 Reading the current user in a frontend
+
+- `GET /me` (Bearer or cookie) returns the profile:
+  ```json
+  {
+    "id": "66f1...", "givenName": "Ada", "familyName": "Lovelace",
+    "email": "ada@example.com", "phoneNumber": "+9779812345678",
+    "emailVerified": true, "phoneNumberVerified": false, "kycVerified": false,
+    "picture": "https://...", "createdAt": "2026-01-01T00:00:00Z", "updatedAt": "...",
+    "socialLinks": [], "roles": ["ADMIN"]
+  }
+  ```
+- `GET /userinfo` returns the OIDC UserInfo for an access token with the `openid` scope.
+- Or decode the ID token / access token claims (section 4). Do not use unverified claims for authorization in
+  the frontend; that is the resource server's job.
+- Update the profile: `POST /update-profile` with any of `givenName`, `familyName`, `email`, `password` +
+  `confirmPassword`, `currentPassword` (required to change the password or email of an account that has one),
+  `picture`.
+- Password reset: `PUT /reset-password?email=<email>` emails a link; the rest happens on the server's own pages.
+
+---
+
+## 4. Token reference
+
+All tokens are JWS compact JWTs signed with **RS256**. The header carries a `kid` matching a key in
+`/oauth2/jwks`.
+
+### 4.1 Access token claims
+
+| Claim | Present in | Meaning |
+|---|---|---|
+| `iss` | all | Auth server public URL (section 2.2) |
+| `sub` | all | **User id** (24-char hex). For `client_credentials` tokens it is the client id. |
+| `aud` | authorization-code tokens | The OAuth `client_id`. Tokens from `/login` have **no `aud`**. |
+| `exp`, `iat`, `nbf` | all | Standard times (seconds) |
+| `scope` | all | JSON array of scope strings, e.g. `["openid","profile","email"]` |
+| `authorities` | user tokens | JSON array of roles, **prefixed**: `["ROLE_ADMIN"]` (empty for users with no role) |
+| `email` | user tokens, if the user has one | |
+| `givenName`, `familyName` | user tokens, if set | camelCase, **not** `given_name` / `family_name` |
+| `picture` | user tokens, if set | URL |
+| `kycVerified` | user tokens | boolean |
+| `phoneNumberVerified` | user tokens | boolean |
+
+Sources: `core/security/WebAuthorizationConfig.kt` (`jwtCustomizer`) and
+`user/controller/ResourceOwnerLoginController.kt`. The ID token from the authorization-code flow carries the same
+custom claims plus the standard OIDC ones (`nonce`, `auth_time`, ...).
+
+### 4.2 UserInfo claims (`GET /userinfo`)
+
+`sub`, `emailVerified`, `phoneNumberVerified`, `kycVerified`, `createdAt`, `updatedAt`, `roles` (unprefixed, e.g.
+`["ADMIN"]`), and when set `email`, `givenName`, `familyName`, `picture`.
+
+### 4.3 Roles and scopes
+
+- New users have no roles (`authorities` is `[]`). The built-in roles are `ADMIN` and `SUPER_ADMIN`
+  (`SUPER_ADMIN` implies `ADMIN`); operators define their own in the roles catalog on the configuration page and
+  grant them with `POST /users/{id}/roles/{role}`.
+- Roles appear in tokens as `ROLE_<NAME>` inside `authorities`. Scopes appear in `scope`; the auth server itself
+  maps them to Spring authorities `SCOPE_<scope>`.
+- Special scopes: `user.read.any` (read any user via the API), `user.write.any` (create, deactivate, delete users).
+- Role changes only show up in tokens issued after the change. With 24-hour `/login` tokens, a revoked role can
+  stay in a live token until it expires; call `GET /users/{id}` if you need the current value.
+
+### 4.4 Lifetimes
+
+| Token | Lifetime |
+|---|---|
+| `/login` access token | 24 h |
+| `/login` refresh token | 30 days, single use, rotated |
+| Authorization-code access token | per client, `accessTokenTtlSeconds` (default 900 s, min 60 s) |
+| Auth-server browser session | `SESSION_TIMEOUT`, default 24 h |
+
+---
+
+## 5. Resource-server (backend API) integration
+
+### 5.1 Rules
+
+1. Read the token from `Authorization: Bearer <jwt>`. Optionally also from the `access_token` cookie if your API is
+   on a subdomain of the relying-party ID and your browser app uses cookie login.
+2. Verify the RS256 signature with keys from `https://auth.example.com/oauth2/jwks`. Cache the JWKS and refetch
+   when a token has an unknown `kid` (standard JWKS libraries do this).
+3. Check `exp` and `nbf` (allow ~60 s clock skew).
+4. Check `iss == "https://auth.example.com"` (exact string, no trailing slash).
+5. **Do not require `aud`** unless you only accept authorization-code tokens from specific clients: tokens from
+   `/login` (and so from the KMP SDK) have no audience. If you do check it, allow the client ids you trust.
+6. Authorize with `authorities` (roles, `ROLE_` prefixed) and `scope`. Identify the user by `sub`.
+7. Reject with 401 and `WWW-Authenticate: Bearer error="invalid_token"` on any failure; 403 when authenticated but
+   not allowed.
+8. The resource server does not need a client id or secret just to validate tokens.
+
+If your API is called from browsers on other origins, configure CORS on the API itself; the auth server's CORS list
+does not apply to your API.
+
+### 5.2 Spring Boot (Spring Security resource server)
+
+```kotlin
+// build.gradle.kts
+implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+```
+
+```yaml
+# application.yml
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth.example.com              # validates iss
+          jwk-set-uri: https://auth.example.com/oauth2/jwks # keys (no discovery call needed at startup)
+```
+
+```kotlin
+@Configuration
+@EnableMethodSecurity
+class SecurityConfig {
+    @Bean
+    fun jwtAuthenticationConverter() = JwtAuthenticationConverter().apply {
+        // Roles already carry the ROLE_ prefix; scopes get SCOPE_. Mirrors the auth server's own converter.
+        setJwtGrantedAuthoritiesConverter { jwt ->
+            (jwt.getClaimAsStringList("authorities").orEmpty().map { SimpleGrantedAuthority(it) } +
+             jwt.getClaimAsStringList("scope").orEmpty().map { SimpleGrantedAuthority("SCOPE_$it") })
+        }
+    }
+
+    @Bean
+    fun filterChain(http: HttpSecurity, converter: JwtAuthenticationConverter): SecurityFilterChain = http
+        .csrf { it.disable() }
+        .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+        .authorizeHttpRequests {
+            it.requestMatchers("/public/**").permitAll()
+              .requestMatchers("/admin/**").hasRole("ADMIN")
+              .anyRequest().authenticated()
+        }
+        .oauth2ResourceServer { it.jwt { jwt -> jwt.jwtAuthenticationConverter(converter) } }
+        .build()
+}
+
+@RestController
+class OrdersController {
+    @GetMapping("/orders")
+    fun orders(@AuthenticationPrincipal jwt: Jwt): List<Order> = service.ordersFor(userId = jwt.subject)
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/orders/{id}")
+    fun delete(@PathVariable id: String) = service.delete(id)
+}
+```
+
+To also accept the `access_token` cookie, register a `BearerTokenResolver` bean that falls back to the cookie when
+the header is absent (the auth server does exactly this in `WebAuthorizationConfig.bearerTokenResolver`). Enable
+CSRF protection on your API if you accept cookies.
+
+### 5.3 Node.js (Express / Fastify / NestJS) with `jose`
+
+```ts
+import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
+
+const ISSUER = "https://auth.example.com";
+const JWKS = createRemoteJWKSet(new URL(`${ISSUER}/oauth2/jwks`)); // cached, refetched on unknown kid
+
+export interface KomposeClaims extends JWTPayload {
+  authorities?: string[]; scope?: string[]; email?: string;
+  givenName?: string; familyName?: string; picture?: string;
+  kycVerified?: boolean; phoneNumberVerified?: boolean;
+}
+
+export async function verify(token: string): Promise<KomposeClaims> {
+  const { payload } = await jwtVerify<KomposeClaims>(token, JWKS, {
+    issuer: ISSUER,
+    algorithms: ["RS256"],
+    clockTolerance: 60,
+  });
+  return payload;
+}
+
+// Express middleware
+export function requireAuth(role?: string) {
+  return async (req, res, next) => {
+    const header = req.headers.authorization ?? "";
+    const token = header.startsWith("Bearer ") ? header.slice(7) : req.cookies?.access_token;
+    if (!token) return res.status(401).set("WWW-Authenticate", "Bearer").end();
+    try {
+      const claims = await verify(token);
+      if (role && !claims.authorities?.includes(`ROLE_${role}`)) return res.status(403).end();
+      req.user = { id: claims.sub!, ...claims };
+      next();
+    } catch {
+      res.status(401).set("WWW-Authenticate", 'Bearer error="invalid_token"').end();
+    }
+  };
+}
+
+app.get("/orders", requireAuth(), (req, res) => res.json(listOrders(req.user.id)));
+app.delete("/orders/:id", requireAuth("ADMIN"), handler);
+```
+
+### 5.4 Python (FastAPI) with PyJWT
+
+```python
+import jwt                                   # pip install "pyjwt[crypto]"
+from fastapi import Depends, FastAPI, HTTPException, Request
+
+ISSUER = "https://auth.example.com"
+jwks_client = jwt.PyJWKClient(f"{ISSUER}/oauth2/jwks", cache_keys=True)
+
+def current_user(request: Request) -> dict:
+    auth = request.headers.get("authorization", "")
+    token = auth[7:] if auth.lower().startswith("bearer ") else request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(401, headers={"WWW-Authenticate": "Bearer"})
+    try:
+        key = jwks_client.get_signing_key_from_jwt(token).key
+        return jwt.decode(token, key, algorithms=["RS256"], issuer=ISSUER, leeway=60,
+                          options={"verify_aud": False})   # /login tokens have no aud
+    except jwt.PyJWTError:
+        raise HTTPException(401, headers={"WWW-Authenticate": 'Bearer error="invalid_token"'})
+
+def require_role(role: str):
+    def check(user: dict = Depends(current_user)) -> dict:
+        if f"ROLE_{role}" not in user.get("authorities", []):
+            raise HTTPException(403)
+        return user
+    return check
+
+app = FastAPI()
+
+@app.get("/orders")
+def orders(user: dict = Depends(current_user)):
+    return list_orders(user["sub"])
+
+@app.delete("/orders/{order_id}")
+def delete(order_id: str, user: dict = Depends(require_role("ADMIN"))):
+    ...
+```
+
+### 5.5 Go with `golang-jwt` and `keyfunc`
+
+```go
+import (
+    "github.com/MicahParks/keyfunc/v3"
+    "github.com/golang-jwt/jwt/v5"
+)
+
+const issuer = "https://auth.example.com"
+
+type Claims struct {
+    Authorities []string `json:"authorities"`
+    Scope       []string `json:"scope"`
+    Email       string   `json:"email"`
+    jwt.RegisteredClaims
+}
+
+jwks, _ := keyfunc.NewDefault([]string{issuer + "/oauth2/jwks"}) // refreshes in the background
+
+func Verify(raw string) (*Claims, error) {
+    claims := &Claims{}
+    _, err := jwt.ParseWithClaims(raw, claims, jwks.Keyfunc,
+        jwt.WithIssuer(issuer), jwt.WithValidMethods([]string{"RS256"}), jwt.WithLeeway(time.Minute))
+    return claims, err // claims.Subject is the user id
+}
+```
+
+### 5.6 Ktor server
+
+```kotlin
+install(Authentication) {
+    jwt("komposeauth") {
+        val issuer = "https://auth.example.com"
+        val jwkProvider = JwkProviderBuilder(URI("$issuer/oauth2/jwks").toURL())
+            .cached(10, 24, TimeUnit.HOURS).rateLimited(10, 1, TimeUnit.MINUTES).build()
+        verifier(jwkProvider, issuer) { acceptLeeway(60) }
+        validate { cred -> if (cred.payload.subject != null) JWTPrincipal(cred.payload) else null }
+    }
+}
+
+routing {
+    authenticate("komposeauth") {
+        get("/orders") {
+            val p = call.principal<JWTPrincipal>()!!
+            val roles = p.payload.getClaim("authorities").asList(String::class.java).orEmpty()
+            call.respond(listOrders(userId = p.payload.subject))
+        }
+    }
+}
+```
+
+### 5.7 Accepting the cookie
+
+Only relevant when a browser app uses `responseType=COOKIE` and your API is on a subdomain of the relying-party ID
+(e.g. API `api.example.com`, auth `auth.example.com`, `rpId` `example.com`). The cookie `access_token` holds the
+same JWT; validate it exactly like a bearer token. The browser must send it with `credentials: "include"`, and your
+API's CORS must allow that origin with credentials. Protect state-changing endpoints against CSRF (e.g. require a
+custom header or a CSRF token) because cookies are sent automatically.
+
+---
+
+## 6. Calling the auth server's API from a backend
+
+A resource server sometimes needs data about other users (e.g. to show an author's name). Options:
+
+1. **Forward the user's token**: call `GET https://auth.example.com/me` with the incoming bearer token.
+2. **Service credentials**: register a dedicated OAuth client for the backend with scope `user.read.any`, keep its
+   secret on the server only, and get a token with the client credentials grant:
+   ```bash
+   curl -X POST https://auth.example.com/oauth2/token \
+     -d grant_type=client_credentials -d client_id=<id> -d client_secret=<secret> -d scope=user.read.any
+   ```
+   Then call:
+   - `GET /users/{id}` - one user
+   - `GET /users?ids=a,b,c` or `GET /users?q=<search>&role=<ROLE>&page=0&size=50` - paged
+     `{"items":[...],"page","pageSize","totalItems","hasNext"}`
+   - `GET /stats` - `{"totalUsers"}`
+   With `user.write.any` it can also call `PATCH /users` (find or create a user from
+   `{"email"|"phoneNumber", "firstName", "lastName", "password", "confirmPassword"}`),
+   `POST /users/{id}/deactivate` and `DELETE /users/{id}`.
+   Cache the client-credentials token until shortly before `expires_in`.
+
+---
+
+## 7. HTTP API summary
+
+Paths are relative to the auth server. "User" means any authenticated user (Bearer or cookie). JSON bodies unless
+stated. Admin-only endpoints accept `ADMIN` or `SUPER_ADMIN`.
+
+| Method & path | Who | Purpose |
+|---|---|---|
+| `POST /login?responseType=` | public | Sign in with a credential (section 3.2) |
+| `GET/POST /logout` | public | Clear cookie and session |
+| `GET /login-options?platform=` | public | Google client id + WebAuthn request options |
+| `POST /send-otp` | public (optional auth) | `{"username","type":"PHONE"|"EMAIL"}` |
+| `POST /verify-otp` | user | `{"username","type","otp"}` verify a phone/email on the current account |
+| `GET /verify-email?token=` | public | Email verification link target |
+| `PUT /reset-password?email=` | public | Send a reset link |
+| `GET /me` | user | Current profile |
+| `POST /update-profile` | user | Update profile (section 3.4) |
+| `POST /webauthn/register/options`, `POST /webauthn/register` | user | Register a passkey |
+| `GET /kyc`, `POST /kyc/personal-info`, `POST /kyc/address`, `POST /kyc/documents` | user | KYC submission |
+| `GET /third-factor-kyc` | user | URL for third-party KYC verification |
+| `GET /organizations?ids=`, `GET /organizations/{id}`, `POST /organizations`, `DELETE /organizations/{id}` | user | Organizations: list yours (or by `ids`), read, create or update, delete |
+| `GET /users/{id}` | self, admin, or `user.read.any` | One user |
+| `GET /users`, `GET /stats` | admin or `user.read.any` | List / count users |
+| `PATCH /users`, `POST /users/{id}/deactivate`, `DELETE /users/{id}` | admin or `user.write.any` | Manage users |
+| `GET /roles`, `POST|DELETE /users/{id}/roles/{role}` | admin | Roles |
+| `GET /kyc/pending`, `POST /kyc/{id}/approve`, `POST /kyc/{id}/reject` | admin | Review KYC |
+| `GET|POST|DELETE /oauth2/clients` | admin | OAuth clients |
+| `GET /countries.json` | public | Country list for phone pickers |
+| `GET /actuator/health/readiness` | public | Health probe |
+
+For exact request and response schemas, read the DTOs in `shared/src/commonMain/kotlin/pitampoudel/komposeauth/`
+or open Swagger UI at `/swagger-ui.html` as an admin.
+
+---
+
+## 8. Common mistakes
+
+- Omitting PKCE. Every authorization request needs `code_challenge` + `code_challenge_method=S256`.
+- A `redirect_uri` that differs from the registered one by a trailing slash, port or scheme.
+- Validating `aud` and then rejecting every token from `/login` or the KMP SDK (they have no `aud`).
+- Looking for `given_name`/`family_name`/`roles` in the access token. Use `givenName`, `familyName` and
+  `authorities` (with `ROLE_` prefix). `/userinfo` has unprefixed `roles`.
+- Hard-coding an issuer with a trailing slash, or reaching the auth server through an internal hostname so `iss`
+  does not match.
+- Expecting a `refresh_token` from the authorization-code exchange (section 3.1).
+- Reusing a `/login` refresh token after it has been redeemed; always store the new one.
+- Forgetting to add the browser app's origin to the auth server's CORS list (token endpoint and `/login` calls
+  fail as opaque CORS errors).
+- Putting the client secret in browser or mobile code. Only backend clients using `client_credentials` need it.
+- Registering a browser client without an explicit `scopes` list, which grants `user.read.any` by default.
+- Sending `/login` as form data. It takes JSON with a `"type"` discriminator; `/oauth2/token` takes form data.

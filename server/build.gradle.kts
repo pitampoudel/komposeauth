@@ -120,6 +120,13 @@ tasks.withType<Test> {
     }
 }
 
+// The LLM integration guide lives at the repository root and in docs/ so it reads well on GitHub, and is
+// copied into the static resources so every running server publishes it at /llms.txt and /llms-full.txt.
+tasks.processResources {
+    from(rootProject.file("llms.txt")) { into("static") }
+    from(rootProject.file("docs/llms-full.txt")) { into("static") }
+}
+
 tasks.named<BootJar>("bootJar") {
     archiveFileName.set("app.jar")
 }

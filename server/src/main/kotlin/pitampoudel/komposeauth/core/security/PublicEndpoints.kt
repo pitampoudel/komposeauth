@@ -28,6 +28,9 @@ object PublicEndpoints {
         "/${ApiEndpoints.RESET_PASSWORD}",
         "/reset-password",
         "/countries.json",
+        // The integration guide for LLMs and developers (llms.txt convention), copied in at build time.
+        "/llms.txt",
+        "/llms-full.txt",
         "/.well-known/**",
         "/setup",
         // Container health probes. The platform runs these before anything has signed in and with no
