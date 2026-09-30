@@ -140,33 +140,6 @@ for the default `framework` strategy to pick up. Use `2` instead if you front th
 external Application Load Balancer, which appends both the client address and its own forwarding
 rule.
 
-##### AWS (ECS Fargate)
-
-`scripts/deploy-aws.sh` creates or updates everything from `scripts/aws-stack.yaml`: the Fargate
-service behind a load balancer (`TRUSTED_PROXY_COUNT=1`, since the load balancer appends one
-`X-Forwarded-For` entry), and an S3 bucket for files. Photos and organization logos in the bucket
-are readable by anyone, as they are shown from their address. KYC documents are not.
-
-1. Put `MONGODB_URI` and `BASE64_ENCRYPTION_KEY` in one Secrets Manager secret, as JSON.
-2. Request an ACM certificate for the server's domain in the same region.
-3. Run the script. It deploys whatever `pitampoudel/komposeauth:main` is now, and running it again
-   deploys a newer one.
-   ```bash
-   VPC_ID=vpc-... SUBNET_IDS=subnet-a,subnet-b CERTIFICATE_ARN=arn:aws:acm:... \
-   APP_SECRET_ARN=arn:aws:secretsmanager:... ALERT_EMAIL=you@example.com bash scripts/deploy-aws.sh
-   ```
-4. Point the domain at the `LoadBalancerDnsName` output, and allow the tasks' addresses in MongoDB
-   Atlas.
-5. In the admin config page, set `s3BucketName` to the `FilesBucketName` output and `s3Region` to
-   the stack's region, and `storageProvider` to say which bucket takes new files. Leave the access
-   key fields empty: the task's own role is used.
-
-Neither cloud is a default. With one bucket configured it takes the new files; with both, the page
-refuses to save until `storageProvider` names one, and switching back is changing that one field.
-Files are never copied between the two: each is still shown from its own address and deleted where
-it was written, so keep both buckets' settings while either holds files. If GCS stops answering,
-deleting an old file there fails quietly and the new photo or logo is still saved.
-
 Scaling to several instances is already accounted for — sessions, OAuth2 authorizations and the
 abuse counters all live in MongoDB rather than in one container's memory, so limits hold across
 instances and survive cold starts.

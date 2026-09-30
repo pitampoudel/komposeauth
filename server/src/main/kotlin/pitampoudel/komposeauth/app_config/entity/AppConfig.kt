@@ -142,11 +142,7 @@ data class AppConfig(
     @LastModifiedDate
     val updatedAt: Instant = Instant.now()
 ) {
-    /**
-     * The store new files go to: the one [storageProvider] names, or the only bucket configured.
-     * With both configured and none named this refuses rather than picking, since either guess puts
-     * users' files somewhere nobody chose.
-     */
+
     fun resolvedStorageProvider(): String {
         val configured = listOfNotNull(
             STORAGE_GCS.takeIf { gcpBucketName != null },
