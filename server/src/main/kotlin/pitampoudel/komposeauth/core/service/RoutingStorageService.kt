@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicReference
 class RoutingStorageService(
     private val appConfigService: AppConfigService,
 ) : StorageService {
-    private val log = LoggerFactory.getLogger(javaClass)
 
     private val s3 = AtomicReference<S3StorageService?>()
     private val gcs = AtomicReference<GcpStorageService?>()
@@ -40,13 +39,15 @@ class RoutingStorageService(
         }
     }
 
-    private fun gcs(): GcpStorageService {
-        return GcpStorageService(appConfigService)
+    private fun gcsOrNull(): GcpStorageService? {
+        return gcs.updateAndGet { current ->
+            current ?: GcpStorageService(appConfigService)
+        }
     }
 
     private fun writeStore(): StorageService = when (appConfigService.getConfig().resolvedStorageProvider()) {
         AppConfig.STORAGE_S3 -> s3OrNull() ?: error("unreachable: the resolved store is configured")
-        AppConfig.STORAGE_GCS -> gcs()
+        AppConfig.STORAGE_GCS -> gcsOrNull() ?: error("unreachable: the resolved store is configured")
         else -> error("unreachable: the resolved store is configured")
     }
 
