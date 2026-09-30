@@ -57,6 +57,9 @@ class ClientCredentialsIntegrationTest {
     }
 
     private fun tokenStatus(vararg params: Pair<String, String>) = mockMvc.post("/oauth2/token") {
+        // As a backend's HTTP client sends it; with no Accept at all the server treats the caller
+        // as a browser and redirects to the sign-in page instead.
+        accept = MediaType.APPLICATION_JSON
         param("grant_type", "client_credentials")
         param("scope", "user.read.any")
         params.forEach { (name, value) -> param(name, value) }

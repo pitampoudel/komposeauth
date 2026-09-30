@@ -20,6 +20,7 @@ import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
 import pitampoudel.komposeauth.user.repository.UserRepository
+import java.net.URI
 import java.security.MessageDigest
 import java.util.Base64
 import kotlin.test.assertEquals
@@ -82,7 +83,8 @@ class PublicClientRefreshTokenIntegrationTest {
             "&scope=openid%20user.read.any&state=s1&code_challenge=$challenge&code_challenge_method=S256"
         var hops = 0
         while (url != null && hops++ < 12) {
-            val result = mockMvc.get(url) {
+            // As a URI, so the already-encoded query (the space in `scope`) is not encoded again.
+            val result = mockMvc.get(URI(url)) {
                 sessionCookie?.let { cookie(it) }
                 accept = MediaType.TEXT_HTML
             }.andReturn()
