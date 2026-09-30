@@ -4,11 +4,9 @@ import com.google.cloud.storage.Bucket
 import com.google.cloud.storage.BucketInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
-import org.springframework.stereotype.Service
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 
 
-@Service
 class GcpStorageService(
     val appConfigService: AppConfigService
 ) : StorageService {
