@@ -19,11 +19,11 @@ import java.util.concurrent.atomic.AtomicReference
 @Service
 class RoutingStorageService(
     private val appConfigService: AppConfigService,
-    private val gcs: GcpStorageService
 ) : StorageService {
     private val log = LoggerFactory.getLogger(javaClass)
 
     private val s3 = AtomicReference<S3StorageService?>()
+    private val gcs = AtomicReference<GcpStorageService?>()
 
     /** The S3 store the config names now, rebuilt when an admin changes it. */
     private fun s3OrNull(): S3StorageService? {
@@ -40,9 +40,14 @@ class RoutingStorageService(
         }
     }
 
+    private fun gcs(): GcpStorageService {
+        return GcpStorageService(appConfigService)
+    }
+
     private fun writeStore(): StorageService = when (appConfigService.getConfig().resolvedStorageProvider()) {
         AppConfig.STORAGE_S3 -> s3OrNull() ?: error("unreachable: the resolved store is configured")
-        else -> gcs
+        AppConfig.STORAGE_GCS -> gcs()
+        else -> error("unreachable: the resolved store is configured")
     }
 
     override fun upload(blobName: String, contentType: String?, bytes: ByteArray): String =
@@ -53,12 +58,6 @@ class RoutingStorageService(
     override fun exists(blobName: String): Boolean = writeStore().exists(blobName)
 
     override fun delete(url: String): Boolean {
-        s3OrNull()?.takeIf { it.owns(url) }?.let { return it.delete(url) }
-        if (appConfigService.getConfig().gcpBucketName == null) return false
-        // Best effort: a file left behind costs a few bytes, and failing here would stop the photo
-        // or logo that replaces it from being saved.
-        return runCatching { gcs.delete(url) }
-            .onFailure { log.warn("Could not delete an old file from GCS", it) }
-            .getOrDefault(false)
+        return writeStore().delete(url)
     }
 }
