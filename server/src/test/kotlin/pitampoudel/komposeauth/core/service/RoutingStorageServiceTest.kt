@@ -22,7 +22,7 @@ class RoutingStorageServiceTest {
 
     private fun router(config: AppConfig): RoutingStorageService {
         val appConfigService: AppConfigService = mock { on { getConfig() } doReturn config }
-        return RoutingStorageService(appConfigService, gcs)
+        return RoutingStorageService(appConfigService)
     }
 
     private val onS3 = AppConfig(
