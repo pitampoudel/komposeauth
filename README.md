@@ -208,6 +208,18 @@ initializeKomposeAuth(
 )
 ```
 
+## Integrating with your apps (guide for LLMs and developers)
+
+A complete integration guide, written so an LLM coding assistant can follow it, covers frontend sign-in (OAuth 2.1
+authorization code + PKCE for SPAs, server-rendered and mobile apps, or the first-party `/login` API), the token
+claims, and resource-server token validation for Spring Boot, Node.js, Python, Go and Ktor.
+
+- [`llms.txt`](llms.txt): short index in the [llms.txt](https://llmstxt.org) format
+- [`docs/llms-full.txt`](docs/llms-full.txt): the full guide
+
+Every running server also publishes both, without authentication, at `https://your-auth-server/llms.txt` and
+`https://your-auth-server/llms-full.txt`. Point your assistant at one of those URLs.
+
 ## Usage snippets (Client)
 
 Utilities

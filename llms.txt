@@ -1,0 +1,31 @@
+# komposeauth
+
+> Self-hosted OAuth 2.1 / OpenID Connect authorization server (Spring Authorization Server + MongoDB), plus a Kotlin Multiplatform client SDK. It signs RS256 JWT access tokens that resource servers validate locally against its JWKS. Users sign in with email/phone + password, Google, Apple, passkeys (WebAuthn) or one-time codes (SMS/WhatsApp/email).
+
+Every running komposeauth server publishes this file at `/llms.txt` and the full integration guide at `/llms-full.txt`, with no authentication. Replace `https://auth.example.com` in the guide with the server's public URL.
+
+Key facts an integrator needs before writing code:
+
+- Discovery: `GET /.well-known/openid-configuration` (issuer, `authorization_endpoint` `/oauth2/authorize`, `token_endpoint` `/oauth2/token`, `jwks_uri` `/oauth2/jwks`, `userinfo_endpoint` `/userinfo`).
+- Browser / third-party apps: authorization code flow with PKCE (S256). PKCE is mandatory for every client. Send `client_id` in the token request; a public app never needs the client secret.
+- OAuth clients are registered by an admin at `/admin/clients` or `POST /oauth2/clients`; exact-match `redirect_uris` are required.
+- First-party apps may instead call the JSON API `POST /login?responseType=TOKEN|COOKIE|SESSION` with a typed credential (`{"type":"USERNAME_PASSWORD",...}`) and refresh with `{"type":"REFRESH_TOKEN",...}`.
+- Resource servers: accept `Authorization: Bearer <jwt>`, verify the signature with `/oauth2/jwks`, check `exp`/`nbf` and the `iss` equal to the auth server's public URL. `sub` is the user id. Roles are in the `authorities` claim as `ROLE_<NAME>`; OAuth scopes are in `scope`.
+- Browser apps on a subdomain of the configured relying-party ID can use the HttpOnly `access_token` cookie instead of a header; their origin must be in the server's CORS allow-list.
+- Kotlin Multiplatform apps should use the `io.github.pitampoudel:komposeauth-client` SDK rather than calling the API by hand.
+
+## Docs
+
+- [Integration guide for LLMs (full)](https://github.com/pitampoudel/komposeauth/blob/main/docs/llms-full.txt): frontend flows (SPA, server-rendered, mobile, KMP), token and claim reference, resource-server validation for Spring Boot, Node.js, Python, Go and Ktor, the HTTP API, and common mistakes. Served by every instance at `/llms-full.txt`.
+- [README](https://github.com/pitampoudel/komposeauth/blob/main/README.md): running the server (Docker, Cloud Run), proxy and client-IP settings, SDK installation.
+
+## Source of truth
+
+- [Server security configuration](https://github.com/pitampoudel/komposeauth/blob/main/server/src/main/kotlin/pitampoudel/komposeauth/core/security/WebAuthorizationConfig.kt): token claims, userinfo mapping, public-client authentication.
+- [Public endpoints](https://github.com/pitampoudel/komposeauth/blob/main/server/src/main/kotlin/pitampoudel/komposeauth/core/security/PublicEndpoints.kt): which paths need no token.
+- [API path constants](https://github.com/pitampoudel/komposeauth/blob/main/shared/src/commonMain/kotlin/pitampoudel/komposeauth/core/domain/ApiEndpoints.kt) and [shared DTOs](https://github.com/pitampoudel/komposeauth/tree/main/shared/src/commonMain/kotlin/pitampoudel/komposeauth): request and response shapes.
+
+## Optional
+
+- [Client SDK source](https://github.com/pitampoudel/komposeauth/tree/main/client/src/commonMain/kotlin/pitampoudel/komposeauth): Ktor bearer-auth plugin, ViewModels for login, OTP, profile, KYC and organizations.
+- Swagger UI at `/swagger-ui.html` and OpenAPI JSON at `/v3/api-docs` on a running server (requires an ADMIN session).
