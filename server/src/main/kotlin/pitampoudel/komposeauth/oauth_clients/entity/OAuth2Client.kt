@@ -38,6 +38,9 @@ data class OAuth2Client(
     companion object {
         const val SCOPE_READ_ANY_USER = "user.read.any"
         const val SCOPE_WRITE_ANY_USER = "user.write.any"
+
+        /** Scopes that act on every account. Only a client acting as itself may hold them. */
+        val SERVICE_ONLY_SCOPES = setOf(SCOPE_READ_ANY_USER, SCOPE_WRITE_ANY_USER)
     }
 }
 

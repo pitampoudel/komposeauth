@@ -2,10 +2,14 @@ package pitampoudel.komposeauth.core.security
 
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
+import org.springframework.mock.web.MockFilterChain
 import org.springframework.mock.web.MockHttpServletRequest
+import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.web.cors.CorsUtils
+import org.springframework.web.filter.CorsFilter
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -86,5 +90,63 @@ class CorsConfigurationSourceTest {
         }
 
         assertTrue(CorsUtils.isCorsRequest(crossOrigin))
+    }
+
+    /** Status the real CORS filter answers with, given what the operator configured. */
+    private fun statusFor(request: MockHttpServletRequest, vararg configured: String): Int {
+        val source = WebSecurityConfig().corsConfigurationSource(
+            mock<AppConfigService> { on { corsAllowedOrigins() } doReturn configured.toList() }
+        )
+        val response = MockHttpServletResponse()
+        CorsFilter(source).doFilter(request, response, MockFilterChain())
+        return response.status
+    }
+
+    /** The console's own form post as it arrives behind a TLS-terminating proxy. */
+    private fun consolePostBehindProxy(origin: String, fetchSite: String?) =
+        MockHttpServletRequest("POST", "/admin/config").apply {
+            scheme = "http"
+            serverName = "auth.example.com"
+            serverPort = 8080
+            addHeader("Origin", origin)
+            fetchSite?.let { addHeader("Sec-Fetch-Site", it) }
+        }
+
+    @Test
+    fun `the console's own post is accepted behind a proxy`() {
+        // The server sees http on 8080 while the browser is on https, so Spring alone calls this
+        // cross-origin and refused it whenever an allow-list was configured.
+        val request = consolePostBehindProxy("https://auth.example.com", "same-origin")
+
+        assertEquals(200, statusFor(request, "https://app.example.com"))
+    }
+
+    @Test
+    fun `a no-referrer page's null origin is accepted when the browser says same-origin`() {
+        val request = consolePostBehindProxy("null", "same-origin")
+
+        assertEquals(200, statusFor(request, "https://app.example.com"))
+    }
+
+    @Test
+    fun `a cross-site post is refused even with no allow-list`() {
+        // CSRF tokens are off and the token cookie is SameSite=None, so this is the CSRF defence.
+        val request = consolePostBehindProxy("https://evil.example.com", "cross-site")
+
+        assertEquals(403, statusFor(request))
+    }
+
+    @Test
+    fun `a cross-site call from an allowed origin goes through`() {
+        val request = consolePostBehindProxy("https://app.example.com", "same-site")
+
+        assertEquals(200, statusFor(request, "https://app.example.com"))
+    }
+
+    @Test
+    fun `a request without fetch metadata and no allow-list is left alone`() {
+        val request = consolePostBehindProxy("https://evil.example.com", null)
+
+        assertEquals(200, statusFor(request))
     }
 }

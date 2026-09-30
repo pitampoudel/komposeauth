@@ -14,7 +14,7 @@ import java.util.*
 fun OAuth2Client.toRegisteredClient(): RegisteredClient {
 
     val builder = RegisteredClient.withId(this.clientId)
-        .clientSecret(this.clientSecret)
+        .clientSecret(this.clientSecret?.let { "{noop}$it" })
         .clientIdIssuedAt(this.createdAt)
         .clientId(this.clientId)
         .clientName(this.clientName)

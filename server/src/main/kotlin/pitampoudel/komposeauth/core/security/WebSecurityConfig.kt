@@ -77,21 +77,31 @@ class WebSecurityConfig {
 
 
     /**
-     * The origins an operator configured, and nothing added at request time.
+     * Who may call this server from a browser page on another origin: the operator's allow-list,
+     * and nothing added at request time.
      *
-     * Same-origin requests are Spring's job: `CorsUtils.isCorsRequest` compares the `Origin`
-     * header's scheme, host and port against the request's own and reports false when they agree,
-     * so the console's own form posts never reach this list. That comparison uses what the
-     * application sees, which behind a proxy means `server.forward-headers-strategy` and an edge
-     * that sends `X-Forwarded-Proto` and `X-Forwarded-Host` — the setting to check if a deployment
-     * has its own posts refused.
+     * Same-origin is decided by the browser, not by us. `Sec-Fetch-Site` is the browser's own
+     * verdict and a page cannot forge it. Spring's fallback compares `Origin` with the scheme, host
+     * and port the application sees, and this filter runs ahead of `ForwardedHeaderFilter` (see
+     * [corsFilterRegistration]), so behind any TLS-terminating proxy the server believes it is
+     * `http://host:8080` and refused the console's own `https://host` form posts as an invalid
+     * CORS request.
+     *
+     * A write the browser marks cross-site is held to the allow-list even when that list is empty.
+     * CSRF tokens are off and the access-token cookie is `SameSite=None`, so this is what stops
+     * another site from posting a form into `/admin/config` with a signed-in admin's cookie.
+     * Requests without the header (servers, mobile apps, very old browsers) keep the previous
+     * behaviour: judged against the list if one is configured, left alone if not.
      */
     @Bean
     fun corsConfigurationSource(appConfigService: AppConfigService): CorsConfigurationSource {
-        return CorsConfigurationSource {
+        return CorsConfigurationSource { request ->
+            val fetchSite = request.getHeader("Sec-Fetch-Site")
+            if (fetchSite == "same-origin" || fetchSite == "none") {
+                return@CorsConfigurationSource null
+            }
             val origins = appConfigService.corsAllowedOrigins()
-            if (origins.isEmpty()) {
-                // No opinion, rather than "refuse everyone".
+            if (origins.isEmpty() && fetchSite == null) {
                 return@CorsConfigurationSource null
             }
 

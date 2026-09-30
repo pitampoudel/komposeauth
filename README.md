@@ -250,38 +250,20 @@ val kycVm = koinViewModel<KycViewModel>()
 
 ## Security
 
-### CSRF, and when you need to think about it
+### Cross-site requests
 
-State-changing requests must carry a CSRF token whenever they authenticate with a cookie, because a
-cookie is sent by the browser whether or not the page asking for it is yours.
+There are no CSRF tokens. Instead, the browser's `Sec-Fetch-Site` header decides:
 
-Most callers never notice:
+- **Same-origin requests** (this server's own pages, including the admin console) are always
+  allowed, whatever proxy sits in front of the server.
+- **Cross-site requests** (anything a browser sends from another site, including a plain form post)
+  are allowed only from origins listed under **CORS allowed origins** on the configuration page.
+  With the list empty, no other site can send a cookie-authenticated write to this server.
+- **Requests from outside a browser** (the KMP SDK, mobile apps, backends) do not carry the header
+  and are unaffected. Anything sending `Authorization: Bearer` is not forgeable anyway.
 
-- **The KMP SDK, and anything else sending `Authorization: Bearer`** — exempt. A browser will not
-  attach that header to a cross-site request on its own, so there is nothing to forge.
-- **Pages this server renders**, including the admin console — the token is already in the form or
-  the page's `<meta name="_csrf">`.
-- **Signing in and resetting a password** — exempt, so a client can do these before it holds a token.
-
-You need to do something in one case: **a browser app on your own origin that authenticates with the
-access-token cookie.** Fetch a token once, then echo it back on every write:
-
-```js
-const {token, headerName} = await (
-    await fetch("https://your-auth-server/csrf", {credentials: "include"})
-).json();
-
-await fetch("https://your-auth-server/update-profile", {
-    method: "POST",
-    credentials: "include",
-    headers: {"Content-Type": "application/json", [headerName]: token},
-    body: JSON.stringify({givenName: "Ada"}),
-});
-```
-
-Your app's origin must be listed under **CORS allowed origins** on the configuration page, or the
-browser will not let it read the token. Apps served from a subdomain of your configured relying party
-ID can also read the `XSRF-TOKEN` cookie directly and skip the fetch.
+So a browser app on another origin that calls this server with `credentials: "include"` only needs
+its origin in that list.
 
 ### Reporting
 

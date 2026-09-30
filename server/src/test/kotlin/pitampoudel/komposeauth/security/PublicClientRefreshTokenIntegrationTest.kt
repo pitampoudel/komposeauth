@@ -23,6 +23,7 @@ import pitampoudel.komposeauth.user.repository.UserRepository
 import java.security.MessageDigest
 import java.util.Base64
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 
@@ -59,7 +60,7 @@ class PublicClientRefreshTokenIntegrationTest {
                     redirectUris = setOf(redirectUri),
                     accessTokenTtlSeconds = 900,
                     refreshTokenTtlDays = 30,
-                    scopes = setOf("openid", "profile", "email")
+                    scopes = setOf("openid", "profile", "email", "user.read.any")
                 )
             )
         }.andExpect { status { isOk() } }.andReturn()
@@ -78,7 +79,7 @@ class PublicClientRefreshTokenIntegrationTest {
             MessageDigest.getInstance("SHA-256").digest(codeVerifier.toByteArray())
         )
         var url: String? = "/oauth2/authorize?response_type=code&client_id=$clientId&redirect_uri=$redirectUri" +
-            "&scope=openid&state=s1&code_challenge=$challenge&code_challenge_method=S256"
+            "&scope=openid%20user.read.any&state=s1&code_challenge=$challenge&code_challenge_method=S256"
         var hops = 0
         while (url != null && hops++ < 12) {
             val result = mockMvc.get(url) {
@@ -123,6 +124,11 @@ class PublicClientRefreshTokenIntegrationTest {
             "code_verifier" to codeVerifier
         )
         val refreshToken = assertNotNull(first["refresh_token"], "no refresh token in $first")
+        // Reaching every account is for a client acting as itself, never for a signed-in user.
+        val claims = json.parseToJsonElement(
+            String(Base64.getUrlDecoder().decode(first.getValue("access_token").split(".")[1]))
+        ).jsonObject
+        assertFalse("user.read.any" in claims["scope"].toString(), "user token carries a service scope: $claims")
 
         val refreshed = token(
             "grant_type" to "refresh_token",

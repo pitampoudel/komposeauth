@@ -207,11 +207,16 @@ class AppConfigController(
         return runCatching { candidate.resolvedStorageProvider() }.exceptionOrNull()?.message
     }
 
-    /** This page renders every secret the server holds; keep it out of caches and history. */
+    /**
+     * This page renders every secret the server holds; keep it out of caches and history.
+     *
+     * No `Referrer-Policy: no-referrer` here: it makes the browser send `Origin: null` with the
+     * page's own form post, which reads as a foreign origin. The site-wide
+     * `strict-origin-when-cross-origin` already keeps the `?key=` query off other sites.
+     */
     private fun noStore(response: HttpServletResponse) {
         response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private")
         response.setHeader("Pragma", "no-cache")
-        response.setHeader("Referrer-Policy", "no-referrer")
     }
 
     private fun enforceConfigAccessOrRedirect(key: String?, request: HttpServletRequest): String? {

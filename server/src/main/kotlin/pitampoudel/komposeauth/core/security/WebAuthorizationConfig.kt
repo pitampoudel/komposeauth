@@ -12,14 +12,17 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.factory.PasswordEncoderFactories
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator
 import org.springframework.security.crypto.keygen.StringKeyGenerator
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.OAuth2RefreshToken
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
+import org.springframework.security.oauth2.server.authorization.authentication.ClientSecretAuthenticationProvider
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.token.*
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
@@ -36,6 +39,7 @@ import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.service.KycService
+import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client.Companion.SERVICE_ONLY_SCOPES
 import pitampoudel.komposeauth.user.service.UserService
 import java.time.Instant
 import java.util.*
@@ -115,35 +119,38 @@ class WebAuthorizationConfig {
         kycService: KycService
     ): OAuth2TokenCustomizer<JwtEncodingContext> {
         return OAuth2TokenCustomizer { context ->
-            when (context.authorizationGrantType) {
-                AuthorizationGrantType.CLIENT_CREDENTIALS -> {
-                    // val principal = context.getPrincipal<OAuth2ClientAuthenticationToken>()
-                }
-
-                else -> {
-                    val principal = context.getPrincipal<UsernamePasswordAuthenticationToken>()
-                    val user = userService.findByUserName(
-                        principal.name
-                    ) ?: throw AccountNotFoundException(
-                        "User not found with email: ${principal.name}"
-                    )
-                    context.claims.claim("authorities", principal.authorities.map { it.authority })
-                    user.email?.let {
-                        context.claims.claim("email", it)
-                    }
-                    user.firstName?.let {
-                        context.claims.claim("givenName", it)
-                    }
-                    user.lastName?.let {
-                        context.claims.claim("familyName", it)
-                    }
-                    user.picture?.let {
-                        context.claims.claim("picture", it)
-                    }
-                    context.claims.claim("kycVerified", kycService.isVerified(user.id))
-                    context.claims.claim("phoneNumberVerified", user.phoneNumberVerified)
+            // A client acting as itself has no user to describe.
+            if (context.authorizationGrantType == AuthorizationGrantType.CLIENT_CREDENTIALS) {
+                return@OAuth2TokenCustomizer
+            }
+            val principal = context.getPrincipal<UsernamePasswordAuthenticationToken>()
+            val user = userService.findByUserName(
+                principal.name
+            ) ?: throw AccountNotFoundException(
+                "User not found with email: ${principal.name}"
+            )
+            // A user's token must not carry scopes that reach every other account, or
+            // anyone able to sign in to such an app could read or edit everyone.
+            context.claims.claims { claims ->
+                (claims[OAuth2ParameterNames.SCOPE] as? Collection<*>)?.let { scopes ->
+                    claims[OAuth2ParameterNames.SCOPE] = scopes.filterNot { it in SERVICE_ONLY_SCOPES }.toSet()
                 }
             }
+            context.claims.claim("authorities", principal.authorities.map { it.authority })
+            user.email?.let {
+                context.claims.claim("email", it)
+            }
+            user.firstName?.let {
+                context.claims.claim("givenName", it)
+            }
+            user.lastName?.let {
+                context.claims.claim("familyName", it)
+            }
+            user.picture?.let {
+                context.claims.claim("picture", it)
+            }
+            context.claims.claim("kycVerified", kycService.isVerified(user.id))
+            context.claims.claim("phoneNumberVerified", user.phoneNumberVerified)
         }
     }
 
@@ -180,6 +187,14 @@ class WebAuthorizationConfig {
                     registeredClientRepository = registeredClientRepository
                 )
             )
+            // Client secrets are stored as issued (the console shows them again) and registered
+            // as `{noop}`; the application's BCrypt encoder, which Spring would otherwise pick up
+            // here, can never match them.
+            it.authenticationProviders { providers ->
+                providers.filterIsInstance<ClientSecretAuthenticationProvider>().forEach { provider ->
+                    provider.setPasswordEncoder(PasswordEncoderFactories.createDelegatingPasswordEncoder())
+                }
+            }
         }
 
         return http.securityMatcher(authorizationServerConfigurer.endpointsMatcher)
