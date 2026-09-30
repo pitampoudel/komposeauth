@@ -50,6 +50,7 @@
     <div th:if="${saved}" class="alert alert-success" role="status" style="margin-top: 24px;">
         Configuration saved.
     </div>
+    <div th:if="${error != null}" class="alert alert-error" role="alert" style="margin-top: 24px;" th:text="${error}"></div>
 
     <form method="post">
         <div th:each="group : ${fieldGroups}" class="field-group">

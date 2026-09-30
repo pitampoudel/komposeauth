@@ -37,13 +37,14 @@ data class AppConfig(
     @field:Email(message = "Invalid support email address")
     var supportEmail: String? = null,
     var rpId: String? = null,
+    /**
+     * Which bucket takes new files, "gcs" or "s3"; needed only when both are set. Neither cloud is a
+     * default, see [resolvedStorageProvider]. A stored file is still read and deleted in the bucket
+     * its address names, so keep the other bucket's settings while any of its files are left.
+     */
+    var storageProvider: String? = null,
     var gcpProjectId: String? = null,
     var gcpBucketName: String? = null,
-
-    /**
-     * Set, and new files go to this S3 bucket instead of [gcpBucketName]. Files already on GCS stay
-     * there and are still deleted there, so keep the GCS settings while any are left.
-     */
     var s3BucketName: String? = null,
     var s3Region: String? = null,
     /** With [s3SecretAccessKey], or both empty to use the host's own role (an ECS task role). */
@@ -141,6 +142,26 @@ data class AppConfig(
     @LastModifiedDate
     val updatedAt: Instant = Instant.now()
 ) {
+    /**
+     * The store new files go to: the one [storageProvider] names, or the only bucket configured.
+     * With both configured and none named this refuses rather than picking, since either guess puts
+     * users' files somewhere nobody chose.
+     */
+    fun resolvedStorageProvider(): String {
+        val configured = listOfNotNull(
+            STORAGE_GCS.takeIf { gcpBucketName != null },
+            STORAGE_S3.takeIf { s3BucketName != null }
+        )
+        val chosen = storageProvider?.lowercase()?.takeIf { it.isNotBlank() }
+            ?: configured.singleOrNull()
+            ?: error(
+                if (configured.isEmpty()) "No storage bucket configured"
+                else "Both a GCS and an S3 bucket are configured; set storageProvider to say which takes new files"
+            )
+        check(chosen in configured) { "storageProvider is '$chosen' but that bucket is not configured" }
+        return chosen
+    }
+
     fun clean(): AppConfig {
         if (name.isNullOrBlank()) name = null
         if (websiteUrl.isNullOrBlank()) websiteUrl = null
@@ -152,6 +173,7 @@ data class AppConfig(
         if (privacyLink.isNullOrBlank()) privacyLink = null
 
         if (logoUrl.isNullOrBlank()) logoUrl = null
+        storageProvider = storageProvider?.lowercase()?.takeIf { it.isNotBlank() }
         if (gcpProjectId.isNullOrBlank()) gcpProjectId = null
         if (gcpBucketName.isNullOrBlank()) gcpBucketName = null
         if (s3BucketName.isNullOrBlank()) s3BucketName = null
@@ -198,5 +220,7 @@ data class AppConfig(
 
     companion object {
         const val SINGLETON_ID: String = "singleton"
+        const val STORAGE_GCS = "gcs"
+        const val STORAGE_S3 = "s3"
     }
 }

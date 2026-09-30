@@ -12,6 +12,7 @@ import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -25,6 +26,7 @@ class RoutingStorageServiceTest {
     }
 
     private val onS3 = AppConfig(
+        storageProvider = AppConfig.STORAGE_S3,
         gcpProjectId = "p",
         gcpBucketName = "old",
         s3BucketName = "new-files",
@@ -32,10 +34,31 @@ class RoutingStorageServiceTest {
     )
 
     @Test
-    fun `without an S3 bucket new files still go to GCS`() {
+    fun `with only GCS configured new files go to GCS`() {
         whenever(gcs.upload(any(), anyOrNull(), any())) doReturn gcsUrl
 
         assertEquals(gcsUrl, router(AppConfig(gcpProjectId = "p", gcpBucketName = "old")).upload("a", null, ByteArray(1)))
+    }
+
+    @Test
+    fun `with both buckets storageProvider decides, and GCS can be chosen`() {
+        whenever(gcs.upload(any(), anyOrNull(), any())) doReturn gcsUrl
+
+        assertEquals(gcsUrl, router(onS3.copy(storageProvider = AppConfig.STORAGE_GCS)).upload("a", null, ByteArray(1)))
+    }
+
+    @Test
+    fun `with both buckets and no choice neither cloud is picked`() {
+        assertFailsWith<IllegalStateException> { router(onS3.copy(storageProvider = null)).upload("a", null, ByteArray(1)) }
+        verify(gcs, never()).upload(any(), anyOrNull(), any())
+    }
+
+    @Test
+    fun `the only bucket configured is used, and a choice with no bucket is refused`() {
+        assertEquals("s3", onS3.copy(storageProvider = null, gcpBucketName = null).resolvedStorageProvider())
+        assertFailsWith<IllegalStateException> {
+            AppConfig(gcpBucketName = "old", storageProvider = AppConfig.STORAGE_S3).resolvedStorageProvider()
+        }
     }
 
     @Test

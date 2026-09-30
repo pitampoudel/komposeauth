@@ -3,15 +3,17 @@ package pitampoudel.komposeauth.core.service
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
+import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * The [StorageService] everything is handed: new files go to S3 when `s3BucketName` is set and to
- * GCS otherwise, and a stored address is deleted from whichever store it names.
+ * The [StorageService] everything is handed: new files go to the store `storageProvider` names (or
+ * the only bucket configured; neither cloud is a default, see [AppConfig.resolvedStorageProvider]),
+ * and a stored address is deleted from whichever store it names.
  *
- * Files are never copied between the two. One written to GCS before the switch stays on GCS and is
- * still read from its own address, so the GCS settings stay beside the S3 ones while any are left.
+ * Files are never copied between the two. One written to either store before a switch stays there
+ * and is still read from its own address, so both stores' settings stay while any files are left.
  */
 @Primary
 @Service
@@ -38,7 +40,10 @@ class RoutingStorageService(
         }
     }
 
-    private fun writeStore(): StorageService = s3OrNull() ?: gcs
+    private fun writeStore(): StorageService = when (appConfigService.getConfig().resolvedStorageProvider()) {
+        AppConfig.STORAGE_S3 -> s3OrNull() ?: error("unreachable: the resolved store is configured")
+        else -> gcs
+    }
 
     override fun upload(blobName: String, contentType: String?, bytes: ByteArray): String =
         writeStore().upload(blobName, contentType, bytes)
@@ -50,8 +55,8 @@ class RoutingStorageService(
     override fun delete(url: String): Boolean {
         s3OrNull()?.takeIf { it.owns(url) }?.let { return it.delete(url) }
         if (appConfigService.getConfig().gcpBucketName == null) return false
-        // Best effort: a file left behind on GCS costs a few bytes, and failing here would stop the
-        // photo or logo that replaces it from being saved.
+        // Best effort: a file left behind costs a few bytes, and failing here would stop the photo
+        // or logo that replaces it from being saved.
         return runCatching { gcs.delete(url) }
             .onFailure { log.warn("Could not delete an old file from GCS", it) }
             .getOrDefault(false)

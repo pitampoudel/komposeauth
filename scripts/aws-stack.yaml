@@ -59,7 +59,8 @@ Resources:
       LogGroupName: !Sub /ecs/${ServiceName}
       RetentionInDays: 30
 
-  # Set its name as s3BucketName, and the stack's region as s3Region, in the admin config page.
+  # Set its name as s3BucketName, and the stack's region as s3Region, in the admin config page, and
+  # storageProvider "s3" when a GCS bucket is configured too.
   # Photos and logos are shown straight from their address, so those two prefixes are readable by
   # anyone; KYC documents are identity papers and are not.
   FilesBucket:

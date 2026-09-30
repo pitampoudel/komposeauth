@@ -158,11 +158,14 @@ are readable by anyone, as they are shown from their address. KYC documents are 
 4. Point the domain at the `LoadBalancerDnsName` output, and allow the tasks' addresses in MongoDB
    Atlas.
 5. In the admin config page, set `s3BucketName` to the `FilesBucketName` output and `s3Region` to
-   the stack's region. Leave the access key fields empty: the task's own role is used.
+   the stack's region, and `storageProvider` to say which bucket takes new files. Leave the access
+   key fields empty: the task's own role is used.
 
-New files then go to S3. Files already on Google Cloud Storage are never copied. They are still
-shown from their old address and deleted from GCS, so keep the GCS settings while any are left. If
-GCS stops answering, deleting an old file fails quietly and the new photo or logo is still saved.
+Neither cloud is a default. With one bucket configured it takes the new files; with both, the page
+refuses to save until `storageProvider` names one, and switching back is changing that one field.
+Files are never copied between the two: each is still shown from its own address and deleted where
+it was written, so keep both buckets' settings while either holds files. If GCS stops answering,
+deleting an old file there fails quietly and the new photo or logo is still saved.
 
 Scaling to several instances is already accounted for — sessions, OAuth2 authorizations and the
 abuse counters all live in MongoDB rather than in one container's memory, so limits hold across
