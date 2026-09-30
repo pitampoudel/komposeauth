@@ -40,6 +40,16 @@ data class AppConfig(
     var gcpProjectId: String? = null,
     var gcpBucketName: String? = null,
 
+    /**
+     * Set, and new files go to this S3 bucket instead of [gcpBucketName]. Files already on GCS stay
+     * there and are still deleted there, so keep the GCS settings while any are left.
+     */
+    var s3BucketName: String? = null,
+    var s3Region: String? = null,
+    /** With [s3SecretAccessKey], or both empty to use the host's own role (an ECS task role). */
+    var s3AccessKeyId: String? = null,
+    var s3SecretAccessKey: String? = null,
+
     var googleAuthClientId: String? = null,
     var googleAuthClientSecret: String? = null,
     var googleAuthDesktopClientId: String? = null,
@@ -144,6 +154,10 @@ data class AppConfig(
         if (logoUrl.isNullOrBlank()) logoUrl = null
         if (gcpProjectId.isNullOrBlank()) gcpProjectId = null
         if (gcpBucketName.isNullOrBlank()) gcpBucketName = null
+        if (s3BucketName.isNullOrBlank()) s3BucketName = null
+        if (s3Region.isNullOrBlank()) s3Region = null
+        if (s3AccessKeyId.isNullOrBlank()) s3AccessKeyId = null
+        if (s3SecretAccessKey.isNullOrBlank()) s3SecretAccessKey = null
         if (googleAuthClientId.isNullOrBlank()) googleAuthClientId = null
         if (googleAuthClientSecret.isNullOrBlank()) googleAuthClientSecret = null
         if (googleAuthDesktopClientId.isNullOrBlank()) googleAuthDesktopClientId = null

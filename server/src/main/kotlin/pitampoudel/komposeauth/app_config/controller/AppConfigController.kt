@@ -49,6 +49,10 @@ class AppConfigController(
                 members = listOf("supportEmail", "rpId", "gcpProjectId", "gcpBucketName")
             ),
             Group(
+                title = "S3 Storage (new files go here when a bucket is set)",
+                members = listOf("s3BucketName", "s3Region", "s3AccessKeyId", "s3SecretAccessKey")
+            ),
+            Group(
                 title = "OAuth",
                 members = listOf(
                     "googleAuthClientId",
