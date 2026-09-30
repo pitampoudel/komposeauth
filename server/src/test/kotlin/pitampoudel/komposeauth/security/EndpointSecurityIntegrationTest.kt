@@ -37,6 +37,21 @@ class EndpointSecurityIntegrationTest {
     private lateinit var userRepository: UserRepository
 
     @Test
+    fun `the LLM integration guide is published without credentials`() {
+        listOf("/llms.txt", "/llms-full.txt").forEach { path ->
+            val body = mockMvc.get(path) {
+                // A stale token must not turn a public document into a 401.
+                header("Authorization", "Bearer not-a-real-token")
+            }.andExpect {
+                status { isOk() }
+                content { contentTypeCompatibleWith(MediaType.TEXT_PLAIN) }
+            }.andReturn().response.contentAsString
+
+            assert(body.contains("komposeauth")) { "$path served unexpected content" }
+        }
+    }
+
+    @Test
     fun `home endpoint requires authentication`() {
         mockMvc.get("/") {
             accept = MediaType.APPLICATION_JSON
