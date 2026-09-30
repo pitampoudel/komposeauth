@@ -1,11 +1,10 @@
 package pitampoudel.komposeauth.core.service
 
+import org.mockito.Mockito.mockConstruction
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.doReturn
-import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import pitampoudel.komposeauth.app_config.entity.AppConfig
@@ -17,13 +16,19 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class RoutingStorageServiceTest {
-    private val gcs: GcpStorageService = mock()
     private val gcsUrl = "https://storage.googleapis.com/download/storage/v1/b/old/o/users%2Fu1%2Fphoto?alt=media"
 
     private fun router(config: AppConfig): RoutingStorageService {
         val appConfigService: AppConfigService = mock { on { getConfig() } doReturn config }
         return RoutingStorageService(appConfigService)
     }
+
+    /** Runs [block] with every GCS store the router builds replaced by a mock that answers [gcsUrl]. */
+    private fun <T> withMockGcs(block: (built: () -> List<GcpStorageService>) -> T): T =
+        mockConstruction(GcpStorageService::class.java) { gcs, _ ->
+            whenever(gcs.upload(any(), anyOrNull(), any())) doReturn gcsUrl
+            whenever(gcs.delete(any())) doReturn true
+        }.use { construction -> block { construction.constructed() } }
 
     private val onS3 = AppConfig(
         storageProvider = AppConfig.STORAGE_S3,
@@ -34,23 +39,20 @@ class RoutingStorageServiceTest {
     )
 
     @Test
-    fun `with only GCS configured new files go to GCS`() {
-        whenever(gcs.upload(any(), anyOrNull(), any())) doReturn gcsUrl
-
+    fun `with only GCS configured new files go to GCS`() = withMockGcs { built ->
         assertEquals(gcsUrl, router(AppConfig(gcpProjectId = "p", gcpBucketName = "old")).upload("a", null, ByteArray(1)))
+        assertEquals(1, built().size)
     }
 
     @Test
-    fun `with both buckets storageProvider decides, and GCS can be chosen`() {
-        whenever(gcs.upload(any(), anyOrNull(), any())) doReturn gcsUrl
-
+    fun `with both buckets storageProvider decides, and GCS can be chosen`() = withMockGcs {
         assertEquals(gcsUrl, router(onS3.copy(storageProvider = AppConfig.STORAGE_GCS)).upload("a", null, ByteArray(1)))
     }
 
     @Test
-    fun `with both buckets and no choice neither cloud is picked`() {
+    fun `with both buckets and no choice neither cloud is picked`() = withMockGcs { built ->
         assertFailsWith<IllegalStateException> { router(onS3.copy(storageProvider = null)).upload("a", null, ByteArray(1)) }
-        verify(gcs, never()).upload(any(), anyOrNull(), any())
+        assertTrue(built().isEmpty())
     }
 
     @Test
@@ -62,24 +64,19 @@ class RoutingStorageServiceTest {
     }
 
     @Test
-    fun `a file written before the switch is deleted from GCS`() {
-        whenever(gcs.delete(gcsUrl)) doReturn true
-
-        assertTrue(router(onS3).delete(gcsUrl))
-        verify(gcs).delete(gcsUrl)
+    fun `the GCS store is built once and reused`() = withMockGcs { built ->
+        val router = router(AppConfig(gcpProjectId = "p", gcpBucketName = "old"))
+        router.upload("a", null, ByteArray(1))
+        router.upload("b", null, ByteArray(1))
+        assertEquals(1, built().size)
     }
 
     @Test
-    fun `a GCS that no longer answers does not stop the replacement being saved`() {
-        whenever(gcs.delete(gcsUrl)) doThrow IllegalStateException("billing disabled")
+    fun `a delete goes to the store new files go to`() = withMockGcs { built ->
+        assertTrue(router(onS3.copy(storageProvider = AppConfig.STORAGE_GCS)).delete(gcsUrl))
+        verify(built().single()).delete(gcsUrl)
 
-        assertFalse(router(onS3).delete(gcsUrl))
-    }
-
-    @Test
-    fun `with no GCS configured an old address is left alone`() {
-        assertFalse(router(onS3.copy(gcpProjectId = null, gcpBucketName = null)).delete(gcsUrl))
-        verify(gcs, never()).delete(any())
+        assertFalse(router(onS3).delete(gcsUrl), "the S3 store does not delete an address that is not its own")
     }
 
     @Test
