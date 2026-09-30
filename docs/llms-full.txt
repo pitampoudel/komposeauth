@@ -174,12 +174,22 @@ Client authentication at the token endpoint: whenever the form contains `client_
 request as a **public client** (`core/providers/OAuth2PublicClientAuthConverter.kt`), so a browser app never needs
 the client secret. Never ship the client secret in browser or mobile code.
 
-Refresh tokens: because token requests are authenticated as public clients, Spring Authorization Server does not
-return a `refresh_token` from the authorization-code exchange. Do not build logic that depends on one. When the
-access token expires, run the authorize redirect again: the user still has a session on the auth server
-(24 hours by default, `SESSION_TIMEOUT`), so it completes without a login page. `prompt=none` makes that
-explicit. Iframe-based silent renew does not work because the server forbids framing. If you need long-lived
-sessions without redirects, use approach B, whose refresh tokens last 30 days.
+Refresh tokens: the authorization-code exchange returns a `refresh_token`, public clients included (komposeauth
+issues one to every client with the `refresh_token` grant, which all registered clients have; stock Spring
+Authorization Server would withhold it from public clients). It lasts the client's `refreshTokenTtlDays` and is
+reused, not rotated: refreshing returns a new access token and the same refresh token. Refresh with a form POST
+to the token endpoint, again with `client_id` and no secret:
+
+```http
+POST /oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token&refresh_token=<refresh_token>&client_id=<clientId>
+```
+
+If the refresh is rejected (expired or revoked), run the authorize redirect again: while the user still has a
+session on the auth server (24 hours by default, `SESSION_TIMEOUT`) it completes without a login page.
+`prompt=none` makes that explicit. Iframe-based silent renew does not work because the server forbids framing.
 
 Logout: clear your own tokens, then end the auth server session with the `end_session_endpoint` from the discovery
 document (RP-initiated logout, pass `id_token_hint` and a `post_logout_redirect_uri`) or with `GET /logout` on the
@@ -197,7 +207,7 @@ export const auth = new UserManager({
   post_logout_redirect_uri: window.location.origin,
   response_type: "code",                           // PKCE S256 is automatic
   scope: "openid profile email",
-  automaticSilentRenew: false,                     // iframes are blocked; re-run signinRedirect instead
+  automaticSilentRenew: true,                      // renews with the refresh token, no iframe involved
   userStore: new WebStorageStateStore({ store: window.sessionStorage }),
 });
 
@@ -210,7 +220,7 @@ const user = await auth.signinRedirectCallback();
 // Calling your API
 const current = await auth.getUser();
 if (!current || current.expired) {
-  await auth.signinRedirect();                     // completes silently while the auth-server session lives
+  await auth.signinRedirect();                     // refresh token gone: completes silently while the auth-server session lives
 } else {
   await fetch("https://api.example.com/orders", {
     headers: { Authorization: `Bearer ${current.access_token}` },
@@ -421,6 +431,7 @@ custom claims plus the standard OIDC ones (`nonce`, `auth_time`, ...).
 |---|---|
 | `/login` access token | 24 h |
 | `/login` refresh token | 30 days, single use, rotated |
+| Authorization-code refresh token | per client, `refreshTokenTtlDays`; reusable, not rotated |
 | Authorization-code access token | per client, `accessTokenTtlSeconds` (default 900 s, min 60 s) |
 | Auth-server browser session | `SESSION_TIMEOUT`, default 24 h |
 
@@ -715,7 +726,8 @@ or open Swagger UI at `/swagger-ui.html` as an admin.
   `authorities` (with `ROLE_` prefix). `/userinfo` has unprefixed `roles`.
 - Hard-coding an issuer with a trailing slash, or reaching the auth server through an internal hostname so `iss`
   does not match.
-- Expecting a `refresh_token` from the authorization-code exchange (section 3.1).
+- Sending the user back through the authorize redirect on every access-token expiry instead of using the
+  `refresh_token` from the authorization-code exchange (section 3.1).
 - Reusing a `/login` refresh token after it has been redeemed; always store the new one.
 - Forgetting to add the browser app's origin to the auth server's CORS list (token endpoint and `/login` calls
   fail as opaque CORS errors).
