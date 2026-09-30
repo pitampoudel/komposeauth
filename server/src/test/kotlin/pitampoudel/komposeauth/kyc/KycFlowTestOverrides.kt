@@ -21,7 +21,8 @@ import java.util.UUID
 @TestConfiguration
 class KycFlowTestOverrides {
 
-    @Bean
+    // Named after RoutingStorageService's bean so it replaces it; a second @Primary would be ambiguous.
+    @Bean("routingStorageService")
     @Primary
     fun storageService(): StorageService = object : StorageService {
         override fun upload(blobName: String, contentType: String?, bytes: ByteArray): String = "test://$blobName"
