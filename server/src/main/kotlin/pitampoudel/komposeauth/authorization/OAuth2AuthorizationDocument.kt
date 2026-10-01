@@ -14,7 +14,7 @@ data class OAuth2AuthorizationDocument(
     val principalName: String,
     val authorizationGrantType: String,
     val authorizedScopes: Set<String> = emptySet(),
-    val state: String? = null,
+    @Indexed(sparse = true) val state: String? = null,
     val attributes: String? = null,
 
     @Indexed(unique = true, sparse = true) val authorizationCodeValue: String? = null,

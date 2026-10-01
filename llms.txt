@@ -8,7 +8,7 @@ Key facts an integrator needs before writing code:
 
 - Discovery: `GET /.well-known/openid-configuration` (issuer, `authorization_endpoint` `/oauth2/authorize`, `token_endpoint` `/oauth2/token`, `jwks_uri` `/oauth2/jwks`, `userinfo_endpoint` `/userinfo`).
 - Browser / third-party apps: authorization code flow with PKCE (S256). PKCE is mandatory for every client. Send `client_id` in the token request; a public app never needs the client secret.
-- OAuth clients are registered by an admin at `/admin/clients` or `POST /oauth2/clients`; exact-match `redirect_uris` are required.
+- OAuth clients are registered by an admin at `/admin/clients` or `POST /oauth2/clients`; exact-match `redirect_uris` are required. Alternatively a public client can use the HTTPS URL of its Client ID Metadata Document as its `client_id` without registering (MCP clients such as Claude do this); the user is asked to consent.
 - First-party apps may instead call the JSON API `POST /login?responseType=TOKEN|COOKIE|SESSION` with a typed credential (`{"type":"USERNAME_PASSWORD",...}`) and refresh with `{"type":"REFRESH_TOKEN",...}`.
 - Resource servers: accept `Authorization: Bearer <jwt>`, verify the signature with `/oauth2/jwks`, check `exp`/`nbf` and the `iss` equal to the auth server's public URL. `sub` is the user id. Roles are in the `authorities` claim as `ROLE_<NAME>`; OAuth scopes are in `scope`.
 - Browser apps on a subdomain of the configured relying-party ID can use the HttpOnly `access_token` cookie instead of a header; their origin must be in the server's CORS allow-list.

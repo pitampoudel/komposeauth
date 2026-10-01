@@ -112,6 +112,20 @@ What every registered client gets (`oauth_clients/dto/Mappers.kt`):
   `user.write.any` reach **every** user's record (section 6) and only ever appear in `client_credentials` tokens,
   which require the client secret; they are stripped from tokens issued to signed-in users.
 
+### 2.3a Clients identified by a metadata document (no registration)
+
+A client may instead use an HTTPS URL as its `client_id`, serving its metadata there as JSON (a Client ID
+Metadata Document, draft-ietf-oauth-client-id-metadata-document, used by the MCP authorization spec and by
+clients such as Claude). The server fetches the document when the client first appears and caches it for 10
+minutes (`oauth_clients/cimd/ClientIdMetadataDocuments.kt`); discovery advertises
+`client_id_metadata_document_supported: true`. Such a client:
+
+- must serve a document whose `client_id` equals its URL, with `redirect_uris` (HTTPS, or `http` on a loopback
+  address) and `token_endpoint_auth_method` `none` (or absent); hosts on private networks aren't fetched;
+- is a public client: authorization code with PKCE, plus `refresh_token` if its `grant_types` list it;
+- gets only `openid profile email`, and always shows the user a **consent screen** naming its URL;
+- gets 1-hour access tokens and 30-day refresh tokens that are **rotated** on every use.
+
 ### 2.4 CORS and cookies
 
 - Browser apps calling the auth server from another origin (token endpoint, `/login`, `/me`, ...) must have their

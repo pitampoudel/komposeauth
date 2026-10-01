@@ -17,6 +17,7 @@ import org.springframework.security.crypto.keygen.Base64StringKeyGenerator
 import org.springframework.security.crypto.keygen.StringKeyGenerator
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.AuthorizationGrantType
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.oauth2.core.OAuth2RefreshToken
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo
@@ -44,6 +45,9 @@ import pitampoudel.komposeauth.user.service.UserService
 import java.time.Instant
 import java.util.*
 import javax.security.auth.login.AccountNotFoundException
+
+/** The authorization server metadata entry that tells clients they may use a metadata document URL as their id. */
+private const val CLIENT_ID_METADATA_DOCUMENT_SUPPORTED = "client_id_metadata_document_supported"
 
 @Configuration
 @EnableWebSecurity
@@ -203,7 +207,21 @@ class WebAuthorizationConfig {
             // called by clients, not browsers — so there is no ambient authority here to forge.
             .csrf { it.disable() }
             .with(authorizationServerConfigurer) { authorizationServer ->
+                // Clients may identify themselves with a Client ID Metadata Document URL (see
+                // ClientIdMetadataDocuments) and sign in as public clients, without a secret
+                authorizationServer.authorizationServerMetadataEndpoint {
+                    it.authorizationServerMetadataCustomizer { metadata ->
+                        metadata.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.NONE.value)
+                        metadata.claim(CLIENT_ID_METADATA_DOCUMENT_SUPPORTED, true)
+                    }
+                }
                 authorizationServer.oidc {
+                    it.providerConfigurationEndpoint { provider ->
+                        provider.providerConfigurationCustomizer { metadata ->
+                            metadata.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.NONE.value)
+                            metadata.claim(CLIENT_ID_METADATA_DOCUMENT_SUPPORTED, true)
+                        }
+                    }
                     it.userInfoEndpoint { userInfo ->
                         userInfo.userInfoMapper { context ->
                             val principal: Authentication = context.getAuthentication()
