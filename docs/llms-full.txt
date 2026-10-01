@@ -108,9 +108,9 @@ What every registered client gets (`oauth_clients/dto/Mappers.kt`):
 - `redirect_uri` must match a registered URI exactly.
 - `accessTokenTtlSeconds` is at least 60; `refreshTokenTtlDays` at least 1.
 - `clientId` is a 24-character MongoDB ObjectId hex string. If you supply one it must be in that format.
-- If `scopes` is omitted it defaults to `openid profile email offline_access user.read.any`. `user.read.any`
-  lets the client read **every** user's record (section 6). Only grant it to trusted backend clients; pass an
-  explicit `scopes` list for browser and mobile apps.
+- If `scopes` is omitted it defaults to `openid profile email offline_access`. `user.read.any` and
+  `user.write.any` reach **every** user's record (section 6) and only ever appear in `client_credentials` tokens,
+  which require the client secret; they are stripped from tokens issued to signed-in users.
 
 ### 2.4 CORS and cookies
 
@@ -120,8 +120,8 @@ What every registered client gets (`oauth_clients/dto/Mappers.kt`):
 - The access-token cookie is named `access_token`, is `HttpOnly`, `Secure` + `SameSite=None` over HTTPS, and is
   scoped to the **relying party ID** (`rpId` on the configuration page, e.g. `example.com`), so it is shared with
   every subdomain of that domain. Without an `rpId` it is host-only.
-- The server's security filter chains currently have CSRF protection disabled
-  (`core/security/WebSecurityConfig.kt`), so no CSRF token is needed for cookie-authenticated writes.
+- There are no CSRF tokens. A browser request the browser marks cross-site (`Sec-Fetch-Site`) is refused unless
+  its origin is in the CORS list, even when that list is empty; same-origin and non-browser requests are unaffected.
 
 ---
 
@@ -170,9 +170,11 @@ Flow:
    ```
 5. Send `Authorization: Bearer <access_token>` to your resource servers.
 
-Client authentication at the token endpoint: whenever the form contains `client_id`, the server authenticates the
-request as a **public client** (`core/providers/OAuth2PublicClientAuthConverter.kt`), so a browser app never needs
-the client secret. Never ship the client secret in browser or mobile code.
+Client authentication at the token endpoint: a request with `client_id` and no secret, client assertion or
+`Authorization` header is authenticated as a **public client** (`core/providers/OAuth2PublicClientAuthConverter.kt`),
+for the authorization-code and refresh grants only, so a browser or mobile app never needs the client secret. A
+request that does send `client_secret` has it verified. `client_credentials` always requires the secret. Never ship
+the client secret in browser or mobile code.
 
 Refresh tokens: the authorization-code exchange returns a `refresh_token`, public clients included (komposeauth
 issues one to every client with the `refresh_token` grant, which all registered clients have; stock Spring
@@ -238,7 +240,7 @@ Use your framework's OIDC client (Auth.js, `openid-client`, `authlib`, `omniauth
 - issuer / authority: `https://auth.example.com`
 - client id: the registered `clientId`
 - PKCE enabled with S256 (required even for server-side apps)
-- token endpoint auth method: `none` (or `client_secret_post`; the server treats both as public)
+- token endpoint auth method: `none`, or `client_secret_post` for a server-side app that keeps the secret (the secret is then verified)
 - scopes: `openid profile email`
 - keep the access token in the server-side session and forward it as `Authorization: Bearer` when calling APIs.
 
@@ -732,5 +734,4 @@ or open Swagger UI at `/swagger-ui.html` as an admin.
 - Forgetting to add the browser app's origin to the auth server's CORS list (token endpoint and `/login` calls
   fail as opaque CORS errors).
 - Putting the client secret in browser or mobile code. Only backend clients using `client_credentials` need it.
-- Registering a browser client without an explicit `scopes` list, which grants `user.read.any` by default.
 - Sending `/login` as form data. It takes JSON with a `"type"` discriminator; `/oauth2/token` takes form data.

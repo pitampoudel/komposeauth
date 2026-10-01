@@ -14,7 +14,7 @@ import java.util.*
 fun OAuth2Client.toRegisteredClient(): RegisteredClient {
 
     val builder = RegisteredClient.withId(this.clientId)
-        .clientSecret(this.clientSecret)
+        .clientSecret(this.clientSecret?.let { "{noop}$it" })
         .clientIdIssuedAt(this.createdAt)
         .clientId(this.clientId)
         .clientName(this.clientName)
@@ -23,6 +23,9 @@ fun OAuth2Client.toRegisteredClient(): RegisteredClient {
         }
         .authorizationGrantTypes { grants ->
             grants.addAll(this.authorizationGrantTypes)
+            // A backend registered without redirect URIs has nowhere to receive a code, and Spring
+            // refuses to build such a client with the authorization-code grant at all.
+            if (this.redirectUris.isEmpty()) grants.remove(AuthorizationGrantType.AUTHORIZATION_CODE)
         }
         .redirectUris { uris -> uris.addAll(this.redirectUris) }
         .scopes { scopes -> scopes.addAll(this.scopes) }
