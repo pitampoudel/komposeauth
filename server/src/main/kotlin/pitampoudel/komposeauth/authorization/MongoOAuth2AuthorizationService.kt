@@ -3,6 +3,7 @@ package pitampoudel.komposeauth.authorization
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.stereotype.Service
@@ -35,12 +36,15 @@ class MongoOAuth2AuthorizationService(
 
     override fun findByToken(token: String, tokenType: OAuth2TokenType?): OAuth2Authorization? {
         val doc = when {
-            tokenType == null -> repository.findByAuthorizationCodeValue(token)
+            tokenType == null -> repository.findByState(token)
+                ?: repository.findByAuthorizationCodeValue(token)
                 ?: repository.findByAccessTokenValue(token)
                 ?: repository.findByRefreshTokenValue(token)
                 ?: repository.findByOidcIdTokenValue(token)
             tokenType == OAuth2TokenType.ACCESS_TOKEN -> repository.findByAccessTokenValue(token)
             tokenType == OAuth2TokenType.REFRESH_TOKEN -> repository.findByRefreshTokenValue(token)
+            // The consent form posts the state back, for clients that ask for the user's consent
+            tokenType.value == OAuth2ParameterNames.STATE -> repository.findByState(token)
             tokenType.value == "code" -> repository.findByAuthorizationCodeValue(token)
             tokenType.value == "id_token" -> repository.findByOidcIdTokenValue(token)
             else -> null
