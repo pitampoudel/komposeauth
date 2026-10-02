@@ -83,6 +83,7 @@ class ResourceOwnerLoginController(
 
         user.email?.let {
             builder.claim("email", it)
+            builder.claim("emailVerified", user.emailVerified)
         }
         user.firstName?.let {
             builder.claim("givenName", it)
