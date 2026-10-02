@@ -1,6 +1,9 @@
 package pitampoudel.komposeauth.user.controller
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
@@ -22,6 +25,7 @@ import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.repository.UserRepository
 import pitampoudel.komposeauth.user.service.UserService
+import java.util.Base64
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -101,6 +105,27 @@ class ResourceOwnerLoginControllerIntegrationTest {
                 jsonPath("$.expires_in") { exists() }
             }
         }
+    }
+
+    @Test
+    fun `the access token says whether the user's email is verified`() {
+        val email = "login-unverified@example.com"
+        val password = "Password1"
+        createUser(email, password)
+
+        val response = mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            param("responseType", ResponseType.TOKEN.name)
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString<Credential>(
+                Credential.UsernamePassword(username = email, password = password)
+            )
+        }.andExpect { status { isOk() } }.andReturn().response.contentAsString
+
+        val accessToken = json.parseToJsonElement(response).jsonObject["access_token"]!!.jsonPrimitive.content
+        val claims = json.parseToJsonElement(String(Base64.getUrlDecoder().decode(accessToken.split(".")[1]))).jsonObject
+        assertEquals(email, claims["email"]?.jsonPrimitive?.content)
+        assertEquals(false, claims["emailVerified"]?.jsonPrimitive?.boolean)
     }
 
     @Test

@@ -416,6 +416,7 @@ All tokens are JWS compact JWTs signed with **RS256**. The header carries a `kid
 | `scope` | all | JSON array of scope strings, e.g. `["openid","profile","email"]` |
 | `authorities` | user tokens | JSON array of roles, **prefixed**: `["ROLE_ADMIN"]` (empty for users with no role) |
 | `email` | user tokens, if the user has one | |
+| `emailVerified` | user tokens with an `email` | boolean: whether the user proved they own `email`. Check it before granting access by email address. |
 | `givenName`, `familyName` | user tokens, if set | camelCase, **not** `given_name` / `family_name` |
 | `picture` | user tokens, if set | URL |
 | `kycVerified` | user tokens | boolean |

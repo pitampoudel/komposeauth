@@ -143,6 +143,8 @@ class WebAuthorizationConfig {
             context.claims.claim("authorities", principal.authorities.map { it.authority })
             user.email?.let {
                 context.claims.claim("email", it)
+                // Apps that grant access by email must know the user proved they own it
+                context.claims.claim("emailVerified", user.emailVerified)
             }
             user.firstName?.let {
                 context.claims.claim("givenName", it)
