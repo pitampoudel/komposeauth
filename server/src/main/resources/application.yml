@@ -2,7 +2,9 @@ spring:
   application:
     name: "komposeauth"
   mongodb:
+    # MONGODB_URI never names a database; this one is fixed here and wins over one in the URI.
     uri: ${MONGODB_URI}
+    database: komposeauth
   jmx:
     enabled: false
   lifecycle:
