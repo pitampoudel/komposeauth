@@ -40,11 +40,13 @@ openssl rand -base64 32
 docker pull pitampoudel/komposeauth:latest
 # Quick start
 docker run -p 80:8080 \
-  -e MONGODB_URI="mongodb://your-mongo-host:27017/db-name" \
+  -e MONGODB_URI="mongodb://your-mongo-host:27017" \
   -e BASE64_ENCRYPTION_KEY="<paste-your-base64-key>" \
   pitampoudel/komposeauth:latest
 ```
 
+- The data lives in a database named `komposeauth`, fixed in `application.yml`, so `MONGODB_URI`
+  does not name one.
 - After the container is running, open the configuration page to set up everything else:
     - http://localhost/admin/config?key=&lt;paste-your-base64-key&gt;
 
