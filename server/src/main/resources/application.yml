@@ -7,6 +7,10 @@ spring:
     database: komposeauth
   jmx:
     enabled: false
+  threads:
+    # Requests block on MongoDB and on outbound calls; virtual threads keep that cheap.
+    virtual:
+      enabled: true
   lifecycle:
     # Bounds `server.shutdown: graceful` below. Cloud Run's own grace period before SIGKILL is 10
     # seconds by default, so finish inside it rather than being killed mid-drain.
