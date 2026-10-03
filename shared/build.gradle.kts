@@ -30,7 +30,10 @@ kotlin {
     }
     iosArm64()
     iosSimulatorArm64()
-    jvm()
+    jvm {
+        // Published for consumers still on Java 21, whatever JDK builds it.
+        compilerOptions { jvmTarget.set(JvmTarget.JVM_21) }
+    }
 
     js {
         browser()

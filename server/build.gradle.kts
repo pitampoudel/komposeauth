@@ -14,12 +14,6 @@ configurations.all {
     exclude(group = "org.springframework.boot", module = "spring-boot-starter-json")
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
-}
-
 extra["snippetsDir"] = file("build/generated-snippets")
 extra["sentryVersion"] = "8.27.0"
 
@@ -98,7 +92,7 @@ dependencyManagement {
     }
 }
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(25)
     compilerOptions {
         freeCompilerArgs.addAll(
             "-Xjsr305=strict",
