@@ -6,6 +6,7 @@ import pitampoudel.core.domain.KmpFile
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
+import java.net.URLConnection
 import java.nio.file.Files
 
 @Composable
@@ -24,7 +25,10 @@ actual fun rememberFilePicker(
                 if (dir != null && file != null) {
                     val f = File(dir, file)
                     val bytes = Files.readAllBytes(f.toPath())
+                    // probeContentType answers null for many files on macOS and Windows.
                     val mime = Files.probeContentType(f.toPath())
+                        ?: URLConnection.guessContentTypeFromName(f.name)
+                        ?: "application/octet-stream"
                     onPicked(listOf(KmpFile(byteArray = bytes, mimeType = mime, name = f.name)))
                 }
             }

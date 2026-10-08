@@ -148,7 +148,12 @@ class CreateOrganizationViewModel(
                         it.copy(progress = 0.0F)
                     }
                     _state.update {
-                        it.copy(logoFileError = ValidateNotNull(state.value.logoFile).error())
+                        // Editing keeps the logo already uploaded unless a new one is picked.
+                        it.copy(
+                            logoFileError = ValidateNotNull(
+                                state.value.logoFile ?: state.value.existingOrganization?.logoUrl
+                            ).error()
+                        )
                     }
 
                     _state.update {

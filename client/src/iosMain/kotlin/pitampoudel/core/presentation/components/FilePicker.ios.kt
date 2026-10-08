@@ -43,6 +43,7 @@ private class IosFilePicker(
             forOpeningContentTypes = contentTypes,
             asCopy = true
         ).apply {
+            delegate = this@IosFilePicker.delegate
             allowsMultipleSelection = (selectionMode == SelectionMode.MULTIPLE)
         }
 

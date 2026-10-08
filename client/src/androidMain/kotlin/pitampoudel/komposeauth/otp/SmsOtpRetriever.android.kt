@@ -91,14 +91,13 @@ actual fun registerSmsOtpRetriever(onRetrieved: (String) -> Unit): Boolean? {
     }
     DisposableEffect(Unit) {
 
+        val filter = IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION)
+        // Below Android 13 there is no export flag to pass, and the receiver still has to be
+        // registered there, or the code is never read on those devices.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ctx.registerReceiver(
-                receiver,
-                IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION),
-                SmsRetriever.SEND_PERMISSION,
-                null,
-                Context.RECEIVER_EXPORTED
-            )
+            ctx.registerReceiver(receiver, filter, SmsRetriever.SEND_PERMISSION, null, Context.RECEIVER_EXPORTED)
+        } else {
+            ctx.registerReceiver(receiver, filter, SmsRetriever.SEND_PERMISSION, null)
         }
 
         val client: SmsRetrieverClient = SmsRetriever.getClient(ctx)
@@ -112,9 +111,7 @@ actual fun registerSmsOtpRetriever(onRetrieved: (String) -> Unit): Boolean? {
             isRegistered = false
         }
         onDispose {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                ctx.unregisterReceiver(receiver)
-            }
+            ctx.unregisterReceiver(receiver)
         }
     }
     return isRegistered
