@@ -15,19 +15,19 @@ internal class LoginUser(
     val authStateHandler: AuthStateHandler,
     val authPreferences: AuthPreferences
 ) {
-    suspend operator fun invoke(credential: Credential, onError: (InfoMessage.Error) -> Unit) {
-        when (currentPlatform()) {
+    /** @return whether the user is now signed in; on failure [onError] has been told why. */
+    suspend operator fun invoke(credential: Credential, onError: (InfoMessage.Error) -> Unit): Boolean {
+        return when (currentPlatform()) {
             Platform.WEB -> when (val res = authClient.login(credential, ResponseType.COOKIE)) {
-                is Result.Error -> onError(res.message)
+                is Result.Error -> false.also { onError(res.message) }
 
-                is Result.Success -> authStateHandler.updateCurrentUser()
-
+                is Result.Success -> true.also { authStateHandler.updateCurrentUser() }
             }
 
             else -> when (val res = authClient.login(credential)) {
-                is Result.Error -> onError(res.message)
+                is Result.Error -> false.also { onError(res.message) }
 
-                is Result.Success -> authPreferences.saveTokenData(tokenData = res.data)
+                is Result.Success -> true.also { authPreferences.saveTokenData(tokenData = res.data) }
             }
         }
     }

@@ -59,12 +59,6 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
     authPreferences: AuthPreferences,
     resourceServerUrls: List<String>
 ) {
-    fun isIPv4(host: String): Boolean {
-        val ipv4Regex = Regex(
-            "^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
-        )
-        return ipv4Regex.matches(host)
-    }
     // Only the web target signs in with the access-token cookie (`LoginUser` is the only caller
     // that ever passes `ResponseType.COOKIE`); every other platform authenticates purely with the
     // bearer token in `Authorization`. Installing the cookie jar unconditionally used to make a
@@ -111,12 +105,12 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
                 val authServerUrl = Config.authServerUrl ?: return@refreshTokens null
                 refresh(client.engine, authServerUrl, refreshToken, authPreferences)
             }
+            // The token goes only to the servers it is for; any other host this client calls, by
+            // name or by address, must not receive it.
             sendWithoutRequest { builder ->
                 val authServerUrl = Config.authServerUrl ?: return@sendWithoutRequest false
-                val hosts = (resourceServerUrls + authServerUrl).toSet()
-                    .map { Url(it).host }.toSet()
-                val host = builder.url.host
-                hosts.contains(host) || isIPv4(host)
+                val hosts = (resourceServerUrls + authServerUrl).map { Url(it).host }.toSet()
+                builder.url.host in hosts
             }
         }
     }
@@ -138,14 +132,19 @@ private suspend fun refresh(
             })
         }
     }
-    val result = safeApiCall<OAuth2Response> {
-        refreshClient.post(
-            "$authServerUrl/$LOGIN",
-            block = {
-                parameter("responseType", ResponseType.TOKEN.name)
-                setBody(Credential.RefreshToken(refreshToken) as Credential)
-            }
-        ).asResource { body() }
+    val result = try {
+        safeApiCall<OAuth2Response> {
+            refreshClient.post(
+                "$authServerUrl/$LOGIN",
+                block = {
+                    parameter("responseType", ResponseType.TOKEN.name)
+                    setBody(Credential.RefreshToken(refreshToken) as Credential)
+                }
+            ).asResource { body() }
+        }
+    } finally {
+        // Built on the caller's engine, which closing this client leaves open.
+        refreshClient.close()
     }
 
     return when (result) {
@@ -158,10 +157,15 @@ private suspend fun refresh(
         }
 
         is Result.Error -> {
-            if (result is Result.Error.Http) {
+            // Only the server refusing the refresh token signs the user out. A 5xx or a dropped
+            // connection says nothing about the token, and clearing it then logged people out
+            // whenever the server restarted.
+            if (result is Result.Error.Http && result.httpStatusCode.value in REFUSED_REFRESH) {
                 authPreferences.clear()
             }
             null
         }
     }
 }
+
+private val REFUSED_REFRESH = setOf(400, 401, 403)
