@@ -8,7 +8,11 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.web.webauthn.api.*
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
+import org.springframework.security.web.webauthn.management.PublicKeyCredentialCreationOptionsRequest
+import org.springframework.security.web.webauthn.management.PublicKeyCredentialRequestOptionsRequest
 import org.springframework.security.web.webauthn.management.PublicKeyCredentialUserEntityRepository
+import org.springframework.security.web.webauthn.management.RelyingPartyAuthenticationRequest
+import org.springframework.security.web.webauthn.management.RelyingPartyRegistrationRequest
 import org.springframework.security.web.webauthn.management.UserCredentialRepository
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations
@@ -22,6 +26,7 @@ import pitampoudel.komposeauth.webauthn.repository.PublicKeyCredentialRepository
 import pitampoudel.komposeauth.webauthn.repository.PublicKeyUserRepository
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.jvm.optionals.getOrNull
 
 private class JsonSessionCreationOptionsRepository(
@@ -193,16 +198,51 @@ class WebAuthnConfig(
     fun relyingPartyOperations(
         userCredentialRepository: UserCredentialRepository,
         userEntityRepository: PublicKeyCredentialUserEntityRepository
-    ): WebAuthnRelyingPartyOperations {
-        return Webauthn4JRelyingPartyOperations(
-            userEntityRepository,
-            userCredentialRepository,
-            PublicKeyCredentialRpEntity.builder()
-                .id(appConfigService.rpId() ?: "localhost")
-                .name(appConfigService.getConfig().name ?: "komposeauth")
-                .build(),
-            appConfigService.webauthnAllowedOrigins()
+    ): WebAuthnRelyingPartyOperations =
+        ConfiguredRelyingPartyOperations(appConfigService, userEntityRepository, userCredentialRepository)
+
+}
+
+/**
+ * The relying party's id, name and origins are set on the config page of a running server, so the
+ * operations are rebuilt when they change instead of being fixed at boot, where a deployment
+ * configured after startup offered passkeys for `localhost` until it was restarted.
+ */
+private class ConfiguredRelyingPartyOperations(
+    private val appConfigService: AppConfigService,
+    private val userEntities: PublicKeyCredentialUserEntityRepository,
+    private val credentials: UserCredentialRepository
+) : WebAuthnRelyingPartyOperations {
+    private data class Settings(val rpId: String, val name: String, val origins: Set<String>)
+
+    private val current = AtomicReference<Pair<Settings, WebAuthnRelyingPartyOperations>?>(null)
+
+    private fun operations(): WebAuthnRelyingPartyOperations {
+        val settings = Settings(
+            rpId = appConfigService.rpId() ?: "localhost",
+            name = appConfigService.getConfig().name ?: "komposeauth",
+            origins = appConfigService.webauthnAllowedOrigins()
         )
+        current.get()?.takeIf { it.first == settings }?.let { return it.second }
+        val built = Webauthn4JRelyingPartyOperations(
+            userEntities,
+            credentials,
+            PublicKeyCredentialRpEntity.builder().id(settings.rpId).name(settings.name).build(),
+            settings.origins
+        )
+        current.set(settings to built)
+        return built
     }
 
+    override fun createPublicKeyCredentialCreationOptions(request: PublicKeyCredentialCreationOptionsRequest) =
+        operations().createPublicKeyCredentialCreationOptions(request)
+
+    override fun registerCredential(request: RelyingPartyRegistrationRequest) =
+        operations().registerCredential(request)
+
+    override fun createCredentialRequestOptions(request: PublicKeyCredentialRequestOptionsRequest) =
+        operations().createCredentialRequestOptions(request)
+
+    override fun authenticate(request: RelyingPartyAuthenticationRequest) =
+        operations().authenticate(request)
 }

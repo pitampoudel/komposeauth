@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.core.service
 
 import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
+import org.slf4j.LoggerFactory
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.mail.javamail.MimeMessageHelper
@@ -16,17 +17,26 @@ class EmailService(
     private val templateEngine: TemplateEngine,
 ) {
 
+    private val log = LoggerFactory.getLogger(javaClass)
+
     private fun javaMailSender(): JavaMailSender {
+        val config = appConfigService.getConfig()
         val impl = JavaMailSenderImpl()
-        impl.host = appConfigService.getConfig().smtpHost
-        impl.port = appConfigService.getConfig().smtpPort ?: 587
-        impl.username = appConfigService.getConfig().smtpUsername
-        impl.password = appConfigService.getConfig().smtpPassword
+        impl.host = config.smtpHost
+        impl.port = config.smtpPort ?: 587
+        impl.username = config.smtpUsername
+        impl.password = config.smtpPassword
 
         val props = impl.javaMailProperties
-        props["mail.smtp.from"] = appConfigService.getConfig().smtpFromEmail
-        props["mail.smtp.auth"] = !appConfigService.getConfig().smtpUsername.isNullOrBlank()
+        // A Properties value can't be null; putting one threw, and so failed every send, whenever no
+        // from-address was configured.
+        config.smtpFromEmail?.let { props["mail.smtp.from"] = it }
+        props["mail.smtp.auth"] = !config.smtpUsername.isNullOrBlank()
         props["mail.smtp.starttls.enable"] = "true"
+        // JavaMail waits forever by default, holding the request thread for as long as the server stalls.
+        props["mail.smtp.connectiontimeout"] = SMTP_TIMEOUT_MILLIS
+        props["mail.smtp.timeout"] = SMTP_TIMEOUT_MILLIS
+        props["mail.smtp.writetimeout"] = SMTP_TIMEOUT_MILLIS
         return impl
     }
 
@@ -77,7 +87,12 @@ class EmailService(
             sender.send(message)
             true
         } catch (e: Exception) {
+            log.error("Could not send the '{}' email", template, e)
             false
         }
+    }
+
+    private companion object {
+        const val SMTP_TIMEOUT_MILLIS = "10000"
     }
 }
