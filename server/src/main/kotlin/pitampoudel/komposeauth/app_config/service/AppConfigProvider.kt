@@ -53,33 +53,22 @@ class AppConfigProvider(
         val CACHE_TTL: Duration = Duration.ofSeconds(60)
     }
 
-    private fun encrypt(src: AppConfig): AppConfig {
-        return src.copy(
-            googleAuthClientSecret = src.googleAuthClientSecret?.let { crypto.encrypt(it) },
-            googleAuthDesktopClientSecret = src.googleAuthDesktopClientSecret?.let {
-                crypto.encrypt(it)
-            },
-            twilioAuthToken = src.twilioAuthToken?.let { crypto.encrypt(it) },
-            smtpPassword = src.smtpPassword?.let { crypto.encrypt(it) },
-            s3SecretAccessKey = src.s3SecretAccessKey?.let { crypto.encrypt(it) },
-            samayeApiKey = src.samayeApiKey?.let { crypto.encrypt(it) },
-            thirdFactorSecretKey = src.thirdFactorSecretKey?.let { crypto.encrypt(it) },
-            thirdFactorToken = src.thirdFactorToken?.let { crypto.encrypt(it) },
-        )
-    }
+    private fun encrypt(src: AppConfig): AppConfig = src.mapSecrets(crypto::encrypt)
 
-    private fun decrypt(src: AppConfig): AppConfig {
-        return src.copy(
-            googleAuthClientSecret = src.googleAuthClientSecret?.let { crypto.decrypt(it) },
-            googleAuthDesktopClientSecret = src.googleAuthDesktopClientSecret?.let {
-                crypto.decrypt(it)
-            },
-            twilioAuthToken = src.twilioAuthToken?.let { crypto.decrypt(it) },
-            smtpPassword = src.smtpPassword?.let { crypto.decrypt(it) },
-            s3SecretAccessKey = src.s3SecretAccessKey?.let { crypto.decrypt(it) },
-            samayeApiKey = src.samayeApiKey?.let { crypto.decrypt(it) },
-            thirdFactorSecretKey = src.thirdFactorSecretKey?.let { crypto.decrypt(it) },
-            thirdFactorToken = src.thirdFactorToken?.let { crypto.decrypt(it) },
-        )
-    }
+    private fun decrypt(src: AppConfig): AppConfig = src.mapSecrets(crypto::decrypt)
+
+    /** Every credential the config holds, listed once so encrypting and decrypting cannot drift apart. */
+    private fun AppConfig.mapSecrets(transform: (String) -> String): AppConfig = copy(
+        googleAuthClientSecret = googleAuthClientSecret?.let(transform),
+        googleAuthDesktopClientSecret = googleAuthDesktopClientSecret?.let(transform),
+        twilioAuthToken = twilioAuthToken?.let(transform),
+        smtpPassword = smtpPassword?.let(transform),
+        s3SecretAccessKey = s3SecretAccessKey?.let(transform),
+        samayeApiKey = samayeApiKey?.let(transform),
+        sparrowApiToken = sparrowApiToken?.let(transform),
+        whatsappAccessToken = whatsappAccessToken?.let(transform),
+        slackBotToken = slackBotToken?.let(transform),
+        thirdFactorSecretKey = thirdFactorSecretKey?.let(transform),
+        thirdFactorToken = thirdFactorToken?.let(transform),
+    )
 }

@@ -192,7 +192,6 @@ data class AppConfig(
         if (twilioFromNumber.isNullOrBlank()) twilioFromNumber = null
         if (twilioVerifyServiceSid.isNullOrBlank()) twilioVerifyServiceSid = null
         if (smtpHost.isNullOrBlank()) smtpHost = null
-        if (smtpPort == null) smtpPort = null
         if (smtpUsername.isNullOrBlank()) smtpUsername = null
         if (smtpPassword.isNullOrBlank()) smtpPassword = null
         if (smtpFromEmail.isNullOrBlank()) smtpFromEmail = null

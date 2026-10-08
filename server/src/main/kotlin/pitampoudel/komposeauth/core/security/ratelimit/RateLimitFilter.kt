@@ -14,7 +14,6 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints
  * Per-client-IP throttling for the unauthenticated endpoints an attacker can hammer: password
  * login, OTP issuing and verification, and password-reset mail.
  *
- * Runs after Spring's `ForwardedHeaderFilter` (see `server.forward-headers-strategy`), so
  * Runs before `ForwardedHeaderFilter` and works the client address out itself via [ClientIpResolver],
  * because `remoteAddr` under `server.forward-headers-strategy: framework` is taken from the leftmost
  * `X-Forwarded-For` entry — a value the caller supplies, and can vary per request to be counted as a

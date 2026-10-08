@@ -12,27 +12,19 @@ object PublicEndpoints {
 
     /** Fully public paths: authentication is never attempted; an invalid token is ignored. */
     val purelyPublicPatterns: List<String> = listOf(
-        "/css/**",
-        "/js/**",
-        "/img/**",
-        "/lib/**",
         "/favicon.ico",
-        "/assets/**",
         "/session-login",
         "/oauth2/jwks",
         "/${ApiEndpoints.LOGIN}",
         "/${ApiEndpoints.LOGOUT}",
-        "/signup",
         "/${ApiEndpoints.LOGIN_OPTIONS}",
         "/${ApiEndpoints.VERIFY_EMAIL}",
         "/${ApiEndpoints.RESET_PASSWORD}",
-        "/reset-password",
         "/countries.json",
         // The integration guide for LLMs and developers (llms.txt convention), copied in at build time.
         "/llms.txt",
         "/llms-full.txt",
         "/.well-known/**",
-        "/setup",
         // Container health probes. The platform runs these before anything has signed in and with no
         // credentials to offer, so behind authentication they answer 401 and the probe reads that as
         // a dead instance. Only `health` is exposed over HTTP (see management.endpoints in
@@ -47,8 +39,7 @@ object PublicEndpoints {
         // The configuration page also accepts a master key, so the filter chain has to let it
         // through to the controller's own access check.
         "/admin/config",
-        "/${ApiEndpoints.SEND_OTP}",
-        "/users"
+        "/${ApiEndpoints.SEND_OTP}"
     )
 
     fun purelyPublicRequestMatcher(): RequestMatcher {
