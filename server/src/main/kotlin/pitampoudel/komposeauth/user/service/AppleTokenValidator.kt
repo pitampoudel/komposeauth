@@ -1,53 +1,38 @@
 package pitampoudel.komposeauth.user.service
 
-import com.nimbusds.jose.jwk.JWKSet
-import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jwt.SignedJWT
+import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.oauth2.jwt.BadJwtException
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.jwt.JwtValidators
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.stereotype.Component
-import java.net.URL
-import java.text.ParseException
-import java.util.Date
+import org.springframework.web.client.RestTemplate
 
+/**
+ * Verifies an ID token from Sign in with Apple: signature, issuer, expiry and audience. Apple's keys
+ * are cached by the decoder rather than fetched on every sign-in, and fetched with the timeouts the
+ * shared [RestTemplate] carries.
+ */
 @Component
-class AppleTokenValidator {
+class AppleTokenValidator(restTemplate: RestTemplate) {
 
-    private val applePublicKeyUrl = "https://appleid.apple.com/auth/keys"
+    private val decoder = NimbusJwtDecoder.withJwkSetUri(APPLE_KEYS_URL)
+        .restOperations(restTemplate)
+        .build()
+        .apply { setJwtValidator(JwtValidators.createDefaultWithIssuer(APPLE_ISSUER)) }
 
-    fun validate(idToken: String, clientId: String): JWTClaimsSet {
-        val signedJwt = try {
-            SignedJWT.parse(idToken.trim())
-        } catch (e: ParseException) {
-            throw IllegalArgumentException(
-                "Invalid Apple ID token $idToken. (expected JWT: header.payload.signature)",
-                e
-            )
+    fun validate(idToken: String, clientId: String): Jwt {
+        val jwt = try {
+            decoder.decode(idToken.trim())
+        } catch (_: BadJwtException) {
+            throw AccessDeniedException("Invalid credentials")
         }
-        val jwkSet = JWKSet.load(URL(applePublicKeyUrl))
-        val jwk = jwkSet.getKeyByKeyId(signedJwt.header.keyID)
-            ?: throw IllegalArgumentException("Could not find matching public key")
+        if (clientId !in jwt.audience) throw AccessDeniedException("Invalid credentials")
+        return jwt
+    }
 
-        val jwsVerifier = com.nimbusds.jose.crypto.RSASSAVerifier(jwk.toRSAKey())
-
-        if (!signedJwt.verify(jwsVerifier)) {
-            throw IllegalArgumentException("Invalid token signature")
-        }
-
-        val claims = signedJwt.jwtClaimsSet
-        val issuer = claims.issuer
-        if (issuer != "https://appleid.apple.com") {
-            throw IllegalArgumentException("Invalid issuer")
-        }
-
-        val audience = claims.audience
-        if (!audience.contains(clientId)) {
-            throw IllegalArgumentException("Invalid audience")
-        }
-
-        val expirationTime = claims.expirationTime
-        if (expirationTime.before(Date())) {
-            throw IllegalArgumentException("Token expired")
-        }
-
-        return claims
+    private companion object {
+        const val APPLE_ISSUER = "https://appleid.apple.com"
+        const val APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys"
     }
 }

@@ -168,17 +168,22 @@ class AuthFlowsIntegrationTest {
             purpose = OneTimeToken.Purpose.RESET_PASSWORD,
             ttl = 1.hours
         )
+        val refreshTokenBeforeReset = oneTimeTokenService.generateRefreshToken(user.id)
 
         mockMvc.post("/${ApiEndpoints.RESET_PASSWORD}") {
             param("token", token)
             param("newPassword", "NewPassword1")
             param("confirmPassword", "NewPassword1")
         }.andExpect {
-            status { is3xxRedirection() }
+            status { isOk() }
         }
 
         assertThrows(ResponseStatusException::class.java) {
             oneTimeTokenService.findValidToken(token, OneTimeToken.Purpose.RESET_PASSWORD)
+        }
+        // A reset is how a stolen account is taken back, so whatever was signed in before is out.
+        assertThrows(ResponseStatusException::class.java) {
+            oneTimeTokenService.findValidToken(refreshTokenBeforeReset, OneTimeToken.Purpose.REFRESH_TOKEN)
         }
 
         mockMvc.post("/${ApiEndpoints.LOGIN}") {

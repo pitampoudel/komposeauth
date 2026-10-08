@@ -1,6 +1,12 @@
 spring:
   application:
     name: "komposeauth"
+  # Every outbound call (SMS providers, Twilio, Google, the KYC service) is made inside a sign-in
+  # request, so a provider that stops answering must fail the request rather than hold it forever.
+  http:
+    clients:
+      connect-timeout: 5s
+      read-timeout: 15s
   mongodb:
     # MONGODB_URI never names a database; this one is fixed here and wins over one in the URI.
     uri: ${MONGODB_URI}

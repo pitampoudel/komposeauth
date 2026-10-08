@@ -56,6 +56,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 import java.time.Instant
 import javax.security.auth.login.AccountLockedException
 
@@ -81,6 +82,8 @@ class UserService(
     private val appleTokenValidator: AppleTokenValidator,
     private val accessRevocation: AccessRevocation
 ) {
+    private val googleTokenClient = HttpClient.newBuilder().connectTimeout(GOOGLE_TOKEN_TIMEOUT).build()
+
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
     }
@@ -90,7 +93,6 @@ class UserService(
         redirectUri: String,
         platform: Platform
     ): User {
-        val client = HttpClient.newHttpClient()
         val form = String.format(
             "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&client_secret=%s",
             URLEncoder.encode(appConfigService.googleClientId(platform), StandardCharsets.UTF_8),
@@ -104,9 +106,12 @@ class UserService(
         val request = HttpRequest.newBuilder()
             .uri(URI.create("https://oauth2.googleapis.com/token"))
             .header("Content-Type", "application/x-www-form-urlencoded")
+            .timeout(GOOGLE_TOKEN_TIMEOUT)
             .POST(HttpRequest.BodyPublishers.ofString(form))
             .build()
-        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+        val response = googleTokenClient.send(request, HttpResponse.BodyHandlers.ofString())
+        // A code Google refuses (used, expired, for another client) is a failed sign-in, not an error.
+        if (response.statusCode() in 400..499) throw AccessDeniedException("Invalid credentials")
         if (response.statusCode() !in 200..299) {
             throw IllegalStateException("Failed to exchange auth code: HTTP ${response.statusCode()} - ${response.body()}")
         }
@@ -463,7 +468,7 @@ class UserService(
                 ?: throw IllegalStateException("Apple client id not configured")
         )
         // Apple sends `email_verified` as a boolean or as the string "true", depending on the token.
-        val email = claims.getStringClaim("email")?.takeIf { claims.getClaim("email_verified")?.toString() == "true" }
+        val email = claims.getClaimAsString("email")?.takeIf { claims.claims["email_verified"]?.toString() == "true" }
             ?: throw AccessDeniedException("Apple has not verified this account's email address")
 
         val user = findOrCreateUser(
@@ -642,3 +647,5 @@ class UserService(
         return userRepository.insert(newUser)
     }
 }
+
+private val GOOGLE_TOKEN_TIMEOUT: Duration = Duration.ofSeconds(10)

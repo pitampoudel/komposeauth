@@ -34,6 +34,7 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
+import org.springframework.boot.restclient.RestTemplateBuilder
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
@@ -55,8 +56,9 @@ class WebAuthorizationConfig {
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
+    /** Boot's builder, so the connect and read timeouts under `spring.http.clients` apply. */
     @Bean
-    fun restTemplate(): RestTemplate = RestTemplate()
+    fun restTemplate(builder: RestTemplateBuilder): RestTemplate = builder.build()
 
     @Bean
     fun securityContextRepository() = HttpSessionSecurityContextRepository()
