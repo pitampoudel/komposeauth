@@ -34,5 +34,5 @@ data class UserResponse(
         require(email != null || phoneNumber != null)
     }
     fun verifiedPhoneNumber() = if (phoneNumberVerified) phoneNumber else null
-    fun fullName() = "$firstName ${lastName ?: ""}"
+    fun fullName() = listOfNotNull(firstName, lastName).joinToString(" ")
 }

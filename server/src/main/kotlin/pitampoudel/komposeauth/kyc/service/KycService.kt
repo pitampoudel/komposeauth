@@ -282,6 +282,11 @@ class KycService(
         status: KycResponse.Status,
     ): KycResponse =
         kycRepo.findById(kycId).map { current ->
+            // Only a submission waiting for review gets a decision: approving a draft would verify
+            // documents nobody has sent, and re-deciding one would flip a verdict already mailed.
+            if (current.status != KycResponse.Status.PENDING) {
+                throw BadRequestException("Only a KYC waiting for review can be approved or rejected")
+            }
             kycRepo.save(current.copy(status = status)).toResponse()
         }.orElseThrow { IllegalArgumentException("KYC not found") }
 }

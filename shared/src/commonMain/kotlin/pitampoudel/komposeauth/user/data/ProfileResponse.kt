@@ -43,5 +43,5 @@ data class ProfileResponse(
     @SerialName("roles")
     val roles: List<String>
 ) {
-    fun fullName() = "$givenName $familyName"
+    fun fullName() = listOfNotNull(givenName, familyName).joinToString(" ")
 }
