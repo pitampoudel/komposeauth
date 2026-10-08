@@ -3,10 +3,9 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
     kotlin("jvm")
-    kotlin("plugin.spring") version "2.3.0"
+    alias(libs.plugins.kotlin.spring)
     id("org.springframework.boot") version "4.0.1"
     id("io.spring.dependency-management") version "1.1.7"
-    id("org.asciidoctor.jvm.convert") version "4.0.5"
     alias(libs.plugins.kotlinx.serialization)
 }
 
@@ -14,7 +13,6 @@ configurations.all {
     exclude(group = "org.springframework.boot", module = "spring-boot-starter-json")
 }
 
-extra["snippetsDir"] = file("build/generated-snippets")
 extra["sentryVersion"] = "8.27.0"
 
 dependencies {
@@ -59,9 +57,6 @@ dependencies {
     implementation("org.apache.httpcomponents.client5:httpclient5:5.6.1")
     implementation("org.apache.httpcomponents.core5:httpcore5:5.4")
     implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.4")
-
-    // Misc
-    implementation("org.jspecify:jspecify:0.3.0")
 
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
@@ -129,11 +124,3 @@ tasks.named<BootJar>("bootJar") {
     archiveFileName.set("app.jar")
 }
 
-tasks.test {
-    outputs.dir(project.extra["snippetsDir"]!!)
-}
-
-tasks.asciidoctor {
-    inputs.dir(project.extra["snippetsDir"]!!)
-    dependsOn(tasks.test)
-}
