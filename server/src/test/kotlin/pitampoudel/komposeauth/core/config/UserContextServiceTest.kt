@@ -4,9 +4,11 @@ import org.bson.types.ObjectId
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+import org.springframework.web.server.ResponseStatusException
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.service.UserService
 import java.time.Instant
@@ -14,6 +16,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class UserContextServiceTest {
+
+    private fun assertUnauthorized(block: () -> Unit) {
+        val error = assertThrows<ResponseStatusException> { block() }
+        assertEquals(HttpStatus.UNAUTHORIZED, error.statusCode)
+    }
 
     private val userService: UserService = mock()
     private val sut = UserContextService(userService)
@@ -62,7 +69,7 @@ class UserContextServiceTest {
             mapOf("sub" to "alice", "client_id" to "some-client")
         )
         val auth = JwtAuthenticationToken(jwt)
-        assertThrows<IllegalStateException> { sut.getUserFromAuthentication(auth) }
+        assertUnauthorized { sut.getUserFromAuthentication(auth) }
     }
 
     @Test
@@ -81,7 +88,7 @@ class UserContextServiceTest {
     }
 
     @Test
-    fun `jwt authentication throws when user not found`() {
+    fun `jwt authentication of a deleted user answers 401`() {
         val jwt = Jwt(
             "token",
             Instant.now().minusSeconds(5),
@@ -92,7 +99,7 @@ class UserContextServiceTest {
         whenever(userService.findByUserName("missing")).thenReturn(null)
 
         val auth = JwtAuthenticationToken(jwt)
-        assertThrows<IllegalStateException> { sut.getUserFromAuthentication(auth) }
+        assertUnauthorized { sut.getUserFromAuthentication(auth) }
     }
 
     @Test
@@ -106,7 +113,7 @@ class UserContextServiceTest {
     }
 
     @Test
-    fun `unsupported authentication type throws`() {
+    fun `unsupported authentication type answers 401`() {
         val auth = object : org.springframework.security.core.Authentication {
             override fun getName() = "x"
             override fun getAuthorities() = emptyList<org.springframework.security.core.GrantedAuthority>()
@@ -117,6 +124,6 @@ class UserContextServiceTest {
             override fun setAuthenticated(isAuthenticated: Boolean) {}
         }
 
-        assertThrows<IllegalStateException> { sut.getUserFromAuthentication(auth) }
+        assertUnauthorized { sut.getUserFromAuthentication(auth) }
     }
 }

@@ -1,10 +1,12 @@
 package pitampoudel.komposeauth.core.config
 
+import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.stereotype.Service
+import org.springframework.web.server.ResponseStatusException
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.organization.entity.Organization
 import pitampoudel.komposeauth.user.entity.User
@@ -12,29 +14,18 @@ import pitampoudel.komposeauth.user.service.UserService
 
 @Service
 class UserContextService(val userService: UserService) {
+    /**
+     * The signed-in user, or a 401: a token for a client acting as itself, a user who has since been
+     * deleted and a missing login are all the caller's to fix, not a server error.
+     */
     fun getUserFromAuthentication(authentication: Authentication? = SecurityContextHolder.getContext().authentication): User {
-        return when (authentication) {
-            is JwtAuthenticationToken -> {
-                val jwt = authentication.principal as org.springframework.security.oauth2.jwt.Jwt
-                if (jwt.subject.isNullOrEmpty() || jwt.claims.containsKey("client_id")) throw IllegalStateException(
-                    "No user associated with authentication context"
-                )
-
-                userService.findByUserName(jwt.subject)
-                    ?: throw IllegalStateException("User not found")
-            }
-
-            is UsernamePasswordAuthenticationToken -> {
-                authentication.name.let {
-                    userService.findByUserName(it)
-                } ?: throw IllegalStateException(
-                    "No user associated with authentication context"
-                )
-            }
-
-
-            else -> throw IllegalStateException("Unsupported authentication type: ${authentication?.javaClass?.name}")
+        val username = when (authentication) {
+            is JwtAuthenticationToken -> authentication.token.takeUnless { it.hasClaim("client_id") }?.subject
+            is UsernamePasswordAuthenticationToken -> authentication.name
+            else -> null
         }
+        return username?.takeIf { it.isNotEmpty() }?.let { userService.findByUserName(it) }
+            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to continue.")
     }
 
     fun authenticatedUserOrNull(): User? {
@@ -45,8 +36,5 @@ class UserContextService(val userService: UserService) {
 /** SUPER_ADMIN is a strict superset of ADMIN, the same way the granted-authority hierarchy has it. */
 fun User.isAdmin() = roles.any { it == Roles.ADMIN || it == Roles.SUPER_ADMIN }
 
-fun canEditOrganization(organization: Organization, user: User): Boolean {
-    return if (user.isAdmin()) true
-    else if (organization.userIds.any { it == user.id }) true
-    else false
-}
+fun canEditOrganization(organization: Organization, user: User): Boolean =
+    user.isAdmin() || user.id in organization.userIds

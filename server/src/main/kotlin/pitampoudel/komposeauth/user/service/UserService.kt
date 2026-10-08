@@ -32,6 +32,7 @@ import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
 import pitampoudel.komposeauth.core.utils.googleProfileFrom
+import pitampoudel.komposeauth.core.utils.normalizedEmail
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
@@ -280,9 +281,19 @@ class UserService(
         val existingUser = userRepository.findById(userId).orElse(null)
             ?: throw IllegalStateException("User not found")
 
+        // An address is attached only once a code sent to it comes back (`/verify-otp`). Taken on
+        // trust here, it would sign whoever later proves that address through Google or a code into
+        // this account, and so into whatever its owner had set up for them.
+        val requestedEmail = req.email?.normalizedEmail()
+        if (requestedEmail != null && requestedEmail != existingUser.email?.normalizedEmail()) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Verify the new email address with a code to change it."
+            )
+        }
+
         if (requireReauthentication) {
-            val changesCredentials = req.password != null ||
-                    (req.email != null && req.email != existingUser.email)
+            val changesCredentials = req.password != null
             val currentHash = existingUser.passwordHash
             // A passwordless account (social or OTP sign-in) has nothing to check against; for one
             // with a password, a hijacked session must not be enough to seize the account.
@@ -315,7 +326,7 @@ class UserService(
     fun markEmailVerified(user: User, email: String): User {
         if (user.emailVerified && user.email == email) return user
         val updatedUser = user.copy(
-            email = email,
+            email = email.normalizedEmail(),
             emailVerified = true,
             updatedAt = Instant.now()
         )
@@ -368,7 +379,7 @@ class UserService(
             "Invalid or expired OTP"
         )
         val updatedUser = user.copy(
-            email = email,
+            email = email.normalizedEmail(),
             emailVerified = true,
             updatedAt = Instant.now()
         )
@@ -405,10 +416,12 @@ class UserService(
      * the visitor was told we couldn't sign them in, for a token that was perfectly good.
      */
     fun findOrCreateVerifiedGoogleUser(profile: CreateUserRequest, emailVerified: Boolean): User {
+        // Accounts are matched by email, so an address Google has not verified would sign the visitor
+        // in to whichever account already holds it.
+        val email = profile.email?.takeIf { emailVerified }
+            ?: throw AccessDeniedException("Google has not verified this account's email address")
         val user = findOrCreateUser(baseUrl = null, req = profile)
-        val email = profile.email
-
-        if (emailVerified && email != null && !user.emailVerified) {
+        if (!user.emailVerified) {
             markEmailVerified(user, email)
             return findUser(user.id.toHexString()) ?: user
         }
@@ -421,7 +434,9 @@ class UserService(
             clientId = appConfigService.getConfig().appleAuthClientId
                 ?: throw IllegalStateException("Apple client id not configured")
         )
-        val email = claims.getStringClaim("email")
+        // Apple sends `email_verified` as a boolean or as the string "true", depending on the token.
+        val email = claims.getStringClaim("email")?.takeIf { claims.getClaim("email_verified")?.toString() == "true" }
+            ?: throw AccessDeniedException("Apple has not verified this account's email address")
 
         val user = findOrCreateUser(
             baseUrl = null,
@@ -433,9 +448,7 @@ class UserService(
             )
         )
 
-        // `== true` rather than a bare call: the claim is optional, and unboxing a null Boolean here
-        // would throw the same way the Google path did.
-        if (claims.getBooleanClaim("email_verified") == true && !user.emailVerified) {
+        if (!user.emailVerified) {
             markEmailVerified(user, email)
             return findUser(user.id.toHexString()) ?: user
         }
@@ -551,7 +564,7 @@ class UserService(
     }
 
     private fun resolveOtpLogin(username: String, otp: String): User {
-        val normalizedEmail = username.lowercase().takeIf { it.isValidEmail() }
+        val normalizedEmail = username.normalizedEmail().takeIf { it.isValidEmail() }
         val normalizedPhone = parsePhoneNumber(null, username)?.fullNumberInE164Format
 
         if (normalizedPhone != null && phoneNumberVerificationService.verify(

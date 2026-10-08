@@ -18,6 +18,8 @@ data class Otp(
     @Indexed
     val receiver: String,
     val otp: String,
+    /** Checks made against this code so far; see [pitampoudel.komposeauth.otp.service.OtpCodes.redeem]. */
+    val attempts: Int = 0,
     @CreatedDate
     @Indexed(expireAfter = "5m") // 5 minutes TTL
     val createdAt: Instant = Instant.now(),

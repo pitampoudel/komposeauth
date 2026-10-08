@@ -25,7 +25,6 @@ import pitampoudel.komposeauth.user.data.VerifyOtpRequest
 import pitampoudel.komposeauth.user.domain.OtpType
 import pitampoudel.komposeauth.user.repository.UserRepository
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.time.Duration.Companion.minutes
 
 @SpringBootTest
@@ -143,7 +142,10 @@ class EmailVerifyControllerIntegrationTest {
         mockMvc.post("/${ApiEndpoints.VERIFY_OTP}") {
             cookie(cookie)
             contentType = MediaType.APPLICATION_JSON
-            content = "{\"otp\":\"000000\"}"
+            content = json.encodeToString(
+                VerifyOtpRequest.serializer(),
+                VerifyOtpRequest(username = email, otp = "000000", type = OtpType.EMAIL)
+            )
         }.andExpect {
             status { isBadRequest() }
         }
@@ -166,12 +168,8 @@ class EmailVerifyControllerIntegrationTest {
     /**
      * A link speaks for the address it was sent to, and for no other.
      *
-     * `User.update` drops `emailVerified` when the address changes, which is right — nobody has
-     * shown they can read mail at the new one. But `verifyEmail` used to mark whatever address the
-     * account held at click time, so an outstanding link put the flag straight back, now attached to
-     * an address its holder had never demonstrated reaching. Since `emailVerified` rides in the
-     * access token and the OIDC `emailVerified` claim, a relying party keying accounts on a verified
-     * address would have taken that at face value.
+     * `verifyEmail` used to mark whatever address the account held at click time, so a link still
+     * outstanding when the address changed would vouch for the new one, or put the old one back.
      */
     @Test
     fun `a link cannot verify an address it was not sent to`() {
@@ -183,34 +181,58 @@ class EmailVerifyControllerIntegrationTest {
         // The link goes out to the address the account holds now.
         val token = verificationToken(userId, original)
 
-        // Then the address is changed. Verification is correctly dropped along with it.
-        mockMvc.post("/${ApiEndpoints.UPDATE_PROFILE}") {
+        // Then the address is changed, the only way it can be: by proving the new one.
+        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
+            cookie(cookie)
+            contentType = MediaType.APPLICATION_JSON
+            content = json.encodeToString(SendOtpRequest.serializer(), SendOtpRequest(swapped, type = OtpType.EMAIL))
+        }.andExpect { status { isOk() } }
+        val otp = otpRepository.findByReceiverOrderByCreatedAtDesc(swapped).first().otp
+        mockMvc.post("/${ApiEndpoints.VERIFY_OTP}") {
             cookie(cookie)
             contentType = MediaType.APPLICATION_JSON
             content = json.encodeToString(
-                UpdateProfileRequest.serializer(),
-                UpdateProfileRequest(email = swapped, currentPassword = "Password1")
+                VerifyOtpRequest.serializer(),
+                VerifyOtpRequest(username = swapped, otp = otp, type = OtpType.EMAIL)
             )
         }.andExpect { status { isOk() } }
-
-        val afterSwap = userRepository.findById(ObjectId(userId)).orElseThrow()
-        assertEquals(swapped, afterSwap.email)
-        assertFalse(afterSwap.emailVerified, "changing the address should drop verification")
+        assertEquals(swapped, userRepository.findById(ObjectId(userId)).orElseThrow().email)
 
         // The old link is now stale. It proves the original address, which the account no longer
-        // holds, and it must not vouch for the new one.
+        // holds, and it must not put it back.
         mockMvc.get("/${ApiEndpoints.VERIFY_EMAIL}") {
             param("token", token)
         }.andExpect {
             status { is4xxClientError() }
         }
 
-        val afterClick = userRepository.findById(ObjectId(userId)).orElseThrow()
-        assertEquals(swapped, afterClick.email, "the stale link must not revert the address")
-        assertFalse(
-            afterClick.emailVerified,
-            "an address nobody proved they can read was marked verified"
+        assertEquals(
+            swapped,
+            userRepository.findById(ObjectId(userId)).orElseThrow().email,
+            "the stale link must not revert the address"
         )
+    }
+
+    /**
+     * An address taken on trust would let its real owner, signing in later through Google or a code,
+     * land in this account instead of their own.
+     */
+    @Test
+    fun `a profile update cannot change the email address`() {
+        val email = "profile-email-locked@example.com"
+        val userId = TestAuthHelpers.createUser(mockMvc, json, email)
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
+
+        mockMvc.post("/${ApiEndpoints.UPDATE_PROFILE}") {
+            cookie(cookie)
+            contentType = MediaType.APPLICATION_JSON
+            content = json.encodeToString(
+                UpdateProfileRequest.serializer(),
+                UpdateProfileRequest(email = "someone-else@example.com", currentPassword = "Password1")
+            )
+        }.andExpect { status { isBadRequest() } }
+
+        assertEquals(email, userRepository.findById(ObjectId(userId)).orElseThrow().email)
     }
 
     /** A link issued the way the application issues one, with the address recorded on the token. */

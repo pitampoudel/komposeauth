@@ -4,24 +4,17 @@ import org.springframework.stereotype.Service
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.otp.entity.Otp
-import pitampoudel.komposeauth.otp.repository.OtpRepository
-import pitampoudel.komposeauth.otp.service.OtpGenerator
+import pitampoudel.komposeauth.core.utils.normalizedEmail
+import pitampoudel.komposeauth.otp.service.OtpCodes
 
 @Service
 class EmailVerificationService(
-    private val otpRepository: OtpRepository,
+    private val otpCodes: OtpCodes,
     private val emailService: EmailService,
     private val appConfigService: AppConfigService,
 ) {
     fun initiate(email: String, baseUrl: String): MessageResponse {
-        val otp = OtpGenerator.next()
-        otpRepository.save(
-            Otp(
-                receiver = email,
-                otp = otp
-            )
-        )
+        val otp = otpCodes.issue(email.normalizedEmail())
         val sent = emailService.sendHtmlMail(
             baseUrl = baseUrl,
             to = email,
@@ -39,17 +32,5 @@ class EmailVerificationService(
         }
     }
 
-    fun verify(email: String, code: String): Boolean {
-        val otpRecords = otpRepository.findByReceiverOrderByCreatedAtDesc(email)
-        if (otpRecords.isEmpty()) {
-            return false
-        }
-        val latestOtp = otpRecords.first()
-        if (latestOtp.otp == code && !latestOtp.isExpired()) {
-            otpRepository.deleteByReceiver(email)
-            return true
-        }
-        return false
-    }
+    fun verify(email: String, code: String): Boolean = otpCodes.redeem(email.normalizedEmail(), code)
 }
-

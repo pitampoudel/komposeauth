@@ -49,8 +49,19 @@ class OAuth2LoginSuccessHandler(
         } catch (ex: Exception) {
             val provider = (authentication as? OAuth2AuthenticationToken)?.authorizedClientRegistrationId
             log.error("Could not complete sign-in through '{}'", provider ?: "oauth2", ex)
-            response.sendRedirect("/session-login?error=provider")
+            refuse(request, response, "provider")
         }
+    }
+
+    /**
+     * The login filter has already saved the provider's own authentication to the session by the
+     * time this runs, so turning the visitor away has to take that back too, or they stay signed in
+     * as a Google identity that is no user of ours.
+     */
+    private fun refuse(request: HttpServletRequest, response: HttpServletResponse, reason: String) {
+        SecurityContextHolder.clearContext()
+        securityContextRepository.saveContext(SecurityContextHolder.createEmptyContext(), request, response)
+        response.sendRedirect("/session-login?error=$reason")
     }
 
     private fun establishSession(
@@ -71,6 +82,8 @@ class OAuth2LoginSuccessHandler(
             profile = googleProfileFromClaims(oidcUser.claims),
             emailVerified = oidcUser.emailVerified == true
         )
+
+        if (user.deactivated) return refuse(request, response, "locked")
 
         val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
 
