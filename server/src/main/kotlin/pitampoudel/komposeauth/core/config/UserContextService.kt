@@ -16,7 +16,7 @@ import pitampoudel.komposeauth.user.service.UserService
 class UserContextService(val userService: UserService) {
     /**
      * The signed-in user, or a 401: a token for a client acting as itself, a user who has since been
-     * deleted and a missing login are all the caller's to fix, not a server error.
+     * deleted or deactivated and a missing login are all the caller's to fix, not a server error.
      */
     fun getUserFromAuthentication(authentication: Authentication? = SecurityContextHolder.getContext().authentication): User {
         val username = when (authentication) {
@@ -24,7 +24,7 @@ class UserContextService(val userService: UserService) {
             is UsernamePasswordAuthenticationToken -> authentication.name
             else -> null
         }
-        return username?.takeIf { it.isNotEmpty() }?.let { userService.findByUserName(it) }
+        return username?.takeIf { it.isNotEmpty() }?.let { userService.findByUserName(it) }?.takeUnless { it.deactivated }
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to continue.")
     }
 

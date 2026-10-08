@@ -140,7 +140,9 @@ class WebAuthorizationConfig {
                     claims[OAuth2ParameterNames.SCOPE] = scopes.filterNot { it in SERVICE_ONLY_SCOPES }.toSet()
                 }
             }
-            context.claims.claim("authorities", principal.authorities.map { it.authority })
+            // Read from the account, not the authentication: on a refresh that authentication is
+            // the one stored at sign-in, and a revoked role would otherwise be reissued forever.
+            context.claims.claim("authorities", user.roles.map { "ROLE_$it" })
             user.email?.let {
                 context.claims.claim("email", it)
                 // Apps that grant access by email must know the user proved they own it

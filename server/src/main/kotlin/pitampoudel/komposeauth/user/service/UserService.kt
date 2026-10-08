@@ -25,7 +25,6 @@ import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.core.domain.isValidEmail
 import pitampoudel.komposeauth.app_config.service.AppConfigService
-import pitampoudel.komposeauth.authorization.OAuth2AuthorizationDocumentRepository
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.core.service.EmailService
@@ -80,7 +79,7 @@ class UserService(
     private val roleChangeEmailNotifier: RoleChangeEmailNotifier,
     private val emailVerificationService: EmailVerificationService,
     private val appleTokenValidator: AppleTokenValidator,
-    private val oauth2AuthorizationDocumentRepository: OAuth2AuthorizationDocumentRepository
+    private val accessRevocation: AccessRevocation
 ) {
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
@@ -167,6 +166,7 @@ class UserService(
         val saved = userRepository.save(
             user.copy(roles = user.roles.filterNot { it == normalized })
         )
+        accessRevocation.endSessions(saved.id)
 
         roleChangeEmailNotifier.notify(
             target = saved,
@@ -186,6 +186,22 @@ class UserService(
         }
         return userRepository.findById(id).orElseThrow {
             UsernameNotFoundException("User not found: $userId")
+        }
+    }
+
+    /**
+     * Removing an account removes its roles with it, so it is held to the same rules as revoking
+     * them: an ADMIN cannot take out a SUPER_ADMIN, and nobody can take out the last holder of a
+     * role that keeps the server administrable.
+     */
+    private fun requireRemovable(actor: User?, target: User) {
+        if (Roles.SUPER_ADMIN in target.roles && actor?.roles?.contains(Roles.SUPER_ADMIN) != true) {
+            throw AccessDeniedException("Only a ${Roles.SUPER_ADMIN} can remove a ${Roles.SUPER_ADMIN}")
+        }
+        target.roles.filter { it in Roles.PROTECTED }.forEach { role ->
+            if (userRepository.countByRolesContaining(role) <= 1) {
+                throw BadRequestException("Cannot remove the last $role")
+            }
         }
     }
 
@@ -272,11 +288,14 @@ class UserService(
      * @param requireReauthentication when true, changing the password or email of an account that
      * already has a password requires the caller to supply that password. Reset-password flows pass
      * false: possession of the emailed one-time token is the proof there.
+     * @param currentSessionId the session making a password change, which stays signed in while
+     * every other session of the account ends.
      */
     fun updateUser(
         userId: ObjectId,
         req: UpdateProfileRequest,
-        requireReauthentication: Boolean = true
+        requireReauthentication: Boolean = true,
+        currentSessionId: String? = null
     ): ProfileResponse {
         val existingUser = userRepository.findById(userId).orElse(null)
             ?: throw IllegalStateException("User not found")
@@ -320,6 +339,15 @@ class UserService(
                 } ?: existingUser.picture
             )
         )
+        if (req.password != null) {
+            // A reset is how a stolen account is taken back, so it signs out everything; a change
+            // made while signed in keeps the person's own devices and ends the other sessions.
+            if (requireReauthentication) {
+                accessRevocation.endSessions(result.id, except = currentSessionId)
+            } else {
+                accessRevocation.revokeAll(result.id)
+            }
+        }
         return result.mapToProfileResponseDto(kycService.isVerified(result.id))
     }
 
@@ -519,13 +547,18 @@ class UserService(
         return userRepository.count()
     }
 
-    fun deactivateUser(userId: ObjectId) {
+    /** @param actor who is asking; null when a service acts with the `user.write.any` scope. */
+    fun deactivateUser(actor: User?, userId: ObjectId) {
         val user = userRepository.findById(userId).orElseThrow()
+        requireRemovable(actor, user)
         userRepository.save(user.copy(deactivated = true))
+        accessRevocation.revokeAll(user.id)
     }
 
-    fun deleteUser(userId: ObjectId) {
+    /** @param actor who is asking; null when a service acts with the `user.write.any` scope. */
+    fun deleteUser(actor: User?, userId: ObjectId) {
         val user = userRepository.findById(userId).orElseThrow()
+        requireRemovable(actor, user)
 
         kycVerificationRepository.findByUserId(user.id)?.let { kyc ->
             listOfNotNull(
@@ -557,8 +590,8 @@ class UserService(
 
         user.picture?.let { storageService.delete(it) }
 
+        accessRevocation.revokeAll(user.id)
         oneTimeTokenRepository.deleteAllByUserId(user.id)
-        oauth2AuthorizationDocumentRepository.deleteAllByPrincipalName(user.id.toHexString())
 
         userRepository.deleteById(user.id)
     }
