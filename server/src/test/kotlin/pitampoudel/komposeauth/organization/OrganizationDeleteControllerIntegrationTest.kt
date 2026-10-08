@@ -1,6 +1,5 @@
 package pitampoudel.komposeauth.organization
 
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
@@ -39,7 +38,7 @@ class OrganizationDeleteControllerIntegrationTest {
     private lateinit var userRepository: UserRepository
 
     @Test
-    fun `delete organization succeeds for member`() = runBlocking {
+    fun `delete organization succeeds for member`() {
         val userId = TestAuthHelpers.createUser(mockMvc, json, "org-delete-member@example.com")
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, "org-delete-member@example.com")
 
@@ -64,7 +63,7 @@ class OrganizationDeleteControllerIntegrationTest {
     }
 
     @Test
-    fun `delete organization fails for non-member`() = runBlocking {
+    fun `delete organization fails for non-member`() {
         val memberId = TestAuthHelpers.createUser(mockMvc, json, "org-delete-other-member@example.com")
         val nonMemberCookie = TestAuthHelpers.loginCookie(mockMvc, json, TestAuthHelpers.createUser(mockMvc, json, "org-delete-non-member@example.com"))
 
@@ -86,7 +85,7 @@ class OrganizationDeleteControllerIntegrationTest {
     }
 
     @Test
-    fun `delete organization succeeds for admin`() = runBlocking {
+    fun `delete organization succeeds for admin`() {
         val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, "org-delete-admin@example.com")
 
         val org = organizationService.save(
@@ -110,14 +109,14 @@ class OrganizationDeleteControllerIntegrationTest {
     }
 
     @Test
-    fun `delete organization fails for non-existent organization`() = runBlocking {
-        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, TestAuthHelpers.createUser(mockMvc, json, "org-delete-400-user@example.com"))
+    fun `delete organization fails for non-existent organization`() {
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, TestAuthHelpers.createUser(mockMvc, json, "org-delete-404-user@example.com"))
 
         mockMvc.delete("/${ApiEndpoints.ORGANIZATIONS}/${ObjectId()}") {
             accept = MediaType.APPLICATION_JSON
             cookie(cookie)
         }.andExpect {
-            status { isBadRequest() }
+            status { isNotFound() }
         }
     }
 }

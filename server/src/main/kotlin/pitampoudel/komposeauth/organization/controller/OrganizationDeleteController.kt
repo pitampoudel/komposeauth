@@ -1,11 +1,9 @@
 package pitampoudel.komposeauth.organization.controller
 
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.websocket.server.PathParam
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.MessageResponse
@@ -23,19 +21,19 @@ class OrganizationDeleteController(
     private val userContextService: UserContextService
 ) {
     @DeleteMapping("/" + ApiEndpoints.ORGANIZATIONS + "/{orgId}")
-    suspend fun deleteOrganization(
-        @PathParam("orgId") orgId: String
+    fun deleteOrganization(
+        @PathVariable orgId: String
     ): MessageResponse {
         val user = userContextService.getUserFromAuthentication()
 
         val organization = organizationService.findById(orgId)
-            ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "organization not found")
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found")
 
         val canEdit = canEditOrganization(organization, user)
         if (!canEdit) throw ResponseStatusException(HttpStatus.FORBIDDEN, "Insufficient permission")
 
-        organization.logoUrl?.let { storageService.delete(it) }
         organizationService.delete(organization.id)
+        organization.logoUrl?.let { storageService.delete(it) }
 
         return MessageResponse("Organization deleted")
     }

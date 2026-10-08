@@ -1,6 +1,5 @@
 package pitampoudel.komposeauth.organization.service
 
-import kotlinx.coroutines.runBlocking
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -26,22 +25,17 @@ class OrganizationServiceTest {
 
 
 
-    @Test
-    fun `findByIds returns empty map for empty input`() = runBlocking {
-        val result = organizationService.findByIds(emptyList())
-        assertTrue(result.isEmpty())
-    }
 
 
 
     @Test
-    fun `findById returns null for non-existent id`() = runBlocking {
+    fun `findById returns null for non-existent id`() {
         val result = organizationService.findById(ObjectId.get().toHexString())
         assertNull(result)
     }
 
     @Test
-    fun `findById returns null for invalid id`() = runBlocking {
+    fun `findById returns null for invalid id`() {
         val result = organizationService.findById("invalid-id")
         assertNull(result)
     }

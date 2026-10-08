@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.MessageResponse
-import pitampoudel.core.domain.now
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.config.canEditOrganization
 import pitampoudel.komposeauth.core.service.StorageService
@@ -16,6 +15,7 @@ import pitampoudel.komposeauth.organization.data.CreateOrUpdateOrganizationReque
 import pitampoudel.komposeauth.organization.service.OrganizationService
 import pitampoudel.komposeauth.organization.service.toOrganization
 import pitampoudel.komposeauth.organization.service.updated
+import java.util.UUID
 
 @RestController
 @Tag(name = "Organizations")
@@ -25,7 +25,7 @@ class OrganizationWriteController(
     val userContextService: UserContextService
 ) {
     @PostMapping("/" + ApiEndpoints.ORGANIZATIONS)
-    suspend fun createOrUpdate(
+    fun createOrUpdate(
         @RequestBody request: CreateOrUpdateOrganizationRequest
     ): MessageResponse {
         val user = userContextService.getUserFromAuthentication()
@@ -33,7 +33,7 @@ class OrganizationWriteController(
         // UPDATE ORGANIZATION
         request.orgId?.let { orgId ->
             val organization = organizationService.findById(orgId)
-                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization not found")
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found")
 
             val canEdit = canEditOrganization(organization, user)
             if (!canEdit) throw ResponseStatusException(
@@ -41,46 +41,40 @@ class OrganizationWriteController(
                 "Insufficient permission"
             )
 
-            if (organization.logoUrl != null) {
-                storageService.delete(organization.logoUrl)
-            }
-
-            val logoImageUrl = request.logo?.toKmpFile()?.let { file ->
-                storageService.upload(
-                    blobName = "organization_logos/${now().epochSeconds}",
-                    contentType = file.mimeType,
-                    bytes = file.byteArray
-                )
-            }
-
+            // No logo in the request keeps the one already there, and the old file goes only once
+            // the record points at its replacement.
+            val newLogoUrl = uploadLogo(request)
             organizationService.save(
                 organization.updated(
                     request = request,
-                    logoImageUrl = logoImageUrl,
+                    logoImageUrl = newLogoUrl ?: organization.logoUrl,
                     oldEmail = organization.email,
                     oldEmailVerified = organization.emailVerified,
                     oldPhoneNumber = organization.phoneNumber,
                     oldPhoneNumberVerified = organization.phoneNumberVerified,
                 )
             )
+            if (newLogoUrl != null) organization.logoUrl?.let { storageService.delete(it) }
 
             return MessageResponse("Organization updated successfully")
         }
 
         // CREATE ORGANIZATION
-        val logoImageUrl = request.logo?.toKmpFile()?.let { file ->
-            storageService.upload(
-                blobName = "organization_logos/${now().epochSeconds}",
-                contentType = file.mimeType,
-                bytes = file.byteArray
-            )
-        }
-
         val organization = request.toOrganization(
             userId = user.id,
-            logoImageUrl = logoImageUrl,
+            logoImageUrl = uploadLogo(request),
         )
         organizationService.save(organization)
         return MessageResponse("Organization created successfully")
     }
+
+    /** A name of its own per upload: a timestamp let two organizations saved in one second share a file. */
+    private fun uploadLogo(request: CreateOrUpdateOrganizationRequest): String? =
+        request.logo?.toKmpFile()?.let { file ->
+            storageService.upload(
+                blobName = "organization_logos/${UUID.randomUUID()}",
+                contentType = file.mimeType,
+                bytes = file.byteArray
+            )
+        }
 }

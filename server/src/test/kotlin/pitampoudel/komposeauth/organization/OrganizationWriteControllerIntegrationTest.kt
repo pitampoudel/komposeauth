@@ -1,9 +1,9 @@
 package pitampoudel.komposeauth.organization
 
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -41,7 +41,7 @@ class OrganizationWriteControllerIntegrationTest {
     private lateinit var userRepository: UserRepository
 
     @Test
-    fun `create organization succeeds with valid data`() = runBlocking {
+    fun `create organization succeeds with valid data`() {
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, TestAuthHelpers.createUser(mockMvc, json, "org-write-user@example.com"))
 
         val request = CreateOrUpdateOrganizationRequest(
@@ -72,7 +72,7 @@ class OrganizationWriteControllerIntegrationTest {
     }
 
     @Test
-    fun `update organization succeeds for member`() = runBlocking {
+    fun `update organization succeeds for member`() {
         val userId = TestAuthHelpers.createUser(mockMvc, json, "org-update-member@example.com")
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, "org-update-member@example.com")
 
@@ -81,14 +81,14 @@ class OrganizationWriteControllerIntegrationTest {
                 name = "Original Name",
                 email = "original@example.com",
                 userIds = listOf(ObjectId(userId)),
-                logoUrl = null, country = null, state = null, city = null, addressLine1 = null, addressLine2 = null, phoneNumber = null, registrationNo = null, description = null, website = null
+                logoUrl = "https://storage.example.com/organization_logos/original", country = null, state = null, city = null, addressLine1 = null, addressLine2 = null, phoneNumber = null, registrationNo = null, description = null, website = null
             )
         )
 
         val request = CreateOrUpdateOrganizationRequest(
             name = "Updated Name",
             email = "updated@example.com",
-            phoneNumber = "+14155552671",
+            phoneNumber = "+14155552672",
             countryNameCode = "US",
             address = AddressInformation(null, null, null, null, null),
             description = "An updated organization",
@@ -110,10 +110,16 @@ class OrganizationWriteControllerIntegrationTest {
                 jsonPath("$.message") { value("Organization updated successfully") }
             }
         }
+
+        // An edit that sends no new logo keeps the one already there.
+        assertEquals(
+            "https://storage.example.com/organization_logos/original",
+            organizationService.findById(org.id.toHexString())?.logoUrl
+        )
     }
 
     @Test
-    fun `update organization fails for non-member`() = runBlocking {
+    fun `update organization fails for non-member`() {
         val memberId = TestAuthHelpers.createUser(mockMvc, json, "org-update-other-member@example.com")
         val nonMemberCookie = TestAuthHelpers.loginCookie(mockMvc, json, TestAuthHelpers.createUser(mockMvc, json, "org-update-non-member@example.com"))
 
@@ -129,7 +135,7 @@ class OrganizationWriteControllerIntegrationTest {
         val request = CreateOrUpdateOrganizationRequest(
             name = "Updated Name",
             email = "updated@example.com",
-            phoneNumber = "+14155552671",
+            phoneNumber = "+14155552673",
             countryNameCode = "US",
             address = AddressInformation(null, null, null, null, null),
             description = "An updated organization",
@@ -151,7 +157,7 @@ class OrganizationWriteControllerIntegrationTest {
     }
 
     @Test
-    fun `update organization succeeds for admin`() = runBlocking {
+    fun `update organization succeeds for admin`() {
         val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, "org-admin@example.com")
 
         val org = organizationService.save(
@@ -166,7 +172,7 @@ class OrganizationWriteControllerIntegrationTest {
         val request = CreateOrUpdateOrganizationRequest(
             name = "Updated by Admin",
             email = "updated-admin@example.com",
-            phoneNumber = "+14155552671",
+            phoneNumber = "+14155552674",
             countryNameCode = "US",
             address = AddressInformation(null, null, null, null, null),
             description = "An organization updated by an admin",
