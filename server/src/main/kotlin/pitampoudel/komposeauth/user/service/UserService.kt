@@ -240,7 +240,8 @@ class UserService(
         }
         val pageable: Pageable = PageRequest.of(pageSafe, sizeCapped)
 
-        if (!ids.isNullOrEmpty()) {
+        // An empty id list asks for nobody, not for everybody.
+        if (ids != null) {
             val all = findUsersBulk(ids)
             val start = (pageSafe * sizeCapped).coerceAtMost(all.size)
             val end = (start + sizeCapped).coerceAtMost(all.size)

@@ -27,6 +27,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * A browser app is a public client: it signs in with the authorization code flow and PKCE and
@@ -48,8 +49,8 @@ class PublicClientRefreshTokenIntegrationTest {
     private val codeVerifier = "v".repeat(43)
     private var sessionCookie: Cookie? = null
 
-    private fun createClient(): String {
-        val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, "spa-admin@example.com")
+    private fun createClient(adminEmail: String = "spa-admin@example.com"): String {
+        val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, adminEmail)
         val result = mockMvc.post("/${ApiEndpoints.OAUTH2_CLIENTS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
@@ -141,5 +142,37 @@ class PublicClientRefreshTokenIntegrationTest {
         assertNotEquals(first["access_token"], refreshed["access_token"])
         // Reused rather than rotated (see the client's token settings), so it keeps working.
         assertEquals(refreshToken, refreshed["refresh_token"])
+    }
+
+    @Test
+    fun `a registered client's token carries the roles, and a deactivated account cannot refresh`() {
+        val clientId = createClient("spa-admin-2@example.com")
+        val email = "spa-deactivated@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+
+        val first = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "code_verifier" to codeVerifier
+        )
+        val claims = json.parseToJsonElement(
+            String(Base64.getUrlDecoder().decode(first.getValue("access_token").split(".")[1]))
+        ).jsonObject
+        assertTrue("authorities" in claims, "no authorities in $claims")
+
+        // Closed behind the authorization's back, as an account deactivated before its
+        // authorizations were revoked on deactivation would be.
+        val user = assertNotNull(userRepository.findByEmail(email))
+        userRepository.save(user.copy(deactivated = true))
+
+        val refused = mockMvc.post("/oauth2/token") {
+            param("grant_type", "refresh_token")
+            param("refresh_token", first.getValue("refresh_token"))
+            param("client_id", clientId)
+        }.andReturn()
+        assertEquals(400, refused.response.status, refused.response.contentAsString)
+        assertTrue("invalid_grant" in refused.response.contentAsString, refused.response.contentAsString)
     }
 }

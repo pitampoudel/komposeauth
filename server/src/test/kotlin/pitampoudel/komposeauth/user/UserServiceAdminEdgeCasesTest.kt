@@ -275,6 +275,17 @@ class UserServiceAdminEdgeCasesTest {
     }
 
     @Test
+    fun `findUsersFlexible with an empty id list finds nobody rather than everybody`() {
+        val userRepo = mock<UserRepository>()
+        whenever(userRepo.findByIdIn(any())).thenReturn(emptyList())
+
+        val result = service(userRepo).findUsersFlexible(ids = emptyList(), q = null, page = 0, size = 50)
+
+        assertTrue(result.content.isEmpty())
+        verify(userRepo, never()).findAll(any<Pageable>())
+    }
+
+    @Test
     fun `findUsersFlexible uses regex-based case-insensitive search with trimmed query`() {
         val userRepo = mock<UserRepository>()
         val emptyPage: Page<User> = PageImpl(emptyList())

@@ -167,7 +167,12 @@ class ClientIdMetadataDocumentIntegrationTest {
             "client_id" to CLIENT,
             "code_verifier" to codeVerifier
         )
-        assertNotNull(first["access_token"])
+        val accessToken = assertNotNull(first["access_token"])
+        // Someone else's app: the user's platform roles stay out of what it is handed
+        val claims = json.parseToJsonElement(
+            String(Base64.getUrlDecoder().decode(accessToken.split(".")[1]))
+        ).jsonObject
+        assertFalse("authorities" in claims, "a third-party token carries roles: $claims")
         val refreshToken = assertNotNull(first["refresh_token"], "no refresh token in $first")
 
         // A public client's refresh token is rotated

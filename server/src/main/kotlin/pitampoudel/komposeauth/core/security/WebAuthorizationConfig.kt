@@ -18,6 +18,8 @@ import org.springframework.security.crypto.keygen.StringKeyGenerator
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes
 import org.springframework.security.oauth2.core.OAuth2RefreshToken
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo
@@ -135,6 +137,9 @@ class WebAuthorizationConfig {
             ) ?: throw AccountNotFoundException(
                 "User not found with email: ${principal.name}"
             )
+            // A refresh reuses the authorization stored at sign-in, which says nothing about
+            // whether the account is still open.
+            if (user.deactivated) throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT)
             // A user's token must not carry scopes that reach every other account, or
             // anyone able to sign in to such an app could read or edit everyone.
             context.claims.claims { claims ->
@@ -144,7 +149,11 @@ class WebAuthorizationConfig {
             }
             // Read from the account, not the authentication: on a refresh that authentication is
             // the one stored at sign-in, and a revoked role would otherwise be reissued forever.
-            context.claims.claim("authorities", user.roles.map { "ROLE_$it" })
+            // Only for a client registered here: a client the user has to consent to is someone
+            // else's app, and an admin's token from it would be an admin's bearer on our own APIs.
+            if (!context.registeredClient.clientSettings.isRequireAuthorizationConsent) {
+                context.claims.claim("authorities", user.roles.map { "ROLE_$it" })
+            }
             user.email?.let {
                 context.claims.claim("email", it)
                 // Apps that grant access by email must know the user proved they own it
