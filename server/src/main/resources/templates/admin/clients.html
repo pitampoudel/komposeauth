@@ -48,6 +48,10 @@
 
         .field { margin-bottom: 16px; }
 
+        .check-field { display: flex; align-items: center; gap: 10px; margin-bottom: 0; cursor: pointer; }
+
+        .check-field input[type=checkbox] { flex-shrink: 0; width: 18px; height: 18px; accent-color: var(--brand); }
+
         .field-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 
         .dialog-body { max-height: min(56vh, 460px); overflow-y: auto; padding-right: 4px; margin-top: 18px; }
@@ -92,6 +96,12 @@
                 <div class="field">
                     <label for="clientName">App name</label>
                     <input id="clientName" type="text" required placeholder="Checkout web app"/>
+                </div>
+                <div class="field">
+                    <label class="check-field">
+                        <input id="publicClient" type="checkbox"/>
+                        <span>Public app <span class="hint">— runs in a browser or on a phone, so it keeps no secret</span></span>
+                    </label>
                 </div>
                 <div class="field">
                     <label for="clientSecret">Client secret <span class="hint">— leave blank to generate one</span></label>
@@ -156,6 +166,7 @@
 
     const fields = {
         clientName: document.getElementById("clientName"),
+        publicClient: document.getElementById("publicClient"),
         clientSecret: document.getElementById("clientSecret"),
         redirectUris: document.getElementById("redirectUris"),
         scopes: document.getElementById("scopes"),
@@ -275,6 +286,11 @@
 
     // ---- create and edit -----------------------------------------------------
 
+    function syncSecretField() {
+        fields.clientSecret.disabled = fields.publicClient.checked;
+        if (fields.publicClient.checked) fields.clientSecret.value = "";
+    }
+
     function openCreate() {
         formState.editingClientId = null;
         formState.mode = "create";
@@ -282,7 +298,9 @@
         el.formSub.textContent = "The client ID and secret go into the app's own configuration.";
         el.submitBtn.textContent = "Register app";
         fields.clientName.value = "";
+        fields.publicClient.checked = false;
         fields.clientSecret.value = "";
+        syncSecretField();
         fields.redirectUris.value = "";
         fields.scopes.value = DEFAULT_SCOPES;
         fields.accessTokenTtl.value = "900";
@@ -300,7 +318,9 @@
         el.formSub.textContent = client.clientId;
         el.submitBtn.textContent = "Save changes";
         fields.clientName.value = client.clientName || "";
+        fields.publicClient.checked = !client.clientSecret;
         fields.clientSecret.value = client.clientSecret || "";
+        syncSecretField();
         fields.redirectUris.value = (client.redirectUris || []).join("\n");
         fields.scopes.value = (client.scopes || []).join("\n");
         fields.accessTokenTtl.value = client.accessTokenTtlSeconds ?? 900;
@@ -319,7 +339,8 @@
         const isEdit = formState.mode === "edit";
         const payload = {
             clientName: fields.clientName.value.trim(),
-            clientSecret: fields.clientSecret.value.trim() || null,
+            publicClient: fields.publicClient.checked,
+            clientSecret: fields.publicClient.checked ? null : fields.clientSecret.value.trim() || null,
             redirectUris: parseSet(fields.redirectUris.value),
             scopes: parseSet(fields.scopes.value),
             accessTokenTtlSeconds: parseInt(fields.accessTokenTtl.value, 10) || 900,
@@ -347,6 +368,7 @@
         }
     });
 
+    fields.publicClient.addEventListener("change", syncSecretField);
     el.newClientBtn.addEventListener("click", openCreate);
     el.emptyNewBtn.addEventListener("click", openCreate);
     el.cancelBtn.addEventListener("click", () => el.dialog.close());
