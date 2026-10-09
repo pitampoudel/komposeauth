@@ -57,7 +57,6 @@ kotlin {
                 // ktor client
                 api(libs.ktor.client.core)
                 api(libs.ktor.client.contentNegotiation)
-                api(libs.ktor.client.logging)
                 api(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.auth)
 
@@ -65,7 +64,6 @@ kotlin {
                 implementation(libs.multiplatformSettings.core)
                 implementation(libs.multiplatformSettings.noArg)
                 implementation(libs.multiplatformSettings.coroutines)
-                implementation(libs.multiplatformSettings.serialization)
                 implementation(libs.multiplatformSettings.makeObservable)
 
                 // Compose Multiplatform
@@ -77,16 +75,9 @@ kotlin {
                 implementation(compose.components.resources)
                 implementation(libs.kotlinx.datetime)
 
-                // Coil 3 (Multiplatform Compose image loading)
-                implementation(libs.coil3.compose)
-                implementation(libs.coil3.network.ktor3)
-
                 // JetBrains Lifecycle
                 implementation(libs.lifecycle.runtime.compose)
                 implementation(libs.jetbrains.lifecycle.viewmodel)
-
-                // Cryptography
-                implementation(libs.cryptography.core)
             }
         }
 
@@ -105,11 +96,14 @@ kotlin {
                 // Country Code Picker
                 implementation(libs.ccp)
 
-                // Android secure storage
-                implementation(libs.androidx.security.crypto)
-
                 // Ktor engine for Android
                 api(libs.ktor.client.okhttp)
+            }
+        }
+
+        val iosMain by getting {
+            dependencies {
+                implementation(libs.kermit)
             }
         }
 
@@ -122,11 +116,6 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
-            }
-        }
-        val wasmJsMain by getting {
-            dependencies {
-                implementation(libs.cryptography.provider.webcrypto)
             }
         }
     }
