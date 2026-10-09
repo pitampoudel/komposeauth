@@ -219,7 +219,7 @@ Utilities
 Current user
 
 ```kotlin
-val userState = rememberCurrentUser()
+val userState = rememberAuthenticatedUser()
 ```
 
 Login with Credential Manager

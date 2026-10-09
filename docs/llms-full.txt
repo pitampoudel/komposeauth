@@ -82,11 +82,15 @@ Content-Type: application/json
   "redirectUris": ["https://app.example.com/callback", "http://localhost:5173/callback"],
   "accessTokenTtlSeconds": 900,
   "refreshTokenTtlDays": 30,
-  "scopes": ["openid", "profile", "email"]
+  "scopes": ["openid", "profile", "email"],
+  "publicClient": false
 }
 ```
 
-Response (the secret is generated when you omit `clientSecret`):
+Set `"publicClient": true` for an app that cannot keep a secret (a browser SPA, a mobile or desktop app). It is
+given no secret and must not send one (`clientSecret` is refused with 400).
+
+Response (for a confidential client the secret is generated when you omit `clientSecret`):
 
 ```json
 {
@@ -104,8 +108,10 @@ Response (the secret is generated when you omit `clientSecret`):
 
 What every registered client gets (`oauth_clients/dto/Mappers.kt`):
 
-- Grant types: `authorization_code`, `refresh_token`, `client_credentials`.
-- Client authentication methods: `none` (public) and `client_secret_post`.
+- A confidential client (the default): grant types `authorization_code`, `refresh_token`, `client_credentials`;
+  client authentication `client_secret_basic` or `client_secret_post`, on every grant.
+- A public client (`publicClient: true`): grant types `authorization_code` and `refresh_token`; client
+  authentication `none`, the `client_id` alone.
 - **PKCE is required** (`requireProofKey = true`). Every authorization request must carry `code_challenge` and
   `code_challenge_method=S256`, including from server-side apps.
 - No consent screen (`requireAuthorizationConsent = false`).
@@ -190,17 +196,19 @@ Flow:
    ```
 5. Send `Authorization: Bearer <access_token>` to your resource servers.
 
-Client authentication at the token endpoint: a request with `client_id` and no secret, client assertion or
-`Authorization` header is authenticated as a **public client** (`core/providers/OAuth2PublicClientAuthConverter.kt`),
-for the authorization-code and refresh grants only, so a browser or mobile app never needs the client secret. A
-request that does send `client_secret` has it verified. `client_credentials` always requires the secret. Never ship
-the client secret in browser or mobile code.
+Client authentication at the token endpoint: a **public client** sends its `client_id` and no secret. Its code
+exchange is proved by the PKCE `code_verifier`, and its refresh by the `client_id` alone
+(`core/providers/OAuth2PublicClientAuthConverter.kt`). A **confidential client** authenticates every grant,
+including the code exchange and the refresh, with its secret (`client_secret_basic` or `client_secret_post`); its
+`client_id` alone is refused. Never ship the client secret in browser or mobile code: register such an app as a
+public client.
 
 Refresh tokens: the authorization-code exchange returns a `refresh_token`, public clients included (komposeauth
 issues one to every client with the `refresh_token` grant, which all registered clients have; stock Spring
 Authorization Server would withhold it from public clients). It lasts the client's `refreshTokenTtlDays` and is
 reused, not rotated: refreshing returns a new access token and the same refresh token. Refresh with a form POST
-to the token endpoint, again with `client_id` and no secret:
+to the token endpoint, authenticated as the code exchange was (a public client's `client_id` alone is shown here;
+a confidential client adds its secret):
 
 ```http
 POST /oauth2/token
@@ -218,6 +226,8 @@ document (RP-initiated logout, pass `id_token_hint` and a `post_logout_redirect_
 auth server using the browser's session.
 
 #### Example: SPA with `oidc-client-ts`
+
+Register the SPA as a public client (`publicClient: true`).
 
 ```ts
 import { UserManager, WebStorageStateStore } from "oidc-client-ts";
@@ -260,7 +270,7 @@ Use your framework's OIDC client (Auth.js, `openid-client`, `authlib`, `omniauth
 - issuer / authority: `https://auth.example.com`
 - client id: the registered `clientId`
 - PKCE enabled with S256 (required even for server-side apps)
-- token endpoint auth method: `none`, or `client_secret_post` for a server-side app that keeps the secret (the secret is then verified)
+- token endpoint auth method: `client_secret_post` (or `client_secret_basic`) with the client secret, kept on the server
 - scopes: `openid profile email`
 - keep the access token in the server-side session and forward it as `Authorization: Bearer` when calling APIs.
 
@@ -273,7 +283,8 @@ Auth.js (NextAuth) provider:
   type: "oidc",
   issuer: "https://auth.example.com",
   clientId: process.env.KOMPOSEAUTH_CLIENT_ID,
-  client: { token_endpoint_auth_method: "none" },
+  clientSecret: process.env.KOMPOSEAUTH_CLIENT_SECRET,
+  client: { token_endpoint_auth_method: "client_secret_post" },
   checks: ["pkce", "state", "nonce"],
   authorization: { params: { scope: "openid profile email" } },
 }
@@ -281,7 +292,8 @@ Auth.js (NextAuth) provider:
 
 #### Example: native mobile apps (AppAuth for Android/iOS, `expo-auth-session`, `flutter_appauth`)
 
-Register a redirect URI with a private scheme, e.g. `com.example.app:/oauth2redirect`, and configure the library
+Register a public client (`publicClient: true`) with a redirect URI with a private scheme, e.g.
+`com.example.app:/oauth2redirect`, and configure the library
 with the discovery URL, the `clientId`, that redirect URI, scopes `openid profile email` and PKCE (on by default in
 these libraries). Private-scheme redirects are supported. Kotlin Multiplatform apps should use the SDK instead
 (section 3.3).
@@ -385,7 +397,7 @@ What the SDK does (`client/.../core/data/installKomposeAuth.kt`): persists token
 `Authorization: Bearer` to requests whose host is the auth server or one of `resourceServerUrls`, refreshes on 401
 with the `REFRESH_TOKEN` credential, and clears tokens when the refresh is rejected. Use `LoginViewModel` with
 `rememberKmpCredentialManager()` for Google/passkey sign-in, `OtpViewModel` for codes, `ProfileViewModel`,
-`KycViewModel`, and `rememberCurrentUser()` for the signed-in user. Your resource servers only have to validate the
+`KycViewModel`, and `rememberAuthenticatedUser()` for the signed-in user. Your resource servers only have to validate the
 bearer token.
 
 ### 3.4 Reading the current user in a frontend
