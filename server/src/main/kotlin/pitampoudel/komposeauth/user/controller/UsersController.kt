@@ -15,7 +15,7 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.ME
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.STATS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.USERS
-import pitampoudel.komposeauth.core.utils.findServerUrl
+import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client.Companion.SCOPE_READ_ANY_USER
 import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client.Companion.SCOPE_WRITE_ANY_USER
@@ -32,7 +32,8 @@ import pitampoudel.komposeauth.user.service.mapToResponseDto
 class UsersController(
     val userService: UserService,
     val kycService: KycService,
-    private val userContextService: UserContextService
+    private val userContextService: UserContextService,
+    private val serverUrl: ServerUrl
 ) {
     @PatchMapping("/$USERS")
     @Operation(
@@ -45,7 +46,7 @@ class UsersController(
         req: HttpServletRequest
     ): ResponseEntity<UserResponse> {
         return ResponseEntity.ok().body(
-            userService.findOrCreateUser(findServerUrl(req), request).let {
+            userService.findOrCreateUser(serverUrl.of(req), request).let {
                 it.mapToResponseDto(kycService.isVerified(it.id))
             }
         )

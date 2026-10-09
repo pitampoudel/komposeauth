@@ -16,7 +16,7 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.security.ratelimit.RateLimitProperties
 import pitampoudel.komposeauth.core.security.ratelimit.RateLimiter
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
-import pitampoudel.komposeauth.core.utils.findServerUrl
+import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.core.utils.normalizedEmail
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
 import pitampoudel.komposeauth.user.data.SendOtpRequest
@@ -33,7 +33,8 @@ class OtpVerifyController(
     val emailVerificationService: EmailVerificationService,
     val phoneNumberVerificationService: PhoneNumberVerificationService,
     private val rateLimiter: RateLimiter,
-    private val rateLimitProperties: RateLimitProperties
+    private val rateLimitProperties: RateLimitProperties,
+    private val serverUrl: ServerUrl
 ) {
 
     /**
@@ -76,7 +77,7 @@ class OtpVerifyController(
                 enforceTargetQuota(normalizedEmail)
                 emailVerificationService.initiate(
                     email = request.username,
-                    baseUrl = findServerUrl(httpServletRequest)
+                    baseUrl = serverUrl.of(httpServletRequest)
                 )
             }
         }

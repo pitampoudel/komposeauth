@@ -54,9 +54,13 @@ discovery.
 
 ### 2.2 The issuer (`iss`)
 
-The server has no fixed issuer setting. The issuer is derived from each request's scheme, host and port
-(`core/utils/ServerUtils.kt`, Spring Authorization Server defaults), so it equals the public URL the client used,
-e.g. `https://auth.example.com` with no trailing slash. Consequences:
+The issuer is the server's public address, set by its operator as `spring.security.oauth2.authorizationserver.issuer`
+(env `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER`), e.g. `https://auth.example.com` with no trailing slash.
+Every token carries it as `iss` and the discovery document names it. Emailed links and the KYC callback are built
+from it too (`core/utils/ServerUtils.kt`).
+
+When it is not set (local development), the issuer is derived from each request's scheme, host and port, so it
+equals the URL the client used. Then:
 
 - Behind a proxy the server must see the original scheme and host (`FORWARD_HEADERS_STRATEGY=framework`, the
   default, and a proxy that sends `X-Forwarded-Proto`/`X-Forwarded-Host`). Otherwise `iss` becomes

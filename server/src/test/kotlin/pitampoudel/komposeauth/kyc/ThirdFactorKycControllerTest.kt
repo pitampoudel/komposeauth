@@ -10,10 +10,12 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.mock.web.MockHttpServletRequest
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.service.jwt.JwtTokenService
+import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.kyc.controller.ThirdFactorKycController
 import pitampoudel.komposeauth.kyc.dto.ThirdFactorModel
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
@@ -38,7 +40,8 @@ class ThirdFactorKycControllerTest {
         jwtTokenService = jwtTokenService,
         userContextService = mock<UserContextService>(),
         kycRepo = mock<KycVerificationRepository>(),
-        restClient = mock()
+        restClient = mock(),
+        serverUrl = ServerUrl(AuthorizationServerSettings.builder().build())
     )
 
     private fun tokenFor(identifier: String) = jwtTokenService.generateHs256Token(

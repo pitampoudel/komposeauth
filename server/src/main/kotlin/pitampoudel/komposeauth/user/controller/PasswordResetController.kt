@@ -15,7 +15,7 @@ import jakarta.servlet.http.HttpServletRequest
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.utils.findServerUrl
+import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.RESET_PASSWORD
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
@@ -28,7 +28,8 @@ class PasswordResetController(
     private val userService: UserService,
     private val emailService: EmailService,
     private val oneTimeTokenService: OneTimeTokenService,
-    private val appConfigService: AppConfigService
+    private val appConfigService: AppConfigService,
+    private val serverUrl: ServerUrl
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -65,11 +66,11 @@ class PasswordResetController(
         if (user != null && address != null) {
             val link = oneTimeTokenService.generateResetPasswordLink(
                 userId = user.id,
-                baseUrl = findServerUrl(request)
+                baseUrl = serverUrl.of(request)
             )
 
             val sent = emailService.sendHtmlMail(
-                baseUrl = findServerUrl(request),
+                baseUrl = serverUrl.of(request),
                 to = address,
                 subject = "Reset Your Password",
                 template = "email/generic",

@@ -6,10 +6,12 @@ import io.mockk.slot
 import io.mockk.verify
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.security.ratelimit.RateLimitProperties
 import pitampoudel.komposeauth.core.security.ratelimit.RateLimiter
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
+import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
 import pitampoudel.komposeauth.user.data.UserResponse
 import pitampoudel.komposeauth.user.data.VerifyOtpRequest
@@ -40,7 +42,8 @@ class OtpVerifyPhoneNormalisationTest {
         phoneNumberVerificationService = phoneNumberVerificationService,
         rateLimiter = rateLimiter,
         // Off, so the target quota never touches the rate limiter in a plain unit test.
-        rateLimitProperties = RateLimitProperties().apply { enabled = false }
+        rateLimitProperties = RateLimitProperties().apply { enabled = false },
+        serverUrl = ServerUrl(AuthorizationServerSettings.builder().build())
     )
 
     private val caller = User(

@@ -24,7 +24,7 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.security.authCookieDomain
 import pitampoudel.komposeauth.core.domain.ResponseType
-import pitampoudel.komposeauth.core.utils.findServerUrl
+import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.user.data.Credential
@@ -44,7 +44,8 @@ class ResourceOwnerLoginController(
     val appConfigService: AppConfigService,
     private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
     private val jwtEncoder: JwtEncoder,
-    private val securityContextRepository: HttpSessionSecurityContextRepository
+    private val securityContextRepository: HttpSessionSecurityContextRepository,
+    private val serverUrl: ServerUrl
 ) {
 
     @PostMapping("/${ApiEndpoints.LOGIN}")
@@ -71,7 +72,7 @@ class ResourceOwnerLoginController(
         val now = Instant.now()
         val scopes = listOf("openid", "profile", "email")
         val builder = JwtClaimsSet.builder()
-            .issuer(findServerUrl(httpServletRequest))
+            .issuer(serverUrl.of(httpServletRequest))
             .subject(user.id.toHexString())
             .issuedAt(now)
             .expiresAt(now + 1.days.toJavaDuration())
