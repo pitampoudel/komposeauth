@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings
 import org.springframework.stereotype.Component
 import java.io.IOException
+import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.URI
@@ -34,6 +35,9 @@ fun interface ClientMetadataFetcher {
 /**
  * Fetches over HTTPS, refusing addresses on private networks (so a client id can't make the server
  * call into its own network), redirects, slow servers and large documents.
+ *
+ * `HttpClient` resolves the host again when it connects and has no hook to connect to the address
+ * checked here instead, so a DNS answer that changes in between (rebinding) is not caught.
  */
 @Component
 class HttpClientMetadataFetcher : ClientMetadataFetcher {
@@ -61,7 +65,9 @@ class HttpClientMetadataFetcher : ClientMetadataFetcher {
 
     private fun InetAddress.isInternal(): Boolean =
         isLoopbackAddress || isAnyLocalAddress || isLinkLocalAddress || isSiteLocalAddress || isMulticastAddress ||
-            (this is Inet6Address && (address[0].toInt() and 0xfe) == 0xfc) // fc00::/7, unique local
+            (this is Inet6Address && (address[0].toInt() and 0xfe) == 0xfc) || // fc00::/7, unique local
+            (this is Inet4Address && address[0].toInt() == 0) || // 0.0.0.0/8, "this network"
+            (this is Inet4Address && address[0].toInt() == 100 && (address[1].toInt() and 0xc0) == 64) // 100.64.0.0/10, carrier-grade NAT
 
     companion object {
         private val TIMEOUT: Duration = Duration.ofSeconds(5)
