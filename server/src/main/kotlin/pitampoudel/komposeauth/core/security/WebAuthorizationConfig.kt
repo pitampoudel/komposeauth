@@ -151,7 +151,10 @@ class WebAuthorizationConfig {
             // the one stored at sign-in, and a revoked role would otherwise be reissued forever.
             // Only for a client registered here: a client the user has to consent to is someone
             // else's app, and an admin's token from it would be an admin's bearer on our own APIs.
-            if (!context.registeredClient.clientSettings.isRequireAuthorizationConsent) {
+            // And only on the access token: an ID token is passed around (id_token_hint, logs).
+            if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN &&
+                !context.registeredClient.clientSettings.isRequireAuthorizationConsent
+            ) {
                 context.claims.claim("authorities", user.roles.map { "ROLE_$it" })
             }
             user.email?.let {

@@ -173,6 +173,11 @@ class PublicClientRefreshTokenIntegrationTest {
             String(Base64.getUrlDecoder().decode(first.getValue("access_token").split(".")[1]))
         ).jsonObject
         assertTrue("authorities" in claims, "no authorities in $claims")
+        // The ID token is the one passed around (id_token_hint, logs), so it carries no roles.
+        val idTokenClaims = json.parseToJsonElement(
+            String(Base64.getUrlDecoder().decode(first.getValue("id_token").split(".")[1]))
+        ).jsonObject
+        assertFalse("authorities" in idTokenClaims, "the ID token carries roles: $idTokenClaims")
 
         // Closed behind the authorization's back, as an account deactivated before its
         // authorizations were revoked on deactivation would be.

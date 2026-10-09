@@ -9,6 +9,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
+import org.springframework.security.oauth2.jwt.JwtClaimsSet
+import org.springframework.security.oauth2.jwt.JwtEncoder
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
@@ -19,12 +22,13 @@ import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.user.data.Credential
+import java.time.Instant
 import java.util.Base64
 import kotlin.test.assertEquals
 
 /**
  * With `spring.security.oauth2.authorizationserver.issuer` set, nothing a caller writes into the Host
- * or forwarded headers reaches a token's issuer.
+ * or forwarded headers reaches a token's issuer, and a bearer is held to that issuer.
  */
 @SpringBootTest(properties = ["spring.security.oauth2.authorizationserver.issuer=${ConfiguredIssuerIntegrationTest.ISSUER}"])
 @ActiveProfiles("test")
@@ -38,6 +42,7 @@ class ConfiguredIssuerIntegrationTest {
 
     @Autowired private lateinit var mockMvc: MockMvc
     @Autowired private lateinit var json: Json
+    @Autowired private lateinit var jwtEncoder: JwtEncoder
 
     private val forgedHost = RequestPostProcessor { request ->
         request.serverName = "attacker.example"
@@ -68,5 +73,27 @@ class ConfiguredIssuerIntegrationTest {
         val accessToken = json.parseToJsonElement(body).jsonObject.getValue("access_token").jsonPrimitive.content
         val claims = json.parseToJsonElement(String(Base64.getUrlDecoder().decode(accessToken.split(".")[1]))).jsonObject
         assertEquals(ISSUER, claims["iss"]?.jsonPrimitive?.content)
+        assertEquals(200, me(accessToken))
     }
+
+    @Test
+    fun `a token this server signed under another issuer is refused`() {
+        val userId = TestAuthHelpers.createUser(mockMvc, json, "other-issuer@example.com")
+        val now = Instant.now()
+        val foreign = jwtEncoder.encode(
+            JwtEncoderParameters.from(
+                JwtClaimsSet.builder()
+                    .issuer("https://attacker.example")
+                    .subject(userId)
+                    .issuedAt(now)
+                    .expiresAt(now.plusSeconds(600))
+                    .claim("scope", listOf("openid"))
+                    .build()
+            )
+        ).tokenValue
+        assertEquals(401, me(foreign))
+    }
+
+    private fun me(accessToken: String) =
+        mockMvc.get("/${ApiEndpoints.ME}") { header("Authorization", "Bearer $accessToken") }.andReturn().response.status
 }

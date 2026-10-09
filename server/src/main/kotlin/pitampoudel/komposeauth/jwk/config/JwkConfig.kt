@@ -10,8 +10,10 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Lazy
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtEncoder
+import org.springframework.security.oauth2.jwt.JwtValidators
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import pitampoudel.komposeauth.jwk.service.JwkService
 import java.security.KeyPair
 import java.security.interfaces.RSAPrivateKey
@@ -55,9 +57,12 @@ class JwkConfig(
 
     @Bean
     @Lazy
-    fun jwtDecoder(serverKeyPair: KeyPair): JwtDecoder {
+    fun jwtDecoder(serverKeyPair: KeyPair, settings: AuthorizationServerSettings): JwtDecoder {
         val publicKey = serverKeyPair.public as RSAPublicKey
         // NimbusJwtDecoder supports RS256 by default when given a public key
-        return NimbusJwtDecoder.withPublicKey(publicKey).build()
+        return NimbusJwtDecoder.withPublicKey(publicKey).build().apply {
+            // Unset, every request names its own issuer and there is no one value to hold tokens to.
+            settings.issuer?.let { setJwtValidator(JwtValidators.createDefaultWithIssuer(it)) }
+        }
     }
 }

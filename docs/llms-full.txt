@@ -56,8 +56,8 @@ discovery.
 
 The issuer is the server's public address, set by its operator as `spring.security.oauth2.authorizationserver.issuer`
 (env `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER`), e.g. `https://auth.example.com` with no trailing slash.
-Every token carries it as `iss` and the discovery document names it. Emailed links and the KYC callback are built
-from it too (`core/utils/ServerUtils.kt`).
+Every token carries it as `iss`, the discovery document names it, and the server accepts a bearer only when its
+`iss` matches. Emailed links and the KYC callback are built from it too (`core/utils/ServerUtils.kt`).
 
 When it is not set (local development), the issuer is derived from each request's scheme, host and port, so it
 equals the URL the client used. Then:
@@ -430,7 +430,8 @@ All tokens are JWS compact JWTs signed with **RS256**. The header carries a `kid
 
 Sources: `core/security/WebAuthorizationConfig.kt` (`jwtCustomizer`) and
 `user/controller/ResourceOwnerLoginController.kt`. The ID token from the authorization-code flow carries the same
-custom claims plus the standard OIDC ones (`nonce`, `auth_time`, ...).
+custom claims except `authorities`, plus the standard OIDC ones (`nonce`, `auth_time`, ...). Authorize with the
+access token, never the ID token.
 
 ### 4.2 UserInfo claims (`GET /userinfo`)
 
