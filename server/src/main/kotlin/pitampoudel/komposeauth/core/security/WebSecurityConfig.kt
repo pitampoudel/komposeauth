@@ -22,6 +22,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException
+import org.springframework.security.oauth2.jwt.JwtClaimNames
+import org.springframework.security.oauth2.jwt.JwtClaimValidator
+import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.security.oauth2.jwt.JwtValidationException
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.web.DefaultRedirectStrategy
 import org.springframework.security.web.authentication.AuthenticationFailureHandler
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
@@ -172,10 +177,30 @@ class WebSecurityConfig {
         }
     }
 
+    /**
+     * The bearers this server's own API accepts. A token issued to a client that asks the user's
+     * consent (one from a metadata document, say) is someone else's app acting for the user: it may
+     * read the user's profile at the userinfo endpoint, which the authorization server's own chain
+     * serves, and nothing here. A token with no audience is one this server minted at `/login`.
+     */
+    private fun firstPartyJwtDecoder(decoder: JwtDecoder, clients: RegisteredClientRepository): JwtDecoder {
+        val firstParty = JwtClaimValidator<Collection<String>>(JwtClaimNames.AUD) { audience ->
+            audience.orEmpty().all { clients.findByClientId(it)?.clientSettings?.isRequireAuthorizationConsent == false }
+        }
+        return JwtDecoder { token ->
+            decoder.decode(token).also { jwt ->
+                val result = firstParty.validate(jwt)
+                if (result.hasErrors()) throw JwtValidationException("Not a token for this server's API", result.errors)
+            }
+        }
+    }
+
     @Bean
     @Order(2)
     fun securityFilterChain(
         http: HttpSecurity,
+        jwtDecoder: JwtDecoder,
+        registeredClientRepository: RegisteredClientRepository,
         jwtAuthenticationConverter: JwtAuthenticationConverter,
         objectMapper: ObjectMapper,
         bearerTokenResolver: BearerTokenResolver,
@@ -254,6 +279,7 @@ class WebSecurityConfig {
                     bearerEntryPoint.commence(request, response, authException)
                 }
                 conf.jwt {
+                    it.decoder(firstPartyJwtDecoder(jwtDecoder, registeredClientRepository))
                     it.jwtAuthenticationConverter(jwtAuthenticationConverter)
                 }
             }

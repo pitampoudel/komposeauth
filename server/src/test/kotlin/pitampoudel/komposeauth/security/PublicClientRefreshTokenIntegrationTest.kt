@@ -231,6 +231,9 @@ class PublicClientRefreshTokenIntegrationTest {
             "code_verifier" to codeVerifier
         )
         val refreshToken = first.getValue("refresh_token")
+        // A registered app's token is a bearer on this server's own API
+        val me = mockMvc.get("/${ApiEndpoints.ME}") { header("Authorization", "Bearer ${first.getValue("access_token")}") }.andReturn()
+        assertEquals(200, me.response.status, me.response.contentAsString)
 
         val bare = tokenRequest(
             "grant_type" to "refresh_token",

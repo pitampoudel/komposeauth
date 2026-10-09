@@ -128,7 +128,9 @@ minutes (`oauth_clients/cimd/ClientIdMetadataDocuments.kt`); discovery advertise
   address) and `token_endpoint_auth_method` `none` (or absent); hosts on private networks aren't fetched;
 - is a public client: authorization code with PKCE, plus `refresh_token` if its `grant_types` list it;
 - gets only `openid profile email`, and always shows the user a **consent screen** naming its URL;
-- gets 1-hour access tokens and 30-day refresh tokens that are **rotated** on every use.
+- gets 1-hour access tokens and 30-day refresh tokens that are **rotated** on every use;
+- may use its access token at `/userinfo` only: this server's own API (`/me`, `/update-profile`, `/send-otp`, ...)
+  refuses a token issued to any client that requires consent, with 401.
 
 ### 2.4 CORS and cookies
 
