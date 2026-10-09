@@ -161,7 +161,11 @@ internal class AuthClientImpl(val httpClient: HttpClient) : AuthClient {
         val result = safeApiCall {
             httpClient.post("$authUrl/$LOGOUT").asResource { this }
         }
-        httpClient.authProvider<BearerAuthProvider>()?.clearToken()
+        clearCachedToken()
         return result
+    }
+
+    override suspend fun clearCachedToken() {
+        httpClient.authProvider<BearerAuthProvider>()?.clearToken()
     }
 }
