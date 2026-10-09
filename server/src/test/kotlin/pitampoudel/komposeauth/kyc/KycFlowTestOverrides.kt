@@ -26,8 +26,6 @@ class KycFlowTestOverrides {
     @Primary
     fun storageService(): StorageService = object : StorageService {
         override fun upload(blobName: String, contentType: String?, bytes: ByteArray): String = "test://$blobName"
-        override fun download(blobName: String): ByteArray? = null
-        override fun exists(blobName: String): Boolean = false
         override fun delete(url: String): Boolean = true
     }
 

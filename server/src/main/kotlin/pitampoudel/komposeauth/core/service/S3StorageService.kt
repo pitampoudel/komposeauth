@@ -7,11 +7,7 @@ import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
-import software.amazon.awssdk.services.s3.model.GetObjectRequest
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
-import software.amazon.awssdk.services.s3.model.S3Exception
 import java.net.URI
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -66,20 +62,6 @@ class S3StorageService(
             RequestBody.fromBytes(bytes)
         )
         return "$baseUrl${encodePath(blobName)}?v=${clock.millis()}"
-    }
-
-    override fun download(blobName: String): ByteArray? = try {
-        client.getObjectAsBytes(GetObjectRequest.builder().bucket(settings.bucket).key(blobName).build())
-            .asByteArray()
-    } catch (_: NoSuchKeyException) {
-        null
-    }
-
-    override fun exists(blobName: String): Boolean = try {
-        client.headObject(HeadObjectRequest.builder().bucket(settings.bucket).key(blobName).build())
-        true
-    } catch (ex: S3Exception) {
-        if (ex.statusCode() == 404) false else throw ex
     }
 
     /** True when [url] is an address this bucket handed out. */

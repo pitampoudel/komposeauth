@@ -25,8 +25,10 @@ class RoutingStorageServiceTest {
 
     /** Runs [block] with every GCS store the router builds replaced by a mock that answers [gcsUrl]. */
     private fun <T> withMockGcs(block: (built: () -> List<GcpStorageService>) -> T): T =
-        mockConstruction(GcpStorageService::class.java) { gcs, _ ->
+        mockConstruction(GcpStorageService::class.java) { gcs, context ->
+            whenever(gcs.settings) doReturn context.arguments().single() as GcpStorageService.Settings
             whenever(gcs.upload(any(), anyOrNull(), any())) doReturn gcsUrl
+            whenever(gcs.owns(gcsUrl)) doReturn true
             whenever(gcs.delete(any())) doReturn true
         }.use { construction -> block { construction.constructed() } }
 
@@ -72,11 +74,22 @@ class RoutingStorageServiceTest {
     }
 
     @Test
-    fun `a delete goes to the store new files go to`() = withMockGcs { built ->
-        assertTrue(router(onS3.copy(storageProvider = AppConfig.STORAGE_GCS)).delete(gcsUrl))
+    fun `the GCS store is rebuilt when its bucket changes`() = withMockGcs { built ->
+        val config = AppConfig(gcpProjectId = "p", gcpBucketName = "old")
+        val router = router(config)
+        router.upload("a", null, ByteArray(1))
+        config.gcpBucketName = "newer"
+        router.upload("b", null, ByteArray(1))
+        assertEquals(listOf("old", "newer"), built().map { it.settings.bucket })
+    }
+
+    @Test
+    fun `a delete goes to the store the address is in, not the one new files go to`() = withMockGcs { built ->
+        // New files go to S3, and a file written to GCS before the switch is still deleted there.
+        assertTrue(router(onS3).delete(gcsUrl))
         verify(built().single()).delete(gcsUrl)
 
-        assertFalse(router(onS3).delete(gcsUrl), "the S3 store does not delete an address that is not its own")
+        assertFalse(router(onS3).delete("https://example.com/elsewhere"), "no store holds that address")
     }
 
     @Test
