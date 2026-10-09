@@ -21,6 +21,7 @@ import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
+import pitampoudel.komposeauth.user.service.AccessRevocation
 import pitampoudel.komposeauth.user.service.UserService
 import java.util.Optional
 import kotlin.test.assertEquals
@@ -47,7 +48,8 @@ class UserServiceAdminEdgeCasesTest {
 
     private fun service(
         userRepository: UserRepository,
-        appConfigService: AppConfigService = appConfigService()
+        appConfigService: AppConfigService = appConfigService(),
+        accessRevocation: AccessRevocation = mock()
     ) = UserService(
         userRepository = userRepository,
         passwordEncoder = mock(),
@@ -67,7 +69,7 @@ class UserServiceAdminEdgeCasesTest {
         roleChangeEmailNotifier = mock(),
         emailVerificationService = mock(),
         appleTokenValidator = mock(),
-        oauth2AuthorizationDocumentRepository = mock()
+        accessRevocation = accessRevocation
     )
 
     private fun user(roles: List<String> = emptyList()) = User(
@@ -121,6 +123,62 @@ class UserServiceAdminEdgeCasesTest {
             .revokeRole(actor(), target.id.toHexString(), "SUPPORT")
 
         assertTrue(updated.roles.isEmpty())
+    }
+
+    @Test
+    fun `revoking a role ends the sessions that still carry it`() {
+        val userRepo = mock<UserRepository>()
+        val revocation = mock<AccessRevocation>()
+        val target = user(roles = listOf(Roles.ADMIN))
+
+        whenever(userRepo.findById(target.id)).thenReturn(Optional.of(target))
+        whenever(userRepo.countByRolesContaining(Roles.ADMIN)).thenReturn(2)
+        whenever(userRepo.save(any<User>())).thenAnswer { it.arguments[0] as User }
+
+        service(userRepo, accessRevocation = revocation).revokeRole(actor(), target.id.toHexString(), Roles.ADMIN)
+
+        verify(revocation).endSessions(target.id)
+    }
+
+    @Test
+    fun `an ADMIN cannot deactivate or delete a SUPER_ADMIN`() {
+        val userRepo = mock<UserRepository>()
+        val target = user(roles = listOf(Roles.SUPER_ADMIN))
+        whenever(userRepo.findById(target.id)).thenReturn(Optional.of(target))
+        whenever(userRepo.countByRolesContaining(Roles.SUPER_ADMIN)).thenReturn(2)
+
+        assertThrows<AccessDeniedException> { service(userRepo).deactivateUser(actor(), target.id) }
+        assertThrows<AccessDeniedException> { service(userRepo).deleteUser(actor(), target.id) }
+        assertThrows<AccessDeniedException> { service(userRepo).deleteUser(null, target.id) }
+        verify(userRepo, never()).save(any<User>())
+        verify(userRepo, never()).deleteById(any())
+    }
+
+    @Test
+    fun `the last ADMIN cannot be deactivated`() {
+        val userRepo = mock<UserRepository>()
+        val target = user(roles = listOf(Roles.ADMIN))
+        whenever(userRepo.findById(target.id)).thenReturn(Optional.of(target))
+        whenever(userRepo.countByRolesContaining(Roles.ADMIN)).thenReturn(1)
+
+        assertThrows<org.apache.coyote.BadRequestException> {
+            service(userRepo).deactivateUser(actor(roles = listOf(Roles.SUPER_ADMIN)), target.id)
+        }
+        verify(userRepo, never()).save(any<User>())
+    }
+
+    @Test
+    fun `deactivating an account signs it out everywhere`() {
+        val userRepo = mock<UserRepository>()
+        val revocation = mock<AccessRevocation>()
+        val target = user()
+        whenever(userRepo.findById(target.id)).thenReturn(Optional.of(target))
+        whenever(userRepo.save(any<User>())).thenAnswer { it.arguments[0] as User }
+
+        service(userRepo, accessRevocation = revocation).deactivateUser(actor(), target.id)
+
+        verify(userRepo).save(target.copy(deactivated = true))
+        verify(revocation).revokeAll(target.id)
     }
 
     @Test
@@ -214,6 +272,17 @@ class UserServiceAdminEdgeCasesTest {
         verify(userRepo).findAll(pageableCaptor.capture())
         assertEquals(0, pageableCaptor.firstValue.pageNumber)
         assertEquals(200, pageableCaptor.firstValue.pageSize)
+    }
+
+    @Test
+    fun `findUsersFlexible with an empty id list finds nobody rather than everybody`() {
+        val userRepo = mock<UserRepository>()
+        whenever(userRepo.findByIdIn(any())).thenReturn(emptyList())
+
+        val result = service(userRepo).findUsersFlexible(ids = emptyList(), q = null, page = 0, size = 50)
+
+        assertTrue(result.content.isEmpty())
+        verify(userRepo, never()).findAll(any<Pageable>())
     }
 
     @Test

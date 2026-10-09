@@ -40,7 +40,7 @@ data class AddressState(
             state = state,
             city = city,
             addressLine1 = addressLine1,
-            addressLine2 = addressLine2
+            addressLine2 = addressLine2.takeIf { it.isNotBlank() }
         )
     }
 
@@ -148,7 +148,7 @@ data class DocumentInformationState(
             documentType = documentType!!,
             documentNumber = documentNumber,
             documentIssuedDate = documentIssuedDate!!,
-            documentExpiryDate = documentExpiryDate,
+            documentExpiryDate = documentExpiryDate.takeIf { documentType == DocumentType.PASSPORT },
             documentIssuedPlace = documentIssuedPlace,
             documentFront = documentFront!!.toEncodedData(),
             documentBack = documentBack!!.toEncodedData(),

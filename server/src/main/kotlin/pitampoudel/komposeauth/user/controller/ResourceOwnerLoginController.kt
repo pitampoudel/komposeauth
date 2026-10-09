@@ -127,6 +127,8 @@ class ResourceOwnerLoginController(
             ResponseType.SESSION -> {
                 val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
                 val appAuth = UsernamePasswordAuthenticationToken(user.id.toHexString(), null, authorities)
+                // A new id for the signed-in session, so one planted before sign-in is not let in.
+                if (httpServletRequest.getSession(false) != null) httpServletRequest.changeSessionId()
                 SecurityContextHolder.getContext().authentication = appAuth
                 securityContextRepository.saveContext(
                     SecurityContextHolder.getContext(),

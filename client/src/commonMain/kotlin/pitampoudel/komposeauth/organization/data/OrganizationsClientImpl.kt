@@ -47,9 +47,8 @@ internal class OrganizationsClientImpl(
 
     override suspend fun delete(orgId: String): Result<MessageResponse> {
         return safeApiCall {
-            httpClient.delete(baseUrl + "/" + ApiEndpoints.ORGANIZATIONS) {
-                parameter("orgId", orgId)
-            }.asResource { body() }
+            httpClient.delete(baseUrl + "/" + ApiEndpoints.ORGANIZATIONS + "/$orgId")
+                .asResource { body() }
         }
     }
 

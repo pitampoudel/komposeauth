@@ -28,8 +28,6 @@ class SamayaSmsService(
             String::class.java
         )
 
-        logger.debug("SMS: $message To: $phoneNumber")
-
         logger.debug("SMS API Response: $response")
     }
 

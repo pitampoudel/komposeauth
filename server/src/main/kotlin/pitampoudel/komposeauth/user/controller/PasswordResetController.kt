@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import jakarta.servlet.http.HttpServletRequest
-import org.springframework.web.servlet.view.RedirectView
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.EmailService
@@ -60,8 +59,10 @@ class PasswordResetController(
     ): ResponseEntity<MessageResponse> {
         // This endpoint is public, so the answer must not differ for an address that has an
         // account and one that doesn't — otherwise it reports who is registered here.
+        // The account may be found by phone number too, so mail goes to the address on the account.
         val user = userService.findByUserName(email)
-        if (user != null) {
+        val address = user?.email
+        if (user != null && address != null) {
             val link = oneTimeTokenService.generateResetPasswordLink(
                 userId = user.id,
                 baseUrl = findServerUrl(request)
@@ -69,7 +70,7 @@ class PasswordResetController(
 
             val sent = emailService.sendHtmlMail(
                 baseUrl = findServerUrl(request),
-                to = email,
+                to = address,
                 subject = "Reset Your Password",
                 template = "email/generic",
                 model = mapOf(
@@ -98,7 +99,7 @@ class PasswordResetController(
         @RequestParam token: String,
         @RequestParam newPassword: String,
         @RequestParam confirmPassword: String
-    ): RedirectView {
+    ): ResponseEntity<MessageResponse> {
         val stored = oneTimeTokenService.findValidToken(token, OneTimeToken.Purpose.RESET_PASSWORD)
         val user = userService.findUser(stored.userId.toHexString())
             ?: throw BadRequestException("User not found")
@@ -118,6 +119,8 @@ class PasswordResetController(
             // password precisely because they cannot supply the current one.
             requireReauthentication = false
         )
-        return RedirectView("${appConfigService.getConfig().websiteUrl}?passwordReset=true")
+        // Answered in place: the form submits with fetch, which cannot follow a redirect to the
+        // website on another origin, and showed an error after the password had already changed.
+        return ResponseEntity.ok(MessageResponse("Your password has been reset. You can now sign in."))
     }
 }

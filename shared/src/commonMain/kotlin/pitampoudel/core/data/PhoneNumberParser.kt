@@ -15,8 +15,10 @@ data class PhoneNumber(
     val fullNumberInE164Format: String
 )
 
+// Built once: an instance loads region metadata as it is needed and keeps it.
+private val phoneUtil by lazy { PhoneNumberUtil.createInstance(metadataLoader = defaultMetadataLoader()) }
+
 fun parsePhoneNumber(countryNameCode: String?, phoneNumber: String): PhoneNumber? {
-    val phoneUtil = PhoneNumberUtil.createInstance(metadataLoader = defaultMetadataLoader())
     return try {
         val num = phoneUtil.parse(phoneNumber, countryNameCode)
         // Accept numbers that are valid OR merely "possible" (correct country code and length).
@@ -31,8 +33,8 @@ fun parsePhoneNumber(countryNameCode: String?, phoneNumber: String): PhoneNumber
             )
         )
         else null
-    } catch (e: Exception) {
-        e.printStackTrace()
+    } catch (_: Exception) {
+        // Not a phone number; callers try an email address with the same input.
         null
     }
 }

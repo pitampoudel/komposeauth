@@ -113,7 +113,7 @@ class PasswordResetControllerIntegrationTest {
             param("newPassword", "NewPassword1")
             param("confirmPassword", "NewPassword1")
         }.andExpect {
-            status { is3xxRedirection() }
+            status { isOk() }
         }
 
         // Verify user can login with new password

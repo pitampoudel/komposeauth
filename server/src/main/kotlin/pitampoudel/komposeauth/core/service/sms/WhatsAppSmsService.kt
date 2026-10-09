@@ -35,8 +35,6 @@ class WhatsAppSmsService(
             String::class.java
         )
 
-        logger.debug("WhatsApp message: $message To: $phoneNumber")
-
         logger.debug("WhatsApp API Response: $response")
     }
 }

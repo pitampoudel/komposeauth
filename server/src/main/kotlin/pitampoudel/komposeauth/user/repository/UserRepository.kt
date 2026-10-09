@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.stereotype.Repository
+import pitampoudel.komposeauth.core.utils.normalizedEmail
 import pitampoudel.komposeauth.user.entity.User
 import kotlin.jvm.optionals.getOrNull
 import java.util.regex.Pattern
@@ -25,7 +26,7 @@ interface UserRepository : MongoRepository<User, ObjectId>, UserRepositoryCustom
         if (ObjectId.isValid(value)) {
             user = findById(ObjectId(value)).getOrNull()
         }
-        user = user ?: findByEmail(value)
+        user = user ?: findByEmail(value.normalizedEmail())
         user = user ?: findByPhoneNumber(value)
         return user
     }

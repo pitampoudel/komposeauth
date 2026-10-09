@@ -72,12 +72,13 @@ class OtpViewModel internal constructor(
                         it.copy(codeError = ValidateOtpCode(state.value.code).error())
                     }
                     state.value.asLoginCredential()?.let { req ->
-                        loginUser(req) { msg ->
+                        val signedIn = loginUser(req) { msg ->
                             _state.update {
                                 it.copy(infoMsg = msg)
                             }
                         }
-                        uiEventChannel.send(ResultUiEvent.Completed)
+                        // A wrong code leaves the user on this screen with the error, not "done".
+                        if (signedIn) uiEventChannel.send(ResultUiEvent.Completed)
                     }
                     _state.update {
                         it.copy(progress = null)

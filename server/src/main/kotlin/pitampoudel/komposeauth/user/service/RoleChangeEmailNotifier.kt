@@ -40,8 +40,8 @@ class RoleChangeEmailNotifier(
 
 
         val message = when (action) {
-            Action.GRANTED -> "You’ve been granted <b>$role</b> access in $appName by ${actor ?: "an admin"}."
-            Action.REVOKED -> "Your <b>$role</b> access in $appName was revoked by ${actor ?: "an admin"}."
+            Action.GRANTED -> "You’ve been granted $role access in $appName by ${actor ?: "an admin"}."
+            Action.REVOKED -> "Your $role access in $appName was revoked by ${actor ?: "an admin"}."
         }
 
         return emailService.sendHtmlMail(

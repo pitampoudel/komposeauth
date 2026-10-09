@@ -4,7 +4,7 @@ Full-stack auth for Kotlin Multiplatform: Spring Auth Server + KMP SDK + Client 
 
 [![Maven Central (shared)](https://img.shields.io/maven-central/v/io.github.pitampoudel/komposeauth-shared.svg)](https://central.sonatype.com/artifact/io.github.pitampoudel/komposeauth-shared)
 [![Maven Central (client)](https://img.shields.io/maven-central/v/io.github.pitampoudel/komposeauth-client.svg)](https://central.sonatype.com/artifact/io.github.pitampoudel/komposeauth-client)
-[![Docker](https://img.shields.io/badge/GHCR-komposeauth-blue?logo=docker)](https://ghcr.io/pitampoudel/komposeauth)
+[![Docker](https://img.shields.io/badge/Docker%20Hub-komposeauth-blue?logo=docker)](https://hub.docker.com/r/pitampoudel/komposeauth)
 [![Compose Multiplatform](https://img.shields.io/badge/Compose-Multiplatform-42a5f5)](https://www.jetbrains.com/lp/compose-multiplatform/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
@@ -53,7 +53,7 @@ docker run -p 80:8080 \
   The `key` is the same `BASE64_ENCRYPTION_KEY` you started the container with. It is needed because
   no account exists yet and this page reads and writes every secret the server holds — SMTP
   password, SMS provider token, OAuth client secrets — so it is never open to an unauthenticated
-  visitor, not even on a fresh install. Once you have created an account and given it the `ADMIN`
+  visitor, not even on a fresh install. Once you have created an account and given it the `SUPER_ADMIN`
   role, signing in is enough and the key is no longer required.
 
   To keep the key out of your browser history and any proxy logs, you can send it as a header
@@ -132,9 +132,6 @@ gcloud run deploy komposeauth \
   --cpu-boost \
   --startup-probe httpGet.path=/actuator/health/readiness,httpGet.port=8080,initialDelaySeconds=4,periodSeconds=2,timeoutSeconds=2,failureThreshold=45
 ```
-
-`scripts/deploy-cloud-run.sh` does all of this from `deploy-targets.json`, which is worth using once
-you have more than one target.
 
 `TRUSTED_PROXY_COUNT=1` is what Cloud Run needs: its front end appends the caller's address as the
 last `X-Forwarded-For` entry, which is the one this server reads, and sets `X-Forwarded-Proto: https`

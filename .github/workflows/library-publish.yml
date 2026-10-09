@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+  # The SDK is compiled and tested here and nowhere else, so a pull request has to run it too.
+  pull_request:
   release:
     types: [ published ]
 
@@ -45,6 +47,7 @@ jobs:
   publish-to-github:
     name: Publish to GitHub Packages
     needs: test
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -71,6 +74,7 @@ jobs:
   publish-to-maven-central:
     name: Publish to MavenCentral
     needs: test
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

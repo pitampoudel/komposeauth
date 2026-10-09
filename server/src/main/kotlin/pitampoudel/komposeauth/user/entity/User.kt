@@ -66,6 +66,6 @@ data class User(
     fun verifiedEmail() = if (emailVerified) email else null
 
     val fullName: String
-        get() = "$firstName $lastName"
+        get() = listOfNotNull(firstName, lastName).joinToString(" ")
 
 }

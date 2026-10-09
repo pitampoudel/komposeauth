@@ -6,6 +6,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -21,6 +22,7 @@ import pitampoudel.komposeauth.core.domain.Constants
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.otp.entity.Otp
 import pitampoudel.komposeauth.otp.repository.OtpRepository
+import pitampoudel.komposeauth.otp.service.OtpCodes
 import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.repository.UserRepository
@@ -224,5 +226,43 @@ class ResourceOwnerLoginControllerIntegrationTest {
         val created = userRepository.findByEmail(email)
         assertNotNull(created)
         assertEquals(true, created!!.emailVerified)
+    }
+
+    /**
+     * A code signs a user in on its own, so guessing it has to run out long before the six digits
+     * do. After [OtpCodes.MAX_ATTEMPTS] wrong tries even the right code is refused.
+     */
+    @Test
+    fun `otp login stops accepting a code after too many wrong guesses`() {
+        val email = "otp-login-guessed@example.com"
+        val otp = "654321"
+        otpRepository.save(Otp(receiver = email, otp = otp))
+
+        fun attempt(code: String) = mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString<Credential>(Credential.OTP(username = email, otp = code))
+        }
+
+        repeat(OtpCodes.MAX_ATTEMPTS) { attempt("111111").andExpect { status { isBadRequest() } } }
+        attempt(otp).andExpect { status { isBadRequest() } }
+
+        assertNull(userRepository.findByEmail(email))
+    }
+
+    @Test
+    fun `otp login accepts the address in any letter case`() {
+        val email = "otp-login-case@example.com"
+        val otp = "234567"
+        otpRepository.save(Otp(receiver = email, otp = otp))
+
+        mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString<Credential>(Credential.OTP(username = "OTP-Login-Case@Example.com", otp = otp))
+        }.andExpect {
+            status { isOk() }
+            content { jsonPath("$.email") { value(email) } }
+        }
     }
 }

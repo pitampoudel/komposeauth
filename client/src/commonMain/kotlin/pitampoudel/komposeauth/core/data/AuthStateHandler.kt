@@ -72,9 +72,10 @@ internal class AuthStateHandler(
         }
     }
 
+    /** Signing out on this device does not depend on the server answering. */
     suspend fun logout() {
-        val res = authClient.logout()
-        if (res is Result.Success) authPreferences.clear()
+        authClient.logout()
+        authPreferences.clear()
     }
 }
 

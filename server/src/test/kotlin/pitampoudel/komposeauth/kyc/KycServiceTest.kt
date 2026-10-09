@@ -269,4 +269,20 @@ class KycServiceTest {
         )
         assertEquals(kyc.firstName, modelCaptor.firstValue["recipientName"])
     }
+
+    @Test
+    fun `a KYC that is not waiting for review cannot be approved or rejected`() {
+        val repo = mock<KycVerificationRepository>()
+        val email = mock<EmailService>()
+        val service = KycService(repo, mock<StorageService>(), email, mock<UserRepository>(), mock<SlackNotifier>())
+        val user = User(id = ObjectId.get(), firstName = "A", lastName = "B", email = "a@example.com", phoneNumber = null)
+
+        listOf(KycResponse.Status.DRAFT, KycResponse.Status.APPROVED, KycResponse.Status.REJECTED).forEach { status ->
+            whenever(repo.findById(user.id)).thenReturn(Optional.of(baseKyc(user.id, status = status)))
+            assertThrows<BadRequestException> { service.approve(baseUrl = "http://localhost", user = user) }
+            assertThrows<BadRequestException> { service.reject(baseUrl = "http://localhost", user = user, reason = null) }
+        }
+        verify(repo, never()).save(any())
+        verify(email, never()).sendHtmlMail(any(), any(), any(), any(), any())
+    }
 }

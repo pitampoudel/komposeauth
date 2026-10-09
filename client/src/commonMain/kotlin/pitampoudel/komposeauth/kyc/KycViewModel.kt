@@ -12,6 +12,7 @@ import pitampoudel.core.domain.validators.ValidateNotBlank
 import pitampoudel.core.domain.validators.ValidateNotNull
 import pitampoudel.core.domain.validators.ValidateDateNotInFuture
 import pitampoudel.core.domain.validators.ValidationResult
+import pitampoudel.komposeauth.kyc.domain.DocumentType
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.login.domain.AuthClient
 
@@ -448,8 +449,6 @@ class KycViewModel internal constructor(
         val currentAddressCityValidation = ValidateNotBlank(_state.value.currentAddress.city)
         val currentAddressAddressLine1Validation =
             ValidateNotBlank(_state.value.currentAddress.addressLine1)
-        val currentAddressAddressLine2Validation =
-            ValidateNotBlank(_state.value.currentAddress.addressLine2)
 
         val permanentAddressCountryValidation =
             ValidateNotBlank(_state.value.permanentAddress.country)
@@ -457,21 +456,17 @@ class KycViewModel internal constructor(
         val permanentAddressCityValidation = ValidateNotBlank(_state.value.permanentAddress.city)
         val permanentAddressAddressLine1Validation =
             ValidateNotBlank(_state.value.permanentAddress.addressLine1)
-        val permanentAddressAddressLine2Validation =
-            ValidateNotBlank(_state.value.permanentAddress.addressLine2)
 
         _state.update { s ->
             s.copy(
                 permanentAddress = s.permanentAddress.copy(
                     addressLine1Error = permanentAddressAddressLine1Validation.error(),
-                    addressLine2Error = permanentAddressAddressLine2Validation.error(),
                     cityError = permanentAddressCityValidation.error(),
                     stateError = permanentAddressStateValidation.error(),
                     countryError = permanentAddressCountryValidation.error(),
                 ),
                 currentAddress = s.currentAddress.copy(
                     addressLine1Error = currentAddressAddressLine1Validation.error(),
-                    addressLine2Error = currentAddressAddressLine2Validation.error(),
                     cityError = currentAddressCityValidation.error(),
                     stateError = currentAddressStateValidation.error(),
                     countryError = currentAddressCountryValidation.error(),
@@ -504,7 +499,11 @@ class KycViewModel internal constructor(
         val documentNumberValidation = ValidateNotBlank(_state.value.documentInfo.documentNumber)
         val documentIssuedDateValidation =
             ValidateNotNull(_state.value.documentInfo.documentIssuedDate)
-        val documentExpiryDateValidation = ValidationResult.Success
+        // Only a passport expires; the request refuses an expiry on the others and its absence on one.
+        val documentExpiryDateValidation = when (_state.value.documentInfo.documentType) {
+            DocumentType.PASSPORT -> ValidateNotNull(_state.value.documentInfo.documentExpiryDate)
+            else -> ValidationResult.Success
+        }
         val documentIssuedPlaceValidation =
             ValidateNotBlank(_state.value.documentInfo.documentIssuedPlace)
         val documentFrontValidation = ValidateNotNull(_state.value.documentInfo.documentFront)

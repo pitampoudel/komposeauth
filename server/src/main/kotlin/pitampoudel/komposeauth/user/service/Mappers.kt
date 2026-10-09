@@ -3,6 +3,7 @@ package pitampoudel.komposeauth.user.service
 import jakarta.validation.Valid
 import org.bson.types.ObjectId
 import org.springframework.security.crypto.password.PasswordEncoder
+import pitampoudel.komposeauth.core.utils.normalizedEmail
 import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.ProfileResponse
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
@@ -16,7 +17,7 @@ fun CreateUserRequest.mapToEntity(passwordEncoder: PasswordEncoder): @Valid User
         id = ObjectId(),
         firstName = firstName,
         lastName = lastName,
-        email = email?.takeIf { it.isNotBlank() }?.lowercase(),
+        email = email?.takeIf { it.isNotBlank() }?.normalizedEmail(),
         phoneNumber = phoneNumberParsed(),
         picture = photoUrl,
         passwordHash = password?.let { passwordEncoder.encode(it) }
@@ -31,8 +32,6 @@ fun User.update(
     return copy(
         firstName = req.givenName ?: firstName,
         lastName = req.familyName ?: lastName,
-        email = req.email ?: email,
-        emailVerified = if (req.email == null || req.email == email) emailVerified else false,
         passwordHash = req.password?.let {
             passwordEncoder.encode(req.password)
         } ?: passwordHash,

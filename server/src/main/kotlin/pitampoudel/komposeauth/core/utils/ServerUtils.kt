@@ -9,3 +9,6 @@ fun findServerUrl(request: HttpServletRequest): String {
     val hostWithPort = if (defaultPort) request.serverName else "${request.serverName}:$port"
     return "$scheme://$hostWithPort"
 }
+
+/** The one spelling an email address is stored and looked up under. */
+fun String.normalizedEmail(): String = trim().lowercase()

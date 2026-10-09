@@ -17,6 +17,7 @@ import pitampoudel.komposeauth.core.security.ratelimit.RateLimitProperties
 import pitampoudel.komposeauth.core.security.ratelimit.RateLimiter
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
 import pitampoudel.komposeauth.core.utils.findServerUrl
+import pitampoudel.komposeauth.core.utils.normalizedEmail
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
 import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.UserResponse
@@ -70,7 +71,7 @@ class OtpVerifyController(
             }
 
             OtpType.EMAIL -> {
-                val normalizedEmail = request.username.lowercase()
+                val normalizedEmail = request.username.normalizedEmail()
                 enforceSelfRequest(currentUser = authenticatedUser, targetUsername = normalizedEmail)
                 enforceTargetQuota(normalizedEmail)
                 emailVerificationService.initiate(

@@ -10,12 +10,13 @@ import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.app_config.service.AppConfigService
-import pitampoudel.komposeauth.otp.repository.OtpRepository
+import pitampoudel.komposeauth.otp.service.OtpCodes
 import pitampoudel.komposeauth.otp.service.NoOpPhoneNumberVerificationService
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationServiceImpl
 import pitampoudel.komposeauth.otp.service.TwilioPhoneNumberVerificationService
 import pitampoudel.komposeauth.otp.service.VerifyServiceConfig
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @ExtendWith(MockitoExtension::class)
@@ -28,7 +29,7 @@ class VerifyServiceConfigTest {
     private lateinit var restTemplate: RestTemplate
 
     @Mock
-    private lateinit var otpRepository: OtpRepository
+    private lateinit var otpCodes: OtpCodes
 
     private lateinit var appConfigService: AppConfigService
     private val config = VerifyServiceConfig()
@@ -47,7 +48,7 @@ class VerifyServiceConfigTest {
             )
         )
 
-        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+        val service = config.verifyService(appConfigService, restTemplate, otpCodes)
 
         assertTrue(service is TwilioPhoneNumberVerificationService)
     }
@@ -61,7 +62,7 @@ class VerifyServiceConfigTest {
             )
         )
 
-        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+        val service = config.verifyService(appConfigService, restTemplate, otpCodes)
 
         assertTrue(service is PhoneNumberVerificationServiceImpl)
     }
@@ -75,7 +76,7 @@ class VerifyServiceConfigTest {
             )
         )
 
-        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+        val service = config.verifyService(appConfigService, restTemplate, otpCodes)
 
         assertTrue(service is PhoneNumberVerificationServiceImpl)
     }
@@ -90,7 +91,7 @@ class VerifyServiceConfigTest {
             )
         )
 
-        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+        val service = config.verifyService(appConfigService, restTemplate, otpCodes)
 
         assertTrue(service is PhoneNumberVerificationServiceImpl)
     }
@@ -105,7 +106,7 @@ class VerifyServiceConfigTest {
             )
         )
 
-        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+        val service = config.verifyService(appConfigService, restTemplate, otpCodes)
 
         assertTrue(service is NoOpPhoneNumberVerificationService)
     }
@@ -120,7 +121,7 @@ class VerifyServiceConfigTest {
             )
         )
 
-        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+        val service = config.verifyService(appConfigService, restTemplate, otpCodes)
 
         assertTrue(service is NoOpPhoneNumberVerificationService)
     }
@@ -134,7 +135,7 @@ class VerifyServiceConfigTest {
             )
         )
 
-        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+        val service = config.verifyService(appConfigService, restTemplate, otpCodes)
 
         assertTrue(service is NoOpPhoneNumberVerificationService)
     }
@@ -148,7 +149,7 @@ class VerifyServiceConfigTest {
             )
         )
 
-        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+        val service = config.verifyService(appConfigService, restTemplate, otpCodes)
 
         assertTrue(service is NoOpPhoneNumberVerificationService)
     }
@@ -162,7 +163,7 @@ class VerifyServiceConfigTest {
             )
         )
 
-        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+        val service = config.verifyService(appConfigService, restTemplate, otpCodes)
 
         assertTrue(service is NoOpPhoneNumberVerificationService)
     }
@@ -177,7 +178,7 @@ class VerifyServiceConfigTest {
             )
         )
 
-        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+        val service = config.verifyService(appConfigService, restTemplate, otpCodes)
 
         assertTrue(service is NoOpPhoneNumberVerificationService)
     }
@@ -191,7 +192,7 @@ class VerifyServiceConfigTest {
             )
         )
 
-        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+        val service = config.verifyService(appConfigService, restTemplate, otpCodes)
 
         assertTrue(service is TwilioPhoneNumberVerificationService)
     }
@@ -206,8 +207,19 @@ class VerifyServiceConfigTest {
             )
         )
 
-        val service = config.verifyService(appConfigService, restTemplate, otpRepository)
+        val service = config.verifyService(appConfigService, restTemplate, otpCodes)
 
         assertTrue(service is NoOpPhoneNumberVerificationService)
+    }
+
+    @Test
+    fun `the service follows a provider configured after startup`() {
+        whenever(mockAppConfigProvider.get()).thenReturn(AppConfig(smsProvider = null))
+        val service = config.phoneNumberVerificationService(appConfigService, restTemplate, otpCodes)
+        assertFalse(service.verify("+9779800000000", "123456"))
+
+        whenever(mockAppConfigProvider.get()).thenReturn(AppConfig(smsProvider = "sparrow", sparrowApiToken = "token123"))
+        whenever(otpCodes.redeem("+9779800000000", "123456")).thenReturn(true)
+        assertTrue(service.verify("+9779800000000", "123456"))
     }
 }

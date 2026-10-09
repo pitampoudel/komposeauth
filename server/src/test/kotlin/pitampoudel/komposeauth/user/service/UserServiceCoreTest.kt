@@ -341,7 +341,7 @@ class UserServiceCoreTest {
             )
         )
 
-        userService.deactivateUser(user.id)
+        userService.deactivateUser(actor = null, userId = user.id)
 
         val updated = userRepository.findById(user.id).orElseThrow()
         assertTrue(updated.deactivated)
@@ -361,7 +361,7 @@ class UserServiceCoreTest {
             )
         )
 
-        userService.deleteUser(user.id)
+        userService.deleteUser(actor = null, userId = user.id)
 
         assertFalse(userRepository.existsById(user.id))
     }

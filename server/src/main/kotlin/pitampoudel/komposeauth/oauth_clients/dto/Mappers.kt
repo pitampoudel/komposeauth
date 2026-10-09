@@ -20,6 +20,11 @@ fun OAuth2Client.toRegisteredClient(): RegisteredClient {
         .clientName(this.clientName)
         .clientAuthenticationMethods { methods ->
             methods.addAll(this.clientAuthenticationMethods)
+            // HTTP Basic is the method RFC 6749 requires and most client libraries default to; rows
+            // saved before it was offered list only the POST form.
+            if (ClientAuthenticationMethod.CLIENT_SECRET_POST in methods) {
+                methods.add(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+            }
         }
         .authorizationGrantTypes { grants ->
             grants.addAll(this.authorizationGrantTypes)
@@ -58,6 +63,7 @@ fun CreateClientRequest.toEntity(): OAuth2Client {
         clientSecret = secret,
         clientName = clientName,
         clientAuthenticationMethods = setOf(
+            ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
             ClientAuthenticationMethod.CLIENT_SECRET_POST,
             ClientAuthenticationMethod.NONE
         ),

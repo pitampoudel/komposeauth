@@ -7,6 +7,7 @@ import pitampoudel.core.domain.isValidEmail
 
 @Serializable
 data class UpdateProfileRequest(
+    /** Only ever the address the account already has: a new one is attached by verifying a code sent to it. */
     @SerialName("email")
     val email: String? = null,
     @SerialName("givenName")
@@ -18,8 +19,8 @@ data class UpdateProfileRequest(
     @SerialName("confirmPassword")
     val confirmPassword: String? = null,
     /**
-     * The account's existing password. Required when changing the password or the email address of
-     * an account that has one, so that a stolen session alone cannot take the account over.
+     * The account's existing password. Required when changing the password of an account that has
+     * one, so that a stolen session alone cannot take the account over.
      */
     @SerialName("currentPassword")
     val currentPassword: String? = null,

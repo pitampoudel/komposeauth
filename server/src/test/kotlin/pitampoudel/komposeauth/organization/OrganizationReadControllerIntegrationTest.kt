@@ -1,6 +1,5 @@
 package pitampoudel.komposeauth.organization
 
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
@@ -35,7 +34,7 @@ class OrganizationReadControllerIntegrationTest {
     private lateinit var organizationService: OrganizationService
 
     @Test
-    fun `getOrganizations returns only organizations for the current user`() = runBlocking {
+    fun `getOrganizations returns only organizations for the current user`() {
         val userId = TestAuthHelpers.createUser(mockMvc, json, "org-read-test-user@example.com")
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, "org-read-test-user@example.com")
 
@@ -61,7 +60,7 @@ class OrganizationReadControllerIntegrationTest {
     }
 
     @Test
-    fun `getOrganizations with ids returns the correct subset`() = runBlocking {
+    fun `getOrganizations with ids returns the correct subset`() {
         val userId = TestAuthHelpers.createUser(mockMvc, json, "org-subset-user@example.com")
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, "org-subset-user@example.com")
 
@@ -89,7 +88,7 @@ class OrganizationReadControllerIntegrationTest {
     }
 
     @Test
-    fun `getOrganizationById returns organization when user is a member`() = runBlocking {
+    fun `getOrganizationById returns organization when user is a member`() {
         val userId = TestAuthHelpers.createUser(mockMvc, json, "org-by-id-user@example.com")
         val cookie = TestAuthHelpers.loginCookie(mockMvc, json, "org-by-id-user@example.com")
 
@@ -115,8 +114,9 @@ class OrganizationReadControllerIntegrationTest {
     }
 
     @Test
-    fun `getOrganizationById returns 403 for user who is not a member`() = runBlocking {
+    fun `getOrganizationById returns 403 for user who is not a member`() {
         val memberId = TestAuthHelpers.createUser(mockMvc, json, "org-member@example.com")
+        TestAuthHelpers.createUser(mockMvc, json, "org-non-member@example.com")
         val nonMemberCookie = TestAuthHelpers.loginCookie(mockMvc, json, "org-non-member@example.com")
 
         val org = organizationService.save(
@@ -137,14 +137,15 @@ class OrganizationReadControllerIntegrationTest {
     }
 
     @Test
-    fun `getOrganizationById returns 400 for non-existent organization`() = runBlocking {
-        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, TestAuthHelpers.createUser(mockMvc, json, "org-400-user@example.com"))
+    fun `getOrganizationById returns 404 for non-existent organization`() {
+        TestAuthHelpers.createUser(mockMvc, json, "org-404-user@example.com")
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, "org-404-user@example.com")
 
         mockMvc.get("/${ApiEndpoints.ORGANIZATIONS}/${ObjectId()}") {
             accept = MediaType.APPLICATION_JSON
             cookie(cookie)
         }.andExpect {
-            status { isBadRequest() }
+            status { isNotFound() }
         }
     }
 }

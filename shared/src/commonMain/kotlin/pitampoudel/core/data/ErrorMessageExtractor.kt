@@ -1,9 +1,9 @@
 package pitampoudel.core.data
 
-import io.ktor.client.call.body
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -26,19 +26,20 @@ suspend fun HttpResponse.catchErrorResponse(): pitampoudel.core.domain.Result.Er
 
 
 private suspend fun extractPreferredErrorMessage(response: HttpResponse): String {
-    val contentType = response.headers[HttpHeaders.ContentType]
+    val text = response.bodyAsText()
 
-    if (contentType?.contains("application/json", ignoreCase = true) == true) {
-        val json = runCatching { response.body<JsonElement>() }.getOrNull()
-        val candidate = json?.collectStringFields()?.bestErrorCandidate()
+    // "json" rather than "application/json": the server answers errors as application/problem+json,
+    // and those used to reach the user as the raw JSON text.
+    if (response.headers[HttpHeaders.ContentType]?.contains("json", ignoreCase = true) == true) {
+        val candidate = runCatching { Json.parseToJsonElement(text) }.getOrNull()
+            ?.collectStringFields()
+            ?.bestErrorCandidate()
 
         if (!candidate.isNullOrBlank()) {
             return candidate
         }
     }
 
-    // Fallback to raw body
-    val text = response.bodyAsText()
     if (text.isNotBlank()) return text
 
     return response.status.description.ifBlank { "Unknown error" }

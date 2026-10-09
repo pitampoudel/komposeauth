@@ -4,8 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import pitampoudel.core.domain.KmpFile
 import kotlinx.browser.document
+import org.khronos.webgl.ArrayBuffer
+import org.khronos.webgl.Int8Array
+import org.khronos.webgl.get
 import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.asList
+import org.w3c.files.File
+import org.w3c.files.FileReader
 
 @Composable
 actual fun rememberFilePicker(
@@ -34,15 +39,31 @@ private class FilePickerImpl(
         inputElement.accept = input.joinToString(",")
         inputElement.onchange = { event ->
             val files = (event.target as HTMLInputElement).files?.asList() ?: emptyList()
-            val kmpFiles = files.map { file ->
+            val picked = arrayOfNulls<KmpFile>(files.size)
+            var remaining = files.size
+            files.forEachIndexed { index, file ->
+                read(file) { kmpFile ->
+                    picked[index] = kmpFile
+                    if (--remaining == 0) onPicked(picked.filterNotNull())
+                }
+            }
+        }
+        inputElement.click()
+    }
+
+    private fun read(file: File, onRead: (KmpFile?) -> Unit) {
+        val reader = FileReader()
+        reader.onload = {
+            val bytes = Int8Array(reader.result!!.unsafeCast<ArrayBuffer>())
+            onRead(
                 KmpFile(
-                    byteArray = byteArrayOf(),
+                    byteArray = ByteArray(bytes.length) { bytes[it] },
                     mimeType = file.type,
                     name = file.name,
                 )
-            }
-            onPicked(kmpFiles)
+            )
         }
-        inputElement.click()
+        reader.onerror = { onRead(null) }
+        reader.readAsArrayBuffer(file)
     }
 }

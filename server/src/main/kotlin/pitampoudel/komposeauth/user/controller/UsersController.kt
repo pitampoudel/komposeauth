@@ -34,22 +34,6 @@ class UsersController(
     val kycService: KycService,
     private val userContextService: UserContextService
 ) {
-//    @PostMapping("/$USERS")
-//    @Operation(
-//        summary = "Create user",
-//        description = "Creates a new user account",
-//    )
-//    fun create(
-//        @RequestBody request: CreateUserRequest,
-//        req: HttpServletRequest
-//    ): ResponseEntity<UserResponse> {
-//        return ResponseEntity.ok()
-//            .body(
-//                userService.createUser(findServerUrl(req), request).mapToResponseDto(false)
-//            )
-//
-//    }
-
     @PatchMapping("/$USERS")
     @Operation(
         summary = "Create a user or return existing",
@@ -134,7 +118,7 @@ class UsersController(
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_WRITE_ANY_USER')")
     fun deactivateUser(@PathVariable id: String): ResponseEntity<MessageResponse> {
         val user = userService.findUser(id) ?: return ResponseEntity.notFound().build()
-        userService.deactivateUser(user.id)
+        userService.deactivateUser(userContextService.authenticatedUserOrNull(), user.id)
         return ResponseEntity.ok(MessageResponse("User account deactivated successfully"))
     }
 
@@ -146,7 +130,7 @@ class UsersController(
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_WRITE_ANY_USER')")
     fun deleteUser(@PathVariable id: String): ResponseEntity<MessageResponse> {
         val user = userService.findUser(id) ?: return ResponseEntity.notFound().build()
-        userService.deleteUser(user.id)
+        userService.deleteUser(userContextService.authenticatedUserOrNull(), user.id)
         return ResponseEntity.ok(MessageResponse("User account deleted successfully"))
     }
 
@@ -154,9 +138,18 @@ class UsersController(
     @Operation(
         summary = "Update current user information"
     )
-    fun update(@RequestBody request: UpdateProfileRequest): ResponseEntity<ProfileResponse> {
+    fun update(
+        @RequestBody request: UpdateProfileRequest,
+        httpServletRequest: HttpServletRequest
+    ): ResponseEntity<ProfileResponse> {
         val user = userContextService.getUserFromAuthentication()
-        return ResponseEntity.ok(userService.updateUser(user.id, request))
+        return ResponseEntity.ok(
+            userService.updateUser(
+                userId = user.id,
+                req = request,
+                currentSessionId = httpServletRequest.getSession(false)?.id
+            )
+        )
     }
 
     @GetMapping("/$STATS")

@@ -2,7 +2,6 @@ package pitampoudel.komposeauth.login.presentation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import com.russhwolf.settings.ObservableSettings
 import io.ktor.http.encodeURLParameter
 import kotlinx.browser.window
 import kotlinx.coroutines.await
@@ -10,7 +9,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
-import org.koin.mp.KoinPlatform.getKoin
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.events.Event
 import pitampoudel.core.domain.Result
@@ -19,7 +17,8 @@ import pitampoudel.komposeauth.core.data.LoginOptionsResponse
 import pitampoudel.komposeauth.core.domain.Platform
 import kotlin.coroutines.resume
 import kotlin.js.Promise
-import kotlin.random.Random
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalWasmJsInterop::class)
 @JsFun(
@@ -107,19 +106,18 @@ private external interface OAuthMessageData : JsAny {
     val error: String?
 }
 
-@OptIn(ExperimentalWasmJsInterop::class)
+@OptIn(ExperimentalWasmJsInterop::class, ExperimentalUuidApi::class)
 @Composable
 actual fun rememberKmpCredentialManager(): KmpCredentialManager {
     return remember {
-        val koin = getKoin()
-        val settings = koin.get<ObservableSettings>()
         object : KmpCredentialManager {
             override suspend fun getCredential(credentialType: CredentialType, options: LoginOptionsResponse): Result<Credential> {
                 return when (credentialType) {
                     CredentialType.GOOGLE, CredentialType.ANY -> {
-                        val state = "state-${Random.nextInt()}"
+                        // Unguessable (Uuid.random draws from crypto.getRandomValues), and held right
+                        // here: the popup answers this page, which never reloads in between.
+                        val state = Uuid.random().toString()
                         val redirectUri = window.location.origin
-                        settings.putString("oauth_state", state)
                         val googleClientId = options.googleClientId
                             ?: return Result.Error("Google client id is not provided")
                         val authUrl = buildGoogleAuthUrl(
@@ -128,7 +126,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                             state = state
                         )
 
-                        openAuthPopupAndWait(authUrl)
+                        openAuthPopupAndWait(authUrl, state)
                     }
                     CredentialType.APPLE -> Result.Error("iOS Sign In is not supported on Web")
                 }
@@ -144,7 +142,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                 }
             }
 
-            private suspend fun openAuthPopupAndWait(authUrl: String): Result<Credential> {
+            private suspend fun openAuthPopupAndWait(authUrl: String, expectedState: String): Result<Credential> {
                 return suspendCancellableCoroutine { continuation ->
                     val popup = window.open(
                         url = authUrl,
@@ -173,7 +171,7 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                                 if (code != null && state != null) {
                                     popup.close()
                                     window.removeEventListener("message", listener)
-                                    continuation.resume(handleCallback(code, state))
+                                    continuation.resume(handleCallback(code, state, expectedState))
                                 }
                             }
                         }
@@ -191,11 +189,8 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
             }
 
 
-            private fun handleCallback(code: String, state: String): Result<Credential> {
-                val savedState = settings.getStringOrNull("oauth_state")
-                if (savedState != state) return Result.Error("Invalid state.")
-
-                settings.remove("oauth_state")
+            private fun handleCallback(code: String, state: String, expectedState: String): Result<Credential> {
+                if (state != expectedState) return Result.Error("Invalid state.")
 
                 return Result.Success(
                     Credential.AuthCode(

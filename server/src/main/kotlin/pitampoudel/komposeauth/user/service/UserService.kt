@@ -25,13 +25,13 @@ import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.core.domain.isValidEmail
 import pitampoudel.komposeauth.app_config.service.AppConfigService
-import pitampoudel.komposeauth.authorization.OAuth2AuthorizationDocumentRepository
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
 import pitampoudel.komposeauth.core.utils.googleProfileFrom
+import pitampoudel.komposeauth.core.utils.normalizedEmail
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
@@ -56,6 +56,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 import java.time.Instant
 import javax.security.auth.login.AccountLockedException
 
@@ -79,8 +80,10 @@ class UserService(
     private val roleChangeEmailNotifier: RoleChangeEmailNotifier,
     private val emailVerificationService: EmailVerificationService,
     private val appleTokenValidator: AppleTokenValidator,
-    private val oauth2AuthorizationDocumentRepository: OAuth2AuthorizationDocumentRepository
+    private val accessRevocation: AccessRevocation
 ) {
+    private val googleTokenClient = HttpClient.newBuilder().connectTimeout(GOOGLE_TOKEN_TIMEOUT).build()
+
     fun findUser(id: String): User? {
         return userRepository.findById(ObjectId(id)).orElse(null)
     }
@@ -90,7 +93,6 @@ class UserService(
         redirectUri: String,
         platform: Platform
     ): User {
-        val client = HttpClient.newHttpClient()
         val form = String.format(
             "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&client_secret=%s",
             URLEncoder.encode(appConfigService.googleClientId(platform), StandardCharsets.UTF_8),
@@ -104,9 +106,12 @@ class UserService(
         val request = HttpRequest.newBuilder()
             .uri(URI.create("https://oauth2.googleapis.com/token"))
             .header("Content-Type", "application/x-www-form-urlencoded")
+            .timeout(GOOGLE_TOKEN_TIMEOUT)
             .POST(HttpRequest.BodyPublishers.ofString(form))
             .build()
-        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+        val response = googleTokenClient.send(request, HttpResponse.BodyHandlers.ofString())
+        // A code Google refuses (used, expired, for another client) is a failed sign-in, not an error.
+        if (response.statusCode() in 400..499) throw AccessDeniedException("Invalid credentials")
         if (response.statusCode() !in 200..299) {
             throw IllegalStateException("Failed to exchange auth code: HTTP ${response.statusCode()} - ${response.body()}")
         }
@@ -166,6 +171,7 @@ class UserService(
         val saved = userRepository.save(
             user.copy(roles = user.roles.filterNot { it == normalized })
         )
+        accessRevocation.endSessions(saved.id)
 
         roleChangeEmailNotifier.notify(
             target = saved,
@@ -185,6 +191,22 @@ class UserService(
         }
         return userRepository.findById(id).orElseThrow {
             UsernameNotFoundException("User not found: $userId")
+        }
+    }
+
+    /**
+     * Removing an account removes its roles with it, so it is held to the same rules as revoking
+     * them: an ADMIN cannot take out a SUPER_ADMIN, and nobody can take out the last holder of a
+     * role that keeps the server administrable.
+     */
+    private fun requireRemovable(actor: User?, target: User) {
+        if (Roles.SUPER_ADMIN in target.roles && actor?.roles?.contains(Roles.SUPER_ADMIN) != true) {
+            throw AccessDeniedException("Only a ${Roles.SUPER_ADMIN} can remove a ${Roles.SUPER_ADMIN}")
+        }
+        target.roles.filter { it in Roles.PROTECTED }.forEach { role ->
+            if (userRepository.countByRolesContaining(role) <= 1) {
+                throw BadRequestException("Cannot remove the last $role")
+            }
         }
     }
 
@@ -218,7 +240,8 @@ class UserService(
         }
         val pageable: Pageable = PageRequest.of(pageSafe, sizeCapped)
 
-        if (!ids.isNullOrEmpty()) {
+        // An empty id list asks for nobody, not for everybody.
+        if (ids != null) {
             val all = findUsersBulk(ids)
             val start = (pageSafe * sizeCapped).coerceAtMost(all.size)
             val end = (start + sizeCapped).coerceAtMost(all.size)
@@ -271,18 +294,31 @@ class UserService(
      * @param requireReauthentication when true, changing the password or email of an account that
      * already has a password requires the caller to supply that password. Reset-password flows pass
      * false: possession of the emailed one-time token is the proof there.
+     * @param currentSessionId the session making a password change, which stays signed in while
+     * every other session of the account ends.
      */
     fun updateUser(
         userId: ObjectId,
         req: UpdateProfileRequest,
-        requireReauthentication: Boolean = true
+        requireReauthentication: Boolean = true,
+        currentSessionId: String? = null
     ): ProfileResponse {
         val existingUser = userRepository.findById(userId).orElse(null)
             ?: throw IllegalStateException("User not found")
 
+        // An address is attached only once a code sent to it comes back (`/verify-otp`). Taken on
+        // trust here, it would sign whoever later proves that address through Google or a code into
+        // this account, and so into whatever its owner had set up for them.
+        val requestedEmail = req.email?.normalizedEmail()
+        if (requestedEmail != null && requestedEmail != existingUser.email?.normalizedEmail()) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Verify the new email address with a code to change it."
+            )
+        }
+
         if (requireReauthentication) {
-            val changesCredentials = req.password != null ||
-                    (req.email != null && req.email != existingUser.email)
+            val changesCredentials = req.password != null
             val currentHash = existingUser.passwordHash
             // A passwordless account (social or OTP sign-in) has nothing to check against; for one
             // with a password, a hijacked session must not be enough to seize the account.
@@ -309,13 +345,22 @@ class UserService(
                 } ?: existingUser.picture
             )
         )
+        if (req.password != null) {
+            // A reset is how a stolen account is taken back, so it signs out everything; a change
+            // made while signed in keeps the person's own devices and ends the other sessions.
+            if (requireReauthentication) {
+                accessRevocation.endSessions(result.id, except = currentSessionId)
+            } else {
+                accessRevocation.revokeAll(result.id)
+            }
+        }
         return result.mapToProfileResponseDto(kycService.isVerified(result.id))
     }
 
     fun markEmailVerified(user: User, email: String): User {
         if (user.emailVerified && user.email == email) return user
         val updatedUser = user.copy(
-            email = email,
+            email = email.normalizedEmail(),
             emailVerified = true,
             updatedAt = Instant.now()
         )
@@ -368,7 +413,7 @@ class UserService(
             "Invalid or expired OTP"
         )
         val updatedUser = user.copy(
-            email = email,
+            email = email.normalizedEmail(),
             emailVerified = true,
             updatedAt = Instant.now()
         )
@@ -405,10 +450,12 @@ class UserService(
      * the visitor was told we couldn't sign them in, for a token that was perfectly good.
      */
     fun findOrCreateVerifiedGoogleUser(profile: CreateUserRequest, emailVerified: Boolean): User {
+        // Accounts are matched by email, so an address Google has not verified would sign the visitor
+        // in to whichever account already holds it.
+        val email = profile.email?.takeIf { emailVerified }
+            ?: throw AccessDeniedException("Google has not verified this account's email address")
         val user = findOrCreateUser(baseUrl = null, req = profile)
-        val email = profile.email
-
-        if (emailVerified && email != null && !user.emailVerified) {
+        if (!user.emailVerified) {
             markEmailVerified(user, email)
             return findUser(user.id.toHexString()) ?: user
         }
@@ -421,7 +468,9 @@ class UserService(
             clientId = appConfigService.getConfig().appleAuthClientId
                 ?: throw IllegalStateException("Apple client id not configured")
         )
-        val email = claims.getStringClaim("email")
+        // Apple sends `email_verified` as a boolean or as the string "true", depending on the token.
+        val email = claims.getClaimAsString("email")?.takeIf { claims.claims["email_verified"]?.toString() == "true" }
+            ?: throw AccessDeniedException("Apple has not verified this account's email address")
 
         val user = findOrCreateUser(
             baseUrl = null,
@@ -433,9 +482,7 @@ class UserService(
             )
         )
 
-        // `== true` rather than a bare call: the claim is optional, and unboxing a null Boolean here
-        // would throw the same way the Google path did.
-        if (claims.getBooleanClaim("email_verified") == true && !user.emailVerified) {
+        if (!user.emailVerified) {
             markEmailVerified(user, email)
             return findUser(user.id.toHexString()) ?: user
         }
@@ -506,13 +553,18 @@ class UserService(
         return userRepository.count()
     }
 
-    fun deactivateUser(userId: ObjectId) {
+    /** @param actor who is asking; null when a service acts with the `user.write.any` scope. */
+    fun deactivateUser(actor: User?, userId: ObjectId) {
         val user = userRepository.findById(userId).orElseThrow()
+        requireRemovable(actor, user)
         userRepository.save(user.copy(deactivated = true))
+        accessRevocation.revokeAll(user.id)
     }
 
-    fun deleteUser(userId: ObjectId) {
+    /** @param actor who is asking; null when a service acts with the `user.write.any` scope. */
+    fun deleteUser(actor: User?, userId: ObjectId) {
         val user = userRepository.findById(userId).orElseThrow()
+        requireRemovable(actor, user)
 
         kycVerificationRepository.findByUserId(user.id)?.let { kyc ->
             listOfNotNull(
@@ -544,14 +596,14 @@ class UserService(
 
         user.picture?.let { storageService.delete(it) }
 
+        accessRevocation.revokeAll(user.id)
         oneTimeTokenRepository.deleteAllByUserId(user.id)
-        oauth2AuthorizationDocumentRepository.deleteAllByPrincipalName(user.id.toHexString())
 
         userRepository.deleteById(user.id)
     }
 
     private fun resolveOtpLogin(username: String, otp: String): User {
-        val normalizedEmail = username.lowercase().takeIf { it.isValidEmail() }
+        val normalizedEmail = username.normalizedEmail().takeIf { it.isValidEmail() }
         val normalizedPhone = parsePhoneNumber(null, username)?.fullNumberInE164Format
 
         if (normalizedPhone != null && phoneNumberVerificationService.verify(
@@ -596,3 +648,5 @@ class UserService(
         return userRepository.insert(newUser)
     }
 }
+
+private val GOOGLE_TOKEN_TIMEOUT: Duration = Duration.ofSeconds(10)
