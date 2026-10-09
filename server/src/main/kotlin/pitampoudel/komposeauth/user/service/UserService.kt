@@ -25,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.core.domain.isValidEmail
 import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.authorization.OAuth2AuthorizationConsentDocumentRepository
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.core.service.EmailService
@@ -80,7 +81,8 @@ class UserService(
     private val roleChangeEmailNotifier: RoleChangeEmailNotifier,
     private val emailVerificationService: EmailVerificationService,
     private val appleTokenValidator: AppleTokenValidator,
-    private val accessRevocation: AccessRevocation
+    private val accessRevocation: AccessRevocation,
+    private val consentRepository: OAuth2AuthorizationConsentDocumentRepository
 ) {
     private val googleTokenClient = HttpClient.newBuilder().connectTimeout(GOOGLE_TOKEN_TIMEOUT).build()
 
@@ -597,6 +599,7 @@ class UserService(
         user.picture?.let { storageService.delete(it) }
 
         accessRevocation.revokeAll(user.id)
+        consentRepository.deleteAllByPrincipalName(user.id.toHexString())
         oneTimeTokenRepository.deleteAllByUserId(user.id)
 
         userRepository.deleteById(user.id)

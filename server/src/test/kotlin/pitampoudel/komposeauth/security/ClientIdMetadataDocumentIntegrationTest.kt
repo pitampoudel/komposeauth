@@ -200,6 +200,10 @@ class ClientIdMetadataDocumentIntegrationTest {
             param("client_id", CLIENT)
         }.andReturn()
         assertEquals(400, reuse.response.status)
+
+        // The consent is remembered: signing in again goes straight back to the app
+        val again = signIn(authorizeUrl(CLIENT), email).response.redirectedUrl.orEmpty()
+        assertTrue(again.startsWith("$REDIRECT?code="), again)
     }
 
     @Test
