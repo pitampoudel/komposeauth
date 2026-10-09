@@ -98,14 +98,13 @@ class ResourceOwnerLoginController(
 
         val claims = builder.build()
         val accessToken = jwtEncoder.encode(JwtEncoderParameters.from(claims)).tokenValue
-        val refreshToken = oneTimeTokenService.generateRefreshToken(user.id)
         when (responseType) {
             ResponseType.TOKEN -> {
                 return ResponseEntity.ok(
                     json.encodeToString(
                         OAuth2Response(
                             accessToken = accessToken,
-                            refreshToken = refreshToken,
+                            refreshToken = oneTimeTokenService.generateRefreshToken(user.id),
                             tokenType = "Bearer",
                             expiresIn = 1.days.inWholeSeconds,
                         )

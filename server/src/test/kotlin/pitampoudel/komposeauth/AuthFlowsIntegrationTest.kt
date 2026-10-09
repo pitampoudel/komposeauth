@@ -92,7 +92,7 @@ class AuthFlowsIntegrationTest {
 
     @Test
     fun `login COOKIE response sets access token cookie and cookie can authenticate to ME`() {
-        createUser("cookie-login@example.com")
+        val userId = org.bson.types.ObjectId(createUser("cookie-login@example.com"))
 
         val mvcResult = mockMvc.post("/${ApiEndpoints.LOGIN}") {
             param("responseType", ResponseType.COOKIE.name)
@@ -110,6 +110,11 @@ class AuthFlowsIntegrationTest {
 
         val cookieValue = mvcResult.response.getCookie(ACCESS_TOKEN_COOKIE_NAME)?.value
         assertNotNull(cookieValue)
+        // Nobody receives a refresh token on a cookie sign-in, so none is minted.
+        assertTrue(
+            oneTimeTokenRepository.findAll()
+                .none { it.userId == userId && it.purpose == OneTimeToken.Purpose.REFRESH_TOKEN }
+        )
 
         mockMvc.get("/${ApiEndpoints.ME}") {
             cookie(Cookie(ACCESS_TOKEN_COOKIE_NAME, cookieValue))
