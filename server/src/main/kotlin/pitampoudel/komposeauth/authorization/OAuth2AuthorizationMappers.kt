@@ -12,6 +12,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.ObjectInputFilter
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.time.Instant
@@ -105,10 +106,18 @@ private fun serializeAttributes(attributes: Map<String, Any>): String {
     return Base64.getEncoder().encodeToString(baos.toByteArray())
 }
 
+// What the attributes really hold: Spring Security's own objects and the JDK collections, strings,
+// numbers and times inside them. Anything else in a stored row was put there by someone else.
+private val ATTRIBUTE_CLASSES: ObjectInputFilter =
+    ObjectInputFilter.Config.createFilter("java.lang.*;java.util.*;java.time.*;org.springframework.security.**;!*")
+
 @Suppress("UNCHECKED_CAST")
 private fun deserializeAttributes(encoded: String): Map<String, Any> {
     val bytes = Base64.getDecoder().decode(encoded)
-    return ObjectInputStream(ByteArrayInputStream(bytes)).use { it.readObject() as Map<String, Any> }
+    return ObjectInputStream(ByteArrayInputStream(bytes)).use {
+        it.objectInputFilter = ATTRIBUTE_CLASSES
+        it.readObject() as Map<String, Any>
+    }
 }
 
 fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: ObjectMapper): OAuth2AuthorizationDocument {
