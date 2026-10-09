@@ -214,7 +214,7 @@ session on the auth server (24 hours by default, `SESSION_TIMEOUT`) it completes
 `prompt=none` makes that explicit. Iframe-based silent renew does not work because the server forbids framing.
 
 Logout: clear your own tokens, then end the auth server session with the `end_session_endpoint` from the discovery
-document (RP-initiated logout, pass `id_token_hint` and a `post_logout_redirect_uri`) or with `GET /logout` on the
+document (RP-initiated logout, pass `id_token_hint` and a `post_logout_redirect_uri`) or with `POST /logout` on the
 auth server using the browser's session.
 
 #### Example: SPA with `oidc-client-ts`
@@ -352,8 +352,8 @@ stores the WebAuthn challenge in a session cookie. Pass `publicKeyAuthOptionsJso
 (`credentials: "include"`). Registering a passkey for a signed-in user: `POST /webauthn/register/options`, then
 `POST /webauthn/register` with `{"publicKey": ...}`.
 
-Logout: `GET` or `POST /logout` clears the cookie and the server session. Bearer-token apps simply delete their
-stored tokens.
+Logout: `POST /logout` clears the cookie and the server session; a `GET` does not, so another site cannot sign the
+user out with a link or an image. Bearer-token apps simply delete their stored tokens.
 
 Error responses are RFC 7807 problem details (`{"type","title","status","detail"}`): 400 for malformed input or a
 bad/spent token or OTP, 401 for a missing, expired or invalid bearer token, 403 for wrong credentials, a
@@ -724,7 +724,7 @@ stated. Admin-only endpoints accept `ADMIN` or `SUPER_ADMIN`.
 | Method & path | Who | Purpose |
 |---|---|---|
 | `POST /login?responseType=` | public | Sign in with a credential (section 3.2) |
-| `GET/POST /logout` | public | Clear cookie and session |
+| `POST /logout` | public | Clear cookie and session |
 | `GET /login-options?platform=` | public | Google client id + WebAuthn request options |
 | `POST /send-otp` | public (optional auth) | `{"username","type":"PHONE"|"EMAIL"}` |
 | `POST /verify-otp` | user | `{"username","type","otp"}` verify a phone/email on the current account |

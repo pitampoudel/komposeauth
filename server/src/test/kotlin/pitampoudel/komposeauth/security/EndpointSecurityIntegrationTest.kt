@@ -52,6 +52,24 @@ class EndpointSecurityIntegrationTest {
     }
 
     @Test
+    fun `logout answers POST only, so another page cannot sign the user out with a GET`() {
+        val email = "logout@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email)
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
+
+        val forged = mockMvc.get("/${ApiEndpoints.LOGOUT}") { cookie(cookie) }.andReturn().response
+        assert(forged.getCookie(ACCESS_TOKEN_COOKIE_NAME) == null) { "a GET cleared the access-token cookie" }
+
+        mockMvc.post("/${ApiEndpoints.LOGOUT}") {
+            cookie(cookie)
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isOk() }
+            cookie { maxAge(ACCESS_TOKEN_COOKIE_NAME, 0) }
+        }
+    }
+
+    @Test
     fun `home endpoint requires authentication`() {
         mockMvc.get("/") {
             accept = MediaType.APPLICATION_JSON

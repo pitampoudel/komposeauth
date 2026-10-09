@@ -253,7 +253,11 @@ class WebSecurityConfig {
             }
             .logout { logout ->
                 logout
-                    .logoutUrl("/${ApiEndpoints.LOGOUT}")
+                    // POST only: with CSRF off, a logout that answers GET can be fired by any page
+                    // with an <img>, which sends no Origin for the CORS check to see.
+                    .logoutRequestMatcher(
+                        PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/${ApiEndpoints.LOGOUT}")
+                    )
                     .logoutSuccessHandler { request, response, _ ->
                         clearTokenCookie(request, response, appConfigService)
                         response.contentType = MediaType.APPLICATION_JSON_VALUE

@@ -51,7 +51,7 @@ class OpenApiConfig {
             )
         )
         openApi.path(
-            "/${ApiEndpoints.LOGOUT}", PathItem().get(
+            "/${ApiEndpoints.LOGOUT}", PathItem().post(
                 Operation()
                     .summary("Logout the current user")
                     .tags(listOf("auth"))

@@ -159,8 +159,7 @@ internal class AuthClientImpl(val httpClient: HttpClient) : AuthClient {
 
     override suspend fun logout(): Result<HttpResponse> {
         val result = safeApiCall {
-            httpClient.get("$authUrl/$LOGOUT") {
-            }.asResource { this }
+            httpClient.post("$authUrl/$LOGOUT").asResource { this }
         }
         httpClient.authProvider<BearerAuthProvider>()?.clearToken()
         return result
