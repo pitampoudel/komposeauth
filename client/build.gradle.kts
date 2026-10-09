@@ -118,6 +118,11 @@ kotlin {
                 implementation(libs.kotlin.test)
             }
         }
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.ktor.client.mock)
+            }
+        }
     }
 }
 
