@@ -22,7 +22,5 @@ data class AuthUser(
     @SerialName("sub")
     val sub: String
 ) {
-    fun fullName(): String {
-        return givenName + (familyName?.let { " $it" } ?: "")
-    }
+    fun fullName(): String = listOfNotNull(givenName, familyName).joinToString(" ")
 }
