@@ -188,7 +188,11 @@ class ClientIdMetadataDocumentIntegrationTest {
         }
         val userInfo = mockMvc.get("/userinfo") { header("Authorization", bearer) }.andReturn()
         assertEquals(200, userInfo.response.status, userInfo.response.contentAsString)
-        assertEquals(email, json.parseToJsonElement(userInfo.response.contentAsString).jsonObject["email"]?.jsonPrimitive?.content)
+        val info = json.parseToJsonElement(userInfo.response.contentAsString).jsonObject
+        assertEquals(email, info["email"]?.jsonPrimitive?.content)
+        assertTrue("givenName" in info && "emailVerified" in info, "$info")
+        // Only what the granted scopes cover, and no platform roles for someone else's app
+        assertFalse("roles" in info || "phoneNumberVerified" in info, "$info")
         val refreshToken = assertNotNull(first["refresh_token"], "no refresh token in $first")
 
         // A public client's refresh token is rotated

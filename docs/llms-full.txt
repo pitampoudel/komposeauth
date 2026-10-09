@@ -435,8 +435,17 @@ access token, never the ID token.
 
 ### 4.2 UserInfo claims (`GET /userinfo`)
 
-`sub`, `emailVerified`, `phoneNumberVerified`, `kycVerified`, `createdAt`, `updatedAt`, `roles` (unprefixed, e.g.
-`["ADMIN"]`), and when set `email`, `givenName`, `familyName`, `picture`.
+Only what the access token's scopes cover:
+
+| Scope | Claims |
+|---|---|
+| (always) | `sub` |
+| `profile` | `kycVerified`, `createdAt`, `updatedAt`, and when set `givenName`, `familyName`, `picture` |
+| `email` | `emailVerified`, and when set `email` |
+| `phone` | `phoneNumberVerified` |
+
+`roles` (unprefixed, e.g. `["ADMIN"]`) is added for a client registered here, never for one that asks the user's
+consent. A token whose user has been deleted is answered with 401 `invalid_token`.
 
 ### 4.3 Roles and scopes
 

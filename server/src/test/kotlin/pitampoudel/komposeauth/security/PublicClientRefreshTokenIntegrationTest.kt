@@ -255,4 +255,28 @@ class PublicClientRefreshTokenIntegrationTest {
         )
         assertNotNull(withSecret["access_token"])
     }
+
+    @Test
+    fun `userinfo answers for the granted scopes only, and refuses a token whose user is gone`() {
+        val clientId = createClient("spa-admin-6@example.com").getValue("clientId")
+        val email = "spa-userinfo@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        val accessToken = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "code_verifier" to codeVerifier
+        ).getValue("access_token")
+
+        fun userInfo() = mockMvc.get("/userinfo") { header("Authorization", "Bearer $accessToken") }.andReturn().response
+
+        // Signed in with `openid` alone: who it is, and, for a client registered here, the roles
+        val info = json.parseToJsonElement(userInfo().contentAsString).jsonObject
+        assertTrue("sub" in info && "roles" in info, "$info")
+        assertFalse("email" in info || "givenName" in info || "phoneNumberVerified" in info, "$info")
+
+        userRepository.deleteById(assertNotNull(userRepository.findByEmail(email)).id)
+        assertEquals(401, userInfo().status)
+    }
 }

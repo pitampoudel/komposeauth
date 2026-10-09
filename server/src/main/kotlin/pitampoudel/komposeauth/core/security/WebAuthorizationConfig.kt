@@ -22,6 +22,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes
 import org.springframework.security.oauth2.core.OAuth2RefreshToken
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
+import org.springframework.security.oauth2.core.oidc.OidcScopes
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
@@ -41,7 +42,6 @@ import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
-import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client.Companion.SERVICE_ONLY_SCOPES
 import pitampoudel.komposeauth.user.service.UserService
@@ -242,36 +242,32 @@ class WebAuthorizationConfig {
                     }
                     it.userInfoEndpoint { userInfo ->
                         userInfo.userInfoMapper { context ->
-                            val principal: Authentication = context.getAuthentication()
-                            val userId = principal.name
-                            val user = userService.findUser(userId) ?: throw IllegalStateException(
-                                "User not found with id: $userId"
-                            )
-                            val builder = OidcUserInfo.builder()
-                                .claim("sub", user.id.toHexString())
-                                .claim("emailVerified", user.emailVerified)
-                                .claim("phoneNumberVerified", user.phoneNumberVerified)
-                                .claim(
-                                    "kycVerified",
-                                    (kycService.find(user.id)?.status == KycResponse.Status.APPROVED)
-                                )
-                                .claim("createdAt", user.createdAt.toString())
-                                .claim("updatedAt", user.updatedAt.toString())
-                                .claim("roles", user.roles)
-
-                            user.email?.let {
-                                builder.claim("email", user.email)
+                            val user = userService.findUser(context.getAuthentication<Authentication>().name)
+                                // Deleted since the token was issued, so the token names nobody.
+                                ?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN)
+                            val scopes = context.accessToken.scopes
+                            val builder = OidcUserInfo.builder().subject(user.id.toHexString())
+                            if (OidcScopes.PROFILE in scopes) {
+                                user.firstName?.let { builder.claim("givenName", it) }
+                                user.lastName?.let { builder.claim("familyName", it) }
+                                user.picture?.let { builder.claim("picture", it) }
+                                builder.claim("kycVerified", kycService.isVerified(user.id))
+                                builder.claim("createdAt", user.createdAt.toString())
+                                builder.claim("updatedAt", user.updatedAt.toString())
                             }
-                            user.firstName?.let {
-                                builder.claim("givenName", user.firstName)
+                            if (OidcScopes.EMAIL in scopes) {
+                                user.email?.let { builder.claim("email", it) }
+                                builder.claim("emailVerified", user.emailVerified)
                             }
-                            user.lastName?.let {
-                                builder.claim("familyName", user.lastName)
+                            if (OidcScopes.PHONE in scopes) {
+                                builder.claim("phoneNumberVerified", user.phoneNumberVerified)
                             }
-                            user.picture?.let {
-                                builder.claim("picture", user.picture)
+                            // As on the access token: a client the user has to consent to is someone
+                            // else's app, and has no business with the user's roles here.
+                            val client = registeredClientRepository.findById(context.authorization.registeredClientId)
+                            if (client?.clientSettings?.isRequireAuthorizationConsent == false) {
+                                builder.claim("roles", user.roles)
                             }
-
                             builder.build()
                         }
                     }
