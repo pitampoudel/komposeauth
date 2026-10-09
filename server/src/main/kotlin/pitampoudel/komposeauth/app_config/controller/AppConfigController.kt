@@ -16,6 +16,7 @@ import pitampoudel.komposeauth.app_config.service.MasterKeyValidator
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.controller.AdminShell
 import pitampoudel.komposeauth.core.domain.Roles
+import java.util.Locale
 
 @Controller
 class AppConfigController(
@@ -46,7 +47,7 @@ class AppConfigController(
             ),
             Group(
                 title = "Support & Platform",
-                members = listOf("supportEmail", "rpId")
+                members = listOf("supportEmail", "rpId", "defaultPhoneRegion")
             ),
             Group(
                 title = "Storage (storageProvider picks where new files go when both buckets are set; old files stay where they are)",
@@ -179,7 +180,7 @@ class AppConfigController(
         response: HttpServletResponse
     ): String {
         enforceConfigAccessOrRedirect(key = key, request = request)?.let { return it }
-        storageChoiceProblem(form)?.let { problem ->
+        (storageChoiceProblem(form) ?: phoneRegionProblem(form))?.let { problem ->
             noStore(response)
             adminShell.apply(model)
             model.addAttribute("config", form)
@@ -205,6 +206,13 @@ class AppConfigController(
         val touched = candidate.gcpBucketName != null || candidate.s3BucketName != null || candidate.storageProvider != null
         if (!touched) return null
         return runCatching { candidate.resolvedStorageProvider() }.exceptionOrNull()?.message
+    }
+
+    /** A region libphonenumber doesn't know would refuse every number typed without a `+`. */
+    private fun phoneRegionProblem(form: AppConfig): String? {
+        val region = form.copy().clean().defaultPhoneRegion ?: return null
+        return if (region in Locale.getISOCountries()) null
+        else "defaultPhoneRegion must be a two-letter country code, such as NP"
     }
 
     /**

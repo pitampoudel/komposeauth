@@ -124,4 +124,35 @@ class PhoneNumberControllerIntegrationTest {
             status { isForbidden() }
         }
     }
+
+    @Test
+    fun `send phone otp reads a number without a country code as Nepali`() {
+        val ownerEmail = "phone-owner-national@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, ownerEmail)
+        val ownerCookie = TestAuthHelpers.loginCookie(mockMvc, json, ownerEmail)
+
+        val context = mockMvc.dispatcherServlet.webApplicationContext!!
+        val userService = context.getBean(pitampoudel.komposeauth.user.service.UserService::class.java)
+        userService.createUser(
+            "http://localhost",
+            CreateUserRequest(
+                firstName = "Other",
+                lastName = "User",
+                phoneNumber = "+9779812345670",
+                countryNameCode = "NP",
+                password = "Password1",
+                confirmPassword = "Password1"
+            )
+        )
+
+        // Forbidden rather than 400: the national spelling was parsed to the other user's number.
+        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            cookie(ownerCookie)
+            content = json.encodeToString(SendOtpRequest.serializer(), SendOtpRequest(username = "9812345670"))
+        }.andExpect {
+            status { isForbidden() }
+        }
+    }
 }

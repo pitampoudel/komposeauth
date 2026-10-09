@@ -14,6 +14,10 @@ class AppConfigService(val appConfigProvider: AppConfigProvider) {
         return appConfigProvider.get().rpId
     }
 
+    /** See [AppConfig.defaultPhoneRegion]. */
+    fun defaultPhoneRegion(): String =
+        appConfigProvider.get().defaultPhoneRegion ?: AppConfig.DEFAULT_PHONE_REGION
+
     fun googleClientId(platform: Platform): String? {
         val value = when (platform) {
             Platform.DESKTOP -> appConfigProvider.get().googleAuthDesktopClientId

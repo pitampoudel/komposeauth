@@ -607,7 +607,8 @@ class UserService(
 
     private fun resolveOtpLogin(username: String, otp: String): User {
         val normalizedEmail = username.normalizedEmail().takeIf { it.isValidEmail() }
-        val normalizedPhone = parsePhoneNumber(null, username)?.fullNumberInE164Format
+        val normalizedPhone =
+            parsePhoneNumber(appConfigService.defaultPhoneRegion(), username)?.fullNumberInE164Format
 
         if (normalizedPhone != null && phoneNumberVerificationService.verify(
                 phoneNumber = normalizedPhone,

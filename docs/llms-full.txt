@@ -294,7 +294,7 @@ these libraries). Private-scheme redirects are supported. Kotlin Multiplatform a
 | `type` | Fields | Notes |
 |---|---|---|
 | `USERNAME_PASSWORD` | `username`, `password`, optional `countryNameCode` | `username` is an email or phone number; `countryNameCode` (e.g. `"NP"`) lets a local phone number be parsed. |
-| `OTP` | `username`, `otp` | Code previously sent with `POST /send-otp`. Creates the user if new. |
+| `OTP` | `username`, `otp` | Code previously sent with `POST /send-otp`. Creates the user if new. A phone number without a leading `+` is read in the default phone region (below). |
 | `GOOGLE_ID` | `idToken` | A Google ID token for the Google client ID the server is configured with. |
 | `APPLE_ID` | `idToken` | A Sign in with Apple ID token. |
 | `AUTH_CODE` | `platform` (`WEB`, `DESKTOP`, `ANDROID`, `IOS`), `code`, `redirectUri` | A Google OAuth authorization code; the server exchanges it. |
@@ -344,6 +344,10 @@ curl -X POST https://auth.example.com/send-otp -H 'Content-Type: application/jso
 curl -X POST 'https://auth.example.com/login?responseType=TOKEN' -H 'Content-Type: application/json' \
   -d '{"type":"OTP","username":"+9779812345678","otp":"123456"}'
 ```
+
+`/send-otp`, `/verify-otp` and OTP sign-in carry no country, so a phone number typed without a leading `+`
+(`9812345678`) is read in the **default phone region** (`defaultPhoneRegion` on the configuration page, an ISO
+country code; Nepal, `NP`, when unset) and stored in E.164. A number with a `+` and country code is read as written.
 
 Passkey sign-in: `GET /login-options?platform=WEB` returns `{"googleClientId", "publicKeyAuthOptionsJson"}` and
 stores the WebAuthn challenge in a session cookie. Pass `publicKeyAuthOptionsJson` to
