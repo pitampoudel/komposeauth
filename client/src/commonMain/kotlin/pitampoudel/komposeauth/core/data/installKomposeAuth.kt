@@ -17,6 +17,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.Cookie
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
@@ -80,6 +81,12 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
         contentType(ContentType.Application.Json)
     }
     install(Auth) {
+        // The token goes only to the servers it is for; any other host this client calls, by name
+        // or by address, must not receive it, neither on the first send nor on the retry after a 401.
+        reAuthorizeOnResponse { response ->
+            response.status == HttpStatusCode.Unauthorized &&
+                response.call.request.url.host in tokenHosts(resourceServerUrls)
+        }
         bearer {
             loadTokens {
                 val tokenData = authPreferences.tokenData() ?: return@loadTokens null
@@ -99,15 +106,14 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
                 val authServerUrl = Config.authServerUrl ?: return@refreshTokens null
                 refresh(client.engine, authServerUrl, refreshToken, authPreferences)
             }
-            // The token goes only to the servers it is for; any other host this client calls, by
-            // name or by address, must not receive it.
-            sendWithoutRequest { builder ->
-                val authServerUrl = Config.authServerUrl ?: return@sendWithoutRequest false
-                val hosts = (resourceServerUrls + authServerUrl).map { Url(it).host }.toSet()
-                builder.url.host in hosts
-            }
+            sendWithoutRequest { builder -> builder.url.host in tokenHosts(resourceServerUrls) }
         }
     }
+}
+
+private fun tokenHosts(resourceServerUrls: List<String>): Set<String> {
+    val authServerUrl = Config.authServerUrl ?: return emptySet()
+    return (resourceServerUrls + authServerUrl).map { Url(it).host }.toSet()
 }
 
 private suspend fun refresh(
