@@ -256,6 +256,74 @@ class UserServiceAdminEdgeCasesTest {
     }
 
     @Test
+    fun `an ADMIN cannot give anyone an app's super admin role, themselves included`() {
+        val userRepo = mock<UserRepository>()
+        val admin = actor()
+        val catalog = appConfigService(Roles.BUILT_IN + listOf("SHOP_SUPER_ADMIN", "SHOP_SUPERADMIN"))
+
+        listOf("SHOP_SUPER_ADMIN", "shop-super-admin", "SHOP_SUPERADMIN").forEach { role ->
+            assertThrows<AccessDeniedException> {
+                service(userRepo, catalog).grantRole(admin, admin.id.toHexString(), role)
+            }
+            assertThrows<AccessDeniedException> {
+                service(userRepo, catalog).grantRole(admin, ObjectId.get().toHexString(), role)
+            }
+        }
+        verify(userRepo, never()).save(any<User>())
+    }
+
+    @Test
+    fun `an ADMIN cannot take an app's super admin role away`() {
+        val userRepo = mock<UserRepository>()
+        val target = user(roles = listOf("SHOP_SUPER_ADMIN"))
+        whenever(userRepo.findById(target.id)).thenReturn(Optional.of(target))
+
+        assertThrows<AccessDeniedException> {
+            service(userRepo, appConfigService(Roles.BUILT_IN + "SHOP_SUPER_ADMIN"))
+                .revokeRole(actor(), target.id.toHexString(), "SHOP_SUPER_ADMIN")
+        }
+        verify(userRepo, never()).save(any<User>())
+    }
+
+    @Test
+    fun `an ADMIN still gives out the roles below the super admin tier`() {
+        val userRepo = mock<UserRepository>()
+        val target = user()
+        whenever(userRepo.findById(target.id)).thenReturn(Optional.of(target))
+        whenever(userRepo.save(any<User>())).thenAnswer { it.arguments[0] as User }
+
+        val updated = service(userRepo, appConfigService(Roles.BUILT_IN + listOf("SHOP_ADMIN", "SHOP_SUPER_ADMIN")))
+            .grantRole(actor(), target.id.toHexString(), "SHOP_ADMIN")
+
+        assertEquals(listOf("SHOP_ADMIN"), updated.roles)
+    }
+
+    @Test
+    fun `a SUPER_ADMIN manages an app's super admin role`() {
+        val userRepo = mock<UserRepository>()
+        val target = user()
+        whenever(userRepo.findById(target.id)).thenReturn(Optional.of(target))
+        whenever(userRepo.save(any<User>())).thenAnswer { it.arguments[0] as User }
+
+        val updated = service(userRepo, appConfigService(Roles.BUILT_IN + "SHOP_SUPER_ADMIN"))
+            .grantRole(actor(roles = listOf(Roles.SUPER_ADMIN)), target.id.toHexString(), "SHOP_SUPER_ADMIN")
+
+        assertEquals(listOf("SHOP_SUPER_ADMIN"), updated.roles)
+    }
+
+    @Test
+    fun `an ADMIN cannot deactivate or delete the holder of an app's super admin role`() {
+        val userRepo = mock<UserRepository>()
+        val target = user(roles = listOf("SHOP_SUPER_ADMIN"))
+        whenever(userRepo.findById(target.id)).thenReturn(Optional.of(target))
+
+        assertThrows<AccessDeniedException> { service(userRepo).deactivateUser(actor(), target.id) }
+        assertThrows<AccessDeniedException> { service(userRepo).deleteUser(actor(), target.id) }
+        verify(userRepo, never()).save(any<User>())
+        verify(userRepo, never()).deleteById(any())
+    }
+
+    @Test
     fun `listRoles reports the catalog with holder counts`() {
         val userRepo = mock<UserRepository>()
         whenever(userRepo.countByRolesContaining(any())).thenReturn(0)

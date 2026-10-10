@@ -119,6 +119,11 @@
     const PAGE_SIZE = 25;
     const SUPER_ADMIN = "SUPER_ADMIN";
 
+    /** The server's rule (`UserService.isSuperAdminTier`): SUPER_ADMIN and any role named after it. */
+    function isSuperAdminTier(role) {
+        return role.replaceAll("_", "").includes("SUPERADMIN");
+    }
+
     const state = {
         roles: [],          // [{role, userCount, builtIn}]
         totalUsers: 0,
@@ -354,8 +359,8 @@
      * click never fails for something the page already knew.
      */
     function optionBlockedReason(role, held) {
-        if (role.role === SUPER_ADMIN && !VIEWER_ROLES.includes(SUPER_ADMIN)) {
-            return `Only a ${SUPER_ADMIN} can give out ${SUPER_ADMIN}.`;
+        if (isSuperAdminTier(role.role) && !VIEWER_ROLES.includes(SUPER_ADMIN)) {
+            return `Only a ${SUPER_ADMIN} can give out ${role.role}.`;
         }
         if (held && role.builtIn && role.userCount <= 1) {
             return `This is the last ${role.role}. Give it to someone else first.`;

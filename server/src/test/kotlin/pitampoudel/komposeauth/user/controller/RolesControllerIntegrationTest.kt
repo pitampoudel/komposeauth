@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.user.controller
 
 import kotlinx.serialization.json.Json
+import org.bson.types.ObjectId
 import org.hamcrest.Matchers.hasItem
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,10 +16,12 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.ROLES
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.USERS
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.user.repository.UserRepository
+import kotlin.test.assertFalse
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -35,7 +38,21 @@ class RolesControllerIntegrationTest {
     @Autowired
     private lateinit var userRepository: UserRepository
 
+    @Autowired
+    private lateinit var appConfigProvider: AppConfigProvider
+
     private fun rolePath(userId: String, role: String) = "/$USERS/$userId/$ROLES/$role"
+
+    /** Runs [block] with [roles] in the catalog, and puts the configuration back afterwards. */
+    private fun withCatalog(vararg roles: String, block: () -> Unit) {
+        val before = appConfigProvider.get()
+        appConfigProvider.save(before.copy(rolesCatalog = roles.joinToString(",")))
+        try {
+            block()
+        } finally {
+            appConfigProvider.save(before)
+        }
+    }
 
     @Test
     fun `listRoles returns the catalog for ADMIN`() {
@@ -150,6 +167,27 @@ class RolesControllerIntegrationTest {
         }.andExpect {
             status { isForbidden() }
         }
+    }
+
+    @Test
+    fun `a plain admin cannot give themselves an app's super admin role`() {
+        val (adminId, adminCookie) = TestAuthHelpers.createAdminAndLogin(
+            mockMvc,
+            json,
+            userRepository,
+            "role-self-escalation@example.com"
+        )
+
+        withCatalog("SHOP_SUPER_ADMIN") {
+            mockMvc.post(rolePath(adminId, "SHOP_SUPER_ADMIN")) {
+                accept = MediaType.APPLICATION_JSON
+                cookie(adminCookie)
+            }.andExpect {
+                status { isForbidden() }
+            }
+        }
+
+        assertFalse("SHOP_SUPER_ADMIN" in userRepository.findById(ObjectId(adminId)).orElseThrow().roles)
     }
 
     @Test
