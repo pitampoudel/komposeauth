@@ -467,11 +467,7 @@ class UserService(
         val email = profile.email?.takeIf { emailVerified }
             ?: throw AccessDeniedException("Google has not verified this account's email address")
         val user = findOrCreateUser(baseUrl = null, req = profile)
-        if (!user.emailVerified) {
-            markEmailVerified(user, email)
-            return findUser(user.id.toHexString()) ?: user
-        }
-        return user
+        return verifyEmailForProvider(user, email)
     }
 
     private fun findOrCreateUserByAppleIdToken(idToken: String): User {
@@ -494,11 +490,26 @@ class UserService(
             )
         )
 
-        if (!user.emailVerified) {
-            markEmailVerified(user, email)
-            return findUser(user.id.toHexString()) ?: user
-        }
-        return user
+        return verifyEmailForProvider(user, email)
+    }
+
+    /**
+     * An address the account had not proven, now proven by an identity provider, also clears the
+     * password: whoever registered it before the mailbox's owner arrived chose that password, and
+     * would otherwise keep signing in beside them. Their sessions and tokens go with it.
+     */
+    private fun verifyEmailForProvider(user: User, email: String): User {
+        if (user.emailVerified) return user
+        val claimed = userRepository.save(
+            user.copy(
+                email = email.normalizedEmail(),
+                emailVerified = true,
+                passwordHash = null,
+                updatedAt = Instant.now()
+            )
+        )
+        if (user.passwordHash != null) accessRevocation.revokeAll(claimed.id)
+        return claimed
     }
 
     fun resolveUserFromCredential(

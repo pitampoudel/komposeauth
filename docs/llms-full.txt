@@ -17,7 +17,9 @@ Throughout this guide `https://auth.example.com` stands for the public base URL 
 - It signs **RS256 JWT access tokens**. Resource servers validate them locally with the public keys at
   `/oauth2/jwks`; they do not need to call the auth server per request.
 - Sign-in methods: email or phone + password, Google, Apple (ID token), passkeys (WebAuthn), and one-time codes
-  sent by SMS/WhatsApp or email. Users are created automatically on first Google, Apple or OTP sign-in.
+  sent by SMS/WhatsApp or email. Users are created automatically on first Google, Apple or OTP sign-in. A
+  Google or Apple sign-in that proves an existing account's unverified email also removes that account's
+  password and signs out its sessions, since whoever registered the address may not own it.
 - It also stores user profiles, roles, KYC records and organizations, exposed through a JSON API.
 - A **Kotlin Multiplatform client SDK** (`io.github.pitampoudel:komposeauth-client`) wraps the API for
   Android, iOS, desktop and web Compose apps.
