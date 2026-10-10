@@ -21,8 +21,8 @@ import pitampoudel.komposeauth.core.domain.Roles
  *
  * What it deliberately does not touch: the checks that read `User.roles` directly rather than
  * granted authorities — the configuration page's own gate, and the rule that only a SUPER_ADMIN may
- * grant or revoke SUPER_ADMIN. Those are asymmetric on purpose, and an ADMIN still cannot reach
- * either.
+ * grant or revoke a super admin role (SUPER_ADMIN, or a catalog role named after it). Those are
+ * asymmetric on purpose, and an ADMIN still cannot reach either.
  */
 @Configuration
 class RoleHierarchyConfig {

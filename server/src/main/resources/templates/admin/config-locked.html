@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!--
+  What /admin/config shows a visitor who is neither a signed-in super admin nor holding the master
+  key. Deliberately outside the console shell, whose navigation carries counts nobody signed out
+  should see. The key is posted, never put in the address.
+-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${appName.isEmpty()} ? 'Configuration' : ${appName} + ' · Configuration'">Configuration</title>
+    <style>
+        :root {
+            --background: #f6f8fc;
+            --foreground: #141e32;
+            --muted: #4c5a72;
+            --divider: color-mix(in oklab, var(--foreground) 14%, transparent);
+            --accent: #3458d4;
+            --danger-text: #dc2626;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: #0a1020;
+                --foreground: #e7ebf6;
+                --muted: #aab8d2;
+                --danger-text: #f87171;
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--background);
+            color: var(--foreground);
+            font-family: "Space Grotesk", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+
+        main { width: 100%; max-width: 400px; }
+        h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+        p { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+        .notice { color: var(--danger-text); }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+
+        input[type=password] {
+            width: 100%;
+            font: inherit;
+            color: inherit;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--divider);
+            padding: 8px 0;
+            outline: none;
+        }
+
+        input[type=password]:focus { border-bottom-color: var(--accent); }
+
+        button {
+            margin-top: 24px;
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            font: inherit;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .alt { margin-top: 24px; font-size: 14px; color: var(--muted); }
+        .alt a { color: inherit; }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Configuration</h1>
+    <p>This page holds every secret the server keeps. Sign in as a super admin, or enter the master key —
+        the <code>BASE64_ENCRYPTION_KEY</code> the server was started with.</p>
+
+    <p th:if="${keyInAddress}" class="notice" role="alert">
+        The master key is not read from the address, where it ends up in logs and browser history. Enter it here instead.
+    </p>
+    <p th:if="${keyRejected}" class="notice" role="alert">That is not the master key.</p>
+
+    <form method="post" action="/admin/config">
+        <input type="hidden" name="unlock" value="true"/>
+        <label for="key">Master key</label>
+        <input id="key" name="key" type="password" autocomplete="off" required autofocus/>
+        <button type="submit">Open configuration</button>
+    </form>
+
+    <p class="alt"><a href="/session-login">Sign in instead</a></p>
+</main>
+</body>
+</html>

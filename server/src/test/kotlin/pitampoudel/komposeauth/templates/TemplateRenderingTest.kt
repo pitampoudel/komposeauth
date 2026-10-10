@@ -121,11 +121,23 @@ class TemplateRenderingTest {
     }
 
     @Test
-    fun `applications page renders`() {
-        val html = engine.process("admin/clients", consoleContext())
+    fun `applications page offers its writes to a super admin`() {
+        val html = engine.process("admin/clients", consoleContext("canManageClients" to true))
 
         assertContains(html, "Apps that can ask for tokens")
-        assertContains(html, "Register an app")
+        assertContains(html, "id=\"newClientBtn\"")
+        assertContains(html, "const CAN_MANAGE = true")
+    }
+
+    @Test
+    fun `applications page shows a plain admin the list without its writes`() {
+        val html = engine.process("admin/clients", consoleContext("canManageClients" to false))
+
+        assertContains(html, "Apps that can ask for tokens")
+        assertContains(html, "Only a SUPER_ADMIN can register, change or remove an app.")
+        assertFalse(html.contains("id=\"newClientBtn\""), "a plain admin's register would answer 403")
+        assertFalse(html.contains("id=\"emptyNewBtn\""), "a plain admin's register would answer 403")
+        assertContains(html, "const CAN_MANAGE = false")
     }
 
     @Test
@@ -137,6 +149,32 @@ class TemplateRenderingTest {
 
         assertContains(html, "Save configuration")
         assertContains(html, "Configuration saved.")
+        assertFalse(html.contains("name=\"key\""), "no key was posted, so none is carried forward")
+    }
+
+    @Test
+    fun `configuration carries a posted master key in the form, not the address`() {
+        val html = engine.process(
+            "admin/config",
+            consoleContext("fieldGroups" to emptyList<Any>(), "masterKey" to "a+b/c=")
+        )
+
+        assertContains(html, """<form method="post" action="/admin/config">""")
+        assertContains(html, """name="key" value="a+b/c="""")
+    }
+
+    @Test
+    fun `locked configuration asks for the key in a posted form`() {
+        val html = engine.process(
+            "admin/config-locked",
+            brandingContext("keyRejected" to true, "keyInAddress" to true)
+        )
+
+        assertContains(html, """<form method="post" action="/admin/config">""")
+        assertContains(html, """name="key" type="password"""")
+        assertContains(html, "That is not the master key.")
+        assertContains(html, "not read from the address")
+        assertFalse(html.contains("Save configuration"))
     }
 
     @Test

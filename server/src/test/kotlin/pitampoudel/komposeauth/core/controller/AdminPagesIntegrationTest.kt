@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.app_config.controller.AppConfigController
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.repository.UserRepository
 
@@ -82,7 +83,7 @@ class AdminPagesIntegrationTest {
 
     @Test
     fun `configuration renders in the shell at the admin address`() {
-        mockMvc.get("/admin/config") { param("key", TestConfig.testKey) }
+        mockMvc.get("/admin/config") { header(AppConfigController.MASTER_KEY_HEADER, TestConfig.testKey) }
             .andExpect {
                 status { isOk() }
                 content { string(org.hamcrest.Matchers.containsString("Save configuration")) }

@@ -17,7 +17,9 @@ Throughout this guide `https://auth.example.com` stands for the public base URL 
 - It signs **RS256 JWT access tokens**. Resource servers validate them locally with the public keys at
   `/oauth2/jwks`; they do not need to call the auth server per request.
 - Sign-in methods: email or phone + password, Google, Apple (ID token), passkeys (WebAuthn), and one-time codes
-  sent by SMS/WhatsApp or email. Users are created automatically on first Google, Apple or OTP sign-in.
+  sent by SMS/WhatsApp or email. Users are created automatically on first Google, Apple or OTP sign-in. A
+  Google or Apple sign-in that proves an existing account's unverified email also removes that account's
+  password and signs out its sessions, since whoever registered the address may not own it.
 - It also stores user profiles, roles, KYC records and organizations, exposed through a JSON API.
 - A **Kotlin Multiplatform client SDK** (`io.github.pitampoudel:komposeauth-client`) wraps the API for
   Android, iOS, desktop and web Compose apps.
@@ -69,12 +71,13 @@ equals the URL the client used. Then:
 
 ### 2.3 Registering an OAuth client (needed for approach A)
 
-An administrator registers clients, either on the admin console at `https://auth.example.com/admin/clients`, or
-through the API with an ADMIN token:
+A super admin registers clients, either on the admin console at `https://auth.example.com/admin/clients`, or
+through the API with a SUPER_ADMIN token. An ADMIN can list them but not create, change or delete one: saving
+over a client without its secret issues a new one, and the app holding the old one stops signing anybody in.
 
 ```http
 POST /oauth2/clients
-Authorization: Bearer <admin access token>
+Authorization: Bearer <super admin access token>
 Content-Type: application/json
 
 {
@@ -467,7 +470,8 @@ consent. A token whose user has been deleted is answered with 401 `invalid_token
 
 - New users have no roles (`authorities` is `[]`). The built-in roles are `ADMIN` and `SUPER_ADMIN`
   (`SUPER_ADMIN` implies `ADMIN`); operators define their own in the roles catalog on the configuration page and
-  grant them with `POST /users/{id}/roles/{role}`.
+  grant them with `POST /users/{id}/roles/{role}`. Only a `SUPER_ADMIN` grants or revokes `SUPER_ADMIN` or a
+  catalog role named after it, such as `MYAPP_SUPER_ADMIN`; an `ADMIN` grants the rest.
 - Roles appear in tokens as `ROLE_<NAME>` inside `authorities`. Scopes appear in `scope`; the auth server itself
   maps them to Spring authorities `SCOPE_<scope>`.
 - Special scopes: `user.read.any` (read any user via the API), `user.write.any` (create, deactivate, delete users).
@@ -755,9 +759,10 @@ stated. Admin-only endpoints accept `ADMIN` or `SUPER_ADMIN`.
 | `GET /users/{id}` | self, admin, or `user.read.any` | One user |
 | `GET /users`, `GET /stats` | admin or `user.read.any` | List / count users |
 | `PATCH /users`, `POST /users/{id}/deactivate`, `DELETE /users/{id}` | admin or `user.write.any` | Manage users |
-| `GET /roles`, `POST|DELETE /users/{id}/roles/{role}` | admin | Roles |
+| `GET /roles`, `POST|DELETE /users/{id}/roles/{role}` | admin; super admin for a super admin role | Roles |
 | `GET /kyc/pending`, `POST /kyc/{id}/approve`, `POST /kyc/{id}/reject` | admin | Review KYC |
-| `GET|POST|DELETE /oauth2/clients` | admin | OAuth clients |
+| `GET /oauth2/clients` | admin | OAuth clients |
+| `POST|DELETE /oauth2/clients` | super admin | Register, update or delete an OAuth client |
 | `GET /countries.json` | public | Country list for phone pickers |
 | `GET /actuator/health/readiness` | public | Health probe |
 

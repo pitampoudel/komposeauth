@@ -198,12 +198,13 @@ class UserService(
 
     /**
      * Removing an account removes its roles with it, so it is held to the same rules as revoking
-     * them: an ADMIN cannot take out a SUPER_ADMIN, and nobody can take out the last holder of a
+     * them: an ADMIN cannot take out a super admin, and nobody can take out the last holder of a
      * role that keeps the server administrable.
      */
     private fun requireRemovable(actor: User?, target: User) {
-        if (Roles.SUPER_ADMIN in target.roles && actor?.roles?.contains(Roles.SUPER_ADMIN) != true) {
-            throw AccessDeniedException("Only a ${Roles.SUPER_ADMIN} can remove a ${Roles.SUPER_ADMIN}")
+        val superAdminRole = target.roles.firstOrNull(::isSuperAdminTier)
+        if (superAdminRole != null && actor?.roles?.contains(Roles.SUPER_ADMIN) != true) {
+            throw AccessDeniedException("Only a ${Roles.SUPER_ADMIN} can remove a $superAdminRole")
         }
         target.roles.filter { it in Roles.PROTECTED }.forEach { role ->
             if (userRepository.countByRolesContaining(role) <= 1) {
@@ -219,13 +220,22 @@ class UserService(
                 "Unknown role: $normalized. Add it to the role catalog in app config first."
             )
         }
-        // SUPER_ADMIN gates access to app configuration and its secrets, so an ADMIN must not be
-        // able to hand it to themselves.
-        if (normalized == Roles.SUPER_ADMIN && !actor.roles.contains(Roles.SUPER_ADMIN)) {
-            throw AccessDeniedException("Only a ${Roles.SUPER_ADMIN} can manage the ${Roles.SUPER_ADMIN} role")
+        // SUPER_ADMIN gates access to app configuration and its secrets, and an app's own super admin
+        // role gates the same tier over there, so an ADMIN must not be able to hand either out — to
+        // themselves least of all.
+        if (isSuperAdminTier(normalized) && !actor.roles.contains(Roles.SUPER_ADMIN)) {
+            throw AccessDeniedException("Only a ${Roles.SUPER_ADMIN} can manage the $normalized role")
         }
         return normalized
     }
+
+    /**
+     * SUPER_ADMIN, and any catalog role named after it, such as an app's own `SHOP_SUPER_ADMIN`.
+     * The catalog holds names and nothing else, so the name is all there is to tell the tier by;
+     * underscores are ignored so `SHOP_SUPERADMIN` counts too. Matching too much only means an
+     * ADMIN has to ask a SUPER_ADMIN.
+     */
+    private fun isSuperAdminTier(role: String) = Roles.normalize(role).replace("_", "").contains("SUPERADMIN")
 
     fun findUsersFlexible(
         ids: List<String>?,
@@ -457,11 +467,7 @@ class UserService(
         val email = profile.email?.takeIf { emailVerified }
             ?: throw AccessDeniedException("Google has not verified this account's email address")
         val user = findOrCreateUser(baseUrl = null, req = profile)
-        if (!user.emailVerified) {
-            markEmailVerified(user, email)
-            return findUser(user.id.toHexString()) ?: user
-        }
-        return user
+        return verifyEmailForProvider(user, email)
     }
 
     private fun findOrCreateUserByAppleIdToken(idToken: String): User {
@@ -484,11 +490,26 @@ class UserService(
             )
         )
 
-        if (!user.emailVerified) {
-            markEmailVerified(user, email)
-            return findUser(user.id.toHexString()) ?: user
-        }
-        return user
+        return verifyEmailForProvider(user, email)
+    }
+
+    /**
+     * An address the account had not proven, now proven by an identity provider, also clears the
+     * password: whoever registered it before the mailbox's owner arrived chose that password, and
+     * would otherwise keep signing in beside them. Their sessions and tokens go with it.
+     */
+    private fun verifyEmailForProvider(user: User, email: String): User {
+        if (user.emailVerified) return user
+        val claimed = userRepository.save(
+            user.copy(
+                email = email.normalizedEmail(),
+                emailVerified = true,
+                passwordHash = null,
+                updatedAt = Instant.now()
+            )
+        )
+        if (user.passwordHash != null) accessRevocation.revokeAll(claimed.id)
+        return claimed
     }
 
     fun resolveUserFromCredential(

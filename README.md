@@ -48,16 +48,16 @@ docker run -p 80:8080 \
 - The data lives in a database named `komposeauth`, fixed in `application.yml`, so `MONGODB_URI`
   does not name one.
 - After the container is running, open the configuration page to set up everything else:
-    - http://localhost/admin/config?key=&lt;paste-your-base64-key&gt;
+    - http://localhost/admin/config
 
-  The `key` is the same `BASE64_ENCRYPTION_KEY` you started the container with. It is needed because
-  no account exists yet and this page reads and writes every secret the server holds — SMTP
-  password, SMS provider token, OAuth client secrets — so it is never open to an unauthenticated
+  and enter the master key: the same `BASE64_ENCRYPTION_KEY` you started the container with. It is
+  needed because no account exists yet and this page reads and writes every secret the server holds —
+  SMTP password, SMS provider token, OAuth client secrets — so it is never open to an unauthenticated
   visitor, not even on a fresh install. Once you have created an account and given it the `SUPER_ADMIN`
   role, signing in is enough and the key is no longer required.
 
-  To keep the key out of your browser history and any proxy logs, you can send it as a header
-  instead:
+  The key is read from the page's own form or from a header, never from the address, where it would
+  end up in browser history and proxy logs:
 
   ```bash
   curl -H "X-Master-Key: <paste-your-base64-key>" http://localhost/admin/config

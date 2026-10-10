@@ -39,7 +39,7 @@ class RolesController(
     @PostMapping("/$USERS/{id}/$ROLES/{role}")
     @Operation(
         summary = "Grant role",
-        description = "Grant a role to a user. The role must be in the app's role catalog. Granting SUPER_ADMIN requires SUPER_ADMIN."
+        description = "Grant a role to a user. The role must be in the app's role catalog. Granting SUPER_ADMIN, or a catalog role named after it such as SHOP_SUPER_ADMIN, requires SUPER_ADMIN."
     )
     @Parameter(name = "id", description = "User ID", required = true)
     @Parameter(name = "role", description = "Role name", required = true)
@@ -57,7 +57,7 @@ class RolesController(
     @DeleteMapping("/$USERS/{id}/$ROLES/{role}")
     @Operation(
         summary = "Revoke role",
-        description = "Revoke a role from a user. Will fail if it is the last holder of a protected role such as ADMIN. Revoking SUPER_ADMIN requires SUPER_ADMIN."
+        description = "Revoke a role from a user. Will fail if it is the last holder of a protected role such as ADMIN. Revoking SUPER_ADMIN, or a catalog role named after it such as SHOP_SUPER_ADMIN, requires SUPER_ADMIN."
     )
     @Parameter(name = "id", description = "User ID", required = true)
     @Parameter(name = "role", description = "Role name", required = true)
