@@ -70,8 +70,9 @@
         <div>
             <p class="eyebrow">Applications</p>
             <h1 class="font-display">Apps that can ask for tokens</h1>
+            <p class="lede" th:unless="${canManageClients}">Only a SUPER_ADMIN can register, change or remove an app.</p>
         </div>
-        <button class="btn btn-primary btn-md" type="button" id="newClientBtn">Register an app</button>
+        <button class="btn btn-primary btn-md" type="button" id="newClientBtn" th:if="${canManageClients}">Register an app</button>
     </div>
 
     <div id="status" class="hidden" role="status" aria-live="polite"></div>
@@ -81,7 +82,7 @@
 
         <div id="empty" class="empty hidden">
             <h3>No app is registered yet</h3>
-            <button class="btn btn-secondary btn-sm" type="button" id="emptyNewBtn">Register an app</button>
+            <button class="btn btn-secondary btn-sm" type="button" id="emptyNewBtn" th:if="${canManageClients}">Register an app</button>
         </div>
     </section>
 
@@ -145,8 +146,10 @@
     </dialog>
 </main>
 
-<script>
+<script th:inline="javascript">
     const API_BASE = "/oauth2/clients";
+    /** Writes need SUPER_ADMIN (`Oauth2ClientsController`), so a plain admin gets the list without its buttons. */
+    const CAN_MANAGE = /*[[${canManageClients}]]*/ false;
     const DEFAULT_SCOPES = "openid\nprofile\nemail\noffline_access";
 
     const el = {
@@ -238,10 +241,10 @@
                     <div class="row-facts">
                         ${facts(client).map(f => `<span class="badge">${escapeHtml(f)}</span>`).join("")}
                     </div>
-                    <div class="row-actions">
+                    ${CAN_MANAGE ? `<div class="row-actions">
                         <button class="btn btn-secondary btn-xs" type="button" data-edit="${index}">Edit</button>
                         <button class="btn btn-danger btn-xs" type="button" data-delete="${index}">Delete</button>
-                    </div>
+                    </div>` : ""}
                 </div>`;
         }).join("");
 
@@ -369,8 +372,8 @@
     });
 
     fields.publicClient.addEventListener("change", syncSecretField);
-    el.newClientBtn.addEventListener("click", openCreate);
-    el.emptyNewBtn.addEventListener("click", openCreate);
+    el.newClientBtn?.addEventListener("click", openCreate);
+    el.emptyNewBtn?.addEventListener("click", openCreate);
     el.cancelBtn.addEventListener("click", () => el.dialog.close());
 
     loadClients();

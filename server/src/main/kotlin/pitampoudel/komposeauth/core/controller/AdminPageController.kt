@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.core.controller
 
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -61,8 +62,10 @@ class AdminPageController(
 
     @GetMapping("/clients")
     @PreAuthorize("hasRole('ADMIN')")
-    fun clients(model: Model): String {
+    fun clients(model: Model, authentication: Authentication): String {
         adminShell.apply(model)
+        // The same test `Oauth2ClientsController` puts on a write, so no button leads to a 403.
+        model.addAttribute("canManageClients", authentication.authorities.any { it.authority == "ROLE_SUPER_ADMIN" })
         return "admin/clients"
     }
 
