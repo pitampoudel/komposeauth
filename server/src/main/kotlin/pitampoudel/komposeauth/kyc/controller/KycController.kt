@@ -16,7 +16,7 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_PENDING
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_PERSONAL_INFO
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.SlackNotifier
-import pitampoudel.komposeauth.core.utils.findServerUrl
+import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
@@ -31,7 +31,8 @@ class KycController(
     private val userContextService: UserContextService,
     private val kycService: KycService,
     private val emailService: EmailService,
-    private val slackNotifier: SlackNotifier
+    private val slackNotifier: SlackNotifier,
+    private val serverUrl: ServerUrl
 ) {
     @Operation(
         summary = "Get KYC information for current user",
@@ -87,7 +88,7 @@ class KycController(
         }
         user.email?.let {
             emailService.sendHtmlMail(
-                baseUrl = findServerUrl(request),
+                baseUrl = serverUrl.of(request),
                 to = it,
                 subject = "KYC Documents Received",
                 template = "email/generic.html",
@@ -114,7 +115,7 @@ class KycController(
         val admin = userContextService.getUserFromAuthentication()
         val targetUser = userService.findUser(id) ?: throw AccountNotFoundException("User not found")
         val response = kycService.approve(
-            baseUrl = findServerUrl(request),
+            baseUrl = serverUrl.of(request),
             user = targetUser
         )
         slackNotifier.send(
@@ -137,7 +138,7 @@ class KycController(
         val admin = userContextService.getUserFromAuthentication()
         val targetUser = userService.findUser(id) ?: throw AccountNotFoundException("User not found")
         val response = kycService.reject(
-            baseUrl = findServerUrl(httpServletRequest),
+            baseUrl = serverUrl.of(httpServletRequest),
             user = targetUser,
             reason = reason
         )

@@ -37,4 +37,6 @@ internal interface AuthClient {
     suspend fun fetchWebAuthnRegistrationOptions(): Result<String>
     suspend fun registerPublicKey(request: RegisterPublicKeyRequest): Result<HttpResponse>
     suspend fun logout(): Result<HttpResponse>
+    /** Empties the bearer token Ktor keeps in memory, so the next request loads it from storage. */
+    suspend fun clearCachedToken()
 }

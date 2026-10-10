@@ -9,6 +9,8 @@ data class CreateClientRequest(
     val clientName: String,
     val clientId: String? = null,
     val clientSecret: String? = null,
+    /** A browser or mobile app, which can't keep a secret: it signs in with PKCE alone and holds none. */
+    val publicClient: Boolean = false,
     val redirectUris: Set<String> = emptySet(),
     val clientUri: String? = null,
     val logoUri: String? = null,

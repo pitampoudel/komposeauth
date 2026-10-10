@@ -9,8 +9,10 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.user.repository.UserRepository
 
 /**
@@ -33,6 +35,9 @@ class AdminPagesIntegrationTest {
 
     @Autowired
     private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var appConfigProvider: AppConfigProvider
 
     private fun adminCookie(email: String) =
         TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, email).second
@@ -83,6 +88,18 @@ class AdminPagesIntegrationTest {
                 content { string(org.hamcrest.Matchers.containsString("Save configuration")) }
                 content { string(org.hamcrest.Matchers.containsString("Skip to content")) }
             }
+    }
+
+    @Test
+    fun `configuration refuses a phone region that is not a country`() {
+        mockMvc.post("/admin/config") {
+            param("key", TestConfig.testKey)
+            param("defaultPhoneRegion", "ZZ")
+        }.andExpect {
+            status { isOk() }
+            content { string(org.hamcrest.Matchers.containsString("defaultPhoneRegion must be a two-letter country code")) }
+        }
+        kotlin.test.assertNull(appConfigProvider.get().defaultPhoneRegion)
     }
 
     /**

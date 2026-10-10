@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.oauth_clients.cimd.ClientIdMetadataDocuments
 import pitampoudel.komposeauth.oauth_clients.cimd.ClientMetadataFetcher
 import pitampoudel.komposeauth.oauth_clients.cimd.InvalidClientMetadata
@@ -173,6 +174,25 @@ class ClientIdMetadataDocumentIntegrationTest {
             String(Base64.getUrlDecoder().decode(accessToken.split(".")[1]))
         ).jsonObject
         assertFalse("authorities" in claims, "a third-party token carries roles: $claims")
+
+        // Nor is it a bearer on this server's own API: it reads the profile it was granted, and no more
+        val bearer = "Bearer $accessToken"
+        assertEquals(401, mockMvc.get("/${ApiEndpoints.ME}") { header("Authorization", bearer) }.andReturn().response.status)
+        for (path in listOf(ApiEndpoints.UPDATE_PROFILE, ApiEndpoints.SEND_OTP)) {
+            val status = mockMvc.post("/$path") {
+                header("Authorization", bearer)
+                contentType = MediaType.APPLICATION_JSON
+                content = "{}"
+            }.andReturn().response.status
+            assertEquals(401, status, path)
+        }
+        val userInfo = mockMvc.get("/userinfo") { header("Authorization", bearer) }.andReturn()
+        assertEquals(200, userInfo.response.status, userInfo.response.contentAsString)
+        val info = json.parseToJsonElement(userInfo.response.contentAsString).jsonObject
+        assertEquals(email, info["email"]?.jsonPrimitive?.content)
+        assertTrue("givenName" in info && "emailVerified" in info, "$info")
+        // Only what the granted scopes cover, and no platform roles for someone else's app
+        assertFalse("roles" in info || "phoneNumberVerified" in info, "$info")
         val refreshToken = assertNotNull(first["refresh_token"], "no refresh token in $first")
 
         // A public client's refresh token is rotated
@@ -184,6 +204,10 @@ class ClientIdMetadataDocumentIntegrationTest {
             param("client_id", CLIENT)
         }.andReturn()
         assertEquals(400, reuse.response.status)
+
+        // The consent is remembered: signing in again goes straight back to the app
+        val again = signIn(authorizeUrl(CLIENT), email).response.redirectedUrl.orEmpty()
+        assertTrue(again.startsWith("$REDIRECT?code="), again)
     }
 
     @Test

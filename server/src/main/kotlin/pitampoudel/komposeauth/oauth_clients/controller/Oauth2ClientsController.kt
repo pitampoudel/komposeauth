@@ -40,6 +40,9 @@ class Oauth2ClientsController(
     )
     @PostMapping
     fun createClient(@RequestBody request: CreateClientRequest): ResponseEntity<OAuth2ClientResponse> {
+        if (request.publicClient && request.clientSecret != null) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "A public app has no client secret")
+        }
         val obj = request.toEntity()
         oauth2ClientRepository.save(obj)
         return ResponseEntity.ok(obj.toClientRegistrationResponse())

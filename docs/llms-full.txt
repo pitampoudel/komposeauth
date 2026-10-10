@@ -54,9 +54,13 @@ discovery.
 
 ### 2.2 The issuer (`iss`)
 
-The server has no fixed issuer setting. The issuer is derived from each request's scheme, host and port
-(`core/utils/ServerUtils.kt`, Spring Authorization Server defaults), so it equals the public URL the client used,
-e.g. `https://auth.example.com` with no trailing slash. Consequences:
+The issuer is the server's public address, set by its operator as `spring.security.oauth2.authorizationserver.issuer`
+(env `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER`), e.g. `https://auth.example.com` with no trailing slash.
+Every token carries it as `iss`, the discovery document names it, and the server accepts a bearer only when its
+`iss` matches. Emailed links and the KYC callback are built from it too (`core/utils/ServerUtils.kt`).
+
+When it is not set (local development), the issuer is derived from each request's scheme, host and port, so it
+equals the URL the client used. Then:
 
 - Behind a proxy the server must see the original scheme and host (`FORWARD_HEADERS_STRATEGY=framework`, the
   default, and a proxy that sends `X-Forwarded-Proto`/`X-Forwarded-Host`). Otherwise `iss` becomes
@@ -78,11 +82,15 @@ Content-Type: application/json
   "redirectUris": ["https://app.example.com/callback", "http://localhost:5173/callback"],
   "accessTokenTtlSeconds": 900,
   "refreshTokenTtlDays": 30,
-  "scopes": ["openid", "profile", "email"]
+  "scopes": ["openid", "profile", "email"],
+  "publicClient": false
 }
 ```
 
-Response (the secret is generated when you omit `clientSecret`):
+Set `"publicClient": true` for an app that cannot keep a secret (a browser SPA, a mobile or desktop app). It is
+given no secret and must not send one (`clientSecret` is refused with 400).
+
+Response (for a confidential client the secret is generated when you omit `clientSecret`):
 
 ```json
 {
@@ -100,8 +108,10 @@ Response (the secret is generated when you omit `clientSecret`):
 
 What every registered client gets (`oauth_clients/dto/Mappers.kt`):
 
-- Grant types: `authorization_code`, `refresh_token`, `client_credentials`.
-- Client authentication methods: `none` (public) and `client_secret_post`.
+- A confidential client (the default): grant types `authorization_code`, `refresh_token`, `client_credentials`;
+  client authentication `client_secret_basic` or `client_secret_post`, on every grant.
+- A public client (`publicClient: true`): grant types `authorization_code` and `refresh_token`; client
+  authentication `none`, the `client_id` alone.
 - **PKCE is required** (`requireProofKey = true`). Every authorization request must carry `code_challenge` and
   `code_challenge_method=S256`, including from server-side apps.
 - No consent screen (`requireAuthorizationConsent = false`).
@@ -124,7 +134,9 @@ minutes (`oauth_clients/cimd/ClientIdMetadataDocuments.kt`); discovery advertise
   address) and `token_endpoint_auth_method` `none` (or absent); hosts on private networks aren't fetched;
 - is a public client: authorization code with PKCE, plus `refresh_token` if its `grant_types` list it;
 - gets only `openid profile email`, and always shows the user a **consent screen** naming its URL;
-- gets 1-hour access tokens and 30-day refresh tokens that are **rotated** on every use.
+- gets 1-hour access tokens and 30-day refresh tokens that are **rotated** on every use;
+- may use its access token at `/userinfo` only: this server's own API (`/me`, `/update-profile`, `/send-otp`, ...)
+  refuses a token issued to any client that requires consent, with 401.
 
 ### 2.4 CORS and cookies
 
@@ -184,17 +196,19 @@ Flow:
    ```
 5. Send `Authorization: Bearer <access_token>` to your resource servers.
 
-Client authentication at the token endpoint: a request with `client_id` and no secret, client assertion or
-`Authorization` header is authenticated as a **public client** (`core/providers/OAuth2PublicClientAuthConverter.kt`),
-for the authorization-code and refresh grants only, so a browser or mobile app never needs the client secret. A
-request that does send `client_secret` has it verified. `client_credentials` always requires the secret. Never ship
-the client secret in browser or mobile code.
+Client authentication at the token endpoint: a **public client** sends its `client_id` and no secret. Its code
+exchange is proved by the PKCE `code_verifier`, and its refresh by the `client_id` alone
+(`core/providers/OAuth2PublicClientAuthConverter.kt`). A **confidential client** authenticates every grant,
+including the code exchange and the refresh, with its secret (`client_secret_basic` or `client_secret_post`); its
+`client_id` alone is refused. Never ship the client secret in browser or mobile code: register such an app as a
+public client.
 
 Refresh tokens: the authorization-code exchange returns a `refresh_token`, public clients included (komposeauth
 issues one to every client with the `refresh_token` grant, which all registered clients have; stock Spring
 Authorization Server would withhold it from public clients). It lasts the client's `refreshTokenTtlDays` and is
 reused, not rotated: refreshing returns a new access token and the same refresh token. Refresh with a form POST
-to the token endpoint, again with `client_id` and no secret:
+to the token endpoint, authenticated as the code exchange was (a public client's `client_id` alone is shown here;
+a confidential client adds its secret):
 
 ```http
 POST /oauth2/token
@@ -208,10 +222,12 @@ session on the auth server (24 hours by default, `SESSION_TIMEOUT`) it completes
 `prompt=none` makes that explicit. Iframe-based silent renew does not work because the server forbids framing.
 
 Logout: clear your own tokens, then end the auth server session with the `end_session_endpoint` from the discovery
-document (RP-initiated logout, pass `id_token_hint` and a `post_logout_redirect_uri`) or with `GET /logout` on the
+document (RP-initiated logout, pass `id_token_hint` and a `post_logout_redirect_uri`) or with `POST /logout` on the
 auth server using the browser's session.
 
 #### Example: SPA with `oidc-client-ts`
+
+Register the SPA as a public client (`publicClient: true`).
 
 ```ts
 import { UserManager, WebStorageStateStore } from "oidc-client-ts";
@@ -254,7 +270,7 @@ Use your framework's OIDC client (Auth.js, `openid-client`, `authlib`, `omniauth
 - issuer / authority: `https://auth.example.com`
 - client id: the registered `clientId`
 - PKCE enabled with S256 (required even for server-side apps)
-- token endpoint auth method: `none`, or `client_secret_post` for a server-side app that keeps the secret (the secret is then verified)
+- token endpoint auth method: `client_secret_post` (or `client_secret_basic`) with the client secret, kept on the server
 - scopes: `openid profile email`
 - keep the access token in the server-side session and forward it as `Authorization: Bearer` when calling APIs.
 
@@ -267,7 +283,8 @@ Auth.js (NextAuth) provider:
   type: "oidc",
   issuer: "https://auth.example.com",
   clientId: process.env.KOMPOSEAUTH_CLIENT_ID,
-  client: { token_endpoint_auth_method: "none" },
+  clientSecret: process.env.KOMPOSEAUTH_CLIENT_SECRET,
+  client: { token_endpoint_auth_method: "client_secret_post" },
   checks: ["pkce", "state", "nonce"],
   authorization: { params: { scope: "openid profile email" } },
 }
@@ -275,7 +292,8 @@ Auth.js (NextAuth) provider:
 
 #### Example: native mobile apps (AppAuth for Android/iOS, `expo-auth-session`, `flutter_appauth`)
 
-Register a redirect URI with a private scheme, e.g. `com.example.app:/oauth2redirect`, and configure the library
+Register a public client (`publicClient: true`) with a redirect URI with a private scheme, e.g.
+`com.example.app:/oauth2redirect`, and configure the library
 with the discovery URL, the `clientId`, that redirect URI, scopes `openid profile email` and PKCE (on by default in
 these libraries). Private-scheme redirects are supported. Kotlin Multiplatform apps should use the SDK instead
 (section 3.3).
@@ -288,7 +306,7 @@ these libraries). Private-scheme redirects are supported. Kotlin Multiplatform a
 | `type` | Fields | Notes |
 |---|---|---|
 | `USERNAME_PASSWORD` | `username`, `password`, optional `countryNameCode` | `username` is an email or phone number; `countryNameCode` (e.g. `"NP"`) lets a local phone number be parsed. |
-| `OTP` | `username`, `otp` | Code previously sent with `POST /send-otp`. Creates the user if new. |
+| `OTP` | `username`, `otp` | Code previously sent with `POST /send-otp`. Creates the user if new. A phone number without a leading `+` is read in the default phone region (below). |
 | `GOOGLE_ID` | `idToken` | A Google ID token for the Google client ID the server is configured with. |
 | `APPLE_ID` | `idToken` | A Sign in with Apple ID token. |
 | `AUTH_CODE` | `platform` (`WEB`, `DESKTOP`, `ANDROID`, `IOS`), `code`, `redirectUri` | A Google OAuth authorization code; the server exchanges it. |
@@ -339,6 +357,10 @@ curl -X POST 'https://auth.example.com/login?responseType=TOKEN' -H 'Content-Typ
   -d '{"type":"OTP","username":"+9779812345678","otp":"123456"}'
 ```
 
+`/send-otp`, `/verify-otp` and OTP sign-in carry no country, so a phone number typed without a leading `+`
+(`9812345678`) is read in the **default phone region** (`defaultPhoneRegion` on the configuration page, an ISO
+country code; Nepal, `NP`, when unset) and stored in E.164. A number with a `+` and country code is read as written.
+
 Passkey sign-in: `GET /login-options?platform=WEB` returns `{"googleClientId", "publicKeyAuthOptionsJson"}` and
 stores the WebAuthn challenge in a session cookie. Pass `publicKeyAuthOptionsJson` to
 `navigator.credentials.get()`, then post the serialized result as
@@ -346,8 +368,8 @@ stores the WebAuthn challenge in a session cookie. Pass `publicKeyAuthOptionsJso
 (`credentials: "include"`). Registering a passkey for a signed-in user: `POST /webauthn/register/options`, then
 `POST /webauthn/register` with `{"publicKey": ...}`.
 
-Logout: `GET` or `POST /logout` clears the cookie and the server session. Bearer-token apps simply delete their
-stored tokens.
+Logout: `POST /logout` clears the cookie and the server session; a `GET` does not, so another site cannot sign the
+user out with a link or an image. Bearer-token apps simply delete their stored tokens.
 
 Error responses are RFC 7807 problem details (`{"type","title","status","detail"}`): 400 for malformed input or a
 bad/spent token or OTP, 401 for a missing, expired or invalid bearer token, 403 for wrong credentials, a
@@ -375,7 +397,7 @@ What the SDK does (`client/.../core/data/installKomposeAuth.kt`): persists token
 `Authorization: Bearer` to requests whose host is the auth server or one of `resourceServerUrls`, refreshes on 401
 with the `REFRESH_TOKEN` credential, and clears tokens when the refresh is rejected. Use `LoginViewModel` with
 `rememberKmpCredentialManager()` for Google/passkey sign-in, `OtpViewModel` for codes, `ProfileViewModel`,
-`KycViewModel`, and `rememberCurrentUser()` for the signed-in user. Your resource servers only have to validate the
+`KycViewModel`, and `rememberAuthenticatedUser()` for the signed-in user. Your resource servers only have to validate the
 bearer token.
 
 ### 3.4 Reading the current user in a frontend
@@ -424,12 +446,22 @@ All tokens are JWS compact JWTs signed with **RS256**. The header carries a `kid
 
 Sources: `core/security/WebAuthorizationConfig.kt` (`jwtCustomizer`) and
 `user/controller/ResourceOwnerLoginController.kt`. The ID token from the authorization-code flow carries the same
-custom claims plus the standard OIDC ones (`nonce`, `auth_time`, ...).
+custom claims except `authorities`, plus the standard OIDC ones (`nonce`, `auth_time`, ...). Authorize with the
+access token, never the ID token.
 
 ### 4.2 UserInfo claims (`GET /userinfo`)
 
-`sub`, `emailVerified`, `phoneNumberVerified`, `kycVerified`, `createdAt`, `updatedAt`, `roles` (unprefixed, e.g.
-`["ADMIN"]`), and when set `email`, `givenName`, `familyName`, `picture`.
+Only what the access token's scopes cover:
+
+| Scope | Claims |
+|---|---|
+| (always) | `sub` |
+| `profile` | `kycVerified`, `createdAt`, `updatedAt`, and when set `givenName`, `familyName`, `picture` |
+| `email` | `emailVerified`, and when set `email` |
+| `phone` | `phoneNumberVerified` |
+
+`roles` (unprefixed, e.g. `["ADMIN"]`) is added for a client registered here, never for one that asks the user's
+consent. A token whose user has been deleted is answered with 401 `invalid_token`.
 
 ### 4.3 Roles and scopes
 
@@ -708,7 +740,7 @@ stated. Admin-only endpoints accept `ADMIN` or `SUPER_ADMIN`.
 | Method & path | Who | Purpose |
 |---|---|---|
 | `POST /login?responseType=` | public | Sign in with a credential (section 3.2) |
-| `GET/POST /logout` | public | Clear cookie and session |
+| `POST /logout` | public | Clear cookie and session |
 | `GET /login-options?platform=` | public | Google client id + WebAuthn request options |
 | `POST /send-otp` | public (optional auth) | `{"username","type":"PHONE"|"EMAIL"}` |
 | `POST /verify-otp` | user | `{"username","type","otp"}` verify a phone/email on the current account |

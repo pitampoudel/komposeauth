@@ -72,5 +72,10 @@ class AppConfigCleanTest {
         assertNull(cleaned.whatsappAccessToken)
         assertNull(cleaned.whatsappPhoneNumberId)
     }
-}
 
+    @Test
+    fun `clean upper-cases the default phone region and drops a blank one`() {
+        assertEquals("IN", AppConfig(defaultPhoneRegion = " in ").clean().defaultPhoneRegion)
+        assertNull(AppConfig(defaultPhoneRegion = "  ").clean().defaultPhoneRegion)
+    }
+}

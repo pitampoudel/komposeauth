@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
+import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.filter.OncePerRequestFilter
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 
@@ -31,7 +33,11 @@ class RateLimitFilter(
         val method: HttpMethod,
         val path: String,
         val quota: RateLimitProperties.Rule
-    )
+    ) {
+        // The path as the dispatcher routes it, decoded and without path parameters, so that
+        // `/%6Cogin` or `/login;x` is counted as `/login` rather than slipping past every rule.
+        val matcher: RequestMatcher = PathPatternRequestMatcher.withDefaults().matcher(method, path)
+    }
 
     private val rules: List<Rule> = listOf(
         Rule(HttpMethod.POST, "/${ApiEndpoints.LOGIN}", properties.login),
@@ -52,11 +58,7 @@ class RateLimitFilter(
             return
         }
 
-        // Rules name application paths, so strip any deployment context path before matching.
-        val path = request.requestURI.removePrefix(request.contextPath)
-        val rule = rules.firstOrNull {
-            it.method.matches(request.method) && it.path == path
-        }
+        val rule = rules.firstOrNull { it.matcher.matches(request) }
         if (rule == null) {
             filterChain.doFilter(request, response)
             return
@@ -74,7 +76,7 @@ class RateLimitFilter(
         log.warn(
             "Rate limit exceeded for {} {} from {}",
             request.method,
-            path,
+            rule.path,
             clientIp
         )
         response.status = HttpStatus.TOO_MANY_REQUESTS.value()

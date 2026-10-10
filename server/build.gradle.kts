@@ -36,7 +36,6 @@ dependencies {
     // this bridge, so the handful of them in the codebase stop resolving without it.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.10.2")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
-    implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.mongodb:mongodb-spring-session:4.0.0")
     implementation(project(":shared"))

@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.http.converter.json.KotlinSerializationJsonHttpMessageConverter
+import org.springframework.security.web.webauthn.jackson.WebauthnJackson2Module
 
 @Configuration
 class SerializationConfig {
@@ -30,11 +31,19 @@ class SerializationConfig {
         return mapper
     }
 
+    /**
+     * Also writes and reads Spring's WebAuthn types in the WebAuthn JSON shape (a base64url
+     * `challenge`, string enums), which their own fields don't say. It is the Jackson 2 module,
+     * deprecated beside the Jackson 3 one, because WebAuthn4J's [ObjectConverter] is built over this
+     * mapper and speaks Jackson 2.
+     */
     @Bean
     @Primary
     fun objectMapper(): ObjectMapper {
         val mapper = ObjectMapper()
         mapper.registerModule(JavaTimeModule())
+        @Suppress("DEPRECATION")
+        mapper.registerModule(WebauthnJackson2Module())
         return mapper
     }
 

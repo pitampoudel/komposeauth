@@ -1,6 +1,5 @@
 package pitampoudel.komposeauth.core.service
 
-import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 import pitampoudel.komposeauth.app_config.entity.AppConfig
@@ -10,7 +9,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * The [StorageService] everything is handed: new files go to the store `storageProvider` names (or
  * the only bucket configured; neither cloud is a default, see [AppConfig.resolvedStorageProvider]),
- * and a delete goes to that same store.
+ * and a delete goes to whichever store the address is in.
  *
  * Files are never copied between the two. One written to either store before a switch stays there
  * and is still read from its own address, so both stores' settings stay while any files are left.
@@ -39,9 +38,13 @@ class RoutingStorageService(
         }
     }
 
+    /** The GCS store the config names now, rebuilt when an admin changes it. */
     private fun gcsOrNull(): GcpStorageService? {
+        val config = appConfigService.getConfig()
+        val bucket = config.gcpBucketName ?: return null
+        val settings = GcpStorageService.Settings(projectId = config.gcpProjectId, bucket = bucket)
         return gcs.updateAndGet { current ->
-            current ?: GcpStorageService(appConfigService)
+            if (current != null && current.settings == settings) current else GcpStorageService(settings)
         }
     }
 
@@ -54,11 +57,8 @@ class RoutingStorageService(
     override fun upload(blobName: String, contentType: String?, bytes: ByteArray): String =
         writeStore().upload(blobName, contentType, bytes)
 
-    override fun download(blobName: String): ByteArray? = writeStore().download(blobName)
-
-    override fun exists(blobName: String): Boolean = writeStore().exists(blobName)
-
     override fun delete(url: String): Boolean {
-        return writeStore().delete(url)
+        val store = s3OrNull()?.takeIf { it.owns(url) } ?: gcsOrNull()?.takeIf { it.owns(url) } ?: return false
+        return store.delete(url)
     }
 }

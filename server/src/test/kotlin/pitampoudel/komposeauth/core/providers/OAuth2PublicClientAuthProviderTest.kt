@@ -68,6 +68,27 @@ class OAuth2PublicClientAuthProviderTest {
     }
 
     @Test
+    fun `rejects a client that holds a secret even when it also lists the none method`() {
+        // Every console client used to be registered with 'none' beside its secret.
+        val legacy = RegisteredClient.withId(UUID.randomUUID().toString())
+            .clientId("legacy-client")
+            .clientSecret("{noop}super-secret")
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+            .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+            .authorizationGrantType(org.springframework.security.oauth2.core.AuthorizationGrantType.AUTHORIZATION_CODE)
+            .redirectUri("https://example.com")
+            .scope("openid")
+            .build()
+
+        val sut = OAuth2PublicClientAuthProvider(FakeRegisteredClientRepository(mapOf("legacy-client" to legacy)))
+
+        val ex = assertThrows<OAuth2AuthenticationException> {
+            sut.authenticate(OAuth2PublicClientAuthToken("legacy-client"))
+        }
+        assertEquals(OAuth2ErrorCodes.INVALID_CLIENT, ex.error.errorCode)
+    }
+
+    @Test
     fun `authenticates public client when registered`() {
         val registered = RegisteredClient.withId(UUID.randomUUID().toString())
             .clientId("client")

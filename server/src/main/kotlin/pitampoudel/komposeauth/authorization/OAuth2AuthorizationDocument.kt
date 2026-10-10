@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.TypeAlias
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
+import java.time.Duration
 import java.time.Instant
 
 @Document(collection = "oauth2_authorizations")
@@ -34,14 +35,19 @@ data class OAuth2AuthorizationDocument(
     val refreshTokenExpiresAt: Instant? = null,
     val refreshTokenMetadata: String? = null,
 
-    val oidcIdTokenValue: String? = null,
+    // Looked up by the RP-initiated logout's id_token_hint, and by a token lookup with no type.
+    @Indexed(sparse = true) val oidcIdTokenValue: String? = null,
     val oidcIdTokenIssuedAt: Instant? = null,
     val oidcIdTokenExpiresAt: Instant? = null,
     val oidcIdTokenMetadata: String? = null,
     val oidcIdTokenClaims: String? = null,
 
     // TTL: MongoDB deletes the document automatically once the longest-lived token expires.
-    // Priority: refresh token > access token > authorization code.
+    // Priority: refresh token > access token > authorization code. One still waiting for the user's
+    // consent holds only its state, and goes once that consent screen has gone stale.
     @Indexed(expireAfter = "0s")
-    val expiresAt: Instant? = refreshTokenExpiresAt ?: accessTokenExpiresAt ?: authorizationCodeExpiresAt,
+    val expiresAt: Instant? = refreshTokenExpiresAt ?: accessTokenExpiresAt ?: authorizationCodeExpiresAt
+        ?: state?.let { Instant.now().plus(PENDING_CONSENT_TTL) },
 )
+
+private val PENDING_CONSENT_TTL: Duration = Duration.ofMinutes(10)

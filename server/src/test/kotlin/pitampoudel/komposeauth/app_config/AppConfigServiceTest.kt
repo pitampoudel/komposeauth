@@ -45,6 +45,16 @@ class AppConfigServiceTest {
     }
 
     @Test
+    fun `the default phone region is Nepal until one is configured`() {
+        val provider = mock<AppConfigProvider>()
+        whenever(provider.get()).thenReturn(AppConfig(), AppConfig(defaultPhoneRegion = "IN"))
+        val service = AppConfigService(provider)
+
+        assertEquals("NP", service.defaultPhoneRegion())
+        assertEquals("IN", service.defaultPhoneRegion())
+    }
+
+    @Test
     fun `corsAllowedOrigins splits by comma and returns empty when null`() {
         val provider = mock<AppConfigProvider>()
         whenever(provider.get()).thenReturn(AppConfig(corsAllowedOriginList = null))

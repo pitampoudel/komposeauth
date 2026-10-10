@@ -40,7 +40,6 @@ kotlin {
         nodejs {
             binaries.library()
         }
-        generateTypeScriptDefinitions()
     }
 
     @OptIn(ExperimentalWasmDsl::class)
@@ -55,7 +54,6 @@ kotlin {
                 implementation(libs.libphonenumber.kotlin)
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.serialization.kotlinx.json)
-                api(libs.kermit)
             }
         }
         val commonTest by getting {

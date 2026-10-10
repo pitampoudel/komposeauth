@@ -30,21 +30,6 @@ class ProfileViewModel internal constructor(
 
     init {
         viewModelScope.launch {
-            val options = when (val res = client.fetchWebAuthnRegistrationOptions()) {
-                is Result.Error -> {
-                    _state.update {
-                        it.copy(infoMsg = res.message)
-                    }
-                    null
-                }
-
-                is Result.Success -> res.data
-            }
-            _state.update {
-                it.copy(webAuthnRegistrationOptions = options)
-            }
-        }
-        viewModelScope.launch {
             _state.update {
                 it.copy(organizationsRes = orgClient.get())
             }

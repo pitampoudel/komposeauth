@@ -38,6 +38,11 @@ data class AppConfig(
     var supportEmail: String? = null,
     var rpId: String? = null,
     /**
+     * The country (ISO 3166 code, e.g. NP) a phone number typed without a leading `+` is read in by
+     * the OTP endpoints, whose requests carry no country of their own. Nepal when unset.
+     */
+    var defaultPhoneRegion: String? = null,
+    /**
      * Which bucket takes new files, "gcs" or "s3"; needed only when both are set. Neither cloud is a
      * default, see [resolvedStorageProvider]. A stored file is still read and deleted in the bucket
      * its address names, so keep the other bucket's settings while any of its files are left.
@@ -198,6 +203,7 @@ data class AppConfig(
         if (smtpFromName.isNullOrBlank()) smtpFromName = null
         if (brandColor.isNullOrBlank()) brandColor = null
         if (supportEmail.isNullOrBlank()) supportEmail = null
+        defaultPhoneRegion = defaultPhoneRegion?.trim()?.uppercase()?.takeIf { it.isNotEmpty() }
         if (emailFooterText.isNullOrBlank()) emailFooterText = null
         if (sentryDsn.isNullOrBlank()) sentryDsn = null
         if (slackBotToken.isNullOrBlank()) slackBotToken = null
@@ -217,5 +223,6 @@ data class AppConfig(
         const val SINGLETON_ID: String = "singleton"
         const val STORAGE_GCS = "gcs"
         const val STORAGE_S3 = "s3"
+        const val DEFAULT_PHONE_REGION = "NP"
     }
 }

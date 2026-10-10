@@ -31,12 +31,13 @@ class OAuth2PublicClientAuthProvider(
 
         // Without this check a client_id alone authenticates *any* registered client, including
         // confidential ones that are supposed to prove possession of a client secret — the secret
-        // becomes optional and knowing the (public) client_id is enough to mint tokens.
-        if (!registeredClient.clientAuthenticationMethods.contains(ClientAuthenticationMethod.NONE)) {
-            log.warn(
-                "Public client auth rejected: client '{}' is not registered for the 'none' authentication method",
-                token.clientId
-            )
+        // becomes optional and knowing the (public) client_id is enough to mint tokens. Clients
+        // registered before public ones had a flag of their own list 'none' beside a secret, so
+        // holding a secret is what decides.
+        val isPublic = registeredClient.clientSecret == null &&
+            registeredClient.clientAuthenticationMethods.contains(ClientAuthenticationMethod.NONE)
+        if (!isPublic) {
+            log.warn("Public client auth rejected: client '{}' is not a public client", token.clientId)
             throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT)
         }
 

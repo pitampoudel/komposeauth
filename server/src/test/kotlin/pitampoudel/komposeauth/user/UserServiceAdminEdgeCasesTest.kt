@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.authorization.OAuth2AuthorizationConsentDocumentRepository
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
@@ -49,7 +50,8 @@ class UserServiceAdminEdgeCasesTest {
     private fun service(
         userRepository: UserRepository,
         appConfigService: AppConfigService = appConfigService(),
-        accessRevocation: AccessRevocation = mock()
+        accessRevocation: AccessRevocation = mock(),
+        consentRepository: OAuth2AuthorizationConsentDocumentRepository = mock()
     ) = UserService(
         userRepository = userRepository,
         passwordEncoder = mock(),
@@ -69,7 +71,8 @@ class UserServiceAdminEdgeCasesTest {
         roleChangeEmailNotifier = mock(),
         emailVerificationService = mock(),
         appleTokenValidator = mock(),
-        accessRevocation = accessRevocation
+        accessRevocation = accessRevocation,
+        consentRepository = consentRepository
     )
 
     private fun user(roles: List<String> = emptyList()) = User(
@@ -179,6 +182,19 @@ class UserServiceAdminEdgeCasesTest {
 
         verify(userRepo).save(target.copy(deactivated = true))
         verify(revocation).revokeAll(target.id)
+    }
+
+    @Test
+    fun `deleting an account forgets the apps it consented to`() {
+        val userRepo = mock<UserRepository>()
+        val consents = mock<OAuth2AuthorizationConsentDocumentRepository>()
+        val target = user()
+        whenever(userRepo.findById(target.id)).thenReturn(Optional.of(target))
+
+        service(userRepo, consentRepository = consents).deleteUser(actor(), target.id)
+
+        verify(consents).deleteAllByPrincipalName(target.id.toHexString())
+        verify(userRepo).deleteById(target.id)
     }
 
     @Test

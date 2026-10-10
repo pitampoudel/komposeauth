@@ -1,6 +1,14 @@
 spring:
   application:
     name: "komposeauth"
+  # This server's public address, exactly as relying parties check `iss` (no trailing slash). Every
+  # token's issuer, every emailed link and the KYC callback are built from it. Left unset, each is
+  # read off the request's Host and X-Forwarded-* headers, which the caller writes, so set it in
+  # production, usually as SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER.
+  # security:
+  #   oauth2:
+  #     authorizationserver:
+  #       issuer: https://auth.example.com
   # Every outbound call (SMS providers, Twilio, Google, the KYC service) is made inside a sign-in
   # request, so a provider that stops answering must fail the request rather than hold it forever.
   http:

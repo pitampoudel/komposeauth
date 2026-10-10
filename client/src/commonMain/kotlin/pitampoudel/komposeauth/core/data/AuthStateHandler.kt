@@ -76,6 +76,8 @@ internal class AuthStateHandler(
     suspend fun logout() {
         authClient.logout()
         authPreferences.clear()
+        // A request sent before the stored tokens were cleared may have loaded them back into the cache.
+        authClient.clearCachedToken()
     }
 }
 

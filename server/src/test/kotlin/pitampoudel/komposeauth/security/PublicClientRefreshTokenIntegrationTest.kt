@@ -2,6 +2,7 @@ package pitampoudel.komposeauth.security
 
 import jakarta.servlet.http.Cookie
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Test
@@ -27,6 +28,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -49,7 +51,10 @@ class PublicClientRefreshTokenIntegrationTest {
     private val codeVerifier = "v".repeat(43)
     private var sessionCookie: Cookie? = null
 
-    private fun createClient(adminEmail: String = "spa-admin@example.com"): String {
+    private fun createClient(
+        adminEmail: String = "spa-admin@example.com",
+        publicClient: Boolean = true
+    ): Map<String, String> {
         val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, adminEmail)
         val result = mockMvc.post("/${ApiEndpoints.OAUTH2_CLIENTS}") {
             contentType = MediaType.APPLICATION_JSON
@@ -59,6 +64,7 @@ class PublicClientRefreshTokenIntegrationTest {
                 CreateClientRequest.serializer(),
                 CreateClientRequest(
                     clientName = "Browser App",
+                    publicClient = publicClient,
                     redirectUris = setOf(redirectUri),
                     accessTokenTtlSeconds = 900,
                     refreshTokenTtlDays = 30,
@@ -66,7 +72,9 @@ class PublicClientRefreshTokenIntegrationTest {
                 )
             )
         }.andExpect { status { isOk() } }.andReturn()
-        return json.parseToJsonElement(result.response.contentAsString).jsonObject["clientId"]!!.jsonPrimitive.content
+        return json.parseToJsonElement(result.response.contentAsString).jsonObject
+            .filterValues { it is JsonPrimitive && it.isString }
+            .mapValues { it.value.jsonPrimitive.content }
     }
 
     private fun remember(result: MvcResult) {
@@ -104,10 +112,13 @@ class PublicClientRefreshTokenIntegrationTest {
         error("the sign-in never reached the app")
     }
 
+    private fun tokenRequest(vararg params: Pair<String, String>): MvcResult = mockMvc.post("/oauth2/token") {
+        accept = MediaType.APPLICATION_JSON
+        params.forEach { (name, value) -> param(name, value) }
+    }.andReturn()
+
     private fun token(vararg params: Pair<String, String>): Map<String, String> {
-        val result = mockMvc.post("/oauth2/token") {
-            params.forEach { (name, value) -> param(name, value) }
-        }.andReturn()
+        val result = tokenRequest(*params)
         assertEquals(200, result.response.status, "${params.first().second}: ${result.response.contentAsString}")
         return json.parseToJsonElement(result.response.contentAsString).jsonObject
             .mapValues { it.value.jsonPrimitive.content }
@@ -115,7 +126,8 @@ class PublicClientRefreshTokenIntegrationTest {
 
     @Test
     fun `a public client gets a refresh token and can use it without a secret`() {
-        val clientId = createClient()
+        val clientId = createClient().getValue("clientId")
+        assertNull(createClient("spa-admin-3@example.com")["clientSecret"], "a public client was given a secret")
         val email = "spa-user@example.com"
         TestAuthHelpers.createUser(mockMvc, json, email, password)
 
@@ -146,7 +158,7 @@ class PublicClientRefreshTokenIntegrationTest {
 
     @Test
     fun `a registered client's token carries the roles, and a deactivated account cannot refresh`() {
-        val clientId = createClient("spa-admin-2@example.com")
+        val clientId = createClient("spa-admin-2@example.com").getValue("clientId")
         val email = "spa-deactivated@example.com"
         TestAuthHelpers.createUser(mockMvc, json, email, password)
 
@@ -161,6 +173,11 @@ class PublicClientRefreshTokenIntegrationTest {
             String(Base64.getUrlDecoder().decode(first.getValue("access_token").split(".")[1]))
         ).jsonObject
         assertTrue("authorities" in claims, "no authorities in $claims")
+        // The ID token is the one passed around (id_token_hint, logs), so it carries no roles.
+        val idTokenClaims = json.parseToJsonElement(
+            String(Base64.getUrlDecoder().decode(first.getValue("id_token").split(".")[1]))
+        ).jsonObject
+        assertFalse("authorities" in idTokenClaims, "the ID token carries roles: $idTokenClaims")
 
         // Closed behind the authorization's back, as an account deactivated before its
         // authorizations were revoked on deactivation would be.
@@ -174,5 +191,92 @@ class PublicClientRefreshTokenIntegrationTest {
         }.andReturn()
         assertEquals(400, refused.response.status, refused.response.contentAsString)
         assertTrue("invalid_grant" in refused.response.contentAsString, refused.response.contentAsString)
+    }
+
+    @Test
+    fun `a code is not redeemed without its PKCE verifier`() {
+        val clientId = createClient("spa-admin-4@example.com").getValue("clientId")
+        val email = "spa-pkce@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+
+        // With no verifier and no secret nothing authenticates the client, so it is a 401, not a 400.
+        val missing = tokenRequest(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId
+        )
+        assertEquals(401, missing.response.status, missing.response.contentAsString)
+
+        val wrong = tokenRequest(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "code_verifier" to "w".repeat(43)
+        )
+        assertEquals(400, wrong.response.status, wrong.response.contentAsString)
+        assertTrue("invalid_grant" in wrong.response.contentAsString, wrong.response.contentAsString)
+    }
+
+    @Test
+    fun `a confidential client cannot refresh with its client id alone`() {
+        val client = createClient("spa-admin-5@example.com", publicClient = false)
+        val clientId = client.getValue("clientId")
+        val secret = client.getValue("clientSecret")
+        val email = "spa-confidential@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+
+        val first = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "client_secret" to secret,
+            "code_verifier" to codeVerifier
+        )
+        val refreshToken = first.getValue("refresh_token")
+        // A registered app's token is a bearer on this server's own API
+        val me = mockMvc.get("/${ApiEndpoints.ME}") { header("Authorization", "Bearer ${first.getValue("access_token")}") }.andReturn()
+        assertEquals(200, me.response.status, me.response.contentAsString)
+
+        val bare = tokenRequest(
+            "grant_type" to "refresh_token",
+            "refresh_token" to refreshToken,
+            "client_id" to clientId
+        )
+        assertEquals(401, bare.response.status, bare.response.contentAsString)
+
+        val withSecret = token(
+            "grant_type" to "refresh_token",
+            "refresh_token" to refreshToken,
+            "client_id" to clientId,
+            "client_secret" to secret
+        )
+        assertNotNull(withSecret["access_token"])
+    }
+
+    @Test
+    fun `userinfo answers for the granted scopes only, and refuses a token whose user is gone`() {
+        val clientId = createClient("spa-admin-6@example.com").getValue("clientId")
+        val email = "spa-userinfo@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        val accessToken = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "code_verifier" to codeVerifier
+        ).getValue("access_token")
+
+        fun userInfo() = mockMvc.get("/userinfo") { header("Authorization", "Bearer $accessToken") }.andReturn().response
+
+        // Signed in with `openid` alone: who it is, and, for a client registered here, the roles
+        val info = json.parseToJsonElement(userInfo().contentAsString).jsonObject
+        assertTrue("sub" in info && "roles" in info, "$info")
+        assertFalse("email" in info || "givenName" in info || "phoneNumberVerified" in info, "$info")
+
+        userRepository.deleteById(assertNotNull(userRepository.findByEmail(email)).id)
+        assertEquals(401, userInfo().status)
     }
 }

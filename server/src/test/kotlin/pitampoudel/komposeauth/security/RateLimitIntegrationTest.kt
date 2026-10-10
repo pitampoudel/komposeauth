@@ -18,6 +18,7 @@ import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.security.ratelimit.RateLimitWindow
 import pitampoudel.komposeauth.user.data.Credential
+import java.net.URI
 
 /**
  * The suite runs with `app.rate-limit.enabled=false`, because every test signs in from the same
@@ -77,6 +78,28 @@ class RateLimitIntegrationTest {
         attemptLogin(email, "WrongPassword1").andExpect {
             status { isTooManyRequests() }
             header { exists("Retry-After") }
+        }
+    }
+
+    @Test
+    fun `a percent-encoded path spends the budget of the path it routes to`() {
+        val email = "encoded-path@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email)
+
+        repeat(3) {
+            attemptLogin(email, "WrongPassword1").andExpect {
+                status { isForbidden() }
+            }
+        }
+
+        mockMvc.post(URI("/%6Cogin")) {
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString<Credential>(
+                Credential.UsernamePassword(username = email, password = "WrongPassword1")
+            )
+        }.andExpect {
+            status { isTooManyRequests() }
         }
     }
 

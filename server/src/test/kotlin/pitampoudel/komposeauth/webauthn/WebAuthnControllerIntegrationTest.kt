@@ -1,6 +1,8 @@
 package pitampoudel.komposeauth.webauthn
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -20,6 +22,7 @@ import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.user.repository.UserRepository
+import kotlin.test.assertTrue
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -62,19 +65,32 @@ class WebAuthnControllerIntegrationTest {
         }
     }
 
-//    @Test
-//    fun `get webauthn register options succeeds for authenticated user`() {
-//        val (_, cookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, "webauthn-admin@example.com")
-//
-//        mockMvc.post("/webauthn/register/options") {
-//            accept = MediaType.APPLICATION_JSON
-//            cookie(cookie)
-//        }.andExpect {
-//            status { isOk() }
-//            content {
-//                jsonPath("$.challenge") { exists() }
-//                jsonPath("$.rp") { exists() }
-//            }
-//        }
-//    }
+    @Test
+    fun `login options carry the challenge as a base64url string`() {
+        val body = mockMvc.get("/${ApiEndpoints.LOGIN_OPTIONS}?platform=${Platform.ANDROID.name}") {
+            accept = MediaType.APPLICATION_JSON
+        }.andReturn().response.contentAsString
+
+        val optionsJson = json.parseToJsonElement(body).jsonObject["publicKeyAuthOptionsJson"]!!.jsonPrimitive.content
+        val challenge = json.parseToJsonElement(optionsJson).jsonObject["challenge"]!!.jsonPrimitive
+
+        assertTrue(challenge.isString, optionsJson)
+        assertTrue(Regex("[A-Za-z0-9_-]+").matches(challenge.content), optionsJson)
+    }
+
+    @Test
+    fun `get webauthn register options succeeds for authenticated user`() {
+        val (_, cookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, "webauthn-admin@example.com")
+
+        mockMvc.post("/webauthn/register/options") {
+            accept = MediaType.APPLICATION_JSON
+            cookie(cookie)
+        }.andExpect {
+            status { isOk() }
+            content {
+                jsonPath("$.challenge") { isString() }
+                jsonPath("$.rp.id") { isString() }
+            }
+        }
+    }
 }

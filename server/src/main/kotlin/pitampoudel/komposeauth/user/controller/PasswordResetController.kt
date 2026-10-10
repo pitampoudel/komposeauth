@@ -3,6 +3,7 @@ package pitampoudel.komposeauth.user.controller
 import io.swagger.v3.oas.annotations.Operation
 import org.apache.coyote.BadRequestException
 import org.slf4j.LoggerFactory
+import org.springframework.core.task.TaskExecutor
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -15,7 +16,7 @@ import jakarta.servlet.http.HttpServletRequest
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.utils.findServerUrl
+import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.RESET_PASSWORD
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
@@ -28,7 +29,9 @@ class PasswordResetController(
     private val userService: UserService,
     private val emailService: EmailService,
     private val oneTimeTokenService: OneTimeTokenService,
-    private val appConfigService: AppConfigService
+    private val appConfigService: AppConfigService,
+    private val serverUrl: ServerUrl,
+    private val taskExecutor: TaskExecutor
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -63,26 +66,30 @@ class PasswordResetController(
         val user = userService.findByUserName(email)
         val address = user?.email
         if (user != null && address != null) {
-            val link = oneTimeTokenService.generateResetPasswordLink(
-                userId = user.id,
-                baseUrl = findServerUrl(request)
-            )
-
-            val sent = emailService.sendHtmlMail(
-                baseUrl = findServerUrl(request),
-                to = address,
-                subject = "Reset Your Password",
-                template = "email/generic",
-                model = mapOf(
-                    "recipientName" to user.firstNameOrUser(),
-                    "message" to "Click the button below to reset your password.",
-                    "actionUrl" to link,
-                    "actionText" to "Reset Password"
-                )
-            )
-            // Can't be reported to the caller without giving the account away, so it has to
-            // surface in the logs instead of the response.
-            if (!sent) log.error("Failed to send password reset email for user {}", user.id)
+            val baseUrl = serverUrl.of(request)
+            // Off the request thread, so an address with an account is answered as fast as one
+            // without. A failure can't be reported to the caller without giving the account away,
+            // so it has to surface in the logs instead of the response.
+            taskExecutor.execute {
+                try {
+                    val link = oneTimeTokenService.generateResetPasswordLink(userId = user.id, baseUrl = baseUrl)
+                    val sent = emailService.sendHtmlMail(
+                        baseUrl = baseUrl,
+                        to = address,
+                        subject = "Reset Your Password",
+                        template = "email/generic",
+                        model = mapOf(
+                            "recipientName" to user.firstNameOrUser(),
+                            "message" to "Click the button below to reset your password.",
+                            "actionUrl" to link,
+                            "actionText" to "Reset Password"
+                        )
+                    )
+                    if (!sent) log.error("Failed to send password reset email for user {}", user.id)
+                } catch (e: Exception) {
+                    log.error("Failed to send password reset email for user {}", user.id, e)
+                }
+            }
         }
 
         return ResponseEntity.ok(

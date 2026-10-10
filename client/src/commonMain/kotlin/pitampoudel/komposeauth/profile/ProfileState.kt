@@ -13,7 +13,6 @@ data class ProfileState(
     val infoMsg: InfoMessage? = null,
     val profile: ProfileResponse? = null,
     val editingState: EditingState = EditingState(),
-    val webAuthnRegistrationOptions: String? = null,
     val organizationsRes: Result<List<OrganizationResponse>>? = null
 ) {
     data class EditingState(

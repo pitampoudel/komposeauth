@@ -63,6 +63,19 @@ docker run -p 80:8080 \
   curl -H "X-Master-Key: <paste-your-base64-key>" http://localhost/admin/config
   ```
 
+#### Tell the server its public address
+
+```bash
+-e SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER="https://auth.example.com"
+```
+
+This is the issuer your apps validate (`iss`, and the discovery document's `issuer`), and it is also
+the address every emailed link (password reset, email verification) and the KYC callback point at.
+Write it exactly as your apps check it, with no trailing slash. Left unset, the server reads it off
+each request's `Host` and `X-Forwarded-*` headers, which the caller writes, so a reset link could be
+made to point anywhere; the server logs a warning at startup when it is unset. Leave it unset only for
+local development.
+
 #### Tell the server how it is reached
 
 The abuse limits count per client address, and the server can only work out which address that is if
@@ -125,7 +138,7 @@ carry `http://` links.
 ```bash
 gcloud run deploy komposeauth \
   --image pitampoudel/komposeauth:latest \
-  --set-env-vars MONGODB_URI="mongodb+srv://...",BASE64_ENCRYPTION_KEY="<your-base64-key>",TRUSTED_PROXY_COUNT=1 \
+  --set-env-vars MONGODB_URI="mongodb+srv://...",BASE64_ENCRYPTION_KEY="<your-base64-key>",TRUSTED_PROXY_COUNT=1,SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER="https://auth.example.com" \
   --min-instances 0 \
   --concurrency 40 \
   --cpu 1 --memory 1Gi \
@@ -206,7 +219,7 @@ Utilities
 Current user
 
 ```kotlin
-val userState = rememberCurrentUser()
+val userState = rememberAuthenticatedUser()
 ```
 
 Login with Credential Manager

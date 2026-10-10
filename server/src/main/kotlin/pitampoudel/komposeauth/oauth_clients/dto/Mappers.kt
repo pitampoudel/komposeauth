@@ -55,22 +55,22 @@ fun OAuth2Client.toRegisteredClient(): RegisteredClient {
 
 fun CreateClientRequest.toEntity(): OAuth2Client {
     val id = clientId?.let { ObjectId(it) } ?: ObjectId()
-    val secret = clientSecret ?: (UUID.randomUUID().toString().replace("-", "") +
+    val secret = if (publicClient) null else clientSecret ?: (UUID.randomUUID().toString().replace("-", "") +
             UUID.randomUUID().toString().replace("-", ""))
 
     return OAuth2Client(
         clientId = id.toHexString(),
         clientSecret = secret,
         clientName = clientName,
-        clientAuthenticationMethods = setOf(
-            ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
-            ClientAuthenticationMethod.CLIENT_SECRET_POST,
-            ClientAuthenticationMethod.NONE
-        ),
-        authorizationGrantTypes = setOf(
+        clientAuthenticationMethods = if (publicClient) {
+            setOf(ClientAuthenticationMethod.NONE)
+        } else {
+            setOf(ClientAuthenticationMethod.CLIENT_SECRET_BASIC, ClientAuthenticationMethod.CLIENT_SECRET_POST)
+        },
+        authorizationGrantTypes = setOfNotNull(
             AuthorizationGrantType.AUTHORIZATION_CODE,
             AuthorizationGrantType.REFRESH_TOKEN,
-            AuthorizationGrantType.CLIENT_CREDENTIALS
+            AuthorizationGrantType.CLIENT_CREDENTIALS.takeUnless { publicClient }
         ),
         redirectUris = redirectUris,
         clientUri = clientUri,

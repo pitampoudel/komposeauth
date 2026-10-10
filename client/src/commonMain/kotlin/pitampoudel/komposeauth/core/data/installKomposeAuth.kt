@@ -9,11 +9,15 @@ import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import io.ktor.client.plugins.cookies.CookiesStorage
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.Cookie
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
@@ -27,9 +31,7 @@ import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.login.domain.AuthPreferences
 import pitampoudel.komposeauth.core.domain.Config
-import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.ResponseType
-import pitampoudel.komposeauth.core.domain.currentPlatform
 import pitampoudel.komposeauth.user.data.Credential
 
 internal fun HttpClientConfig<*>.installKomposeAuth(
@@ -59,18 +61,11 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
     authPreferences: AuthPreferences,
     resourceServerUrls: List<String>
 ) {
-    // Only the web target signs in with the access-token cookie (`LoginUser` is the only caller
-    // that ever passes `ResponseType.COOKIE`); every other platform authenticates purely with the
-    // bearer token in `Authorization`. Installing the cookie jar unconditionally used to make a
-    // native client pick up and resend *any* cookie the server set — including the session cookie
-    // `/login-options` creates to hold the WebAuthn challenge, which has nothing to do with
-    // authentication. Once that was in the jar, every later bearer-authenticated write (send-otp,
-    // verify-otp, update-profile, ...) stopped qualifying as a header-only bearer request on the
-    // server, which then demands a CSRF token this client never fetches — a permanent 403 for the
-    // rest of the app's lifetime. Native platforms have no legitimate use for any cookie, so they
-    // simply don't keep one.
-    if (currentPlatform() == Platform.WEB) {
-        install(HttpCookies)
+    // Passkey sign-in needs the auth server's session cookie on every platform: `/login-options`
+    // keeps the WebAuthn challenge in that session and `/login` reads it back. The bearer token is
+    // still the credential, so the jar holds the auth server's cookies and no other host's.
+    install(HttpCookies) {
+        storage = AuthServerCookies()
     }
     install(ContentNegotiation) {
         json(
@@ -86,6 +81,12 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
         contentType(ContentType.Application.Json)
     }
     install(Auth) {
+        // The token goes only to the servers it is for; any other host this client calls, by name
+        // or by address, must not receive it, neither on the first send nor on the retry after a 401.
+        reAuthorizeOnResponse { response ->
+            response.status == HttpStatusCode.Unauthorized &&
+                response.call.request.url.host in tokenHosts(resourceServerUrls)
+        }
         bearer {
             loadTokens {
                 val tokenData = authPreferences.tokenData() ?: return@loadTokens null
@@ -105,15 +106,14 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
                 val authServerUrl = Config.authServerUrl ?: return@refreshTokens null
                 refresh(client.engine, authServerUrl, refreshToken, authPreferences)
             }
-            // The token goes only to the servers it is for; any other host this client calls, by
-            // name or by address, must not receive it.
-            sendWithoutRequest { builder ->
-                val authServerUrl = Config.authServerUrl ?: return@sendWithoutRequest false
-                val hosts = (resourceServerUrls + authServerUrl).map { Url(it).host }.toSet()
-                builder.url.host in hosts
-            }
+            sendWithoutRequest { builder -> builder.url.host in tokenHosts(resourceServerUrls) }
         }
     }
+}
+
+private fun tokenHosts(resourceServerUrls: List<String>): Set<String> {
+    val authServerUrl = Config.authServerUrl ?: return emptySet()
+    return (resourceServerUrls + authServerUrl).map { Url(it).host }.toSet()
 }
 
 private suspend fun refresh(
@@ -169,3 +169,17 @@ private suspend fun refresh(
 }
 
 private val REFUSED_REFRESH = setOf(400, 401, 403)
+
+private class AuthServerCookies(
+    private val delegate: CookiesStorage = AcceptAllCookiesStorage()
+) : CookiesStorage by delegate {
+    private fun isAuthServer(url: Url): Boolean =
+        Config.authServerUrl?.let { Url(it).host == url.host } ?: false
+
+    override suspend fun get(requestUrl: Url): List<Cookie> =
+        if (isAuthServer(requestUrl)) delegate.get(requestUrl) else emptyList()
+
+    override suspend fun addCookie(requestUrl: Url, cookie: Cookie) {
+        if (isAuthServer(requestUrl)) delegate.addCookie(requestUrl, cookie)
+    }
+}
