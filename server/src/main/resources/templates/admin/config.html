@@ -52,7 +52,8 @@
     </div>
     <div th:if="${error != null}" class="alert alert-error" role="alert" style="margin-top: 24px;" th:text="${error}"></div>
 
-    <form method="post">
+    <form method="post" action="/admin/config">
+        <input th:if="${masterKey != null}" type="hidden" name="key" th:value="${masterKey}"/>
         <div th:each="group : ${fieldGroups}" class="field-group">
             <h2 th:if="${group.title != null}" class="field-group-title" th:text="${group.title}"></h2>
 

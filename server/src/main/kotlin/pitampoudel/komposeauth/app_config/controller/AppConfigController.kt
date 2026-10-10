@@ -9,7 +9,6 @@ import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestParam
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.app_config.service.MasterKeyValidator
@@ -157,14 +156,12 @@ class AppConfigController(
     )
     fun form(
         model: Model,
-        @RequestParam("key", required = false)
-        key: String?,
         request: HttpServletRequest,
         response: HttpServletResponse
     ): String {
-        enforceConfigAccessOrRedirect(key = key, request = request)?.let { return it }
-        val config = appConfigProvider.get()
         noStore(response)
+        enforceConfigAccessOrLock(model = model, request = request, response = response)?.let { return it }
+        val config = appConfigProvider.get()
         adminShell.apply(model)
         model.addAttribute("config", config)
         model.addAttribute("fieldGroups", fieldGroups(config))
@@ -173,15 +170,23 @@ class AppConfigController(
 
     @PostMapping("/admin/config")
     fun submit(
-        @RequestParam("key", required = false) key: String?,
         @ModelAttribute form: AppConfig,
         model: Model,
         request: HttpServletRequest,
         response: HttpServletResponse
     ): String {
-        enforceConfigAccessOrRedirect(key = key, request = request)?.let { return it }
+        noStore(response)
+        enforceConfigAccessOrLock(model = model, request = request, response = response)?.let { return it }
+        // Carried in the form so the next save is let in the way this request was.
+        model.addAttribute("masterKey", postedKey(request)?.takeIf(masterKeyValidator::isValid))
+        if (request.getParameter(UNLOCK_PARAM) != null) {
+            val config = appConfigProvider.get()
+            adminShell.apply(model)
+            model.addAttribute("config", config)
+            model.addAttribute("fieldGroups", fieldGroups(config))
+            return "admin/config"
+        }
         (storageChoiceProblem(form) ?: phoneRegionProblem(form))?.let { problem ->
-            noStore(response)
             adminShell.apply(model)
             model.addAttribute("config", form)
             model.addAttribute("fieldGroups", fieldGroups(form))
@@ -189,7 +194,6 @@ class AppConfigController(
             return "admin/config"
         }
         val config = appConfigProvider.save(form)
-        noStore(response)
         adminShell.apply(model)
         model.addAttribute("config", config)
         model.addAttribute("fieldGroups", fieldGroups(config))
@@ -219,24 +223,24 @@ class AppConfigController(
      * This page renders every secret the server holds; keep it out of caches and history.
      *
      * No `Referrer-Policy: no-referrer` here: it makes the browser send `Origin: null` with the
-     * page's own form post, which reads as a foreign origin. The site-wide
-     * `strict-origin-when-cross-origin` already keeps the `?key=` query off other sites.
+     * page's own form post, which reads as a foreign origin.
      */
     private fun noStore(response: HttpServletResponse) {
         response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private")
         response.setHeader("Pragma", "no-cache")
     }
 
-    private fun enforceConfigAccessOrRedirect(key: String?, request: HttpServletRequest): String? {
+    private fun enforceConfigAccessOrLock(
+        model: Model,
+        request: HttpServletRequest,
+        response: HttpServletResponse
+    ): String? {
         // There is deliberately no "no users yet, let anyone in" bootstrap here. This page reads and
         // writes every secret the server holds — SMTP password, Twilio token, Google client secret —
         // so opening it to the internet for the window between deploy and first signup hands a fresh
         // instance to whoever finds it first. The operator already has BASE64_ENCRYPTION_KEY, which
         // is required to boot, so the master key below is always available to them for first-run.
-        //
-        // The key may also arrive as a header, so operators aren't forced to put it in a URL where
-        // it lands in access logs, proxy logs and browser history.
-        val suppliedKey = key ?: request.getHeader(MASTER_KEY_HEADER)
+        val suppliedKey = request.getHeader(MASTER_KEY_HEADER) ?: postedKey(request)
         if (masterKeyValidator.isValid(suppliedKey)) {
             return null
         }
@@ -247,11 +251,27 @@ class AppConfigController(
             }
             return null
         }
-        // `/login` is the JSON login API, not a page; the browser sign-in page is /session-login.
-        return "redirect:/session-login"
+        if (suppliedKey != null) response.status = HttpServletResponse.SC_FORBIDDEN
+        model.addAttribute("appName", appConfigProvider.get().name.orEmpty())
+        model.addAttribute("keyRejected", suppliedKey != null)
+        model.addAttribute("keyInAddress", request.queryString != null && request.getParameter(KEY_PARAM) != null)
+        return "admin/config-locked"
     }
+
+    /**
+     * The key typed into this page's own form. Never one from the address, where it lands in
+     * access logs, proxy logs, browser history and the Referer of whatever the page loads — and
+     * since the servlet API hands back a posted field and a query parameter of the same name
+     * alike, a request whose URL carries a query can't supply the key as a parameter at all.
+     */
+    private fun postedKey(request: HttpServletRequest): String? =
+        request.takeIf { it.method == "POST" && it.queryString == null }?.getParameter(KEY_PARAM)
 
     companion object {
         const val MASTER_KEY_HEADER = "X-Master-Key"
+        private const val KEY_PARAM = "key"
+
+        /** Sent by the locked page: show the form for the key it carries, rather than save it. */
+        private const val UNLOCK_PARAM = "unlock"
     }
 }

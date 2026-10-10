@@ -137,6 +137,32 @@ class TemplateRenderingTest {
 
         assertContains(html, "Save configuration")
         assertContains(html, "Configuration saved.")
+        assertFalse(html.contains("name=\"key\""), "no key was posted, so none is carried forward")
+    }
+
+    @Test
+    fun `configuration carries a posted master key in the form, not the address`() {
+        val html = engine.process(
+            "admin/config",
+            consoleContext("fieldGroups" to emptyList<Any>(), "masterKey" to "a+b/c=")
+        )
+
+        assertContains(html, """<form method="post" action="/admin/config">""")
+        assertContains(html, """name="key" value="a+b/c="""")
+    }
+
+    @Test
+    fun `locked configuration asks for the key in a posted form`() {
+        val html = engine.process(
+            "admin/config-locked",
+            brandingContext("keyRejected" to true, "keyInAddress" to true)
+        )
+
+        assertContains(html, """<form method="post" action="/admin/config">""")
+        assertContains(html, """name="key" type="password"""")
+        assertContains(html, "That is not the master key.")
+        assertContains(html, "not read from the address")
+        assertFalse(html.contains("Save configuration"))
     }
 
     @Test
