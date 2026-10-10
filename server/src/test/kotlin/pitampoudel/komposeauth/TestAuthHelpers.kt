@@ -63,7 +63,8 @@ object TestAuthHelpers {
     }
 
     /**
-     * Creates an ADMIN user (via API) and grants ADMIN role directly in the DB.
+     * Creates a user (via API) and grants [role] directly in the DB — ADMIN unless told otherwise;
+     * registering an OAuth client takes SUPER_ADMIN.
      * Returns the created user id + an authenticated cookie for that user.
      */
     fun createAdminAndLogin(
@@ -71,14 +72,15 @@ object TestAuthHelpers {
         json: Json,
         userRepository: UserRepository,
         email: String,
-        password: String = "Password1"
+        password: String = "Password1",
+        role: String = "ADMIN"
     ): Pair<String, Cookie> {
         val userId = createUser(mockMvc, json, email, password)
 
         val objId = ObjectId(userId)
         val user = userRepository.findById(objId).orElseThrow()
-        if (!user.roles.contains("ADMIN")) {
-            userRepository.save(user.copy(roles = user.roles + "ADMIN"))
+        if (!user.roles.contains(role)) {
+            userRepository.save(user.copy(roles = user.roles + role))
         }
 
         val cookie = loginCookie(mockMvc, json, email, password)

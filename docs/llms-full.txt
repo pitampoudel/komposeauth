@@ -69,12 +69,13 @@ equals the URL the client used. Then:
 
 ### 2.3 Registering an OAuth client (needed for approach A)
 
-An administrator registers clients, either on the admin console at `https://auth.example.com/admin/clients`, or
-through the API with an ADMIN token:
+A super admin registers clients, either on the admin console at `https://auth.example.com/admin/clients`, or
+through the API with a SUPER_ADMIN token. An ADMIN can list them but not create, change or delete one: saving
+over a client without its secret issues a new one, and the app holding the old one stops signing anybody in.
 
 ```http
 POST /oauth2/clients
-Authorization: Bearer <admin access token>
+Authorization: Bearer <super admin access token>
 Content-Type: application/json
 
 {
@@ -758,7 +759,8 @@ stated. Admin-only endpoints accept `ADMIN` or `SUPER_ADMIN`.
 | `PATCH /users`, `POST /users/{id}/deactivate`, `DELETE /users/{id}` | admin or `user.write.any` | Manage users |
 | `GET /roles`, `POST|DELETE /users/{id}/roles/{role}` | admin; super admin for a super admin role | Roles |
 | `GET /kyc/pending`, `POST /kyc/{id}/approve`, `POST /kyc/{id}/reject` | admin | Review KYC |
-| `GET|POST|DELETE /oauth2/clients` | admin | OAuth clients |
+| `GET /oauth2/clients` | admin | OAuth clients |
+| `POST|DELETE /oauth2/clients` | super admin | Register, update or delete an OAuth client |
 | `GET /countries.json` | public | Country list for phone pickers |
 | `GET /actuator/health/readiness` | public | Health probe |
 

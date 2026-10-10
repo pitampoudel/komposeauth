@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
 import pitampoudel.komposeauth.user.repository.UserRepository
 
@@ -36,12 +37,13 @@ class Oauth2ClientsControllerIntegrationTest {
     private lateinit var userRepository: UserRepository
 
     @Test
-    fun `admin can create update delete and list oauth2 clients`() {
+    fun `super admin can create update delete and list oauth2 clients`() {
         val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(
             mockMvc,
             json,
             userRepository,
-            "oauth-admin@example.com"
+            "oauth-admin@example.com",
+            role = Roles.SUPER_ADMIN
         )
 
         val createRequest = CreateClientRequest(

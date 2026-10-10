@@ -34,11 +34,14 @@ class Oauth2ClientsController(
         )
     }
 
+    // Writes are a SUPER_ADMIN's: saving over a client without its secret issues a new one, and the
+    // app still holding the old one stops signing anybody in.
     @Operation(
         summary = "Save OAuth2 client",
-        description = "Registers a new OAuth2 client or updates existing"
+        description = "Registers a new OAuth2 client or updates existing. Requires SUPER_ADMIN."
     )
     @PostMapping
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     fun createClient(@RequestBody request: CreateClientRequest): ResponseEntity<OAuth2ClientResponse> {
         if (request.publicClient && request.clientSecret != null) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "A public app has no client secret")
@@ -50,9 +53,10 @@ class Oauth2ClientsController(
 
     @Operation(
         summary = "Delete OAuth2 client",
-        description = "Deletes a registered OAuth2 client."
+        description = "Deletes a registered OAuth2 client. Requires SUPER_ADMIN."
     )
     @DeleteMapping("/{clientId}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     fun deleteClient(@PathVariable clientId: String): ResponseEntity<MessageResponse> {
         if (!oauth2ClientRepository.existsById(clientId)) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "OAuth2 client not found")

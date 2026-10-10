@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
 import pitampoudel.komposeauth.user.repository.UserRepository
 import java.net.URI
@@ -55,7 +56,7 @@ class PublicClientRefreshTokenIntegrationTest {
         adminEmail: String = "spa-admin@example.com",
         publicClient: Boolean = true
     ): Map<String, String> {
-        val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, adminEmail)
+        val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, adminEmail, role = Roles.SUPER_ADMIN)
         val result = mockMvc.post("/${ApiEndpoints.OAUTH2_CLIENTS}") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
