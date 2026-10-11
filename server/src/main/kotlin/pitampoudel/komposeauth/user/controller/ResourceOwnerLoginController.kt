@@ -14,7 +14,6 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
-import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
@@ -45,7 +44,6 @@ class ResourceOwnerLoginController(
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
     val appConfigService: AppConfigService,
-    private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
     private val jwtEncoder: JwtEncoder,
     private val securityContextRepository: HttpSessionSecurityContextRepository,
     private val serverUrl: ServerUrl
@@ -64,14 +62,7 @@ class ResourceOwnerLoginController(
         httpServletRequest: HttpServletRequest,
         httpServletResponse: HttpServletResponse,
     ): ResponseEntity<*> {
-        val user = userService.resolveUserFromCredential(
-            request = request,
-            loadPublicKeyCredentialRequestOptions = {
-                val options = requestOptionsRepository.load(httpServletRequest)
-                requestOptionsRepository.save(httpServletRequest, httpServletResponse, null)
-                options
-            }
-        )
+        val user = userService.resolveUserFromCredential(request)
         val now = Instant.now()
         val scopes = listOf("openid", "profile", "email")
         val builder = JwtClaimsSet.builder()

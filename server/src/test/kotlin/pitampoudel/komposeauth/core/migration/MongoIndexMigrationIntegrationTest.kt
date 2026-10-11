@@ -77,6 +77,11 @@ class MongoIndexMigrationIntegrationTest {
         val rateLimitTtl = mongoTemplate.indexOps("rate_limits").indexInfo
             .any { it.expireAfter.isPresent }
         assertTrue(rateLimitTtl, "rate_limits lost its TTL index")
+
+        // Never read through a repository, so only the entity scan puts it in front of the migration.
+        val passkeyChallengeTtl = mongoTemplate.indexOps("webauthn_challenges").indexInfo
+            .any { it.expireAfter.isPresent }
+        assertTrue(passkeyChallengeTtl, "webauthn_challenges lost its TTL index")
     }
 
     @Test

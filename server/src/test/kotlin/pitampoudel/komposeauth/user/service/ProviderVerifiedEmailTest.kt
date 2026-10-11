@@ -66,8 +66,7 @@ class ProviderVerifiedEmailTest {
         organizationRepository = mock(),
         oneTimeTokenRepository = mock(),
         storageService = mock(),
-        objectMapper = mock(),
-        webAuthnRelyingPartyOperations = mock(),
+        passkeys = mock(),
         roleChangeEmailNotifier = mock(),
         emailVerificationService = mock(),
         appleTokenValidator = appleTokenValidator,
@@ -111,7 +110,7 @@ class ProviderVerifiedEmailTest {
         )
 
         val user = service(repo, revocation, apple)
-            .resolveUserFromCredential(Credential.AppleId("apple-id-token")) { null }
+            .resolveUserFromCredential(Credential.AppleId("apple-id-token"))
 
         assertTrue(user.emailVerified)
         assertNull(user.passwordHash)

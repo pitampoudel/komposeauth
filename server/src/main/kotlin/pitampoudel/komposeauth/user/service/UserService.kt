@@ -1,7 +1,5 @@
 package pitampoudel.komposeauth.user.service
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -15,11 +13,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.web.webauthn.api.AuthenticatorAssertionResponse
-import org.springframework.security.web.webauthn.api.PublicKeyCredential
-import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions
-import org.springframework.security.web.webauthn.management.RelyingPartyAuthenticationRequest
-import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
@@ -51,6 +44,7 @@ import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import pitampoudel.komposeauth.webauthn.repository.PublicKeyCredentialRepository
 import pitampoudel.komposeauth.webauthn.repository.PublicKeyUserRepository
+import pitampoudel.komposeauth.webauthn.service.PasskeyService
 import java.net.URI
 import java.net.URLEncoder
 import java.net.http.HttpClient
@@ -76,8 +70,7 @@ class UserService(
     private val organizationRepository: OrganizationRepository,
     private val oneTimeTokenRepository: OneTimeTokenRepository,
     val storageService: StorageService,
-    private val objectMapper: ObjectMapper,
-    private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
+    private val passkeys: PasskeyService,
     private val roleChangeEmailNotifier: RoleChangeEmailNotifier,
     private val emailVerificationService: EmailVerificationService,
     private val appleTokenValidator: AppleTokenValidator,
@@ -557,10 +550,7 @@ class UserService(
         return claimed
     }
 
-    fun resolveUserFromCredential(
-        request: Credential,
-        loadPublicKeyCredentialRequestOptions: () -> PublicKeyCredentialRequestOptions?
-    ): User {
+    fun resolveUserFromCredential(request: Credential): User {
         val user = when (request) {
             is Credential.UsernamePassword -> userRepository
                 .findByLoginName(request.username, request.countryNameCode ?: appConfigService.defaultPhoneRegion())
@@ -583,25 +573,7 @@ class UserService(
             }
 
             is Credential.AppleId -> findOrCreateUserByAppleIdToken(request.idToken)
-            is Credential.PublicKey -> {
-                val json = objectMapper.readValue(
-                    request.authenticationResponseJson,
-                    object :
-                        TypeReference<PublicKeyCredential<AuthenticatorAssertionResponse>>() {}
-                )
-                val requestOptions = loadPublicKeyCredentialRequestOptions()
-                val publicKeyUser = requestOptions?.let {
-                    webAuthnRelyingPartyOperations.authenticate(
-                        RelyingPartyAuthenticationRequest(
-                            requestOptions,
-                            json
-                        )
-                    )
-                }
-                publicKeyUser?.let {
-                    findByUserName(publicKeyUser.name)
-                }
-            }
+            is Credential.PublicKey -> passkeys.signIn(request.authenticationResponseJson)
 
             is Credential.OTP -> {
                 resolveOtpLogin(request.username, request.otp)

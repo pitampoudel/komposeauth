@@ -1,13 +1,9 @@
 package pitampoudel.komposeauth.webauthn.config
 
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
 import org.bson.types.ObjectId
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.web.webauthn.api.*
-import org.springframework.security.web.webauthn.authentication.HttpSessionPublicKeyCredentialRequestOptionsRepository
-import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
 import org.springframework.security.web.webauthn.management.PublicKeyCredentialCreationOptionsRequest
 import org.springframework.security.web.webauthn.management.PublicKeyCredentialRequestOptionsRequest
 import org.springframework.security.web.webauthn.management.PublicKeyCredentialUserEntityRepository
@@ -16,7 +12,6 @@ import org.springframework.security.web.webauthn.management.RelyingPartyRegistra
 import org.springframework.security.web.webauthn.management.UserCredentialRepository
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations
-import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository
 import org.springframework.stereotype.Repository
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.user.repository.UserRepository
@@ -24,86 +19,11 @@ import pitampoudel.komposeauth.webauthn.entity.PublicKeyCredential
 import pitampoudel.komposeauth.webauthn.entity.PublicKeyUser
 import pitampoudel.komposeauth.webauthn.repository.PublicKeyCredentialRepository
 import pitampoudel.komposeauth.webauthn.repository.PublicKeyUserRepository
-import java.io.Serializable
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.jvm.optionals.getOrNull
-
-/**
- * Keeps the registration options in the session as their serializable parts. Spring's own session
- * repository stores the options object itself, which is not [Serializable], and the session store
- * serializes every attribute.
- */
-private class SessionCreationOptionsRepository : PublicKeyCredentialCreationOptionsRepository {
-    override fun save(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-        options: PublicKeyCredentialCreationOptions?
-    ) {
-        if (options == null) {
-            request.getSession(false)?.removeAttribute(ATTR)
-            return
-        }
-        request.getSession(true).setAttribute(ATTR, StoredCreationOptions(options))
-    }
-
-    override fun load(request: HttpServletRequest): PublicKeyCredentialCreationOptions? =
-        (request.getSession(false)?.getAttribute(ATTR) as? StoredCreationOptions)?.toOptions()
-
-    private class StoredCreationOptions(options: PublicKeyCredentialCreationOptions) : Serializable {
-        private val rpId = options.rp.id
-        private val rpName = options.rp.name
-        private val user: PublicKeyCredentialUserEntity = ImmutablePublicKeyCredentialUserEntity.builder()
-            .id(options.user.id).name(options.user.name)
-            .apply { options.user.displayName?.let { displayName(it) } }
-            .build()
-        private val challenge = options.challenge
-        private val algorithms = options.pubKeyCredParams.map { it.alg.value }
-        private val timeout = options.timeout
-        private val excludeCredentials = options.excludeCredentials?.let(::ArrayList)
-        private val authenticatorAttachment = options.authenticatorSelection?.authenticatorAttachment
-        private val residentKey = options.authenticatorSelection?.residentKey?.value
-        private val userVerification = options.authenticatorSelection?.userVerification
-        private val hasAuthenticatorSelection = options.authenticatorSelection != null
-        private val attestation = options.attestation?.value
-        private val extensions = options.extensions
-
-        fun toOptions(): PublicKeyCredentialCreationOptions = PublicKeyCredentialCreationOptions.builder()
-            .rp(PublicKeyCredentialRpEntity.builder().id(rpId).name(rpName).build())
-            .user(user)
-            .challenge(challenge)
-            .pubKeyCredParams(algorithms.map { alg -> PARAMETERS.single { it.alg.value == alg } })
-            .apply {
-                timeout?.let { timeout(it) }
-                excludeCredentials?.let { excludeCredentials(it) }
-                if (hasAuthenticatorSelection) authenticatorSelection(
-                    AuthenticatorSelectionCriteria.builder().apply {
-                        authenticatorAttachment?.let { authenticatorAttachment(it) }
-                        residentKey?.let { residentKey(ResidentKeyRequirement.valueOf(it)) }
-                        userVerification?.let { userVerification(it) }
-                    }.build()
-                )
-                attestation?.let { attestation(AttestationConveyancePreference.valueOf(it)) }
-                extensions?.let { extensions(it) }
-            }
-            .build()
-    }
-
-    private companion object {
-        const val ATTR = "WEBAUTHN_CREATION_OPTIONS"
-        val PARAMETERS = listOf(
-            PublicKeyCredentialParameters.EdDSA,
-            PublicKeyCredentialParameters.ES256,
-            PublicKeyCredentialParameters.ES384,
-            PublicKeyCredentialParameters.ES512,
-            PublicKeyCredentialParameters.RS256,
-            PublicKeyCredentialParameters.RS384,
-            PublicKeyCredentialParameters.RS512,
-            PublicKeyCredentialParameters.RS1
-        )
-    }
-}
 
 private fun stableWebAuthnUserHandle(userId: ObjectId): Bytes {
     // 32 bytes, stable. Purpose-separated so it doesn't collide with other hashes.
@@ -123,8 +43,10 @@ class UserCredentialRepositoryImpl(
     }
 
     override fun save(credentialRecord: CredentialRecord) {
-        // Best-effort denormalization: map userHandle -> userId.
-        val publicKeyUser = publicKeyUserRepository.findByUserHandle(credentialRecord.userEntityUserId) ?: return
+        // Saved silently as nothing, a passkey whose handle maps to no account looked registered and
+        // could never sign anybody in.
+        val publicKeyUser = publicKeyUserRepository.findByUserHandle(credentialRecord.userEntityUserId)
+            ?: throw IllegalStateException("No account holds the passkey's user handle")
         val userId = publicKeyUser.userId
 
         repository.save(
@@ -142,6 +64,7 @@ class UserCredentialRepositoryImpl(
                 backupState = credentialRecord.isBackupState,
                 uvInitialized = credentialRecord.isUvInitialized,
                 credentialType = credentialRecord.credentialType,
+                createdAt = credentialRecord.created ?: Instant.now(),
                 lastUsedAt = credentialRecord.lastUsed
             )
         )
@@ -163,24 +86,37 @@ class PublicKeyCredentialUserEntityRepositoryImpl(
     private val repository: PublicKeyUserRepository
 ) : PublicKeyCredentialUserEntityRepository {
     override fun findById(id: Bytes): PublicKeyCredentialUserEntity? {
-        return repository.findByUserHandle(id)
+        return repository.findByUserHandle(id)?.asUserEntity()
     }
 
     override fun findByUsername(username: String): PublicKeyCredentialUserEntity? {
-        var record = repository.findByName(username)
-        if (record == null) {
-            val user = userRepository.findByUserName(username) ?: return null
-            record = PublicKeyUser(
+        repository.findByName(username)?.let { return it.asUserEntity() }
+        val user = userRepository.findByUserName(username) ?: return null
+        // By account rather than by name: the same account reached under another of its names
+        // (its id, its email) already has a handle, and a second record would collide with it.
+        repository.findByUserId(user.id)?.let { return it.asUserEntity() }
+        return repository.save(
+            PublicKeyUser(
                 userId = user.id,
                 userHandle = stableWebAuthnUserHandle(user.id),
                 name = username,
                 displayName = user.fullName,
                 id = ObjectId()
             )
-            repository.save(record)
-        }
-        return record
+        ).asUserEntity()
     }
+
+    /**
+     * What goes into the options a client is handed. The stored record also has an `id` of its own,
+     * its ObjectId, which is what the client was sent as `user.id` in place of the handle; and the
+     * WebAuthn API refuses a user without a `displayName`, though an empty one is allowed.
+     */
+    private fun PublicKeyUser.asUserEntity(): PublicKeyCredentialUserEntity =
+        ImmutablePublicKeyCredentialUserEntity.builder()
+            .id(userHandle)
+            .name(name)
+            .displayName(displayName.orEmpty())
+            .build()
 
     override fun save(userEntity: PublicKeyCredentialUserEntity) {
         // This repository is only used by the WebAuthn flow; we still enforce that the username maps to a real user.
@@ -207,14 +143,6 @@ class PublicKeyCredentialUserEntityRepositoryImpl(
 class WebAuthnConfig(
     private val appConfigService: AppConfigService
 ) {
-    @Bean
-    fun requestOptionsRepository(): PublicKeyCredentialRequestOptionsRepository =
-        HttpSessionPublicKeyCredentialRequestOptionsRepository()
-
-    @Bean
-    fun publicKeyCredentialCreationOptionsRepository(): PublicKeyCredentialCreationOptionsRepository =
-        SessionCreationOptionsRepository()
-
     @Bean
     fun relyingPartyOperations(
         userCredentialRepository: UserCredentialRepository,

@@ -400,12 +400,18 @@ Branch on `code`, not on `detail`. A replaced email address is told at that addr
 the account's verified email address, if it has one. An address or number that belongs to another account is
 refused with `403` and no `code`.
 
-Passkey sign-in: `GET /login-options?platform=WEB` returns `{"googleClientId", "publicKeyAuthOptionsJson"}` and
-stores the WebAuthn challenge in a session cookie. Pass `publicKeyAuthOptionsJson` to
-`navigator.credentials.get()`, then post the serialized result as
-`{"type":"PUBLIC_KEY","authenticationResponseJson":"..."}` to `/login` **with the same cookie**
-(`credentials: "include"`). Registering a passkey for a signed-in user: `POST /webauthn/register/options`, then
-`POST /webauthn/register` with `{"publicKey": ...}`.
+Passkey sign-in: `GET /login-options?platform=WEB` returns `{"googleClientId", "publicKeyAuthOptionsJson"}`. Pass
+`publicKeyAuthOptionsJson` to `navigator.credentials.get()` (or the platform's passkey API), then post the
+serialized result as `{"type":"PUBLIC_KEY","authenticationResponseJson":"..."}` to `/login`. No cookie is needed:
+the server keeps the options it handed out and finds them again by the challenge inside the signed answer. Each set
+of options answers once and lapses after its `timeout` (milliseconds); fetch new ones for every attempt.
+
+Registering a passkey for a signed-in user: `POST /webauthn/register/options` returns
+`PublicKeyCredentialCreationOptions` JSON for `navigator.credentials.create()`; then `POST /webauthn/register` with
+`{"publicKey":{"credential":<the created credential, serialized>,"label":"<a name the user will recognise>"}}`,
+which answers `{"message":"Passkey added"}`. Options issued to one account cannot add a passkey to another. A passkey
+answer is accepted from the configured CORS origins, an allowed Android signing key, and `https://<rpId>`, which is
+the origin an iOS app's passkey reports.
 
 Logout: `POST /logout` clears the cookie and the server session; a `GET` does not, so another site cannot sign the
 user out with a link or an image. Bearer-token apps delete their stored tokens and send the refresh token as
