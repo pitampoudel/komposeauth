@@ -12,6 +12,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.web.servlet.MockHttpServletRequestDsl
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.get
@@ -21,6 +22,7 @@ import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.authorization.MongoOAuth2AuthorizationService
 import pitampoudel.komposeauth.authorization.OAuth2AuthorizationDocumentRepository
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
 import pitampoudel.komposeauth.user.data.LogoutRequest
@@ -98,12 +100,12 @@ class PublicClientRefreshTokenIntegrationTest {
     }
 
     /** Signs in through the hosted login page and returns the authorization code. */
-    private fun authorize(clientId: String, email: String): String {
+    private fun authorize(clientId: String, email: String, scope: String? = "openid%20user.read.any"): String {
         val challenge = Base64.getUrlEncoder().withoutPadding().encodeToString(
             MessageDigest.getInstance("SHA-256").digest(codeVerifier.toByteArray())
         )
         var url: String? = "/oauth2/authorize?response_type=code&client_id=$clientId&redirect_uri=$redirectUri" +
-            "&scope=openid%20user.read.any&state=s1&code_challenge=$challenge&code_challenge_method=S256"
+            scope?.let { "&scope=$it" }.orEmpty() + "&state=s1&code_challenge=$challenge&code_challenge_method=S256"
         var hops = 0
         while (url != null && hops++ < 12) {
             // As a URI, so the already-encoded query (the space in `scope`) is not encoded again.
@@ -494,5 +496,50 @@ class PublicClientRefreshTokenIntegrationTest {
 
         userRepository.deleteById(assertNotNull(userRepository.findByEmail(email)).id)
         assertEquals(401, userInfo().status)
+    }
+
+    @Test
+    fun `an ID token is not a bearer on this server's API, though the access token issued beside it is`() {
+        val clientId = createClient("spa-admin-16@example.com").getValue("clientId")
+        val email = "spa-id-token@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        val tokens = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "code_verifier" to codeVerifier
+        )
+        val idToken = tokens.getValue("id_token")
+        // Same key, same user, and the audience of a client registered here: only its shape differs.
+        assertEquals(claimsOf(tokens.getValue("access_token"))["sub"], claimsOf(idToken)["sub"])
+
+        fun me(build: MockHttpServletRequestDsl.() -> Unit) = mockMvc.get("/${ApiEndpoints.ME}") { build() }.andReturn().response
+
+        assertEquals(200, me { header("Authorization", "Bearer ${tokens.getValue("access_token")}") }.status)
+        val refused = me { header("Authorization", "Bearer $idToken") }
+        assertEquals(401, refused.status, refused.contentAsString)
+        assertTrue("invalid_token" in refused.getHeader("WWW-Authenticate").orEmpty(), refused.getHeader("WWW-Authenticate"))
+        assertEquals(401, me { cookie(Cookie(ACCESS_TOKEN_COOKIE_NAME, idToken)) }.status)
+    }
+
+    @Test
+    fun `an access token from a grant that asked for no scope carries none and is still a bearer`() {
+        val clientId = createClient("spa-admin-17@example.com").getValue("clientId")
+        val email = "spa-no-scope@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        val tokens = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email, scope = null),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "code_verifier" to codeVerifier
+        )
+        assertNull(tokens["id_token"])
+        val accessToken = tokens.getValue("access_token")
+        assertFalse("scope" in claimsOf(accessToken), "${claimsOf(accessToken)}")
+
+        val me = mockMvc.get("/${ApiEndpoints.ME}") { header("Authorization", "Bearer $accessToken") }.andReturn().response
+        assertEquals(200, me.status, me.contentAsString)
     }
 }

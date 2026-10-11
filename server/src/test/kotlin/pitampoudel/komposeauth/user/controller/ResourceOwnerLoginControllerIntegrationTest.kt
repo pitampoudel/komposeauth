@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
@@ -128,6 +129,27 @@ class ResourceOwnerLoginControllerIntegrationTest {
         val claims = json.parseToJsonElement(String(Base64.getUrlDecoder().decode(accessToken.split(".")[1]))).jsonObject
         assertEquals(email, claims["email"]?.jsonPrimitive?.content)
         assertEquals(false, claims["emailVerified"]?.jsonPrimitive?.boolean)
+    }
+
+    @Test
+    fun `the access token from login is a bearer on this server's API, as a header and as the cookie`() {
+        val email = "login-bearer@example.com"
+        val password = "Password1"
+        createUser(email, password)
+        fun login(responseType: ResponseType) = mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            param("responseType", responseType.name)
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString<Credential>(Credential.UsernamePassword(username = email, password = password))
+        }.andExpect { status { isOk() } }.andReturn().response
+
+        val accessToken = json.parseToJsonElement(login(ResponseType.TOKEN).contentAsString)
+            .jsonObject["access_token"]!!.jsonPrimitive.content
+        mockMvc.get("/${ApiEndpoints.ME}") { header("Authorization", "Bearer $accessToken") }
+            .andExpect { status { isOk() } }
+
+        val cookie = login(ResponseType.COOKIE).getCookie(Constants.ACCESS_TOKEN_COOKIE_NAME)!!
+        mockMvc.get("/${ApiEndpoints.ME}") { cookie(cookie) }.andExpect { status { isOk() } }
     }
 
     @Test

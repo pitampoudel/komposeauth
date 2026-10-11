@@ -182,6 +182,8 @@ class WebSecurityConfig {
      * consent (one from a metadata document, say) is someone else's app acting for the user: it may
      * read the user's profile at the userinfo endpoint, which the authorization server's own chain
      * serves, and nothing here. A token with no audience is one this server minted at `/login`.
+     * And only an access token: an ID token issued to a client registered here passes the audience
+     * check, so [AccessTokenShape] turns it away first.
      */
     private fun firstPartyJwtDecoder(decoder: JwtDecoder, clients: RegisteredClientRepository): JwtDecoder {
         val firstParty = JwtClaimValidator<Collection<String>>(JwtClaimNames.AUD) { audience ->
@@ -189,6 +191,8 @@ class WebSecurityConfig {
         }
         return JwtDecoder { token ->
             decoder.decode(token).also { jwt ->
+                val shape = AccessTokenShape.validate(jwt)
+                if (shape.hasErrors()) throw JwtValidationException("Not an access token", shape.errors)
                 val result = firstParty.validate(jwt)
                 if (result.hasErrors()) throw JwtValidationException("Not a token for this server's API", result.errors)
             }

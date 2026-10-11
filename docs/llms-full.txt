@@ -477,7 +477,7 @@ All tokens are JWS compact JWTs signed with **RS256**. The header carries a `kid
 | `sub` | all | **User id** (24-char hex). For `client_credentials` tokens it is the client id. |
 | `aud` | authorization-code tokens | The OAuth `client_id`. Tokens from `/login` have **no `aud`**. |
 | `exp`, `iat`, `nbf` | all | Standard times (seconds) |
-| `scope` | all | JSON array of scope strings, e.g. `["openid","profile","email"]` |
+| `scope` | all but a token whose request named no scope | JSON array of scope strings, e.g. `["openid","profile","email"]` |
 | `authorities` | user tokens | JSON array of roles, **prefixed**: `["ROLE_ADMIN"]` (empty for users with no role) |
 | `email` | user tokens, if the user has one | |
 | `emailVerified` | user tokens with an `email` | boolean: whether the user proved they own `email`. Check it before granting access by email address. |
@@ -489,8 +489,9 @@ All tokens are JWS compact JWTs signed with **RS256**. The header carries a `kid
 
 Sources: `core/security/WebAuthorizationConfig.kt` (`jwtCustomizer`) and
 `user/controller/ResourceOwnerLoginController.kt`. The ID token from the authorization-code flow carries the same
-custom claims except `authorities`, plus the standard OIDC ones (`nonce`, `auth_time`, ...). Authorize with the
-access token, never the ID token.
+custom claims except `authorities`, plus the standard OIDC ones (`azp`, `nonce`, `auth_time`, ...). Authorize with the
+access token, never the ID token: this server's own API answers an ID token with 401 `invalid_token`, telling the two
+apart by `nbf`, which every access token carries, and `azp`, which only an ID token does.
 
 ### 4.2 UserInfo claims (`GET /userinfo`)
 
@@ -542,10 +543,12 @@ consent. A token whose user has been deleted is answered with 401 `invalid_token
 4. Check `iss == "https://auth.example.com"` (exact string, no trailing slash).
 5. **Do not require `aud`** unless you only accept authorization-code tokens from specific clients: tokens from
    `/login` (and so from the KMP SDK) have no audience. If you do check it, allow the client ids you trust.
-6. Authorize with `authorities` (roles, `ROLE_` prefixed) and `scope`. Identify the user by `sub`.
-7. Reject with 401 and `WWW-Authenticate: Bearer error="invalid_token"` on any failure; 403 when authenticated but
+6. Refuse an ID token presented as a bearer: one that carries `azp`, or no `nbf`. It is signed with the same key and
+   names the same user, and for a client registered here it even has the same `aud`.
+7. Authorize with `authorities` (roles, `ROLE_` prefixed) and `scope`. Identify the user by `sub`.
+8. Reject with 401 and `WWW-Authenticate: Bearer error="invalid_token"` on any failure; 403 when authenticated but
    not allowed.
-8. The resource server does not need a client id or secret just to validate tokens.
+9. The resource server does not need a client id or secret just to validate tokens.
 
 If your API is called from browsers on other origins, configure CORS on the API itself; the auth server's CORS list
 does not apply to your API.
