@@ -6,6 +6,15 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
+import org.apache.hc.client5.http.DnsResolver
+import org.apache.hc.client5.http.SystemDefaultDnsResolver
+import org.apache.hc.client5.http.classic.methods.HttpGet
+import org.apache.hc.client5.http.config.ConnectionConfig
+import org.apache.hc.client5.http.config.RequestConfig
+import org.apache.hc.client5.http.impl.classic.HttpClients
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder
+import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy
+import org.apache.hc.core5.util.Timeout
 import org.slf4j.LoggerFactory
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
@@ -13,17 +22,15 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings
 import org.springframework.stereotype.Component
-import java.io.IOException
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
+import java.net.UnknownHostException
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
+import javax.net.ssl.SSLContext
 
 class InvalidClientMetadata(message: String) : RuntimeException(message)
 
@@ -36,41 +43,79 @@ fun interface ClientMetadataFetcher {
  * Fetches over HTTPS, refusing addresses on private networks (so a client id can't make the server
  * call into its own network), redirects, slow servers and large documents.
  *
- * `HttpClient` resolves the host again when it connects and has no hook to connect to the address
- * checked here instead, so a DNS answer that changes in between (rebinding) is not caught.
+ * The check is the HTTP client's own DNS resolver, so the connection is made to the very addresses it
+ * passed and the name is never looked up a second time, which is where a rebinding answer (public
+ * when checked, private when connected to) would get in. The host name still goes out in the Host
+ * header and in TLS SNI, and the certificate is checked against it.
  */
 @Component
-class HttpClientMetadataFetcher : ClientMetadataFetcher {
-    private val http = HttpClient.newBuilder()
-        .connectTimeout(TIMEOUT)
-        .followRedirects(HttpClient.Redirect.NEVER)
+class HttpClientMetadataFetcher(
+    dns: DnsResolver = SystemDefaultDnsResolver.INSTANCE,
+    timeout: Duration = Duration.ofSeconds(5)
+) : ClientMetadataFetcher {
+    private val http = HttpClients.custom()
+        .setConnectionManager(
+            PoolingHttpClientConnectionManagerBuilder.create()
+                .setDnsResolver(PublicAddressesOnly(dns))
+                .setTlsSocketStrategy(DefaultClientTlsStrategy(SSLContext.getDefault()))
+                .setDefaultConnectionConfig(
+                    ConnectionConfig.custom()
+                        .setConnectTimeout(Timeout.of(timeout))
+                        .setSocketTimeout(Timeout.of(timeout))
+                        .build()
+                )
+                .build()
+        )
+        .setDefaultRequestConfig(RequestConfig.custom().setResponseTimeout(Timeout.of(timeout)).build())
+        // A document is fetched once in ten minutes at most, and nothing is retried, so a kept
+        // connection the server has since closed would only fail the next fetch.
+        .setConnectionReuseStrategy { _, _, _ -> false }
+        .disableRedirectHandling()
+        .disableAutomaticRetries()
+        .disableContentCompression()
+        .disableCookieManagement()
         .build()
 
     override fun fetch(url: URI): String {
-        val addresses = try {
-            InetAddress.getAllByName(url.host)
-        } catch (e: IOException) {
-            throw InvalidClientMetadata("can't resolve ${url.host}")
-        }
-        if (addresses.any { it.isInternal() }) throw InvalidClientMetadata("${url.host} is on a private network")
-        val request = HttpRequest.newBuilder(url).timeout(TIMEOUT).header("Accept", "application/json").GET().build()
-        val response = http.send(request, HttpResponse.BodyHandlers.ofInputStream())
-        response.body().use { body ->
-            if (response.statusCode() != 200) throw InvalidClientMetadata("$url answered ${response.statusCode()}")
-            val bytes = body.readNBytes(MAX_BYTES + 1)
-            if (bytes.size > MAX_BYTES) throw InvalidClientMetadata("$url is larger than $MAX_BYTES bytes")
-            return bytes.toString(Charsets.UTF_8)
+        val request = HttpGet(url).apply { setHeader("Accept", "application/json") }
+        return http.execute(request) { response ->
+            try {
+                if (response.code != 200) throw InvalidClientMetadata("$url answered ${response.code}")
+                val bytes = response.entity?.content?.readNBytes(MAX_BYTES + 1) ?: ByteArray(0)
+                if (bytes.size > MAX_BYTES) throw InvalidClientMetadata("$url is larger than $MAX_BYTES bytes")
+                bytes.toString(Charsets.UTF_8)
+            } catch (e: Exception) {
+                // Closing the response would first read the rest of the body; drop the connection instead.
+                request.cancel()
+                throw e
+            }
         }
     }
 
-    private fun InetAddress.isInternal(): Boolean =
-        isLoopbackAddress || isAnyLocalAddress || isLinkLocalAddress || isSiteLocalAddress || isMulticastAddress ||
-            (this is Inet6Address && (address[0].toInt() and 0xfe) == 0xfc) || // fc00::/7, unique local
-            (this is Inet4Address && address[0].toInt() == 0) || // 0.0.0.0/8, "this network"
-            (this is Inet4Address && address[0].toInt() == 100 && (address[1].toInt() and 0xc0) == 64) // 100.64.0.0/10, carrier-grade NAT
+    /** Resolves through [dns] and refuses a host any of whose addresses is on a private network. */
+    private class PublicAddressesOnly(private val dns: DnsResolver) : DnsResolver {
+        override fun resolve(host: String): Array<InetAddress> {
+            val addresses = try {
+                dns.resolve(host)
+            } catch (e: UnknownHostException) {
+                null
+            }
+            // A missing answer would have the client resolve the name again by itself, unchecked.
+            if (addresses.isNullOrEmpty()) throw InvalidClientMetadata("can't resolve $host")
+            if (addresses.any { it.isInternal() }) throw InvalidClientMetadata("$host is on a private network")
+            return addresses
+        }
+
+        override fun resolveCanonicalHostname(host: String): String = dns.resolveCanonicalHostname(host)
+
+        private fun InetAddress.isInternal(): Boolean =
+            isLoopbackAddress || isAnyLocalAddress || isLinkLocalAddress || isSiteLocalAddress || isMulticastAddress ||
+                (this is Inet6Address && (address[0].toInt() and 0xfe) == 0xfc) || // fc00::/7, unique local
+                (this is Inet4Address && address[0].toInt() == 0) || // 0.0.0.0/8, "this network"
+                (this is Inet4Address && address[0].toInt() == 100 && (address[1].toInt() and 0xc0) == 64) // 100.64.0.0/10, carrier-grade NAT
+    }
 
     companion object {
-        private val TIMEOUT: Duration = Duration.ofSeconds(5)
         private const val MAX_BYTES = 16 * 1024
     }
 }
