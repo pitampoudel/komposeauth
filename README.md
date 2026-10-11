@@ -185,6 +185,10 @@ val httpClient = HttpClient {
 }
 ```
 
+On Android the overload takes a `Context` too, and the tokens are encrypted with an Android Keystore key. On
+desktop, also pass `appId` (your package name, say) so that your app's sign-in is kept apart from other apps';
+desktop tokens are stored unencrypted in the user's Java preferences.
+
 Initialize SDK
 
 ```kotlin
