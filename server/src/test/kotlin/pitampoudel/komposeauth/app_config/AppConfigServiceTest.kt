@@ -85,6 +85,15 @@ class AppConfigServiceTest {
         kotlin.test.assertEquals(expected, service.webauthnAllowedOrigins())
     }
 
+    @Test
+    fun `webauthnAllowedOrigins includes the relying party's own origin, which iOS passkeys report`() {
+        val provider = mock<AppConfigProvider>()
+        whenever(provider.get()).thenReturn(AppConfig(rpId = "example.com"))
+        val service = AppConfigService(provider)
+
+        kotlin.test.assertEquals(setOf("https://example.com"), service.webauthnAllowedOrigins())
+    }
+
 
     @Test
     fun `saving and retrieving app config works`() {

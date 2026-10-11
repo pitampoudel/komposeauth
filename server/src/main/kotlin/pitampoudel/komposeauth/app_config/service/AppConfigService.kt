@@ -68,10 +68,15 @@ class AppConfigService(val appConfigProvider: AppConfigProvider) {
             .orEmpty()
     }
 
+    /**
+     * Where a passkey answer may come from: the configured browser origins, each allowed Android
+     * signing key, and the relying party's own `https://` origin, which is the origin an iOS app's
+     * passkey reports.
+     */
     fun webauthnAllowedOrigins(): Set<String> {
         return appConfigProvider.get().allowedAndroidSha256List?.split(",")?.map {
             androidOrigin(it)
-        }.orEmpty().toSet() + corsAllowedOrigins()
+        }.orEmpty().toSet() + corsAllowedOrigins() + listOfNotNull(rpId()?.trim()?.takeIf { it.isNotEmpty() }?.let { "https://$it" })
     }
 
     /** How many reverse proxies of our own sit in front of this server. See [AppConfig.trustedProxyCount]. */
