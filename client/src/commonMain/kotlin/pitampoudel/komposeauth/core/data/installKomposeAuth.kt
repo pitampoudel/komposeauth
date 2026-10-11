@@ -33,7 +33,9 @@ import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.login.domain.AuthPreferences
 import pitampoudel.komposeauth.core.domain.Config
+import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.ResponseType
+import pitampoudel.komposeauth.core.domain.currentPlatform
 import pitampoudel.komposeauth.user.data.Credential
 
 internal fun HttpClientConfig<*>.installKomposeAuth(
@@ -63,11 +65,14 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
     authPreferences: AuthPreferences,
     resourceServerUrls: List<String>
 ) {
-    // Passkey sign-in needs the auth server's session cookie on every platform: `/login-options`
-    // keeps the WebAuthn challenge in that session and `/login` reads it back. The bearer token is
-    // still the credential, so the jar holds the auth server's cookies and no other host's.
-    install(HttpCookies) {
-        storage = AuthServerCookies()
+    // Only the web target signs in with a cookie (`LoginUser` alone passes `ResponseType.COOKIE`).
+    // Elsewhere the bearer token is the credential and nothing else needs a cookie sent back --
+    // passkey sign-in included, since the server finds its options by the signed challenge -- so a
+    // native client keeps none. On the web the jar holds the auth server's cookies and no other host's.
+    if (currentPlatform() == Platform.WEB) {
+        install(HttpCookies) {
+            storage = AuthServerCookies()
+        }
     }
     install(ContentNegotiation) {
         json(

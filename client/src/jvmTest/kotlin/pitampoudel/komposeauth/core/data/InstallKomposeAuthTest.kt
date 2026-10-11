@@ -53,16 +53,11 @@ class InstallKomposeAuthTest {
     }
 
     @Test
-    fun `only the auth server's cookies are kept and sent back`() = runBlocking {
+    fun `a native client sends no cookie back, the auth server's included`() = runBlocking {
         val auth = client(HttpStatusCode.OK, setCookie = "SESSION=one; Path=/")
         auth.get("https://auth.example.com/login-options")
         auth.post("https://auth.example.com/login")
 
-        val other = client(HttpStatusCode.OK, setCookie = "TRACK=two; Path=/")
-        other.get("https://cdn.example.net/a")
-        other.get("https://cdn.example.net/b")
-
-        assertEquals("SESSION=one", sent[1].headers[HttpHeaders.Cookie])
-        assertNull(sent[3].headers[HttpHeaders.Cookie])
+        assertNull(sent[1].headers[HttpHeaders.Cookie])
     }
 }
