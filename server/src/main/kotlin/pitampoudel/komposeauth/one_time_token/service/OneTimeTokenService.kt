@@ -64,6 +64,18 @@ class OneTimeTokenService(
         }
     }
 
+    /**
+     * Signs out the refresh token's holder: it, every token it was refreshed from and any refreshed
+     * from it stop working. Spent or not, since a refresh may have redeemed it a moment ago. False
+     * when it is not a refresh token of ours.
+     */
+    fun revokeRefreshToken(rawToken: String): Boolean {
+        val token = repo.findByTokenHashAndPurpose(hash(rawToken), OneTimeToken.Purpose.REFRESH_TOKEN)
+            ?: return false
+        endFamily(token)
+        return true
+    }
+
     private fun endFamily(token: OneTimeToken) {
         val family = token.familyId()
         mongoTemplate.remove(

@@ -206,7 +206,8 @@ class WebSecurityConfig {
         bearerTokenResolver: BearerTokenResolver,
         loginSuccessHandler: OAuth2LoginSuccessHandler,
         appConfigService: AppConfigService,
-        authorizationRequestResolver: OAuth2AuthorizationRequestResolver
+        authorizationRequestResolver: OAuth2AuthorizationRequestResolver,
+        refreshTokenLogoutHandler: RefreshTokenLogoutHandler
     ): SecurityFilterChain {
         return http
             .cors { }
@@ -258,6 +259,7 @@ class WebSecurityConfig {
                     .logoutRequestMatcher(
                         PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/${ApiEndpoints.LOGOUT}")
                     )
+                    .addLogoutHandler(refreshTokenLogoutHandler)
                     .logoutSuccessHandler { request, response, _ ->
                         clearTokenCookie(request, response, appConfigService)
                         response.contentType = MediaType.APPLICATION_JSON_VALUE

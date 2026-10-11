@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.user.data.Credential
+import pitampoudel.komposeauth.user.data.LogoutRequest
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.repository.OneTimeTokenRepository
@@ -127,6 +128,46 @@ class AuthFlowsIntegrationTest {
         assertEquals(400, tokenLogin(Credential.RefreshToken(phoneNext)).status)
 
         refreshTokenOf(tokenLogin(Credential.RefreshToken(laptop)))
+    }
+
+    private fun logout(body: String?): MockHttpServletResponse = mockMvc.post("/${ApiEndpoints.LOGOUT}") {
+        if (body != null) {
+            contentType = MediaType.APPLICATION_JSON
+            content = body
+        }
+    }.andReturn().response
+
+    @Test
+    fun `signing out with the refresh token ends it and the sign-in it was refreshed from`() {
+        createUser("signout-family@example.com")
+        val password = Credential.UsernamePassword(username = "signout-family@example.com", password = "Password1")
+        val first = refreshTokenOf(tokenLogin(password))
+        val second = refreshTokenOf(tokenLogin(Credential.RefreshToken(first)))
+        val otherDevice = refreshTokenOf(tokenLogin(password))
+
+        assertEquals(200, logout(json.encodeToString(LogoutRequest(refreshToken = second))).status)
+
+        assertEquals(400, tokenLogin(Credential.RefreshToken(second)).status)
+        refreshTokenOf(tokenLogin(Credential.RefreshToken(otherDevice)))
+    }
+
+    @Test
+    fun `a sign-out holding a token already refreshed still ends the one that replaced it`() {
+        createUser("logout-stale@example.com")
+        val first = refreshTokenOf(tokenLogin(Credential.UsernamePassword(username = "logout-stale@example.com", password = "Password1")))
+        val second = refreshTokenOf(tokenLogin(Credential.RefreshToken(first)))
+
+        assertEquals(200, logout(json.encodeToString(LogoutRequest(refreshToken = first))).status)
+
+        assertEquals(400, tokenLogin(Credential.RefreshToken(second)).status)
+    }
+
+    @Test
+    fun `a sign-out without a refresh token, or with one nobody issued, still succeeds`() {
+        assertEquals(200, logout(null).status)
+        assertEquals(200, logout("{}").status)
+        assertEquals(200, logout("not json").status)
+        assertEquals(200, logout(json.encodeToString(LogoutRequest(refreshToken = "never-issued"))).status)
     }
 
     @Test

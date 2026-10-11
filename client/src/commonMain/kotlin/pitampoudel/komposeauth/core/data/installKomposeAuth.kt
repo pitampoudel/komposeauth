@@ -119,9 +119,9 @@ private fun tokenHosts(resourceServerUrls: List<String>): Set<String> {
 }
 
 /**
- * Held while the stored tokens are refreshed, by every client in the process. A refresh token answers
- * once, and Ktor serialises refreshes only within one client: two clients sharing the stored tokens
- * would otherwise redeem the same one, and the server takes the second as a replay.
+ * Held while the stored tokens are refreshed or cleared, by every client in the process. A refresh
+ * token answers once, and Ktor serialises refreshes only within one client: two clients sharing the
+ * stored tokens would otherwise redeem the same one, and the server takes the second as a replay.
  */
 internal val storedTokensLock = Mutex()
 

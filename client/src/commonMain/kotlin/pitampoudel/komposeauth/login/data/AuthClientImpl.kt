@@ -157,12 +157,12 @@ internal class AuthClientImpl(val httpClient: HttpClient) : AuthClient {
         }
     }
 
-    override suspend fun logout(): Result<HttpResponse> {
-        val result = safeApiCall {
-            httpClient.post("$authUrl/$LOGOUT").asResource { this }
+    override suspend fun logout(refreshToken: String?): Result<HttpResponse> {
+        return safeApiCall {
+            httpClient.post("$authUrl/$LOGOUT") {
+                setBody(LogoutRequest(refreshToken = refreshToken))
+            }.asResource { this }
         }
-        clearCachedToken()
-        return result
     }
 
     override suspend fun clearCachedToken() {

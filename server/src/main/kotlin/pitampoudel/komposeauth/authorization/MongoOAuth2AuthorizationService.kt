@@ -54,15 +54,8 @@ class MongoOAuth2AuthorizationService(
     }
 
     override fun findById(id: String): OAuth2Authorization? =
-        repository.findById(id).orElse(null)?.let {
-            fromOAuth2AuthorizationDocument(
-                doc = it,
-                registeredClient = registeredClientRepository.findById(it.registeredClientId) ?: return null,
-                objectMapper = objectMapper,
-                // Generic lookups can feed token generation, so keep claims serializer-friendly.
-                claimTypeMode = OidcClaimTypeMode.SERIALIZATION
-            )
-        }
+        // Generic lookups can feed token generation, so keep claims serializer-friendly.
+        repository.findById(id).orElse(null)?.toAuthorization(OidcClaimTypeMode.SERIALIZATION)
 
     override fun findByToken(token: String, tokenType: OAuth2TokenType?): OAuth2Authorization? {
         val doc = when {
@@ -73,27 +66,40 @@ class MongoOAuth2AuthorizationService(
                 ?: repository.findByOidcIdTokenValue(token)
             tokenType == OAuth2TokenType.ACCESS_TOKEN -> repository.findByAccessTokenValue(token)
             tokenType == OAuth2TokenType.REFRESH_TOKEN -> repository.findByRefreshTokenValue(token)
-                ?: findByRetiredRefreshToken(token)
+                ?: retiredWithinGrace(token)
             // The consent form posts the state back, for clients that ask for the user's consent
             tokenType.value == OAuth2ParameterNames.STATE -> repository.findByState(token)
             tokenType.value == "code" -> repository.findByAuthorizationCodeValue(token)
             tokenType.value == "id_token" -> repository.findByOidcIdTokenValue(token)
             else -> null
         }
-        return doc?.let {
-            fromOAuth2AuthorizationDocument(
-                doc = it,
-                registeredClient = registeredClientRepository.findById(it.registeredClientId) ?: return null,
-                objectMapper = objectMapper,
-                // UserInfo reads access-token claims through Spring OIDC accessors.
-                claimTypeMode = if (tokenType == OAuth2TokenType.ACCESS_TOKEN) {
-                    OidcClaimTypeMode.SPRING_ACCESSORS
-                } else {
-                    OidcClaimTypeMode.SERIALIZATION
-                }
-            )
-        }
+        return doc?.toAuthorization(
+            // UserInfo reads access-token claims through Spring OIDC accessors.
+            if (tokenType == OAuth2TokenType.ACCESS_TOKEN) {
+                OidcClaimTypeMode.SPRING_ACCESSORS
+            } else {
+                OidcClaimTypeMode.SERIALIZATION
+            }
+        )
     }
+
+    /**
+     * The authorization whose refresh token replaced [token] less than [ROTATION_GRACE] ago. Past
+     * that, [token] is a replay and the authorization is ended instead.
+     *
+     * Not part of [findByToken] without a type, which revocation and introspection use: the
+     * authorization no longer holds [token], and both go on to ask it for the token they looked up.
+     */
+    fun findByRetiredRefreshToken(token: String): OAuth2Authorization? =
+        retiredWithinGrace(token)?.toAuthorization(OidcClaimTypeMode.SERIALIZATION)
+
+    private fun OAuth2AuthorizationDocument.toAuthorization(claimTypeMode: OidcClaimTypeMode): OAuth2Authorization? =
+        fromOAuth2AuthorizationDocument(
+            doc = this,
+            registeredClient = registeredClientRepository.findById(registeredClientId) ?: return null,
+            objectMapper = objectMapper,
+            claimTypeMode = claimTypeMode
+        )
 
     /**
      * Replaces [presented], the authorization's refresh token, with [replacement], in one step so
@@ -126,7 +132,7 @@ class MongoOAuth2AuthorizationService(
         return OAuth2RefreshToken(current, doc.refreshTokenIssuedAt, doc.refreshTokenExpiresAt)
     }
 
-    private fun findByRetiredRefreshToken(token: String): OAuth2AuthorizationDocument? {
+    private fun retiredWithinGrace(token: String): OAuth2AuthorizationDocument? {
         val doc = repository.findByPreviousRefreshTokenValue(token) ?: return null
         if (doc.rotatedWithinGrace(Instant.now())) return doc
         log.warn(

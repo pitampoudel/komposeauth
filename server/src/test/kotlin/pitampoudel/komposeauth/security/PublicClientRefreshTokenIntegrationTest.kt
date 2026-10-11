@@ -23,6 +23,7 @@ import pitampoudel.komposeauth.authorization.OAuth2AuthorizationDocumentReposito
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
+import pitampoudel.komposeauth.user.data.LogoutRequest
 import pitampoudel.komposeauth.user.repository.UserRepository
 import java.net.URI
 import java.security.MessageDigest
@@ -357,6 +358,93 @@ class PublicClientRefreshTokenIntegrationTest {
             "client_secret" to secret
         )
         assertNotNull(again["access_token"])
+    }
+
+    private data class ConfidentialSignIn(val clientId: String, val secret: String, val refreshToken: String)
+
+    private fun signInConfidential(adminEmail: String, email: String): ConfidentialSignIn {
+        val client = createClient(adminEmail, publicClient = false)
+        val clientId = client.getValue("clientId")
+        val secret = client.getValue("clientSecret")
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        val refreshToken = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "client_secret" to secret,
+            "code_verifier" to codeVerifier
+        ).getValue("refresh_token")
+        return ConfidentialSignIn(clientId, secret, refreshToken)
+    }
+
+    /** What a server-side app sends when its user signs out (RFC 7009, `client_secret_post`). */
+    private fun revoke(clientId: String, secret: String, token: String): MvcResult = mockMvc.post("/oauth2/revoke") {
+        param("token", token)
+        param("token_type_hint", "refresh_token")
+        param("client_id", clientId)
+        param("client_secret", secret)
+    }.andReturn()
+
+    private fun refreshWithSecret(signIn: ConfidentialSignIn, refreshToken: String) = tokenRequest(
+        "grant_type" to "refresh_token",
+        "refresh_token" to refreshToken,
+        "client_id" to signIn.clientId,
+        "client_secret" to signIn.secret
+    )
+
+    @Test
+    fun `a confidential client revokes a refresh token with its secret in the form, and it stops working`() {
+        val signIn = signInConfidential("spa-admin-10@example.com", "spa-revoke@example.com")
+
+        assertEquals(401, revoke(signIn.clientId, "not-the-secret", signIn.refreshToken).response.status)
+        val revoked = revoke(signIn.clientId, signIn.secret, signIn.refreshToken)
+        assertEquals(200, revoked.response.status, revoked.response.contentAsString)
+        assertEquals("", revoked.response.contentAsString)
+
+        assertRefused(refreshWithSecret(signIn, signIn.refreshToken))
+        // Revoking again, or revoking anything unknown, is not an error.
+        assertEquals(200, revoke(signIn.clientId, signIn.secret, signIn.refreshToken).response.status)
+        assertEquals(200, revoke(signIn.clientId, signIn.secret, "never-issued").response.status)
+    }
+
+    @Test
+    fun `revoking the refresh token a refresh just replaced signs out the one that replaced it`() {
+        val signIn = signInConfidential("spa-admin-11@example.com", "spa-revoke-retired@example.com")
+        val replacement = refreshedToken(refreshWithSecret(signIn, signIn.refreshToken))
+        val authorizationId = assertNotNull(authorizations.findByRefreshTokenValue(replacement)).id
+
+        // A sign-out reading the cookie the request arrived with, before the refresh replaced it.
+        assertEquals(200, revoke(signIn.clientId, signIn.secret, signIn.refreshToken).response.status)
+
+        assertRefused(refreshWithSecret(signIn, replacement))
+        assertRefused(refreshWithSecret(signIn, signIn.refreshToken))
+        assertNull(authorizations.findById(authorizationId).orElse(null))
+    }
+
+    @Test
+    fun `a client cannot revoke another client's replaced refresh token`() {
+        val signIn = signInConfidential("spa-admin-12@example.com", "spa-revoke-owner@example.com")
+        val replacement = refreshedToken(refreshWithSecret(signIn, signIn.refreshToken))
+        val other = createClient("spa-admin-13@example.com", publicClient = false)
+
+        // Answered as for any token it never issued.
+        assertEquals(200, revoke(other.getValue("clientId"), other.getValue("clientSecret"), signIn.refreshToken).response.status)
+
+        assertNotNull(refreshedToken(refreshWithSecret(signIn, replacement)))
+    }
+
+    @Test
+    fun `a public client, which cannot authenticate to the revocation endpoint, signs out at logout`() {
+        val (clientId, refreshToken) = signIn("spa-admin-14@example.com", "spa-logout@example.com")
+
+        val result = mockMvc.post("/${ApiEndpoints.LOGOUT}") {
+            contentType = MediaType.APPLICATION_JSON
+            content = json.encodeToString(LogoutRequest(refreshToken = refreshToken))
+        }.andReturn()
+        assertEquals(200, result.response.status, result.response.contentAsString)
+
+        assertRefused(refresh(clientId, refreshToken))
     }
 
     @Test

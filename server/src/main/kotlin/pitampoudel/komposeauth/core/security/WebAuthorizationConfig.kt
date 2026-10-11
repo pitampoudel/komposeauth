@@ -41,6 +41,7 @@ import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
 import org.springframework.boot.restclient.RestTemplateBuilder
 import org.springframework.web.client.RestTemplate
 import pitampoudel.komposeauth.authorization.MongoOAuth2AuthorizationService
+import pitampoudel.komposeauth.authorization.RetiredRefreshTokenRevocationProvider
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
@@ -209,7 +210,8 @@ class WebAuthorizationConfig {
         registeredClientRepository: RegisteredClientRepository,
         userService: UserService,
         kycService: KycService,
-        securityContextRepository: HttpSessionSecurityContextRepository
+        securityContextRepository: HttpSessionSecurityContextRepository,
+        authorizationService: MongoOAuth2AuthorizationService
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
         val loginEntryPoint = LoginUrlAuthenticationEntryPoint("/session-login")
@@ -244,6 +246,9 @@ class WebAuthorizationConfig {
                         metadata.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.NONE.value)
                         metadata.claim(CLIENT_ID_METADATA_DOCUMENT_SUPPORTED, true)
                     }
+                }
+                authorizationServer.tokenRevocationEndpoint {
+                    it.authenticationProvider(RetiredRefreshTokenRevocationProvider(authorizationService))
                 }
                 authorizationServer.oidc {
                     it.providerConfigurationEndpoint { provider ->
