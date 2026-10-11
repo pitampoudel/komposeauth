@@ -38,8 +38,9 @@ data class AppConfig(
     var supportEmail: String? = null,
     var rpId: String? = null,
     /**
-     * The country (ISO 3166 code, e.g. NP) a phone number typed without a leading `+` is read in by
-     * the OTP endpoints, whose requests carry no country of their own. Nepal when unset.
+     * The country (ISO 3166 code, e.g. NP) a phone number typed without a leading `+` is read in
+     * where the request carries no country of its own: the OTP endpoints, the sign-in page, and a
+     * password sign-in at `/login` without `countryNameCode`. Nepal when unset.
      */
     var defaultPhoneRegion: String? = null,
     /**

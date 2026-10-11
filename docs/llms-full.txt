@@ -325,7 +325,7 @@ these libraries). Private-scheme redirects are supported. Kotlin Multiplatform a
 
 | `type` | Fields | Notes |
 |---|---|---|
-| `USERNAME_PASSWORD` | `username`, `password`, optional `countryNameCode` | `username` is an email or phone number; `countryNameCode` (e.g. `"NP"`) lets a local phone number be parsed. |
+| `USERNAME_PASSWORD` | `username`, `password`, optional `countryNameCode` | `username` is an email or phone number. A phone number with a leading `+` and country code is read as written; one without is read in `countryNameCode` (e.g. `"IN"`) when sent, otherwise in the default phone region (below). |
 | `OTP` | `username`, `otp` | Code previously sent with `POST /send-otp`. Creates the user if new. A phone number without a leading `+` is read in the default phone region (below). |
 | `GOOGLE_ID` | `idToken` | A Google ID token for the Google client ID the server is configured with. |
 | `APPLE_ID` | `idToken` | A Sign in with Apple ID token. |
@@ -378,9 +378,10 @@ curl -X POST 'https://auth.example.com/login?responseType=TOKEN' -H 'Content-Typ
   -d '{"type":"OTP","username":"+9779812345678","otp":"123456"}'
 ```
 
-`/send-otp`, `/verify-otp` and OTP sign-in carry no country, so a phone number typed without a leading `+`
-(`9812345678`) is read in the **default phone region** (`defaultPhoneRegion` on the configuration page, an ISO
-country code; Nepal, `NP`, when unset) and stored in E.164. A number with a `+` and country code is read as written.
+`/send-otp`, `/verify-otp`, OTP sign-in and the hosted sign-in page carry no country (nor does a password sign-in
+without `countryNameCode`), so a phone number typed without a leading `+` (`9812345678`) is read in the **default
+phone region** (`defaultPhoneRegion` on the configuration page, an ISO country code; Nepal, `NP`, when unset) and
+stored in E.164. A number with a `+` and country code is read as written.
 
 `POST /verify-otp` (signed in, `{"username","type","otp"}`) attaches the address or number the code was sent to.
 Setting one for the first time, or proving the same one again, needs nothing more. **Replacing one the account has

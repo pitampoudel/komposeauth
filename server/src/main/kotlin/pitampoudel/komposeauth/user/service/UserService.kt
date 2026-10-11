@@ -562,7 +562,8 @@ class UserService(
         loadPublicKeyCredentialRequestOptions: () -> PublicKeyCredentialRequestOptions?
     ): User {
         val user = when (request) {
-            is Credential.UsernamePassword -> findByUserName(request.username())
+            is Credential.UsernamePassword -> userRepository
+                .findByLoginName(request.username, request.countryNameCode ?: appConfigService.defaultPhoneRegion())
                 ?.takeIf {
                     passwordEncoder.matches(request.password, it.passwordHash)
                 }

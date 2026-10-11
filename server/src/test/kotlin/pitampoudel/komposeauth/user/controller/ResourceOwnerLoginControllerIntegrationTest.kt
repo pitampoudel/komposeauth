@@ -7,6 +7,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -150,6 +151,39 @@ class ResourceOwnerLoginControllerIntegrationTest {
 
         val cookie = login(ResponseType.COOKIE).getCookie(Constants.ACCESS_TOKEN_COOKIE_NAME)!!
         mockMvc.get("/${ApiEndpoints.ME}") { cookie(cookie) }.andExpect { status { isOk() } }
+    }
+
+    @Test
+    fun `a phone number signs in as written with its country code, and without one in the default region`() {
+        val password = "Password1"
+        userService.createUser(
+            baseUrl = null,
+            req = CreateUserRequest(phoneNumber = "+9779809990001", password = password, confirmPassword = password)
+        )
+        fun login(username: String, countryNameCode: String? = null) = mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            param("responseType", ResponseType.TOKEN.name)
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString<Credential>(
+                Credential.UsernamePassword(countryNameCode = countryNameCode, username = username, password = password)
+            )
+        }.andReturn().response.status
+
+        assertEquals(200, login("+9779809990001"))
+        // No country in the request: read in the default region, Nepal when unconfigured.
+        assertEquals(200, login("9809990001"))
+        assertEquals(200, login("980-999-0001"))
+        // A country the request does name is the one it is read in.
+        assertEquals(200, login("9809990001", countryNameCode = "NP"))
+        assertEquals(403, login("9809990001", countryNameCode = "IN"))
+
+        // The hosted sign-in page has no country field at all.
+        val signedIn = mockMvc.post("/session-login") {
+            param("username", "9809990001")
+            param("password", password)
+        }.andReturn().response
+        assertEquals(302, signedIn.status)
+        assertTrue(signedIn.redirectedUrl?.contains("error") != true, "sign-in failed, redirected to ${signedIn.redirectedUrl}")
     }
 
     @Test
