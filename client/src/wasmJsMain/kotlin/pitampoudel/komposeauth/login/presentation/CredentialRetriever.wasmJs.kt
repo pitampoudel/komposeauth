@@ -9,6 +9,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.events.Event
 import pitampoudel.core.domain.Result
@@ -57,28 +58,59 @@ import kotlin.uuid.Uuid
           }));
         }
 
-        const credential = await navigator.credentials.create({ publicKey: options });
+        let credential;
+        try {
+          credential = await navigator.credentials.create({ publicKey: options });
+        } catch (e) {
+          return JSON.stringify({ error: (e && e.name) || 'Error' });
+        }
 
-        // Convert back from ArrayBuffers → Base64URL strings for server, and return JSON string
-        const result = {
-          publicKey: {
-            credential: {
-              id: credential.id,
-              rawId: arrayBufferToBase64url(credential.rawId),
-              type: credential.type,
-              response: {
-                attestationObject: arrayBufferToBase64url(credential.response.attestationObject),
-                clientDataJSON: arrayBufferToBase64url(credential.response.clientDataJSON)
-              }
-            },
-            label: "1password"
+        // Back to Base64URL strings, in the shape the server reads a credential in.
+        return JSON.stringify({
+          credential: {
+            id: credential.id,
+            rawId: arrayBufferToBase64url(credential.rawId),
+            type: credential.type,
+            authenticatorAttachment: credential.authenticatorAttachment || undefined,
+            clientExtensionResults: credential.getClientExtensionResults(),
+            response: {
+              attestationObject: arrayBufferToBase64url(credential.response.attestationObject),
+              clientDataJSON: arrayBufferToBase64url(credential.response.clientDataJSON),
+              transports: credential.response.getTransports ? credential.response.getTransports() : []
+            }
           }
-        };
-        return JSON.stringify(result);
+        });
        }
     """
 )
 external fun createPasskey(optionsJson: String): Promise<JsAny>
+
+@OptIn(ExperimentalWasmJsInterop::class)
+@JsFun("() => typeof PublicKeyCredential !== 'undefined' && !!navigator.credentials")
+private external fun browserSupportsPasskeys(): Boolean
+
+/** The browser and the system it runs on, such as "Chrome on macOS". */
+private fun browserName(userAgent: String): String {
+    val browser = when {
+        "Edg" in userAgent -> "Edge"
+        "OPR/" in userAgent -> "Opera"
+        "SamsungBrowser" in userAgent -> "Samsung Internet"
+        "Firefox/" in userAgent || "FxiOS" in userAgent -> "Firefox"
+        "Chrome/" in userAgent || "CriOS" in userAgent -> "Chrome"
+        "Safari/" in userAgent -> "Safari"
+        else -> null
+    }
+    val system = when {
+        "iPhone" in userAgent || "iPad" in userAgent -> "iOS"
+        "Android" in userAgent -> "Android"
+        "Windows" in userAgent -> "Windows"
+        "CrOS" in userAgent -> "ChromeOS"
+        "Mac OS X" in userAgent -> "macOS"
+        "Linux" in userAgent -> "Linux"
+        else -> null
+    }
+    return listOfNotNull(browser, system).joinToString(" on ").ifEmpty { "Web browser" }
+}
 
 private fun buildGoogleAuthUrl(
     clientId: String,
@@ -132,13 +164,23 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                 }
             }
 
+            override val canCreatePasskeys: Boolean = browserSupportsPasskeys()
+
+            override val passkeyLabel: String = browserName(window.navigator.userAgent)
+
             override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
-                return try {
-                    val credentialJs: Any = createPasskey(options).await()
-                    val jsonObject = Json.parseToJsonElement(credentialJs.toString()).jsonObject
-                    Result.Success(jsonObject)
+                val answer = try {
+                    Json.parseToJsonElement(createPasskey(options).await<JsAny>().toString()).jsonObject
                 } catch (e: Throwable) {
-                    Result.Error(e.message.orEmpty())
+                    return Result.Error("The passkey could not be created. Try again.")
+                }
+                answer["credential"]?.let { return Result.Success(it.jsonObject) }
+                // The names are the WebAuthn API's DOMException names.
+                return when (answer["error"]?.jsonPrimitive?.content) {
+                    "NotAllowedError", "AbortError" -> PasskeyCancelled
+                    "InvalidStateError" -> Result.Error("This device already has a passkey for your account.")
+                    "SecurityError" -> Result.Error("Passkeys are not set up for this website.")
+                    else -> Result.Error("The passkey could not be created. Try again.")
                 }
             }
 

@@ -29,8 +29,10 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
             }
         }
 
+        override val canCreatePasskeys: Boolean = false
+
         override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
-            return Result.Error("Passkeys are not implemented on iOS yet")
+            return Result.Error("Passkeys can't be added on iOS yet.")
         }
     }
 }

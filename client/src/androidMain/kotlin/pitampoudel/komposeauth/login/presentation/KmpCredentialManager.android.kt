@@ -1,7 +1,9 @@
 package pitampoudel.komposeauth.login.presentation
 
 
+import android.content.Context
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -14,11 +16,14 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetPublicKeyCredentialOption
 import androidx.credentials.PublicKeyCredential
+import androidx.credentials.exceptions.CreateCredentialCancellationException
 import androidx.credentials.exceptions.CreateCredentialException
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.GetCredentialProviderConfigurationException
 import androidx.credentials.exceptions.NoCredentialException
+import androidx.credentials.exceptions.domerrors.InvalidStateError
+import androidx.credentials.exceptions.publickeycredential.CreatePublicKeyCredentialDomException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -134,34 +139,56 @@ actual fun rememberKmpCredentialManager(): KmpCredentialManager {
                 return getCredentialForOptions(options)
             }
 
-            override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
+            override val canCreatePasskeys: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
 
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return Result.Error("Android version not supported")
+            override val passkeyLabel: String = deviceName(activity)
+
+            override suspend fun createPassKeyAndRetrieveJson(options: String): Result<JsonObject> {
+                if (!canCreatePasskeys) return Result.Error("Passkeys need Android 9 or later.")
 
                 val response = try {
                     credentialManager.createCredential(
                         context = activity,
                         request = CreatePublicKeyCredentialRequest(options)
                     )
-
+                } catch (e: CreateCredentialCancellationException) {
+                    return PasskeyCancelled
+                } catch (e: CreatePublicKeyCredentialDomException) {
+                    e.printStackTrace()
+                    // What an authenticator answers when it already holds a passkey for this account.
+                    if (e.domError is InvalidStateError) {
+                        return Result.Error("This device already has a passkey for your account.")
+                    }
+                    return Result.Error(COULD_NOT_CREATE)
                 } catch (e: CreateCredentialException) {
                     e.printStackTrace()
-                    return Result.Error(e.message.orEmpty())
+                    return Result.Error(COULD_NOT_CREATE)
                 }
 
                 return when (response) {
-
                     is CreatePublicKeyCredentialResponse -> {
                         Result.Success(Json.parseToJsonElement(response.registrationResponseJson).jsonObject)
                     }
 
-                    else -> {
-                        Result.Error("Unknown credential")
-                    }
+                    else -> Result.Error(COULD_NOT_CREATE)
                 }
             }
 
         }
     }
 
+}
+
+private const val COULD_NOT_CREATE = "The passkey could not be created. Try again."
+
+/** The name the owner gave this device, as Settings shows it, or else its model. */
+private fun deviceName(context: Context): String {
+    val named = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+        runCatching { Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME) }.getOrNull()
+    } else {
+        null
+    }
+    return named?.takeIf { it.isNotBlank() }
+        ?: Build.MODEL.takeIf { it.startsWith(Build.MANUFACTURER, ignoreCase = true) }
+        ?: "${Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} ${Build.MODEL}"
 }

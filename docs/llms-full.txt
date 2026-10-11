@@ -449,6 +449,22 @@ with the `REFRESH_TOKEN` credential, and clears tokens when the refresh is rejec
 `KycViewModel`, and `rememberAuthenticatedUser()` for the signed-in user. Your resource servers only have to validate the
 bearer token.
 
+Adding a passkey from your profile screen:
+
+```kotlin
+val credentialManager = rememberKmpCredentialManager()
+if (credentialManager.canCreatePasskeys) {
+    Button(onClick = { profileViewModel.onEvent(ProfileEvent.AddPasskey(credentialManager)) }) {
+        Text("Add a passkey")
+    }
+}
+```
+
+The options are fetched only when the button is pressed. The passkey is labelled with the device or browser it was
+made on (`passkeyLabel`), and the outcome lands in `state.infoMsg`: "Passkey added", or what went wrong; nothing when
+the person closes the system prompt. Android 9+ and browsers can add passkeys; iOS and desktop can't yet, so
+`canCreatePasskeys` is false there.
+
 ### 3.4 Reading the current user in a frontend
 
 - `GET /me` (Bearer or cookie) returns the profile:
