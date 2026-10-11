@@ -195,15 +195,13 @@ class ClientIdMetadataDocumentIntegrationTest {
         assertFalse("roles" in info || "phoneNumberVerified" in info, "$info")
         val refreshToken = assertNotNull(first["refresh_token"], "no refresh token in $first")
 
-        // A public client's refresh token is rotated
+        // A public client's refresh token is rotated. Presented again at once, as a second tab
+        // refreshing with it would, it gets the same new token rather than a third.
         val refreshed = token("grant_type" to "refresh_token", "refresh_token" to refreshToken, "client_id" to CLIENT)
-        assertNotEquals(refreshToken, refreshed["refresh_token"])
-        val reuse = mockMvc.post("/oauth2/token") {
-            param("grant_type", "refresh_token")
-            param("refresh_token", refreshToken)
-            param("client_id", CLIENT)
-        }.andReturn()
-        assertEquals(400, reuse.response.status)
+        val rotated = assertNotNull(refreshed["refresh_token"])
+        assertNotEquals(refreshToken, rotated)
+        val repeated = token("grant_type" to "refresh_token", "refresh_token" to refreshToken, "client_id" to CLIENT)
+        assertEquals(rotated, repeated["refresh_token"])
 
         // The consent is remembered: signing in again goes straight back to the app
         val again = signIn(authorizeUrl(CLIENT), email).response.redirectedUrl.orEmpty()

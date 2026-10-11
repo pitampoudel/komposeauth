@@ -18,13 +18,20 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.authorization.MongoOAuth2AuthorizationService
+import pitampoudel.komposeauth.authorization.OAuth2AuthorizationDocumentRepository
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
 import pitampoudel.komposeauth.user.repository.UserRepository
 import java.net.URI
 import java.security.MessageDigest
+import java.time.Duration
+import java.time.Instant
 import java.util.Base64
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
@@ -46,6 +53,11 @@ class PublicClientRefreshTokenIntegrationTest {
     @Autowired private lateinit var mockMvc: MockMvc
     @Autowired private lateinit var json: Json
     @Autowired private lateinit var userRepository: UserRepository
+    @Autowired private lateinit var authorizations: OAuth2AuthorizationDocumentRepository
+
+    private companion object {
+        const val CONTENDERS = 6
+    }
 
     private val redirectUri = "https://spa.example.com/auth/callback"
     private val password = "Password1"
@@ -153,8 +165,88 @@ class PublicClientRefreshTokenIntegrationTest {
         )
         assertNotNull(refreshed["access_token"])
         assertNotEquals(first["access_token"], refreshed["access_token"])
-        // Reused rather than rotated (see the client's token settings), so it keeps working.
-        assertEquals(refreshToken, refreshed["refresh_token"])
+        // Rotated: the refresh hands back a new refresh token, which is the one that works from now on.
+        val rotated = assertNotNull(refreshed["refresh_token"])
+        assertNotEquals(refreshToken, rotated)
+        assertNotNull(token("grant_type" to "refresh_token", "refresh_token" to rotated, "client_id" to clientId)["access_token"])
+    }
+
+    private fun signIn(adminEmail: String, email: String): Pair<String, String> {
+        val clientId = createClient(adminEmail).getValue("clientId")
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        val refreshToken = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "code_verifier" to codeVerifier
+        ).getValue("refresh_token")
+        return clientId to refreshToken
+    }
+
+    private fun refresh(clientId: String, refreshToken: String) = tokenRequest(
+        "grant_type" to "refresh_token",
+        "refresh_token" to refreshToken,
+        "client_id" to clientId
+    )
+
+    private fun refreshedToken(result: MvcResult): String {
+        assertEquals(200, result.response.status, result.response.contentAsString)
+        return json.parseToJsonElement(result.response.contentAsString).jsonObject.getValue("refresh_token").jsonPrimitive.content
+    }
+
+    private fun assertRefused(result: MvcResult) {
+        assertEquals(400, result.response.status, result.response.contentAsString)
+        assertTrue("invalid_grant" in result.response.contentAsString, result.response.contentAsString)
+    }
+
+    @Test
+    fun `a refresh made again with the token it replaced gets the same new token`() {
+        val (clientId, first) = signIn("spa-admin-7@example.com", "spa-rotation@example.com")
+
+        val second = refreshedToken(refresh(clientId, first))
+        // What a second request of the same page load does: it read the cookie before the first
+        // request's answer replaced it.
+        assertEquals(second, refreshedToken(refresh(clientId, first)))
+        assertNotEquals(second, refreshedToken(refresh(clientId, second)))
+    }
+
+    @Test
+    fun `concurrent refreshes with one token all end up holding the same token`() {
+        val (clientId, first) = signIn("spa-admin-8@example.com", "spa-concurrent@example.com")
+
+        val pool = Executors.newFixedThreadPool(CONTENDERS)
+        val start = CountDownLatch(1)
+        val answers = try {
+            (1..CONTENDERS).map {
+                pool.submit<MvcResult> {
+                    start.await()
+                    refresh(clientId, first)
+                }
+            }.also { start.countDown() }.map { it.get(30, TimeUnit.SECONDS) }
+        } finally {
+            pool.shutdownNow()
+        }
+
+        val held = answers.map(::refreshedToken).toSet()
+        assertEquals(1, held.size, "the requests came away with ${held.size} different refresh tokens")
+        assertNotEquals(first, held.single())
+        refreshedToken(refresh(clientId, held.single()))
+    }
+
+    @Test
+    fun `a replaced refresh token used after the grace ends the authorization`() {
+        val (clientId, first) = signIn("spa-admin-9@example.com", "spa-replay@example.com")
+        val second = refreshedToken(refresh(clientId, first))
+        val stored = assertNotNull(authorizations.findByRefreshTokenValue(second))
+        authorizations.save(
+            stored.copy(refreshTokenRotatedAt = Instant.now() - MongoOAuth2AuthorizationService.ROTATION_GRACE - Duration.ofSeconds(1))
+        )
+
+        assertRefused(refresh(clientId, first))
+        // Whoever was holding the newer token is out too: either of them may be the one who stole it.
+        assertRefused(refresh(clientId, second))
+        assertNull(authorizations.findById(stored.id).orElse(null))
     }
 
     @Test
@@ -255,6 +347,16 @@ class PublicClientRefreshTokenIntegrationTest {
             "client_secret" to secret
         )
         assertNotNull(withSecret["access_token"])
+        // Rotated for a confidential client too, and the new token is the one that refreshes.
+        val rotated = withSecret.getValue("refresh_token")
+        assertNotEquals(refreshToken, rotated)
+        val again = token(
+            "grant_type" to "refresh_token",
+            "refresh_token" to rotated,
+            "client_id" to clientId,
+            "client_secret" to secret
+        )
+        assertNotNull(again["access_token"])
     }
 
     @Test

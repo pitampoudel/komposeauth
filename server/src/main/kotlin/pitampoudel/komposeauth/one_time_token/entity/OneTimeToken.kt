@@ -34,6 +34,12 @@ data class OneTimeToken(
      * and on links issued before this field existed.
      */
     val subject: String? = null,
+    /**
+     * For a [Purpose.REFRESH_TOKEN], the sign-in it descends from: a refresh issues its successor
+     * into the same family, so a replay of any of them, or a sign-out with one, ends the lot. Null on
+     * other purposes and on tokens issued before families existed, which are each their own.
+     */
+    val family: String? = null,
     val consumedAt: Instant? = null,
     val createdAt: Instant = Instant.now()
 ) {
@@ -46,4 +52,5 @@ data class OneTimeToken(
     fun isExpired(): Boolean = Instant.now().isAfter(expiresAt)
     fun isConsumed(): Boolean = consumedAt != null
     fun isValid(): Boolean = !isExpired() && !isConsumed()
+    fun familyId(): String = family ?: requireNotNull(id).toHexString()
 }

@@ -24,6 +24,8 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import pitampoudel.core.data.asResource
 import pitampoudel.core.data.safeApiCall
@@ -116,12 +118,24 @@ private fun tokenHosts(resourceServerUrls: List<String>): Set<String> {
     return (resourceServerUrls + authServerUrl).map { Url(it).host }.toSet()
 }
 
+/**
+ * Held while the stored tokens are refreshed, by every client in the process. A refresh token answers
+ * once, and Ktor serialises refreshes only within one client: two clients sharing the stored tokens
+ * would otherwise redeem the same one, and the server takes the second as a replay.
+ */
+internal val storedTokensLock = Mutex()
+
 private suspend fun refresh(
     engine: HttpClientEngine,
     authServerUrl: String,
     refreshToken: String,
     authPreferences: AuthPreferences
-): BearerTokens? {
+): BearerTokens? = storedTokensLock.withLock {
+    // Another client may have refreshed while this one waited, or the user signed out.
+    val stored = authPreferences.tokenData() ?: return@withLock null
+    if (stored.refreshToken != refreshToken) {
+        return@withLock BearerTokens(accessToken = stored.accessToken, refreshToken = stored.refreshToken)
+    }
     val refreshClient = HttpClient(engine) {
         install(DefaultRequest) {
             contentType(ContentType.Application.Json)
@@ -147,7 +161,7 @@ private suspend fun refresh(
         refreshClient.close()
     }
 
-    return when (result) {
+    when (result) {
         is Result.Success -> {
             authPreferences.saveTokenData(result.data)
             BearerTokens(

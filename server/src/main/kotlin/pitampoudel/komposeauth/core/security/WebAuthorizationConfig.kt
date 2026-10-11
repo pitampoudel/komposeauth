@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.core.oidc.OidcScopes
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationToken
 import org.springframework.security.oauth2.server.authorization.authentication.ClientSecretAuthenticationProvider
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.token.*
@@ -39,6 +40,7 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
 import org.springframework.boot.restclient.RestTemplateBuilder
 import org.springframework.web.client.RestTemplate
+import pitampoudel.komposeauth.authorization.MongoOAuth2AuthorizationService
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthConverter
 import pitampoudel.komposeauth.core.providers.OAuth2PublicClientAuthProvider
@@ -65,7 +67,9 @@ class WebAuthorizationConfig {
     @Bean
     fun securityContextRepository() = HttpSessionSecurityContextRepository()
 
-    class OAuth2RefreshTokenGenerator : OAuth2TokenGenerator<OAuth2RefreshToken> {
+    class OAuth2RefreshTokenGenerator(
+        private val authorizationService: MongoOAuth2AuthorizationService
+    ) : OAuth2TokenGenerator<OAuth2RefreshToken> {
         private val refreshTokenGenerator: StringKeyGenerator = Base64StringKeyGenerator(
             Base64.getUrlEncoder().withoutPadding(), 96
         )
@@ -77,7 +81,14 @@ class WebAuthorizationConfig {
             val issuedAt = Instant.now()
             val expiresAt =
                 issuedAt.plus(context.registeredClient.tokenSettings.refreshTokenTimeToLive)
-            return OAuth2RefreshToken(this.refreshTokenGenerator.generateKey(), issuedAt, expiresAt)
+            val token = OAuth2RefreshToken(this.refreshTokenGenerator.generateKey(), issuedAt, expiresAt)
+            // A refresh replaces the token it was made with, or, when another refresh with that token
+            // got there first, hands back the one that did.
+            val refresh = context.getAuthorizationGrant<Authentication>() as? OAuth2RefreshTokenAuthenticationToken
+            val authorization = context.authorization
+            if (refresh == null || authorization == null) return token
+            return authorizationService.rotateRefreshToken(authorization.id, refresh.refreshToken, token)
+                ?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT)
         }
     }
 
@@ -109,14 +120,15 @@ class WebAuthorizationConfig {
     @Bean
     fun tokenGenerator(
         jwtEncoder: JwtEncoder,
-        jwtCustomizer: OAuth2TokenCustomizer<JwtEncodingContext>
+        jwtCustomizer: OAuth2TokenCustomizer<JwtEncodingContext>,
+        authorizationService: MongoOAuth2AuthorizationService
     ): OAuth2TokenGenerator<*> {
         val jwtGenerator = JwtGenerator(jwtEncoder)
         jwtGenerator.setJwtCustomizer(jwtCustomizer)
         return DelegatingOAuth2TokenGenerator(
             jwtGenerator,
             OAuth2AccessTokenGenerator(),
-            OAuth2RefreshTokenGenerator()
+            OAuth2RefreshTokenGenerator(authorizationService)
         )
     }
 

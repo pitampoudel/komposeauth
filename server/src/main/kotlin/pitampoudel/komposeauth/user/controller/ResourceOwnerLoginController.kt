@@ -104,7 +104,10 @@ class ResourceOwnerLoginController(
                     json.encodeToString(
                         OAuth2Response(
                             accessToken = accessToken,
-                            refreshToken = oneTimeTokenService.generateRefreshToken(user.id),
+                            refreshToken = oneTimeTokenService.generateRefreshToken(
+                                userId = user.id,
+                                replacing = (request as? Credential.RefreshToken)?.refreshToken
+                            ),
                             tokenType = "Bearer",
                             expiresIn = 1.days.inWholeSeconds,
                         )

@@ -209,9 +209,12 @@ public client.
 Refresh tokens: the authorization-code exchange returns a `refresh_token`, public clients included (komposeauth
 issues one to every client with the `refresh_token` grant, which all registered clients have; stock Spring
 Authorization Server would withhold it from public clients). It lasts the client's `refreshTokenTtlDays` and is
-reused, not rotated: refreshing returns a new access token and the same refresh token. Refresh with a form POST
-to the token endpoint, authenticated as the code exchange was (a public client's `client_id` alone is shown here;
-a confidential client adds its secret):
+rotated: refreshing returns a new access token and a new refresh token; store the new one and discard the old.
+Several refreshes with the same token within two minutes of the first (concurrent requests that each noticed the
+expiry) all succeed and all get the same new token. Presented after that, a replaced refresh token is taken as
+stolen: the whole authorization is revoked and the user has to sign in again. Refresh with a form POST to the
+token endpoint, authenticated as the code exchange was (a public client's `client_id` alone is shown here; a
+confidential client adds its secret):
 
 ```http
 POST /oauth2/token
@@ -326,7 +329,8 @@ these libraries). Private-scheme redirects are supported. Kotlin Multiplatform a
 
 Tokens from `/login` last 24 hours. The refresh token lasts 30 days and is **single-use**: each refresh returns a
 new access token and a new refresh token; store the new one and discard the old. Presenting a spent refresh token
-returns 400.
+returns 400 and also revokes every refresh token issued since the sign-in it came from, since either holder may be
+the one who copied it. Refresh one request at a time.
 
 ```bash
 # Password login, tokens in the body
@@ -484,7 +488,7 @@ consent. A token whose user has been deleted is answered with 401 `invalid_token
 |---|---|
 | `/login` access token | 24 h |
 | `/login` refresh token | 30 days, single use, rotated |
-| Authorization-code refresh token | per client, `refreshTokenTtlDays`; reusable, not rotated |
+| Authorization-code refresh token | per client, `refreshTokenTtlDays`; rotated on every use |
 | Authorization-code access token | per client, `accessTokenTtlSeconds` (default 900 s, min 60 s) |
 | Auth-server browser session | `SESSION_TIMEOUT`, default 24 h |
 
@@ -782,7 +786,8 @@ or open Swagger UI at `/swagger-ui.html` as an admin.
   does not match.
 - Sending the user back through the authorize redirect on every access-token expiry instead of using the
   `refresh_token` from the authorization-code exchange (section 3.1).
-- Reusing a `/login` refresh token after it has been redeemed; always store the new one.
+- Reusing a refresh token after it has been redeemed, from `/login` or `/oauth2/token`; always store the new one.
+  An old one presented again (after two minutes, at `/oauth2/token`) signs the user out.
 - Forgetting to add the browser app's origin to the auth server's CORS list (token endpoint and `/login` calls
   fail as opaque CORS errors).
 - Putting the client secret in browser or mobile code. Only backend clients using `client_credentials` need it.

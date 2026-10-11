@@ -10,6 +10,7 @@ interface OAuth2AuthorizationDocumentRepository : MongoRepository<OAuth2Authoriz
     fun findByState(value: String): OAuth2AuthorizationDocument?
     fun findByAccessTokenValue(value: String): OAuth2AuthorizationDocument?
     fun findByRefreshTokenValue(value: String): OAuth2AuthorizationDocument?
+    fun findByPreviousRefreshTokenValue(value: String): OAuth2AuthorizationDocument?
     fun findByOidcIdTokenValue(value: String): OAuth2AuthorizationDocument?
     fun deleteAllByPrincipalName(principalName: String)
 }

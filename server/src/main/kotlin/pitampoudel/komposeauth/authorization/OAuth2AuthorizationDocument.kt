@@ -34,6 +34,10 @@ data class OAuth2AuthorizationDocument(
     val refreshTokenIssuedAt: Instant? = null,
     val refreshTokenExpiresAt: Instant? = null,
     val refreshTokenMetadata: String? = null,
+    // The refresh token this one replaced, and when: honoured for a moment after its rotation, then
+    // taken as a replay. See MongoOAuth2AuthorizationService.
+    @Indexed(sparse = true) val previousRefreshTokenValue: String? = null,
+    val refreshTokenRotatedAt: Instant? = null,
 
     // Looked up by the RP-initiated logout's id_token_hint, and by a token lookup with no type.
     @Indexed(sparse = true) val oidcIdTokenValue: String? = null,

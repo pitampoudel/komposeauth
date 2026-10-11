@@ -36,7 +36,6 @@ import pitampoudel.komposeauth.core.utils.normalizedEmail
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
-import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.repository.OneTimeTokenRepository
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
@@ -530,10 +529,7 @@ class UserService(
             )
 
             is Credential.RefreshToken -> {
-                val token = oneTimeTokenService.consume(
-                    request.refreshToken,
-                    purpose = OneTimeToken.Purpose.REFRESH_TOKEN
-                )
+                val token = oneTimeTokenService.redeemRefreshToken(request.refreshToken)
                 findUser(token.userId.toHexString()) ?: throw AccessDeniedException(
                     "Invalid credentials"
                 )

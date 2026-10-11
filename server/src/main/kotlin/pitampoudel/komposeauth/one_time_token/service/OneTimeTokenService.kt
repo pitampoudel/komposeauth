@@ -31,9 +31,49 @@ class OneTimeTokenService(
         const val INVALID_TOKEN_MESSAGE = "This link is invalid or has expired. Request a new one."
     }
 
-    fun generateRefreshToken(userId: ObjectId, ttl: Duration = 30.days): String {
-        return createToken(userId, OneTimeToken.Purpose.REFRESH_TOKEN, ttl)
+    /**
+     * @param replacing the refresh token this one is issued for, already redeemed with
+     * [redeemRefreshToken]; the new token joins its family. Null for a sign-in, which starts one.
+     */
+    fun generateRefreshToken(userId: ObjectId, replacing: String? = null, ttl: Duration = 30.days): String {
+        val family = if (replacing == null) {
+            ObjectId().toHexString()
+        } else {
+            // Gone if its family ended between the redeem and now, and then so has this refresh.
+            repo.findByTokenHashAndPurpose(hash(replacing), OneTimeToken.Purpose.REFRESH_TOKEN)?.familyId()
+                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, INVALID_TOKEN_MESSAGE)
+        }
+        return createToken(userId, OneTimeToken.Purpose.REFRESH_TOKEN, ttl, family = family)
+    }
 
+    /**
+     * Spends a refresh token so its successor can be issued ([generateRefreshToken]).
+     *
+     * One already spent is a replay, not a race: the SDK refreshes one request at a time and keeps
+     * the token it gets back, so a spent token presented again means somebody else holds a copy of
+     * it. Whichever of the two refreshed first, its family ends here, and both are signed out.
+     */
+    fun redeemRefreshToken(rawToken: String): OneTimeToken {
+        return try {
+            consume(rawToken, OneTimeToken.Purpose.REFRESH_TOKEN)
+        } catch (e: ResponseStatusException) {
+            repo.findByTokenHashAndPurpose(hash(rawToken), OneTimeToken.Purpose.REFRESH_TOKEN)
+                ?.takeIf { it.isConsumed() }
+                ?.let(::endFamily)
+            throw e
+        }
+    }
+
+    private fun endFamily(token: OneTimeToken) {
+        val family = token.familyId()
+        mongoTemplate.remove(
+            Query(
+                Criteria.where("userId").`is`(token.userId)
+                    .and("purpose").`is`(OneTimeToken.Purpose.REFRESH_TOKEN)
+                    .orOperator(Criteria.where("family").`is`(family), Criteria.where("id").`is`(token.id))
+            ),
+            OneTimeToken::class.java
+        )
     }
 
     /**
@@ -65,7 +105,8 @@ class OneTimeTokenService(
         userId: ObjectId,
         purpose: OneTimeToken.Purpose,
         ttl: Duration,
-        subject: String? = null
+        subject: String? = null,
+        family: String? = null
     ): String {
         fun newRandomToken(): String {
             val bytes = ByteArray(32)
@@ -80,7 +121,8 @@ class OneTimeTokenService(
             purpose = purpose,
             tokenHash = hash(raw),
             expiresAt = now.plusSeconds(ttl.inWholeSeconds),
-            subject = subject
+            subject = subject,
+            family = family
         )
         repo.save(entity)
         return raw
