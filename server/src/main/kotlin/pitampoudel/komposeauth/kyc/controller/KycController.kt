@@ -3,11 +3,19 @@ package pitampoudel.komposeauth.kyc.controller
 import io.swagger.v3.oas.annotations.Operation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.bson.types.ObjectId
+import org.springframework.http.CacheControl
+import org.springframework.http.ContentDisposition
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.server.ResponseStatusException
 import pitampoudel.komposeauth.core.config.UserContextService
+import pitampoudel.komposeauth.core.config.isAdmin
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_ADDRESS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_DOCUMENTS
@@ -16,10 +24,13 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_PERSONAL_INFO
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.SlackNotifier
 import pitampoudel.komposeauth.core.utils.ServerUrl
+import pitampoudel.komposeauth.core.utils.imageMimeTypeOrNull
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
 import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
+import pitampoudel.komposeauth.kyc.entity.KycDocument
+import pitampoudel.komposeauth.kyc.service.KycDocuments
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.user.service.UserService
 import javax.security.auth.login.AccountNotFoundException
@@ -42,6 +53,31 @@ class KycController(
         val user = userContextService.getUserFromAuthentication()
         val kyc = kycService.find(user.id)
         return if (kyc != null) ResponseEntity.ok(kyc) else ResponseEntity.notFound().build()
+    }
+
+    @Operation(
+        summary = "Get a submitted KYC document",
+        description = "One of a user's KYC files (front, back or selfie) as it was submitted, for that user " +
+            "and for admins. This is the address KYC responses give; the stored copy is encrypted."
+    )
+    @GetMapping(KycDocuments.PATH)
+    fun getDocument(@PathVariable userId: String, @PathVariable document: String): ResponseEntity<ByteArray> {
+        val caller = userContextService.getUserFromAuthentication()
+        val owner = runCatching { ObjectId(userId) }.getOrNull()
+        val kycDocument = KycDocument.ofLabel(document)
+        // Somebody else's file gets the same answer as one that is not there.
+        val notFound = ResponseStatusException(HttpStatus.NOT_FOUND, "No such document")
+        if (owner == null || kycDocument == null || (caller.id != owner && !caller.isAdmin())) throw notFound
+        val bytes = kycService.document(owner, kycDocument) ?: throw notFound
+
+        // Anything but a picture is handed over as a download rather than rendered on this origin.
+        val imageType = bytes.imageMimeTypeOrNull()
+        val disposition = if (imageType != null) ContentDisposition.inline() else ContentDisposition.attachment()
+        return ResponseEntity.ok()
+            .cacheControl(CacheControl.noStore().cachePrivate())
+            .contentType(imageType?.let(MediaType::parseMediaType) ?: MediaType.APPLICATION_OCTET_STREAM)
+            .header(HttpHeaders.CONTENT_DISPOSITION, disposition.filename("kyc-${kycDocument.label}").build().toString())
+            .body(bytes)
     }
 
     @Operation(

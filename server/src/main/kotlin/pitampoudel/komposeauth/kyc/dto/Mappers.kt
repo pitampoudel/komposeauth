@@ -4,9 +4,11 @@ import kotlinx.datetime.toKotlinLocalDate
 import pitampoudel.komposeauth.core.data.AddressInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
+import pitampoudel.komposeauth.kyc.entity.KycDocument
 import pitampoudel.komposeauth.kyc.entity.KycVerification
 
-fun KycVerification.toResponse() = KycResponse(
+/** [documentUrl] is where a stored file is handed out; the storage address on the record never is. */
+fun KycVerification.toResponse(documentUrl: (KycDocument) -> String) = KycResponse(
     userId = userId.toHexString(),
     personalInformation = PersonalInformation(
         country = country,
@@ -40,9 +42,9 @@ fun KycVerification.toResponse() = KycResponse(
         documentIssuedDate = documentIssuedDate?.toKotlinLocalDate(),
         documentExpiryDate = documentExpiryDate?.toKotlinLocalDate(),
         documentIssuedPlace = documentIssuedPlace,
-        documentFrontUrl = documentFrontUrl,
-        documentBackUrl = documentBackUrl,
-        selfieUrl = selfieUrl
+        documentFrontUrl = documentFrontUrl?.let { documentUrl(KycDocument.FRONT) },
+        documentBackUrl = documentBackUrl?.let { documentUrl(KycDocument.BACK) },
+        selfieUrl = selfieUrl?.let { documentUrl(KycDocument.SELFIE) }
     ),
     status = status,
     thirdFactorWarnings = thirdFactorWarnings

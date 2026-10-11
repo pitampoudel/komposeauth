@@ -7,6 +7,8 @@ import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
+import software.amazon.awssdk.services.s3.model.GetObjectRequest
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.net.URI
 import java.net.URLDecoder
@@ -71,6 +73,15 @@ class S3StorageService(
         val key = keyOf(url) ?: return false
         client.deleteObject(DeleteObjectRequest.builder().bucket(settings.bucket).key(key).build())
         return true
+    }
+
+    override fun download(url: String): ByteArray? {
+        val key = keyOf(url) ?: throw IllegalArgumentException("$url is not in bucket ${settings.bucket}")
+        return try {
+            client.getObjectAsBytes(GetObjectRequest.builder().bucket(settings.bucket).key(key).build()).asByteArray()
+        } catch (_: NoSuchKeyException) {
+            null
+        }
     }
 
     private fun keyOf(url: String): String? {

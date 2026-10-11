@@ -7,13 +7,13 @@ import org.springframework.transaction.annotation.Transactional
 import pitampoudel.core.data.EncodedData
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.SlackNotifier
-import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
 import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
 import pitampoudel.komposeauth.kyc.dto.ThirdFactorModel
 import pitampoudel.komposeauth.kyc.dto.toResponse
+import pitampoudel.komposeauth.kyc.entity.KycDocument
 import pitampoudel.komposeauth.kyc.entity.KycVerification
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.user.entity.User
@@ -22,7 +22,6 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.Base64
 import kotlinx.datetime.toJavaLocalDate
-import pitampoudel.komposeauth.core.utils.detectMimeType
 import pitampoudel.komposeauth.kyc.domain.DocumentType
 import pitampoudel.komposeauth.kyc.dto.docType
 import pitampoudel.komposeauth.kyc.dto.toGender
@@ -31,13 +30,21 @@ import pitampoudel.komposeauth.kyc.dto.toGender
 @Service
 class KycService(
     private val kycRepo: KycVerificationRepository,
-    private val storageService: StorageService,
+    private val documents: KycDocuments,
     val emailService: EmailService,
     private val userRepository: UserRepository,
     private val slackNotifier: SlackNotifier
 ) {
 
-    fun find(userId: ObjectId): KycResponse? = kycRepo.findByUserId(userId)?.toResponse()
+    fun find(userId: ObjectId): KycResponse? = kycRepo.findByUserId(userId)?.response()
+
+    /** One of [userId]'s submitted files as it was sent, or null when there is none. */
+    fun document(userId: ObjectId, document: KycDocument): ByteArray? {
+        val storedUrl = kycRepo.findByUserId(userId)?.let(document.storedUrl) ?: return null
+        return documents.read(userId, document, storedUrl)
+    }
+
+    private fun KycVerification.response() = toResponse { documents.addressOf(userId, it) }
 
     fun isVerified(userId: ObjectId): Boolean {
         return find(userId)?.status == KycResponse.Status.APPROVED
@@ -53,7 +60,7 @@ class KycService(
     }
 
     fun getPending(): List<KycResponse> =
-        kycRepo.findAllByStatus(KycResponse.Status.PENDING).map { it.toResponse() }
+        kycRepo.findAllByStatus(KycResponse.Status.PENDING).map { it.response() }
 
     @Transactional
     fun submitPersonalInformation(
@@ -91,7 +98,7 @@ class KycService(
             throw BadRequestException("KYC already submitted; cannot resubmit")
         }
 
-        return kycRepo.save(newKycData).toResponse()
+        return kycRepo.save(newKycData).response()
     }
 
     @Transactional
@@ -113,7 +120,7 @@ class KycService(
             throw BadRequestException("KYC already submitted; cannot resubmit")
         }
 
-        return kycRepo.save(newKycData).toResponse()
+        return kycRepo.save(newKycData).response()
     }
 
     @Transactional
@@ -124,15 +131,12 @@ class KycService(
             throw BadRequestException("KYC already submitted; cannot resubmit")
         }
 
-        fun uploadKycDoc(label: String, encoded: EncodedData): String {
-            val file = encoded.toKmpFile()
-            val blobName = "kyc/${userId.toHexString()}/$label"
-            return storageService.upload(blobName, file.mimeType, file.byteArray)
-        }
+        fun uploadKycDoc(document: KycDocument, encoded: EncodedData): String =
+            documents.store(userId, document, encoded.toKmpFile().byteArray)
 
-        val newFrontUrl = uploadKycDoc("front", data.documentFront)
-        val newBackUrl = uploadKycDoc("back", data.documentBack)
-        val newSelfieUrl = uploadKycDoc("selfie", data.selfie)
+        val newFrontUrl = uploadKycDoc(KycDocument.FRONT, data.documentFront)
+        val newBackUrl = uploadKycDoc(KycDocument.BACK, data.documentBack)
+        val newSelfieUrl = uploadKycDoc(KycDocument.SELFIE, data.selfie)
 
         val entity = existing.copy(
             documentType = data.documentType,
@@ -145,7 +149,7 @@ class KycService(
             selfieUrl = newSelfieUrl,
             status = KycResponse.Status.PENDING
         )
-        return kycRepo.save(entity).toResponse()
+        return kycRepo.save(entity).response()
     }
 
     @Transactional
@@ -215,10 +219,10 @@ class KycService(
             .lastOrNull { it.isVerified && it.docType() != null }
             ?.docType()
 
-        fun uploadBase64Photo(label: String, base64: String): String? {
+        fun uploadBase64Photo(document: KycDocument, base64: String): String? {
             val raw = base64.substringAfter("base64,").trim().takeIf { it.isNotBlank() } ?: return null
             val bytes = runCatching { Base64.getDecoder().decode(raw) }.getOrNull() ?: return null
-            return storageService.upload("kyc/${userId.toHexString()}/$label", bytes.detectMimeType(), bytes)
+            return documents.store(userId, document, bytes)
         }
 
         fun photoFor(side: String): String? = data.documentPhoto
@@ -233,9 +237,9 @@ class KycService(
             throw BadRequestException("Document detection failed")
         }
 
-        val selfieUrl = uploadBase64Photo("selfie", userPhoto)
-        val documentFrontUrl = uploadBase64Photo("front", documentFront)
-        val documentBackUrl = uploadBase64Photo("back", documentBack)
+        val selfieUrl = uploadBase64Photo(KycDocument.SELFIE, userPhoto)
+        val documentFrontUrl = uploadBase64Photo(KycDocument.FRONT, documentFront)
+        val documentBackUrl = uploadBase64Photo(KycDocument.BACK, documentBack)
 
         val documentNumber = data.documentNumber?.takeIf { it.isNotBlank() }
             ?: data.documentDetectionLog.lastOrNull { it.isVerified }?.documentNumber?.takeIf { it.isNotBlank() }
@@ -274,7 +278,7 @@ class KycService(
                     warnings.joinToString("\n") { "• $it" }
             )
         }
-        return saved.toResponse()
+        return saved.response()
     }
 
     private fun updateStatus(
@@ -287,6 +291,6 @@ class KycService(
             if (current.status != KycResponse.Status.PENDING) {
                 throw BadRequestException("Only a KYC waiting for review can be approved or rejected")
             }
-            kycRepo.save(current.copy(status = status)).toResponse()
+            kycRepo.save(current.copy(status = status)).response()
         }.orElseThrow { IllegalArgumentException("KYC not found") }
 }

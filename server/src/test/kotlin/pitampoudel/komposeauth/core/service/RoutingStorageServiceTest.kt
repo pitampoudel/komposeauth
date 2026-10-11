@@ -30,6 +30,7 @@ class RoutingStorageServiceTest {
             whenever(gcs.upload(any(), anyOrNull(), any())) doReturn gcsUrl
             whenever(gcs.owns(gcsUrl)) doReturn true
             whenever(gcs.delete(any())) doReturn true
+            whenever(gcs.download(gcsUrl)) doReturn "stored".toByteArray()
         }.use { construction -> block { construction.constructed() } }
 
     private val onS3 = AppConfig(
@@ -90,6 +91,14 @@ class RoutingStorageServiceTest {
         verify(built().single()).delete(gcsUrl)
 
         assertFalse(router(onS3).delete("https://example.com/elsewhere"), "no store holds that address")
+    }
+
+    @Test
+    fun `a read goes to the store the address is in, and an address no store holds is not an absent file`() {
+        withMockGcs {
+            assertEquals("stored", router(onS3).download(gcsUrl)?.decodeToString())
+            assertFailsWith<IllegalStateException> { router(onS3).download("https://example.com/elsewhere") }
+        }
     }
 
     @Test

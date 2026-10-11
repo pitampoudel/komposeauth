@@ -1,12 +1,15 @@
 package pitampoudel.komposeauth.core.service.security
 
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import pitampoudel.komposeauth.StaticAppProperties
 import java.util.Base64
+import javax.crypto.AEADBadTagException
 
 class CryptoServiceTest {
 
@@ -86,5 +89,31 @@ class CryptoServiceTest {
         val service = CryptoService(propsWithKey(base64KeyOfLength(16)))
         assertEquals("", service.encrypt(""))
         assertEquals("", service.decrypt(""))
+    }
+
+    @Test
+    fun `a sealed file opens under its own context and no other`() {
+        val service = CryptoService(propsWithKey(base64KeyOfLength(32)))
+        val plain = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte()) + "a scanned passport".toByteArray()
+
+        val sealed = service.seal(plain, "kyc/u1/front")
+
+        assertTrue(service.isSealed(sealed))
+        assertFalse(service.isSealed(plain))
+        assertFalse(String(sealed, Charsets.ISO_8859_1).contains("a scanned passport"))
+        assertArrayEquals(plain, service.open(sealed, "kyc/u1/front"))
+        assertThrows<AEADBadTagException> { service.open(sealed, "kyc/u2/front") }
+    }
+
+    @Test
+    fun `a sealed file that was altered or sealed under another key does not open`() {
+        val service = CryptoService(propsWithKey(base64KeyOfLength(32)))
+        val sealed = service.seal("selfie".toByteArray(), "kyc/u1/selfie")
+
+        val altered = sealed.copyOf().also { it[it.size - 1] = (it[it.size - 1] + 1).toByte() }
+        assertThrows<AEADBadTagException> { service.open(altered, "kyc/u1/selfie") }
+
+        val otherKey = CryptoService(propsWithKey(Base64.getEncoder().encodeToString(ByteArray(32) { 7 })))
+        assertThrows<AEADBadTagException> { otherKey.open(sealed, "kyc/u1/selfie") }
     }
 }

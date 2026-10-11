@@ -289,6 +289,21 @@ There are no CSRF tokens. Instead, the browser's `Sec-Fetch-Site` header decides
 So a browser app on another origin that calls this server with `credentials: "include"` only needs
 its origin in that list.
 
+### KYC documents
+
+Profile photos and KYC uploads go to the same bucket, and a profile photo is meant to be readable by
+anyone with its address. KYC documents (the document scans and the selfie) are not: they are
+encrypted with `BASE64_ENCRYPTION_KEY` before they are uploaded, so the stored copy is unreadable,
+and a KYC response's `documentFrontUrl`, `documentBackUrl` and `selfieUrl` point at this server
+(`GET /kyc/{userId}/documents/{front|back|selfie}`), which serves them only to that user and to
+admins. Fetch them with the user's bearer token or session cookie, not as a bare `<img src>` from
+another site. Files uploaded by an earlier version are encrypted where they are, in the background,
+once a server with this version starts.
+
+Keep the key: a server started with a different one cannot open the documents already stored. And
+if your bucket keeps old object versions (GCS object versioning, S3 versioning), delete the old
+versions under `kyc/`, which are the unencrypted originals.
+
 ### Reporting
 
 If you discover a security vulnerability, please email the maintainers or open a private security

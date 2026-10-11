@@ -817,6 +817,7 @@ stated. Admin-only endpoints accept `ADMIN` or `SUPER_ADMIN`.
 | `POST /update-profile` | user | Update profile (section 3.4) |
 | `POST /webauthn/register/options`, `POST /webauthn/register` | user | Register a passkey |
 | `GET /kyc`, `POST /kyc/personal-info`, `POST /kyc/address`, `POST /kyc/documents` | user | KYC submission |
+| `GET /kyc/{userId}/documents/{front|back|selfie}` | that user, or admin | A submitted KYC file; the address `documentFrontUrl`, `documentBackUrl` and `selfieUrl` give. Fetch it with the bearer or cookie: the stored copy is encrypted |
 | `GET /third-factor-kyc` | user | URL for third-party KYC verification |
 | `GET /organizations?ids=`, `GET /organizations/{id}`, `POST /organizations`, `DELETE /organizations/{id}` | user | Organizations: list yours (or by `ids`), read, create or update, delete |
 | `GET /users/{id}` | self, admin, or `user.read.any` | One user |
