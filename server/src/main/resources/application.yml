@@ -1,10 +1,11 @@
 spring:
   application:
     name: "komposeauth"
-  # This server's public address, exactly as relying parties check `iss` (no trailing slash). Every
-  # token's issuer, every emailed link and the KYC callback are built from it. Left unset, each is
-  # read off the request's Host and X-Forwarded-* headers, which the caller writes, so set it in
-  # production, usually as SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER.
+  # This server's public address, exactly as relying parties check `iss`: an origin with no trailing
+  # slash or path. Every token's issuer, every emailed link, the KYC callback and the Google sign-in's
+  # redirect URI are built from it. Required: the server refuses to start without it rather than read
+  # it off a request's Host and X-Forwarded-* headers, which the caller writes. Usually set as
+  # SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER.
   # security:
   #   oauth2:
   #     authorizationserver:

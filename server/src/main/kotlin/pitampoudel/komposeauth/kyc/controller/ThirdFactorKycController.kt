@@ -1,7 +1,6 @@
 package pitampoudel.komposeauth.kyc.controller
 
 import io.swagger.v3.oas.annotations.Operation
-import jakarta.servlet.http.HttpServletRequest
 import org.apache.coyote.BadRequestException
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -39,7 +38,7 @@ class ThirdFactorKycController(
         description = "Generates a third-factor KYC URL for the currently authenticated user."
     )
     @GetMapping("/$THIRD_FACTOR_KYC")
-    fun generateUrl(httpServletRequest: HttpServletRequest): UrlResponse {
+    fun generateUrl(): UrlResponse {
         val user = userContextService.getUserFromAuthentication()
         val secretKey = appConfigService.getConfig().thirdFactorSecretKey
             ?: error("Third-factor secret key is not configured")
@@ -55,14 +54,14 @@ class ThirdFactorKycController(
         val generatedJwt = jwtTokenService.generateHs256Token(
             secretKey = secretKey,
             subject = user.id.toHexString(),
-            issuer = serverUrl.of(httpServletRequest),
+            issuer = serverUrl.value,
             claims = mapOf(
                 "name" to user.fullName,
                 "token" to token,
                 "identifier" to user.id.toHexString(),
                 "label" to "",
                 "secondary_label" to "",
-                "callback" to serverUrl.of(httpServletRequest) + "/$THIRD_FACTOR_KYC",
+                "callback" to "${serverUrl.value}/$THIRD_FACTOR_KYC",
                 "return_url" to appConfigService.getConfig().websiteUrl.orEmpty(),
                 "is_sdk" to "true"
             )
@@ -80,7 +79,6 @@ class ThirdFactorKycController(
 
     @PostMapping("/$THIRD_FACTOR_KYC")
     fun submit(
-        httpServletRequest: HttpServletRequest,
         @RequestBody data: ThirdFactorModel
     ): ResponseEntity<KycResponse> {
         val secretKey = appConfigService.getConfig().thirdFactorSecretKey
@@ -96,7 +94,7 @@ class ThirdFactorKycController(
             throw BadRequestException("Identifier does not match the verification session")
         }
 
-        return ResponseEntity.ok(kycService.submitThirdFactorVerification(serverUrl.of(httpServletRequest), data))
+        return ResponseEntity.ok(kycService.submitThirdFactorVerification(serverUrl.value, data))
     }
 
 

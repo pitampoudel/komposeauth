@@ -9,7 +9,6 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigService
@@ -41,7 +40,7 @@ class ThirdFactorKycControllerTest {
         userContextService = mock<UserContextService>(),
         kycRepo = mock<KycVerificationRepository>(),
         restClient = mock(),
-        serverUrl = ServerUrl(AuthorizationServerSettings.builder().build())
+        serverUrl = ServerUrl(AuthorizationServerSettings.builder().issuer("https://auth.example.com").build())
     )
 
     private fun tokenFor(identifier: String) = jwtTokenService.generateHs256Token(
@@ -68,7 +67,7 @@ class ThirdFactorKycControllerTest {
         val data = payload(jwt = tokenFor(attacker), identifier = victim)
 
         assertThrows<BadRequestException> {
-            controller.submit(MockHttpServletRequest(), data)
+            controller.submit(data)
         }
         verify(kycService, never()).submitThirdFactorVerification(any(), any())
     }
@@ -79,7 +78,7 @@ class ThirdFactorKycControllerTest {
         val userId = ObjectId().toHexString()
         val data = payload(jwt = tokenFor(userId), identifier = userId)
 
-        controller.submit(MockHttpServletRequest(), data)
+        controller.submit(data)
 
         verify(kycService).submitThirdFactorVerification(any(), any())
     }

@@ -5,12 +5,14 @@ import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
 import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.media.StringSchema
+import io.swagger.v3.oas.models.servers.Server
 import kotlinx.datetime.LocalDate
 import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springdoc.core.utils.SpringDocUtils
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.utils.ServerUrl
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -30,11 +32,12 @@ class OpenApiConfig {
 
     }
 
+    /** With no server named, springdoc writes in whatever host the request for the docs named. */
     @Bean
-    fun openAPI(): OpenAPI {
+    fun openAPI(serverUrl: ServerUrl): OpenAPI {
         return OpenAPI().info(
             Info().title("komposeauth API").description("The REST APIs")
-        )
+        ).servers(listOf(Server().url(serverUrl.value)))
     }
 
     /**

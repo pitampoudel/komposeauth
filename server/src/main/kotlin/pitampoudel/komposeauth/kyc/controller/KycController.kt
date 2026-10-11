@@ -1,7 +1,6 @@
 package pitampoudel.komposeauth.kyc.controller
 
 import io.swagger.v3.oas.annotations.Operation
-import jakarta.servlet.http.HttpServletRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.http.ResponseEntity
@@ -79,8 +78,7 @@ class KycController(
     )
     @PostMapping("/$KYC_DOCUMENTS")
     suspend fun submitDocumentDetails(
-        @Validated @RequestBody data: DocumentInformation,
-        request: HttpServletRequest
+        @Validated @RequestBody data: DocumentInformation
     ): ResponseEntity<KycResponse> {
         val user = userContextService.getUserFromAuthentication()
         val result = withContext(Dispatchers.IO) {
@@ -88,7 +86,7 @@ class KycController(
         }
         user.email?.let {
             emailService.sendHtmlMail(
-                baseUrl = serverUrl.of(request),
+                baseUrl = serverUrl.value,
                 to = it,
                 subject = "KYC Documents Received",
                 template = "email/generic.html",
@@ -109,13 +107,12 @@ class KycController(
     @PostMapping("/kyc/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     fun approve(
-        @PathVariable id: String,
-        request: HttpServletRequest
+        @PathVariable id: String
     ): ResponseEntity<KycResponse> {
         val admin = userContextService.getUserFromAuthentication()
         val targetUser = userService.findUser(id) ?: throw AccountNotFoundException("User not found")
         val response = kycService.approve(
-            baseUrl = serverUrl.of(request),
+            baseUrl = serverUrl.value,
             user = targetUser
         )
         slackNotifier.send(
@@ -131,14 +128,13 @@ class KycController(
     @PostMapping("/kyc/{id}/reject")
     @PreAuthorize("hasRole('ADMIN')")
     fun reject(
-        httpServletRequest: HttpServletRequest,
         @PathVariable id: String,
         @RequestParam(required = false) reason: String?
     ): ResponseEntity<KycResponse> {
         val admin = userContextService.getUserFromAuthentication()
         val targetUser = userService.findUser(id) ?: throw AccountNotFoundException("User not found")
         val response = kycService.reject(
-            baseUrl = serverUrl.of(httpServletRequest),
+            baseUrl = serverUrl.value,
             user = targetUser,
             reason = reason
         )

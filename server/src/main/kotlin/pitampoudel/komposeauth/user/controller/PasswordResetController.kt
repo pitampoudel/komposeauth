@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
-import jakarta.servlet.http.HttpServletRequest
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.EmailService
@@ -57,8 +56,7 @@ class PasswordResetController(
     )
     @PutMapping
     fun sendResetLink(
-        @RequestParam email: String,
-        request: HttpServletRequest
+        @RequestParam email: String
     ): ResponseEntity<MessageResponse> {
         // This endpoint is public, so the answer must not differ for an address that has an
         // account and one that doesn't — otherwise it reports who is registered here.
@@ -66,7 +64,7 @@ class PasswordResetController(
         val user = userService.findByUserName(email)
         val address = user?.email
         if (user != null && address != null) {
-            val baseUrl = serverUrl.of(request)
+            val baseUrl = serverUrl.value
             // Off the request thread, so an address with an account is answered as fast as one
             // without. A failure can't be reported to the caller without giving the account away,
             // so it has to surface in the logs instead of the response.

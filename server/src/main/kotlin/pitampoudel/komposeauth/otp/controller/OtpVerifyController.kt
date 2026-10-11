@@ -1,7 +1,6 @@
 package pitampoudel.komposeauth.otp.controller
 
 import io.swagger.v3.oas.annotations.Operation
-import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -59,8 +58,7 @@ class OtpVerifyController(
     @Operation(summary = "Send OTP")
     @PostMapping("/${ApiEndpoints.SEND_OTP}")
     fun sendOtp(
-        @Valid @RequestBody request: SendOtpRequest,
-        httpServletRequest: HttpServletRequest
+        @Valid @RequestBody request: SendOtpRequest
     ): ResponseEntity<MessageResponse> {
 
         val authenticatedUser = userContextService.authenticatedUserOrNull()
@@ -80,7 +78,7 @@ class OtpVerifyController(
                 enforceTargetQuota(normalizedEmail)
                 emailVerificationService.initiate(
                     email = request.username,
-                    baseUrl = serverUrl.of(httpServletRequest)
+                    baseUrl = serverUrl.value
                 )
             }
         }

@@ -66,7 +66,7 @@ class ResourceOwnerLoginController(
         val now = Instant.now()
         val scopes = listOf("openid", "profile", "email")
         val builder = JwtClaimsSet.builder()
-            .issuer(serverUrl.of(httpServletRequest))
+            .issuer(serverUrl.value)
             .subject(user.id.toHexString())
             .issuedAt(now)
             .expiresAt(now + 1.days.toJavaDuration())

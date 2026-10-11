@@ -57,17 +57,14 @@ discovery.
 ### 2.2 The issuer (`iss`)
 
 The issuer is the server's public address, set by its operator as `spring.security.oauth2.authorizationserver.issuer`
-(env `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER`), e.g. `https://auth.example.com` with no trailing slash.
+(env `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER`), e.g. `https://auth.example.com`: an origin with no
+trailing slash, path, query or fragment. It is required; the server refuses to start without it, or with anything
+that is not an origin alone, and never derives it from a request's `Host` or `X-Forwarded-*` headers.
+
 Every token carries it as `iss`, the discovery document names it, and the server accepts a bearer only when its
-`iss` matches. Emailed links and the KYC callback are built from it too (`core/utils/ServerUtils.kt`).
-
-When it is not set (local development), the issuer is derived from each request's scheme, host and port, so it
-equals the URL the client used. Then:
-
-- Behind a proxy the server must see the original scheme and host (`FORWARD_HEADERS_STRATEGY=framework`, the
-  default, and a proxy that sends `X-Forwarded-Proto`/`X-Forwarded-Host`). Otherwise `iss` becomes
-  `http://internal-host:8080` and validation fails.
-- Always reach the auth server by one canonical public URL, from browsers and from backends alike.
+`iss` matches. Emailed links, the KYC callback and the Google sign-in's redirect URI
+(`<issuer>/login/oauth2/code/google`) are built from it too (`core/utils/ServerUtils.kt`). So `iss` is the same
+whichever hostname a client happened to reach the server by; validate it against exactly this value.
 
 ### 2.3 Registering an OAuth client (needed for approach A)
 
@@ -844,8 +841,8 @@ or open Swagger UI at `/swagger-ui.html` as an admin.
 - Validating `aud` and then rejecting every token from `/login` or the KMP SDK (they have no `aud`).
 - Looking for `given_name`/`family_name`/`roles` in the access token. Use `givenName`, `familyName` and
   `authorities` (with `ROLE_` prefix). `/userinfo` has unprefixed `roles`.
-- Hard-coding an issuer with a trailing slash, or reaching the auth server through an internal hostname so `iss`
-  does not match.
+- Hard-coding an issuer with a trailing slash, or any spelling other than the operator's configured one: `iss` is
+  that value byte for byte, whichever hostname the token was requested through.
 - Sending the user back through the authorize redirect on every access-token expiry instead of using the
   `refresh_token` from the authorization-code exchange (section 3.1).
 - Reusing a refresh token after it has been redeemed, from `/login` or `/oauth2/token`; always store the new one.
