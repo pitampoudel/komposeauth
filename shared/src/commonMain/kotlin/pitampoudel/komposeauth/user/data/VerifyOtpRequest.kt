@@ -11,5 +11,11 @@ data class VerifyOtpRequest(
     @SerialName("type")
     val type: OtpType,
     @SerialName("otp")
-    val otp: String
+    val otp: String,
+    /**
+     * Needed only to replace an already verified email or phone number of an account that has a
+     * password; see [pitampoudel.komposeauth.core.domain.ErrorCode.CURRENT_PASSWORD_REQUIRED].
+     */
+    @SerialName("currentPassword")
+    val currentPassword: String? = null
 )

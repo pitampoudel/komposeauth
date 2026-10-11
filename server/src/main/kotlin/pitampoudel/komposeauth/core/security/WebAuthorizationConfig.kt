@@ -170,6 +170,10 @@ class WebAuthorizationConfig {
             ) {
                 context.claims.claim("authorities", user.roles.map { "ROLE_$it" })
             }
+            // The principal is the one stored at sign-in, so a refreshed token keeps the sign-in's time.
+            if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN) {
+                principal.signedInAt()?.let { context.claims.claim(AUTH_TIME_CLAIM, it.epochSecond) }
+            }
             user.email?.let {
                 context.claims.claim("email", it)
                 // Apps that grant access by email must know the user proved they own it

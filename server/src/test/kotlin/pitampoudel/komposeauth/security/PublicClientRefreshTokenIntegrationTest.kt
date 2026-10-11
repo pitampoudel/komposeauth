@@ -447,6 +447,31 @@ class PublicClientRefreshTokenIntegrationTest {
         assertRefused(refresh(clientId, refreshToken))
     }
 
+    private fun claimsOf(jwt: String) = json.parseToJsonElement(
+        Base64.getUrlDecoder().decode(jwt.split(".")[1]).decodeToString()
+    ).jsonObject
+
+    @Test
+    fun `an access token says when the user signed in, and a refreshed one keeps saying it`() {
+        val clientId = createClient("spa-admin-15@example.com").getValue("clientId")
+        val email = "spa-auth-time@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email)
+        val before = Instant.now().epochSecond
+
+        val first = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "code_verifier" to codeVerifier
+        )
+        val signedInAt = assertNotNull(claimsOf(first.getValue("access_token"))["auth_time"]).jsonPrimitive.content.toLong()
+        assertTrue(signedInAt in before..Instant.now().epochSecond, "auth_time $signedInAt")
+
+        val refreshed = token("grant_type" to "refresh_token", "refresh_token" to first.getValue("refresh_token"), "client_id" to clientId)
+        assertEquals(signedInAt, claimsOf(refreshed.getValue("access_token"))["auth_time"]?.jsonPrimitive?.content?.toLong())
+    }
+
     @Test
     fun `userinfo answers for the granted scopes only, and refuses a token whose user is gone`() {
         val clientId = createClient("spa-admin-6@example.com").getValue("clientId")

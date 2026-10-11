@@ -382,6 +382,23 @@ curl -X POST 'https://auth.example.com/login?responseType=TOKEN' -H 'Content-Typ
 (`9812345678`) is read in the **default phone region** (`defaultPhoneRegion` on the configuration page, an ISO
 country code; Nepal, `NP`, when unset) and stored in E.164. A number with a `+` and country code is read as written.
 
+`POST /verify-otp` (signed in, `{"username","type","otp"}`) attaches the address or number the code was sent to.
+Setting one for the first time, or proving the same one again, needs nothing more. **Replacing one the account has
+already verified needs proof that the caller is the account holder**, checked before the code is spent: an account
+with a password sends it as `"currentPassword"`; one without has to have signed in within the last 10 minutes (the
+token's `auth_time`; a refreshed `/login` token has none, so sign in again, or for an OAuth client redirect with
+`prompt=login`). Otherwise the answer is `403` with `Content-Type: application/problem+json` and a `code` saying
+which proof is missing:
+
+```json
+{"title":"Forbidden","status":403,"detail":"Enter your current password to replace your verified email address.","instance":"/verify-otp","code":"CURRENT_PASSWORD_REQUIRED"}
+{"title":"Forbidden","status":403,"detail":"Sign in again to replace your verified phone number.","instance":"/verify-otp","code":"RECENT_SIGN_IN_REQUIRED"}
+```
+
+Branch on `code`, not on `detail`. A replaced email address is told at that address, and a replaced phone number at
+the account's verified email address, if it has one. An address or number that belongs to another account is
+refused with `403` and no `code`.
+
 Passkey sign-in: `GET /login-options?platform=WEB` returns `{"googleClientId", "publicKeyAuthOptionsJson"}` and
 stores the WebAuthn challenge in a session cookie. Pass `publicKeyAuthOptionsJson` to
 `navigator.credentials.get()`, then post the serialized result as
@@ -397,7 +414,8 @@ valid until they expire.
 
 Error responses are RFC 7807 problem details (`{"type","title","status","detail"}`): 400 for malformed input or a
 bad/spent token or OTP, 401 for a missing, expired or invalid bearer token, 403 for wrong credentials, a
-deactivated account or insufficient rights, 409 for a duplicate email/phone, 429 when rate limited.
+deactivated account or insufficient rights, 409 for a duplicate email/phone, 429 when rate limited. A refusal the
+client is expected to act on also carries a `code` (`CURRENT_PASSWORD_REQUIRED`, `RECENT_SIGN_IN_REQUIRED`).
 
 ### 3.3 Kotlin Multiplatform / Compose Multiplatform apps: use the SDK
 
@@ -467,6 +485,7 @@ All tokens are JWS compact JWTs signed with **RS256**. The header carries a `kid
 | `picture` | user tokens, if set | URL |
 | `kycVerified` | user tokens | boolean |
 | `phoneNumberVerified` | user tokens | boolean |
+| `auth_time` | user tokens issued by a sign-in, and those refreshed from one at `/oauth2/token` | When the user signed in (seconds). A token from a `/login` refresh has none. |
 
 Sources: `core/security/WebAuthorizationConfig.kt` (`jwtCustomizer`) and
 `user/controller/ResourceOwnerLoginController.kt`. The ID token from the authorization-code flow carries the same
@@ -768,7 +787,7 @@ stated. Admin-only endpoints accept `ADMIN` or `SUPER_ADMIN`.
 | `POST /logout` | public | Clear cookie and session; optional `{"refreshToken"}` revokes it |
 | `GET /login-options?platform=` | public | Google client id + WebAuthn request options |
 | `POST /send-otp` | public (optional auth) | `{"username","type":"PHONE"|"EMAIL"}` |
-| `POST /verify-otp` | user | `{"username","type","otp"}` verify a phone/email on the current account |
+| `POST /verify-otp` | user | `{"username","type","otp","currentPassword"?}` verify a phone/email on the current account; replacing a verified one needs proof (section 3.2) |
 | `GET /verify-email?token=` | public | Email verification link target |
 | `PUT /reset-password?email=` | public | Send a reset link |
 | `GET /me` | user | Current profile |

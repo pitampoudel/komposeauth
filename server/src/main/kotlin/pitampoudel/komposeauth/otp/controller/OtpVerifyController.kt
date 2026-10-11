@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -16,6 +17,7 @@ import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.security.ratelimit.RateLimitProperties
 import pitampoudel.komposeauth.core.security.ratelimit.RateLimiter
+import pitampoudel.komposeauth.core.security.signedInAt
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
 import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.core.utils.normalizedEmail
@@ -93,6 +95,7 @@ class OtpVerifyController(
         @RequestBody request: VerifyOtpRequest
     ): UserResponse {
         val user = userContextService.getUserFromAuthentication()
+        val signedInAt = SecurityContextHolder.getContext().authentication?.signedInAt()
         return if (request.type == OtpType.PHONE) {
             /*
              * Parsed to E.164 here exactly as `sendOtp` does above, because the number is the key the
@@ -104,9 +107,10 @@ class OtpVerifyController(
             // The same rule the send leg enforces: a number that already belongs to somebody else is
             // not yours to attach, whichever leg you arrive on.
             enforceSelfRequest(currentUser = user, targetUsername = phoneNumber)
-            userService.verifyPhoneNumber(user.id, phoneNumber, request.otp)
+            userService.verifyPhoneNumber(user.id, phoneNumber, request.otp, request.currentPassword, signedInAt)
         } else {
-            userService.verifyEmail(user.id, request.username, request.otp)
+            enforceSelfRequest(currentUser = user, targetUsername = request.username.normalizedEmail())
+            userService.verifyEmail(user.id, request.username, request.otp, request.currentPassword, signedInAt)
         }
 
     }

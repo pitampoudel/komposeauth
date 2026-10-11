@@ -72,7 +72,8 @@ class UserServiceAdminEdgeCasesTest {
         emailVerificationService = mock(),
         appleTokenValidator = mock(),
         accessRevocation = accessRevocation,
-        consentRepository = consentRepository
+        consentRepository = consentRepository,
+        contactChangeNotifier = mock()
     )
 
     private fun user(roles: List<String> = emptyList()) = User(

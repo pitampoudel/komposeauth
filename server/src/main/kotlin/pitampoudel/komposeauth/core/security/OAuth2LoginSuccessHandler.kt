@@ -85,7 +85,8 @@ class OAuth2LoginSuccessHandler(
 
         if (user.deactivated) return refuse(request, response, "locked")
 
-        val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
+        // With the factor Spring recorded for this sign-in, which says when it happened.
+        val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") } + oauth.signInFactors()
 
         // Put our own authentication in the SecurityContext for the remainder of the request + session.
         val appAuth = UsernamePasswordAuthenticationToken(user.id.toHexString(), null, authorities)

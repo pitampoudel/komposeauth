@@ -72,7 +72,8 @@ class ProviderVerifiedEmailTest {
         emailVerificationService = mock(),
         appleTokenValidator = appleTokenValidator,
         accessRevocation = accessRevocation,
-        consentRepository = mock()
+        consentRepository = mock(),
+        contactChangeNotifier = mock()
     )
 
     @Test
