@@ -6,6 +6,10 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
@@ -22,6 +26,7 @@ import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Roles
+import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.user.repository.UserRepository
 import kotlin.test.assertTrue
 
@@ -39,6 +44,9 @@ class KycFlowIntegrationTest {
 
     @Autowired
     private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var emailService: EmailService
 
     private fun createAndLogin(email: String): Cookie {
         TestAuthHelpers.createUser(mockMvc, json, email)
@@ -123,6 +131,10 @@ class KycFlowIntegrationTest {
         mockMvc.perform(asyncDispatch(mvcResult))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("PENDING"))
+        // Named as every other mail names it; with the suffix the resolver finds no template.
+        verify(emailService).sendHtmlMail(
+            any(), eq("user-kyc-flow@example.com"), eq("KYC Documents Received"), eq("email/generic"), anyOrNull()
+        )
 
         // Step 3: admin sees it in pending list.
         val pendingBodyBefore = mockMvc.get("/${ApiEndpoints.KYC_PENDING}") {

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.test.context.ActiveProfiles
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.authorization.OAuth2AuthorizationDocument
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.webauthn.entity.PublicKeyUser
 import kotlin.test.assertEquals
@@ -67,6 +68,14 @@ class MongoIndexMigrationIntegrationTest {
         assertTrue(
             userIndexes.size > 1,
             "expected the compound indexes on User, found $userIndexes"
+        )
+    }
+
+    @Test
+    fun `an account's authorizations are found by an index when it is signed out everywhere`() {
+        assertTrue(
+            "principalName" in indexedFieldsOf(OAuth2AuthorizationDocument::class.java),
+            "oauth2_authorizations has no index on principalName, so revoking an account scans the collection"
         )
     }
 

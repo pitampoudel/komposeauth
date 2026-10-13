@@ -1,5 +1,6 @@
 package pitampoudel.komposeauth.core.security.ratelimit
 
+import com.nimbusds.jwt.JWTParser
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -7,6 +8,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.filter.OncePerRequestFilter
@@ -14,7 +16,9 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints
 
 /**
  * Per-client-IP throttling for the unauthenticated endpoints an attacker can hammer: password
- * login, OTP issuing and verification, and password-reset mail.
+ * login, the passkey challenges login options mint, OTP issuing and verification, and password-reset
+ * mail. The OTP endpoints are counted per account instead when the request carries a bearer token,
+ * so the people behind one shared address don't spend one budget.
  *
  * Runs before `ForwardedHeaderFilter` and works the client address out itself via [ClientIpResolver],
  * because `remoteAddr` under `server.forward-headers-strategy: framework` is taken from the leftmost
@@ -24,7 +28,9 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints
 class RateLimitFilter(
     private val rateLimiter: RateLimiter,
     private val properties: RateLimitProperties,
-    private val clientIpResolver: ClientIpResolver
+    private val clientIpResolver: ClientIpResolver,
+    /** The resolver Spring Security authenticates with, so the token counted is the one it checks. */
+    private val bearerTokenResolver: BearerTokenResolver
 ) : OncePerRequestFilter() {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -32,7 +38,8 @@ class RateLimitFilter(
     private data class Rule(
         val method: HttpMethod,
         val path: String,
-        val quota: RateLimitProperties.Rule
+        val quota: RateLimitProperties.Rule,
+        val perAccount: Boolean = false
     ) {
         // The path as the dispatcher routes it, decoded and without path parameters, so that
         // `/%6Cogin` or `/login;x` is counted as `/login` rather than slipping past every rule.
@@ -42,8 +49,9 @@ class RateLimitFilter(
     private val rules: List<Rule> = listOf(
         Rule(HttpMethod.POST, "/${ApiEndpoints.LOGIN}", properties.login),
         Rule(HttpMethod.POST, "/session-login", properties.login),
-        Rule(HttpMethod.POST, "/${ApiEndpoints.SEND_OTP}", properties.otpSend),
-        Rule(HttpMethod.POST, "/${ApiEndpoints.VERIFY_OTP}", properties.otpVerify),
+        Rule(HttpMethod.GET, "/${ApiEndpoints.LOGIN_OPTIONS}", properties.loginOptions),
+        Rule(HttpMethod.POST, "/${ApiEndpoints.SEND_OTP}", properties.otpSend, perAccount = true),
+        Rule(HttpMethod.POST, "/${ApiEndpoints.VERIFY_OTP}", properties.otpVerify, perAccount = true),
         Rule(HttpMethod.PUT, "/${ApiEndpoints.RESET_PASSWORD}", properties.passwordResetRequest),
         Rule(HttpMethod.POST, "/${ApiEndpoints.RESET_PASSWORD}", properties.passwordResetSubmit)
     )
@@ -64,8 +72,9 @@ class RateLimitFilter(
             return
         }
 
-        val clientIp = clientIpResolver.resolve(request)
-        val key = "ip:$clientIp:${rule.method}:${rule.path}"
+        val client = subjectOf(request)?.takeIf { rule.perAccount }?.let { "sub:$it" }
+            ?: "ip:${clientIpResolver.resolve(request)}"
+        val key = "$client:${rule.method}:${rule.path}"
         val decision = rateLimiter.check(key, rule.quota.limit, rule.quota.window)
         if (decision.allowed) {
             filterChain.doFilter(request, response)
@@ -77,7 +86,7 @@ class RateLimitFilter(
             "Rate limit exceeded for {} {} from {}",
             request.method,
             rule.path,
-            clientIp
+            client
         )
         response.status = HttpStatus.TOO_MANY_REQUESTS.value()
         response.setHeader("Retry-After", retryAfter.toString())
@@ -86,5 +95,13 @@ class RateLimitFilter(
             """{"type":"about:blank","title":"Too Many Requests","status":429,""" +
                     """"detail":"Too many requests. Try again in $retryAfter seconds."}"""
         )
+    }
+
+    // Read without checking the signature: Spring Security authenticates this same token next, so a
+    // forged one buys a budget of its own and then a 401.
+    private fun subjectOf(request: HttpServletRequest): String? = try {
+        bearerTokenResolver.resolve(request)?.let { JWTParser.parse(it).jwtClaimsSet.subject }
+    } catch (_: Exception) {
+        null
     }
 }

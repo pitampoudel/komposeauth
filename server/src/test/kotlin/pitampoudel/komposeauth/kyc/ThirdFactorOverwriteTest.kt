@@ -69,14 +69,14 @@ class ThirdFactorOverwriteTest {
 
     private fun submit(data: ThirdFactorModel): KycVerification {
         whenever(repo.findByUserId(userId)).thenReturn(declared)
-        whenever(repo.save(any<KycVerification>())).thenAnswer { it.arguments[0] }
+        whenever(repo.replaceIfStatus(any(), any())).thenAnswer { it.arguments[1] }
         whenever(storage.upload(any(), any(), any())).thenReturn("https://storage/x")
         whenever(userRepo.findById(userId)).thenReturn(Optional.empty())
 
         service.submitThirdFactorVerification("https://example.test", data)
 
         val captor = argumentCaptor<KycVerification>()
-        verify(repo).save(captor.capture())
+        verify(repo).replaceIfStatus(any(), captor.capture())
         return captor.firstValue
     }
 

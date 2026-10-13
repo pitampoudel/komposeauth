@@ -43,6 +43,10 @@ import org.springframework.security.web.util.matcher.NegatedRequestMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.filter.CorsFilter
+import org.springframework.security.authentication.AccountStatusUserDetailsChecker
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider
+import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.crypto.password.PasswordEncoder
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
@@ -53,6 +57,22 @@ import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
 class WebSecurityConfig {
+
+    /**
+     * The form sign-in's provider, which Spring would otherwise build from [UserDetailsServiceImpl]
+     * with the account checks first: a deactivated account then answers "locked" to any password, so
+     * anyone could learn which addresses have one. Checked after the password instead, it says so
+     * only to its owner.
+     */
+    @Bean
+    fun daoAuthenticationProvider(
+        userDetailsService: UserDetailsService,
+        passwordEncoder: PasswordEncoder
+    ): DaoAuthenticationProvider = DaoAuthenticationProvider(userDetailsService).apply {
+        setPasswordEncoder(passwordEncoder)
+        setPreAuthenticationChecks { }
+        setPostAuthenticationChecks(AccountStatusUserDetailsChecker())
+    }
 
     private fun clearTokenCookie(
         request: HttpServletRequest,

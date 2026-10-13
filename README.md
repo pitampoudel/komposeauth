@@ -87,31 +87,35 @@ address followed by `/login/oauth2/code/google`.
 
 #### Tell the server how it is reached
 
-The abuse limits count per client address, and the server can only work out which address that is if
-it knows what stands between it and the internet. `X-Forwarded-For` is written by the caller as much
-as by any proxy, so entries are trustworthy only from the right-hand end inwards — and only as far
-in as the proxies you actually run. `TRUSTED_PROXY_COUNT` is how many that is.
+The abuse limits count per client address (the code endpoints count a signed-in caller by account
+instead), and the server can only work out which address that is if it knows what stands between it
+and the internet. `X-Forwarded-For` is written by the caller as much as by any proxy, so entries are
+trustworthy only from the right-hand end inwards — and only as far in as the proxies you actually
+run. `trustedProxyCount` is how many that is.
+
+Both settings below are fields under **Rate Limiting** on the `/admin/config` page, not environment
+variables, so they can be corrected on a running server without a redeploy.
 
 Hosting platforms do this in one of two ways, and they need opposite settings.
 
 **Some edges publish the client address under a header of their own.** Name it and it's used as-is —
 no counting, nothing of the caller's mixed in. Prefer this wherever it's offered:
 
-| Platform          | Setting                             |
-|-------------------|-------------------------------------|
-| Railway           | `CLIENT_IP_HEADER=X-Real-IP`        |
-| Fly.io            | `CLIENT_IP_HEADER=Fly-Client-IP`    |
-| Behind Cloudflare | `CLIENT_IP_HEADER=CF-Connecting-IP` |
+| Platform          | `clientIpHeader`   |
+|-------------------|--------------------|
+| Railway           | `X-Real-IP`        |
+| Fly.io            | `Fly-Client-IP`    |
+| Behind Cloudflare | `CF-Connecting-IP` |
 
 **Other edges append to `X-Forwarded-For`**, leaving whatever the caller sent to the left of their
 own entries. There, count hops in from the right:
 
-| Deployment                                      | Setting                                                   |
-|-------------------------------------------------|-----------------------------------------------------------|
-| Google Cloud Run, at its own `run.app` URL      | `TRUSTED_PROXY_COUNT=1`                                   |
-| Behind a GCP external Application Load Balancer | `TRUSTED_PROXY_COUNT=2`                                   |
-| Your own nginx / Caddy in front                 | `TRUSTED_PROXY_COUNT=1`, plus one per extra hop           |
-| Exposed directly, as in the quickstart above    | leave both unset, and set `FORWARD_HEADERS_STRATEGY=none` |
+| Deployment                                      | `trustedProxyCount`                                                   |
+|-------------------------------------------------|-----------------------------------------------------------------------|
+| Google Cloud Run, at its own `run.app` URL      | `1`                                                                   |
+| Behind a GCP external Application Load Balancer | `2`                                                                   |
+| Your own nginx / Caddy in front                 | `1`, plus one per extra hop                                           |
+| Exposed directly, as in the quickstart above    | leave both unset, and set the env var `FORWARD_HEADERS_STRATEGY=none` |
 
 Count only proxies you control. Guessing **too high** is the safe direction — the server falls back
 to the connection's own peer address. Guessing **too low** attributes every request to your proxy, so
@@ -133,9 +137,9 @@ curl https://your-auth-server/admin/client-ip -H "Cookie: <your session>"
 
 It reports the address the limits are currently counting you as, how that was decided, and every
 client-address header the request actually carried. Call it from a phone on mobile data — somewhere
-the public address is unmistakably yours — and set `CLIENT_IP_HEADER` to whichever header came back
+the public address is unmistakably yours — and set `clientIpHeader` to whichever header came back
 holding it. If instead `X-Forwarded-For` *ends* with your address, count its position from the right
-and use `TRUSTED_PROXY_COUNT`.
+and use `trustedProxyCount`.
 
 The last row is the only one that should turn off `FORWARD_HEADERS_STRATEGY`. Everywhere else it must
 stay at its default of `framework`, because that is what tells the server it was reached over HTTPS —
@@ -146,7 +150,7 @@ without it, session cookies lose `Secure` and cross-site sign-in stops working.
 ```bash
 gcloud run deploy komposeauth \
   --image pitampoudel/komposeauth:latest \
-  --set-env-vars MONGODB_URI="mongodb+srv://...",BASE64_ENCRYPTION_KEY="<your-base64-key>",TRUSTED_PROXY_COUNT=1,SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER="https://auth.example.com" \
+  --set-env-vars MONGODB_URI="mongodb+srv://...",BASE64_ENCRYPTION_KEY="<your-base64-key>",SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER="https://auth.example.com" \
   --min-instances 0 \
   --concurrency 40 \
   --cpu 1 --memory 1Gi \
@@ -154,11 +158,11 @@ gcloud run deploy komposeauth \
   --startup-probe httpGet.path=/actuator/health/readiness,httpGet.port=8080,initialDelaySeconds=4,periodSeconds=2,timeoutSeconds=2,failureThreshold=45
 ```
 
-`TRUSTED_PROXY_COUNT=1` is what Cloud Run needs: its front end appends the caller's address as the
-last `X-Forwarded-For` entry, which is the one this server reads, and sets `X-Forwarded-Proto: https`
-for the default `framework` strategy to pick up. Use `2` instead if you front the service with an
-external Application Load Balancer, which appends both the client address and its own forwarding
-rule.
+Then set `trustedProxyCount` to `1` on the config page, which is what Cloud Run needs: its front end
+appends the caller's address as the last `X-Forwarded-For` entry, which is the one this server reads,
+and sets `X-Forwarded-Proto: https` for the default `framework` strategy to pick up. Use `2` instead
+if you front the service with an external Application Load Balancer, which appends both the client
+address and its own forwarding rule.
 
 Scaling to several instances is already accounted for — sessions, OAuth2 authorizations and the
 abuse counters all live in MongoDB rather than in one container's memory, so limits hold across

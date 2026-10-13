@@ -13,6 +13,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RoutingStorageServiceTest {
@@ -109,5 +110,7 @@ class RoutingStorageServiceTest {
         assertFalse(s3.owns("https://other.s3.ap-south-1.amazonaws.com/users/u1/photo"))
         assertFalse(s3.owns(gcsUrl))
         assertFalse(s3.delete(gcsUrl))
+        assertEquals("users/u1/photo", s3.blobNameOf("https://new-files.s3.ap-south-1.amazonaws.com/users/u1/photo?v=1"))
+        assertNull(s3.blobNameOf("https://evil.example/?https://new-files.s3.ap-south-1.amazonaws.com/users/u1/photo"))
     }
 }

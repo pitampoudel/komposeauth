@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import kotlinx.serialization.json.Json
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ResponseStatusException
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
@@ -62,6 +64,14 @@ class ResourceOwnerLoginController(
         httpServletRequest: HttpServletRequest,
         httpServletResponse: HttpServletResponse,
     ): ResponseEntity<*> {
+        // Redeeming a refresh token spends it, and only a TOKEN response hands back its successor.
+        // Checked first, so a mistaken call leaves the client's token still good.
+        if (request is Credential.RefreshToken && responseType != ResponseType.TOKEN) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "A refresh token can only be exchanged with responseType=TOKEN, which returns the token that replaces it."
+            )
+        }
         val user = userService.resolveUserFromCredential(request)
         val now = Instant.now()
         val scopes = listOf("openid", "profile", "email")

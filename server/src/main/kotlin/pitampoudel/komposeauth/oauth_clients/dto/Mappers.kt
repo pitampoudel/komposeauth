@@ -85,11 +85,11 @@ fun CreateClientRequest.toEntity(): OAuth2Client {
     )
 }
 
-fun OAuth2Client.toClientRegistrationResponse(): OAuth2ClientResponse {
+fun OAuth2Client.toClientRegistrationResponse(includeSecret: Boolean): OAuth2ClientResponse {
     return OAuth2ClientResponse(
         clientName = clientName,
         clientId = clientId,
-        clientSecret = clientSecret,
+        clientSecret = clientSecret.takeIf { includeSecret },
         redirectUris = redirectUris,
         clientUri = clientUri,
         logoUri = logoUri,

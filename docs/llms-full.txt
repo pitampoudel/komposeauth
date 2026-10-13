@@ -70,7 +70,9 @@ whichever hostname a client happened to reach the server by; validate it against
 
 A super admin registers clients, either on the admin console at `https://auth.example.com/admin/clients`, or
 through the API with a SUPER_ADMIN token. An ADMIN can list them but not create, change or delete one: saving
-over a client without its secret issues a new one, and the app holding the old one stops signing anybody in.
+over a client without its secret issues a new one, and the app holding the old one stops signing anybody in. For
+the same reason only a SUPER_ADMIN sees a client's secret in `GET /oauth2/clients`; an ADMIN gets
+`"clientSecret": null` for every client.
 
 ```http
 POST /oauth2/clients
@@ -208,8 +210,10 @@ issues one to every client with the `refresh_token` grant, which all registered 
 Authorization Server would withhold it from public clients). It lasts the client's `refreshTokenTtlDays` and is
 rotated: refreshing returns a new access token and a new refresh token; store the new one and discard the old.
 Several refreshes with the same token within two minutes of the first (concurrent requests that each noticed the
-expiry) all succeed and all get the same new token. Presented after that, a replaced refresh token is taken as
-stolen: the whole authorization is revoked and the user has to sign in again. Refresh with a form POST to the
+expiry) all succeed and all get the same new token. Presented after that, the refresh token the current one
+replaced is taken as stolen: the whole authorization is revoked and the user has to sign in again. Only that
+immediately previous token is recognised; one from any earlier rotation is simply refused (`invalid_grant`) and
+revokes nothing. Refresh with a form POST to the
 token endpoint, authenticated as the code exchange was (a public client's `client_id` alone is shown here; a
 confidential client adds its secret):
 
@@ -337,6 +341,9 @@ these libraries). Private-scheme redirects are supported. Kotlin Multiplatform a
 - `COOKIE` (the default): sets the HttpOnly `access_token` cookie and returns the user profile. Use this for a
   browser app on a subdomain of the relying-party ID; call with `credentials: "include"`.
 - `SESSION`: creates a server session on the auth server and returns the profile.
+
+A `REFRESH_TOKEN` credential is accepted only with `responseType=TOKEN`, the one response that hands back the
+refresh token replacing it; with `COOKIE` or `SESSION` it is refused with 400 and left unspent.
 
 Tokens from `/login` last 24 hours. The refresh token lasts 30 days and is **single-use**: each refresh returns a
 new access token and a new refresh token; store the new one and discard the old. Presenting a spent refresh token
@@ -506,6 +513,10 @@ All tokens are JWS compact JWTs signed with **RS256**. The header carries a `kid
 | `kycVerified` | user tokens | boolean |
 | `phoneNumberVerified` | user tokens | boolean |
 | `auth_time` | user tokens issued by a sign-in, and those refreshed from one at `/oauth2/token` | When the user signed in (seconds). A token from a `/login` refresh has none. |
+
+For a client that asks the user's consent, the personal claims follow the consented scopes exactly as at
+`/userinfo` (section 4.2): `email`/`emailVerified` only with `email`, `givenName`/`familyName`/`picture`/`kycVerified`
+only with `profile`, `phoneNumberVerified` only with `phone`. A client registered here gets all of them.
 
 Sources: `core/security/WebAuthorizationConfig.kt` (`jwtCustomizer`) and
 `user/controller/ResourceOwnerLoginController.kt`. The ID token from the authorization-code flow carries the same
@@ -847,7 +858,8 @@ or open Swagger UI at `/swagger-ui.html` as an admin.
 - Sending the user back through the authorize redirect on every access-token expiry instead of using the
   `refresh_token` from the authorization-code exchange (section 3.1).
 - Reusing a refresh token after it has been redeemed, from `/login` or `/oauth2/token`; always store the new one.
-  An old one presented again (after two minutes, at `/oauth2/token`) signs the user out.
+  At `/oauth2/token`, the one the current token replaced, presented again after two minutes, signs the user out;
+  an older one is only refused.
 - Forgetting to add the browser app's origin to the auth server's CORS list (token endpoint and `/login` calls
   fail as opaque CORS errors).
 - Putting the client secret in browser or mobile code. Only backend clients using `client_credentials` need it.
