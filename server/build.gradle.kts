@@ -140,7 +140,7 @@ tasks.named<BootBuildImage>("bootBuildImage") {
         val effectiveTag = tag.ifBlank { "latest" }
         "docker.io/pitampoudel/komposeauth:$effectiveTag"
     }
-
     imageName.convention(finalImageName)
+    environment.put("BP_SPRING_CLOUD_BINDINGS_DISABLED", "true")
 }
 

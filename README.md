@@ -270,6 +270,24 @@ val profileVm = koinViewModel<ProfileViewModel>()
 val kycVm = koinViewModel<KycViewModel>()
 ```
 
+## Building & Publishing Docker Image
+
+To build and publish the server image directly to Docker Hub:
+
+```bash
+# 1. Run tests (optional but recommended)
+./gradlew :server:check
+
+# 2. Build image (automatically tags with the latest Git release tag or 'latest')
+./gradlew :server:bootBuildImage
+
+# 3. Push image to Docker Hub
+TAG=$(git describe --tags --abbrev=0 | sed 's/^[vV]//')
+# Make latest
+docker tag "docker.io/pitampoudel/komposeauth:$TAG" docker.io/pitampoudel/komposeauth:latest
+docker push docker.io/pitampoudel/komposeauth:$TAG
+```
+
 ## Contributing
 
 - Issues and PRs are welcome
