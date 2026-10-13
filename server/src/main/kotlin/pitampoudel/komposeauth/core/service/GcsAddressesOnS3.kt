@@ -14,6 +14,8 @@ class GcsAddressesOnS3(private val gcsBucket: String, private val copy: S3Storag
 
     fun owns(url: String): Boolean = keyOf(url) != null
 
+    override fun blobNameOf(url: String): String? = keyOf(url)
+
     override fun upload(blobName: String, contentType: String?, bytes: ByteArray): String =
         copy.upload(blobName, contentType, bytes)
 

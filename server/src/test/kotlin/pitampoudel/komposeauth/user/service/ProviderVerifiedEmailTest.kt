@@ -17,6 +17,7 @@ import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
+import pitampoudel.komposeauth.webauthn.repository.PublicKeyCredentialRepository
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -49,7 +50,8 @@ class ProviderVerifiedEmailTest {
     private fun service(
         userRepository: UserRepository,
         accessRevocation: AccessRevocation,
-        appleTokenValidator: AppleTokenValidator = mock()
+        appleTokenValidator: AppleTokenValidator = mock(),
+        publicKeyCredentialRepository: PublicKeyCredentialRepository = mock()
     ) = UserService(
         userRepository = userRepository,
         passwordEncoder = mock(),
@@ -62,7 +64,7 @@ class ProviderVerifiedEmailTest {
         kycService = mock(),
         kycVerificationRepository = mock(),
         publicKeyUserRepository = mock(),
-        publicKeyCredentialRepository = mock(),
+        publicKeyCredentialRepository = publicKeyCredentialRepository,
         organizationRepository = mock(),
         oneTimeTokenRepository = mock(),
         storageService = mock(),
@@ -118,18 +120,38 @@ class ProviderVerifiedEmailTest {
     }
 
     @Test
+    fun `the registrant's passkeys go too, with the sessions they opened`() {
+        val registered = account(emailVerified = false, passwordHash = null)
+        val repo = repositoryHolding(registered)
+        val revocation = mock<AccessRevocation>()
+        val passkeys = mock<PublicKeyCredentialRepository>()
+        whenever(passkeys.deleteAllByUserId(registered.id)).thenReturn(1)
+
+        service(repo, revocation, publicKeyCredentialRepository = passkeys).findOrCreateVerifiedGoogleUser(
+            profile = CreateUserRequest(email = email),
+            emailVerified = true
+        )
+
+        verify(passkeys).deleteAllByUserId(registered.id)
+        // Even with no password to clear, a passkey signed somebody in.
+        verify(revocation).revokeAll(registered.id)
+    }
+
+    @Test
     fun `a provider leaves the password of an address already proven alone`() {
         val owner = account(emailVerified = true)
         val repo = repositoryHolding(owner)
         val revocation = mock<AccessRevocation>()
+        val passkeys = mock<PublicKeyCredentialRepository>()
 
-        val user = service(repo, revocation).findOrCreateVerifiedGoogleUser(
+        val user = service(repo, revocation, publicKeyCredentialRepository = passkeys).findOrCreateVerifiedGoogleUser(
             profile = CreateUserRequest(email = email),
             emailVerified = true
         )
 
         assertEquals("registrant-hash", user.passwordHash)
         verify(repo, never()).save(any<User>())
+        verify(passkeys, never()).deleteAllByUserId(any())
         verify(revocation, never()).revokeAll(any())
         verify(revocation, never()).endSessions(any(), anyOrNull())
     }

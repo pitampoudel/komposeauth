@@ -117,6 +117,24 @@ class AuthFlowsIntegrationTest {
     }
 
     @Test
+    fun `a refresh token is refused unspent when the response could not carry its successor`() {
+        createUser("refresh-cookie@example.com")
+        val first = refreshTokenOf(tokenLogin(Credential.UsernamePassword(username = "refresh-cookie@example.com", password = "Password1")))
+
+        listOf(ResponseType.COOKIE, ResponseType.SESSION).forEach { responseType ->
+            val refused = mockMvc.post("/${ApiEndpoints.LOGIN}") {
+                param("responseType", responseType.name)
+                contentType = MediaType.APPLICATION_JSON
+                content = json.encodeToString<Credential>(Credential.RefreshToken(first))
+            }.andReturn().response
+            assertEquals(400, refused.status, refused.contentAsString)
+            assertTrue(refused.getHeaders("Set-Cookie").none { it.startsWith(ACCESS_TOKEN_COOKIE_NAME) })
+        }
+
+        refreshTokenOf(tokenLogin(Credential.RefreshToken(first)))
+    }
+
+    @Test
     fun `a replay ends only the sign-in it descends from`() {
         createUser("two-devices@example.com")
         val password = Credential.UsernamePassword(username = "two-devices@example.com", password = "Password1")

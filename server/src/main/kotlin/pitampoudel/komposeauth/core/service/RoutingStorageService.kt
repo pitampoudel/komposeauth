@@ -64,6 +64,8 @@ class RoutingStorageService(
         return store.delete(url)
     }
 
+    override fun blobNameOf(url: String): String? = storeHolding(url)?.blobNameOf(url)
+
     override fun download(url: String): ByteArray? {
         val store = storeHolding(url) ?: error("No configured store holds $url")
         return store.download(url)

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.MessageResponse
@@ -21,15 +22,18 @@ class Oauth2ClientsController(
     val oauth2ClientRepository: OAuth2ClientRepository
 ) {
 
+    // A secret lets its holder ask for tokens as the app, so only those who may replace it see it;
+    // the same test the admin page uses to offer editing.
     @Operation(
         summary = "Get all OAuth2 clients",
-        description = "Retrieves a list of all registered OAuth2 clients."
+        description = "Retrieves a list of all registered OAuth2 clients. Client secrets are included for SUPER_ADMIN only."
     )
     @GetMapping
-    fun getAllClients(): ResponseEntity<List<OAuth2ClientResponse>> {
+    fun getAllClients(authentication: Authentication): ResponseEntity<List<OAuth2ClientResponse>> {
+        val includeSecret = authentication.authorities.any { it.authority == "ROLE_SUPER_ADMIN" }
         return ResponseEntity.ok(
             oauth2ClientRepository.findAll().map {
-                it.toClientRegistrationResponse()
+                it.toClientRegistrationResponse(includeSecret)
             }
         )
     }
@@ -48,7 +52,7 @@ class Oauth2ClientsController(
         }
         val obj = request.toEntity()
         oauth2ClientRepository.save(obj)
-        return ResponseEntity.ok(obj.toClientRegistrationResponse())
+        return ResponseEntity.ok(obj.toClientRegistrationResponse(includeSecret = true))
     }
 
     @Operation(

@@ -20,6 +20,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.authorization.OAuth2AuthorizationConsentDocumentRepository
 import pitampoudel.komposeauth.core.domain.Roles
+import pitampoudel.komposeauth.core.service.StorageService
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import pitampoudel.komposeauth.user.service.AccessRevocation
@@ -51,7 +52,8 @@ class UserServiceAdminEdgeCasesTest {
         userRepository: UserRepository,
         appConfigService: AppConfigService = appConfigService(),
         accessRevocation: AccessRevocation = mock(),
-        consentRepository: OAuth2AuthorizationConsentDocumentRepository = mock()
+        consentRepository: OAuth2AuthorizationConsentDocumentRepository = mock(),
+        storageService: StorageService = mock()
     ) = UserService(
         userRepository = userRepository,
         passwordEncoder = mock(),
@@ -65,7 +67,7 @@ class UserServiceAdminEdgeCasesTest {
         publicKeyCredentialRepository = mock(),
         organizationRepository = mock(),
         oneTimeTokenRepository = mock(),
-        storageService = mock(),
+        storageService = storageService,
         passkeys = mock(),
         roleChangeEmailNotifier = mock(),
         emailVerificationService = mock(),
@@ -195,6 +197,25 @@ class UserServiceAdminEdgeCasesTest {
 
         verify(consents).deleteAllByPrincipalName(target.id.toHexString())
         verify(userRepo).deleteById(target.id)
+    }
+
+    @Test
+    fun `deleting an account deletes the photo stored for it and nobody else's file`() {
+        val userRepo = mock<UserRepository>()
+        val storage = mock<StorageService>()
+        val own = user().copy(picture = "https://files.example/own")
+        val borrowed = user().copy(picture = "https://files.example/someone-elses")
+        whenever(storage.blobNameOf(own.picture!!)).thenReturn("users/${own.id.toHexString()}/photo")
+        // Set at sign-up to the address of another account's file, which the store does hold.
+        whenever(storage.blobNameOf(borrowed.picture!!)).thenReturn("kyc/${ObjectId.get().toHexString()}/front")
+        listOf(own, borrowed).forEach { whenever(userRepo.findById(it.id)).thenReturn(Optional.of(it)) }
+
+        service(userRepo, storageService = storage).deleteUser(actor(), own.id)
+        service(userRepo, storageService = storage).deleteUser(actor(), borrowed.id)
+
+        verify(storage).delete(own.picture!!)
+        verify(storage, never()).delete(borrowed.picture!!)
+        verify(userRepo).deleteById(borrowed.id)
     }
 
     @Test

@@ -6,6 +6,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.web.filter.ForwardedHeaderFilter
 import java.time.Clock
 
@@ -38,10 +39,11 @@ class RateLimitConfig {
     fun rateLimitFilterRegistration(
         rateLimiter: RateLimiter,
         properties: RateLimitProperties,
-        clientIpResolver: ClientIpResolver
+        clientIpResolver: ClientIpResolver,
+        bearerTokenResolver: BearerTokenResolver
     ): FilterRegistrationBean<RateLimitFilter> {
         val registration = FilterRegistrationBean(
-            RateLimitFilter(rateLimiter, properties, clientIpResolver)
+            RateLimitFilter(rateLimiter, properties, clientIpResolver, bearerTokenResolver)
         )
         registration.order = Ordered.HIGHEST_PRECEDENCE + 10
         registration.addUrlPatterns("/*")

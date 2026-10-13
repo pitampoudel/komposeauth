@@ -1,6 +1,7 @@
 package pitampoudel.komposeauth.user.controller
 
 import kotlinx.serialization.json.Json
+import org.bson.types.ObjectId
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -184,6 +185,22 @@ class ResourceOwnerLoginControllerIntegrationTest {
         }.andReturn().response
         assertEquals(302, signedIn.status)
         assertTrue(signedIn.redirectedUrl?.contains("error") != true, "sign-in failed, redirected to ${signedIn.redirectedUrl}")
+    }
+
+    @Test
+    fun `the sign-in page says an account is locked only to someone who knows its password`() {
+        val email = "locked-form@example.com"
+        val userId = ObjectId(createUser(email, "Password1"))
+        userRepository.save(userRepository.findById(userId).orElseThrow().copy(deactivated = true))
+
+        fun formSignIn(password: String) = mockMvc.post("/session-login") {
+            param("username", email)
+            param("password", password)
+        }.andReturn().response.redirectedUrl
+
+        // Otherwise a wrong guess tells anyone that the address has an account, and that it is closed.
+        assertEquals("/session-login?error=", formSignIn("wrong-password"))
+        assertEquals("/session-login?error=locked", formSignIn("Password1"))
     }
 
     @Test

@@ -12,7 +12,8 @@ import java.time.Instant
 data class OAuth2AuthorizationDocument(
     @Id val id: String,
     val registeredClientId: String,
-    val principalName: String,
+    // Every sign-out everywhere deletes by it (AccessRevocation.revokeAll).
+    @Indexed val principalName: String,
     val authorizationGrantType: String,
     val authorizedScopes: Set<String> = emptySet(),
     @Indexed(sparse = true) val state: String? = null,

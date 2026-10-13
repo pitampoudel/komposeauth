@@ -49,7 +49,7 @@ class KycServiceBusinessRulesTest {
             status = KycResponse.Status.PENDING,
         )
         whenever(repo.findById(userId)).thenReturn(Optional.of(existing))
-        whenever(repo.save(any())).thenAnswer { it.arguments[0] as KycVerification }
+        whenever(repo.replaceIfStatus(any(), any())).thenAnswer { it.arguments[1] as KycVerification }
 
         val res = service.approve(
             baseUrl = "http://localhost",

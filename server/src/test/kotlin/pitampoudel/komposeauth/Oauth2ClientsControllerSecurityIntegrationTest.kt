@@ -1,6 +1,11 @@
 package pitampoudel.komposeauth
 
+import jakarta.servlet.http.Cookie
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -38,6 +43,16 @@ class Oauth2ClientsControllerSecurityIntegrationTest {
 
     @Autowired
     private lateinit var clientRepository: OAuth2ClientRepository
+
+    private fun listedSecret(cookie: Cookie, clientId: String): String? {
+        val body = mockMvc.get("/${ApiEndpoints.OAUTH2_CLIENTS}") {
+            accept = MediaType.APPLICATION_JSON
+            cookie(cookie)
+        }.andExpect { status { isOk() } }.andReturn().response.contentAsString
+        val listed = json.parseToJsonElement(body).jsonArray.map { it.jsonObject }
+            .single { it.getValue("clientId").jsonPrimitive.content == clientId }
+        return listed["clientSecret"]?.jsonPrimitive?.contentOrNull
+    }
 
     @Test
     fun `oauth2 clients endpoints require admin - normal user gets 403`() {
@@ -117,10 +132,9 @@ class Oauth2ClientsControllerSecurityIntegrationTest {
                 content = json.encodeToString(existing)
             }.andExpect { status { isOk() } }
 
-            mockMvc.get("/${ApiEndpoints.OAUTH2_CLIENTS}") {
-                accept = MediaType.APPLICATION_JSON
-                cookie(adminCookie)
-            }.andExpect { status { isOk() } }
+            // The secret lets its holder ask for tokens as the app; only who may replace it sees it.
+            assertEquals(null, listedSecret(adminCookie, clientId))
+            assertEquals("original-secret", listedSecret(superCookie, clientId))
 
             listOf(existing.copy(clientSecret = null), existing.copy(clientId = newClientId)).forEach { request ->
                 mockMvc.post("/${ApiEndpoints.OAUTH2_CLIENTS}") {

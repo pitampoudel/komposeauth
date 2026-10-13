@@ -3,7 +3,6 @@ package pitampoudel.komposeauth.kyc.service
 import org.apache.coyote.BadRequestException
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import pitampoudel.core.data.EncodedData
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.SlackNotifier
@@ -62,7 +61,6 @@ class KycService(
     fun getPending(): List<KycResponse> =
         kycRepo.findAllByStatus(KycResponse.Status.PENDING).map { it.response() }
 
-    @Transactional
     fun submitPersonalInformation(
         userId: ObjectId,
         data: PersonalInformation
@@ -98,10 +96,9 @@ class KycService(
             throw BadRequestException("KYC already submitted; cannot resubmit")
         }
 
-        return kycRepo.save(newKycData).response()
+        return (if (existing == null) kycRepo.save(newKycData) else saveOver(existing, newKycData)).response()
     }
 
-    @Transactional
     fun submitAddressDetails(userId: ObjectId, data: UpdateAddressDetailsRequest): KycResponse {
         val existing = kycRepo.findByUserId(userId) ?: throw BadRequestException("KYC not found")
         val newKycData = existing.copy(
@@ -120,10 +117,9 @@ class KycService(
             throw BadRequestException("KYC already submitted; cannot resubmit")
         }
 
-        return kycRepo.save(newKycData).response()
+        return saveOver(existing, newKycData).response()
     }
 
-    @Transactional
     fun submitDocumentDetails(userId: ObjectId, data: DocumentInformation): KycResponse {
         val existing = kycRepo.findByUserId(userId) ?: throw BadRequestException("KYC not found")
 
@@ -149,10 +145,9 @@ class KycService(
             selfieUrl = newSelfieUrl,
             status = KycResponse.Status.PENDING
         )
-        return kycRepo.save(entity).response()
+        return saveOver(existing, entity).response()
     }
 
-    @Transactional
     fun approve(baseUrl: String, user: User): KycResponse {
         val enrichedUser = user.takeIf { it.firstName != null && it.lastName != null } ?: run {
             val kyc = kycRepo.findById(user.id).orElse(null)
@@ -183,7 +178,6 @@ class KycService(
     }
 
 
-    @Transactional
     fun reject(baseUrl: String, user: User, reason: String?): KycResponse {
         val res = updateStatus(user.id, KycResponse.Status.REJECTED)
         user.email?.let { userEmail ->
@@ -202,7 +196,6 @@ class KycService(
         return res
     }
 
-    @Transactional
     fun submitThirdFactorVerification(baseUrl: String, data: ThirdFactorModel): KycResponse {
 
         val userId = runCatching { ObjectId(data.identifier) }.getOrElse {
@@ -268,7 +261,7 @@ class KycService(
             gender = data.gender?.toGender() ?: existingKyc.gender,
             status = KycResponse.Status.PENDING
         )
-        val saved = kycRepo.save(updated)
+        val saved = saveOver(existingKyc, updated)
         val user = userRepository.findById(userId).orElse(null)
         if (user != null) {
             val warnings = saved.thirdFactorWarnings
@@ -284,13 +277,23 @@ class KycService(
     private fun updateStatus(
         kycId: ObjectId,
         status: KycResponse.Status,
-    ): KycResponse =
-        kycRepo.findById(kycId).map { current ->
-            // Only a submission waiting for review gets a decision: approving a draft would verify
-            // documents nobody has sent, and re-deciding one would flip a verdict already mailed.
-            if (current.status != KycResponse.Status.PENDING) {
-                throw BadRequestException("Only a KYC waiting for review can be approved or rejected")
-            }
-            kycRepo.save(current.copy(status = status)).response()
-        }.orElseThrow { IllegalArgumentException("KYC not found") }
+    ): KycResponse {
+        val current = kycRepo.findById(kycId).orElseThrow { IllegalArgumentException("KYC not found") }
+        // Only a submission waiting for review gets a decision: approving a draft would verify
+        // documents nobody has sent, and re-deciding one would flip a verdict already mailed.
+        if (current.status != KycResponse.Status.PENDING) throw notAwaitingReview()
+        return (kycRepo.replaceIfStatus(KycResponse.Status.PENDING, current.copy(status = status))
+            ?: throw notAwaitingReview()).response()
+    }
+
+    private fun notAwaitingReview() =
+        BadRequestException("Only a KYC waiting for review can be approved or rejected")
+
+    /**
+     * Saves [updated] in place of [existing] only if nothing changed its status since it was read,
+     * so a decision and a resubmission landing together cannot undo one another.
+     */
+    private fun saveOver(existing: KycVerification, updated: KycVerification): KycVerification =
+        kycRepo.replaceIfStatus(existing.status, updated)
+            ?: throw BadRequestException("KYC already submitted; cannot resubmit")
 }

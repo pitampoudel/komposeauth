@@ -14,8 +14,11 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import pitampoudel.core.data.MessageResponse
 import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.core.security.ratelimit.RateLimitProperties
+import pitampoudel.komposeauth.core.security.ratelimit.RateLimiter
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.utils.ServerUrl
+import pitampoudel.komposeauth.core.utils.normalizedEmail
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.RESET_PASSWORD
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
@@ -30,7 +33,9 @@ class PasswordResetController(
     private val oneTimeTokenService: OneTimeTokenService,
     private val appConfigService: AppConfigService,
     private val serverUrl: ServerUrl,
-    private val taskExecutor: TaskExecutor
+    private val taskExecutor: TaskExecutor,
+    private val rateLimiter: RateLimiter,
+    private val rateLimitProperties: RateLimitProperties
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -70,6 +75,12 @@ class PasswordResetController(
             // so it has to surface in the logs instead of the response.
             taskExecutor.execute {
                 try {
+                    // Counted here rather than refused in the answer, which would say the address has
+                    // an account; a sender spread over many addresses still can't flood this inbox.
+                    if (!withinRecipientQuota(address)) {
+                        log.warn("Password reset mail for user {} skipped: too many requested", user.id)
+                        return@execute
+                    }
                     val link = oneTimeTokenService.generateResetPasswordLink(userId = user.id, baseUrl = baseUrl)
                     val sent = emailService.sendHtmlMail(
                         baseUrl = baseUrl,
@@ -94,6 +105,13 @@ class PasswordResetController(
             MessageResponse("If that address has an account, a reset link is on its way.")
         )
     }
+
+    private fun withinRecipientQuota(address: String): Boolean =
+        !rateLimitProperties.enabled || rateLimiter.tryAcquire(
+            key = "password-reset-target:${address.normalizedEmail()}",
+            limit = rateLimitProperties.passwordResetPerRecipient.limit,
+            window = rateLimitProperties.passwordResetPerRecipient.window
+        )
 
     @Operation(
         summary = "Reset password",

@@ -174,22 +174,32 @@ class WebAuthorizationConfig {
             if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN) {
                 principal.signedInAt()?.let { context.claims.claim(AUTH_TIME_CLAIM, it.epochSecond) }
             }
-            user.email?.let {
-                context.claims.claim("email", it)
-                // Apps that grant access by email must know the user proved they own it
-                context.claims.claim("emailVerified", user.emailVerified)
+            // A client the user has to consent to is told only what the scopes they consented to
+            // cover, as the userinfo endpoint below tells it; a client registered here, everything.
+            val consentedOnly = context.registeredClient.clientSettings.isRequireAuthorizationConsent
+            fun covered(scope: String) = !consentedOnly || scope in context.authorizedScopes
+            if (covered(OidcScopes.EMAIL)) {
+                user.email?.let {
+                    context.claims.claim("email", it)
+                    // Apps that grant access by email must know the user proved they own it
+                    context.claims.claim("emailVerified", user.emailVerified)
+                }
             }
-            user.firstName?.let {
-                context.claims.claim("givenName", it)
+            if (covered(OidcScopes.PROFILE)) {
+                user.firstName?.let {
+                    context.claims.claim("givenName", it)
+                }
+                user.lastName?.let {
+                    context.claims.claim("familyName", it)
+                }
+                user.picture?.let {
+                    context.claims.claim("picture", it)
+                }
+                context.claims.claim("kycVerified", kycService.isVerified(user.id))
             }
-            user.lastName?.let {
-                context.claims.claim("familyName", it)
+            if (covered(OidcScopes.PHONE)) {
+                context.claims.claim("phoneNumberVerified", user.phoneNumberVerified)
             }
-            user.picture?.let {
-                context.claims.claim("picture", it)
-            }
-            context.claims.claim("kycVerified", kycService.isVerified(user.id))
-            context.claims.claim("phoneNumberVerified", user.phoneNumberVerified)
         }
     }
 

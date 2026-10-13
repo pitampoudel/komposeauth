@@ -342,9 +342,8 @@ class UserService(
                 passwordEncoder = passwordEncoder,
                 picture = req.picture?.let {
                     val file = it.toKmpFile()
-                    val blobName = "users/${existingUser.id.toHexString()}/photo"
                     storageService.upload(
-                        blobName = blobName,
+                        blobName = profilePhotoBlobName(existingUser.id),
                         contentType = file.mimeType,
                         bytes = file.byteArray
                     )
@@ -534,7 +533,7 @@ class UserService(
     /**
      * An address the account had not proven, now proven by an identity provider, also clears the
      * password: whoever registered it before the mailbox's owner arrived chose that password, and
-     * would otherwise keep signing in beside them. Their sessions and tokens go with it.
+     * would otherwise keep signing in beside them. Their passkeys, sessions and tokens go with it.
      */
     private fun verifyEmailForProvider(user: User, email: String): User {
         if (user.emailVerified) return user
@@ -546,8 +545,18 @@ class UserService(
                 updatedAt = Instant.now()
             )
         )
-        if (user.passwordHash != null) accessRevocation.revokeAll(claimed.id)
+        val hadPasskeys = deletePasskeys(claimed.id)
+        if (user.passwordHash != null || hadPasskeys) accessRevocation.revokeAll(claimed.id)
         return claimed
+    }
+
+    /** Removes every passkey of the account, saying whether there was one. */
+    private fun deletePasskeys(userId: ObjectId): Boolean {
+        var deleted = publicKeyCredentialRepository.deleteAllByUserId(userId)
+        publicKeyUserRepository.findByUserId(userId)?.let { publicKeyUser ->
+            deleted += publicKeyCredentialRepository.deleteAllByPublicKeyUserId(publicKeyUser.userHandle)
+        }
+        return deleted > 0
     }
 
     fun resolveUserFromCredential(request: Credential): User {
@@ -632,7 +641,10 @@ class UserService(
             // todo if org has no users and not being used delete it
         }
 
-        user.picture?.let { storageService.delete(it) }
+        // A picture can also be an address the account was created with, which anybody can type, so
+        // only the photo this server stored for this account is deleted.
+        user.picture?.takeIf { storageService.blobNameOf(it) == profilePhotoBlobName(user.id) }
+            ?.let { storageService.delete(it) }
 
         accessRevocation.revokeAll(user.id)
         consentRepository.deleteAllByPrincipalName(user.id.toHexString())
@@ -664,16 +676,27 @@ class UserService(
         ?: throw IllegalArgumentException("Either email or phone number is required")
         val existingUser = findByUserName(username)
         if (existingUser != null) {
+            // As in [verifyEmailForProvider]: a code proves the address or number now, so whoever
+            // registered it unproven chose the password, and the passkeys it let them add.
+            val claimed = (email != null && !existingUser.emailVerified) ||
+                (phoneNumber != null && !existingUser.phoneNumberVerified)
+            val evicted = claimed && existingUser.passwordHash != null
             val updatedUser = existingUser.copy(
                 email = existingUser.email ?: email,
                 emailVerified = existingUser.emailVerified || email != null,
                 phoneNumber = existingUser.phoneNumber ?: phoneNumber,
                 phoneNumberVerified = existingUser.phoneNumberVerified || phoneNumber != null,
+                passwordHash = if (evicted) null else existingUser.passwordHash,
                 updatedAt = Instant.now()
             )
-            return if (updatedUser == existingUser) existingUser else userRepository.save(
+            val result = if (updatedUser == existingUser) existingUser else userRepository.save(
                 updatedUser
             )
+            if (evicted) {
+                deletePasskeys(result.id)
+                accessRevocation.revokeAll(result.id)
+            }
+            return result
         }
 
         val newUser = User(
@@ -690,6 +713,9 @@ class UserService(
 }
 
 private val GOOGLE_TOKEN_TIMEOUT: Duration = Duration.ofSeconds(10)
+
+/** Where an account's uploaded profile photo is stored. */
+private fun profilePhotoBlobName(userId: ObjectId) = "users/${userId.toHexString()}/photo"
 
 /** How recent a sign-in has to be to stand in for the password an account doesn't have. */
 val RECENT_SIGN_IN: Duration = Duration.ofMinutes(10)
