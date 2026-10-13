@@ -125,22 +125,8 @@ tasks.named<BootJar>("bootJar") {
 }
 
 tasks.named<BootBuildImage>("bootBuildImage") {
-    val gitTag = providers.exec {
-        isIgnoreExitValue = true
-        commandLine("git", "describe", "--tags", "--exact-match")
-    }.standardOutput.asText.map { it.trim().removePrefix("v") }
-        .orElse(
-            providers.exec {
-                isIgnoreExitValue = true
-                commandLine("git", "describe", "--tags", "--abbrev=0")
-            }.standardOutput.asText.map { it.trim().removePrefix("v") }
-        ).orElse("latest")
-
-    val finalImageName = gitTag.map { tag ->
-        val effectiveTag = tag.ifBlank { "latest" }
-        "docker.io/pitampoudel/komposeauth:$effectiveTag"
-    }
-    imageName.convention(finalImageName)
+    val effectiveTag = project.version.toString().takeIf { it.isNotBlank() && it != "unspecified" } ?: "latest"
+    imageName.convention("docker.io/pitampoudel/komposeauth:$effectiveTag")
     environment.put("BP_SPRING_CLOUD_BINDINGS_DISABLED", "true")
 }
 
