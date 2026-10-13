@@ -6,15 +6,17 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Service
+import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.user.repository.UserRepository
 
 @Service
 class UserDetailsServiceImpl(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val appConfigService: AppConfigService
 ) : UserDetailsService {
 
     override fun loadUserByUsername(username: String): UserDetails {
-        val user = userRepository.findByUserName(username)
+        val user = userRepository.findByLoginName(username, appConfigService.defaultPhoneRegion())
             ?: throw UsernameNotFoundException("User not found: $username")
         if (user.passwordHash == null) {
             throw UsernameNotFoundException("No password set for user: $username")

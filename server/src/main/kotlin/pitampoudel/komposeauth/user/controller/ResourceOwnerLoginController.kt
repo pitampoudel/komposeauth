@@ -7,13 +7,13 @@ import kotlinx.serialization.json.Json
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.FactorGrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
-import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
@@ -22,7 +22,9 @@ import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.data.OAuth2Response
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
+import pitampoudel.komposeauth.core.security.AUTH_TIME_CLAIM
 import pitampoudel.komposeauth.core.security.authCookieDomain
+import pitampoudel.komposeauth.core.security.signInFactor
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.kyc.service.KycService
@@ -42,7 +44,6 @@ class ResourceOwnerLoginController(
     val oneTimeTokenService: OneTimeTokenService,
     val kycService: KycService,
     val appConfigService: AppConfigService,
-    private val requestOptionsRepository: PublicKeyCredentialRequestOptionsRepository,
     private val jwtEncoder: JwtEncoder,
     private val securityContextRepository: HttpSessionSecurityContextRepository,
     private val serverUrl: ServerUrl
@@ -61,18 +62,11 @@ class ResourceOwnerLoginController(
         httpServletRequest: HttpServletRequest,
         httpServletResponse: HttpServletResponse,
     ): ResponseEntity<*> {
-        val user = userService.resolveUserFromCredential(
-            request = request,
-            loadPublicKeyCredentialRequestOptions = {
-                val options = requestOptionsRepository.load(httpServletRequest)
-                requestOptionsRepository.save(httpServletRequest, httpServletResponse, null)
-                options
-            }
-        )
+        val user = userService.resolveUserFromCredential(request)
         val now = Instant.now()
         val scopes = listOf("openid", "profile", "email")
         val builder = JwtClaimsSet.builder()
-            .issuer(serverUrl.of(httpServletRequest))
+            .issuer(serverUrl.value)
             .subject(user.id.toHexString())
             .issuedAt(now)
             .expiresAt(now + 1.days.toJavaDuration())
@@ -81,6 +75,9 @@ class ResourceOwnerLoginController(
             .claim("scope", scopes)
             .claim("kycVerified", kycService.isVerified(user.id))
             .claim("phoneNumberVerified", user.phoneNumberVerified)
+        // A refresh is not a sign-in, so its token says nothing about when there was one.
+        val factor = request.signInFactor()
+        if (factor != null) builder.claim(AUTH_TIME_CLAIM, now.epochSecond)
 
         user.email?.let {
             builder.claim("email", it)
@@ -104,7 +101,10 @@ class ResourceOwnerLoginController(
                     json.encodeToString(
                         OAuth2Response(
                             accessToken = accessToken,
-                            refreshToken = oneTimeTokenService.generateRefreshToken(user.id),
+                            refreshToken = oneTimeTokenService.generateRefreshToken(
+                                userId = user.id,
+                                replacing = (request as? Credential.RefreshToken)?.refreshToken
+                            ),
                             tokenType = "Bearer",
                             expiresIn = 1.days.inWholeSeconds,
                         )
@@ -125,7 +125,8 @@ class ResourceOwnerLoginController(
             }
 
             ResponseType.SESSION -> {
-                val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") }
+                val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") } +
+                    listOfNotNull(factor?.let { FactorGrantedAuthority.withAuthority(it).issuedAt(now).build() })
                 val appAuth = UsernamePasswordAuthenticationToken(user.id.toHexString(), null, authorities)
                 // A new id for the signed-in session, so one planted before sign-in is not let in.
                 if (httpServletRequest.getSession(false) != null) httpServletRequest.changeSessionId()

@@ -10,8 +10,8 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * Simple AES-GCM encryption service for protecting sensitive configuration values at rest.
- * The ciphertext format is: "enc:" + Base64( IV(12) || CIPHERTEXT+TAG )
+ * Simple AES-GCM encryption service for protecting sensitive configuration values and files at rest.
+ * A string's ciphertext format is: "enc:" + Base64( IV(12) || CIPHERTEXT+TAG ); a file's is [seal]'s.
  */
 @Service
 class CryptoService(private val props: StaticAppProperties) {
@@ -27,6 +27,9 @@ class CryptoService(private val props: StaticAppProperties) {
         private const val GCM_TAG_LENGTH_BITS = 128
         private const val IV_LENGTH_BYTES = 12
         private const val PREFIX = "enc:"
+
+        /** Readable on purpose: somebody who opens a sealed file in the bucket sees what it is. */
+        private val SEALED_HEADER = "komposeauth-sealed/1\n".toByteArray(Charsets.US_ASCII)
     }
 
     private val secureRandom = SecureRandom()
@@ -87,5 +90,36 @@ class CryptoService(private val props: StaticAppProperties) {
         cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv))
         val plainBytes = cipher.doFinal(encrypted)
         return String(plainBytes, Charsets.UTF_8)
+    }
+
+    fun isSealed(bytes: ByteArray): Boolean =
+        bytes.size > SEALED_HEADER.size + IV_LENGTH_BYTES &&
+            bytes.copyOfRange(0, SEALED_HEADER.size).contentEquals(SEALED_HEADER)
+
+    /**
+     * [plain] encrypted under the same key, in a form a file can be stored in: a header, the IV, then
+     * the ciphertext and tag. [context] is bound in as associated data, so a sealed file opens only
+     * under the context it was sealed for and cannot be passed off as another.
+     */
+    fun seal(plain: ByteArray, context: String): ByteArray {
+        val iv = ByteArray(IV_LENGTH_BYTES).also { secureRandom.nextBytes(it) }
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+        cipher.init(Cipher.ENCRYPT_MODE, resolveKey(), GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv))
+        cipher.updateAAD(context.toByteArray(Charsets.UTF_8))
+        return SEALED_HEADER + iv + cipher.doFinal(plain)
+    }
+
+    /** What [seal] sealed under [context]. Throws for anything else, or for a file that was altered. */
+    fun open(sealed: ByteArray, context: String): ByteArray {
+        require(isSealed(sealed)) { "Not a sealed file" }
+        val ivEnd = SEALED_HEADER.size + IV_LENGTH_BYTES
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+        cipher.init(
+            Cipher.DECRYPT_MODE,
+            resolveKey(),
+            GCMParameterSpec(GCM_TAG_LENGTH_BITS, sealed.copyOfRange(SEALED_HEADER.size, ivEnd))
+        )
+        cipher.updateAAD(context.toByteArray(Charsets.UTF_8))
+        return cipher.doFinal(sealed, ivEnd, sealed.size - ivEnd)
     }
 }

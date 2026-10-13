@@ -57,17 +57,14 @@ discovery.
 ### 2.2 The issuer (`iss`)
 
 The issuer is the server's public address, set by its operator as `spring.security.oauth2.authorizationserver.issuer`
-(env `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER`), e.g. `https://auth.example.com` with no trailing slash.
+(env `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER`), e.g. `https://auth.example.com`: an origin with no
+trailing slash, path, query or fragment. It is required; the server refuses to start without it, or with anything
+that is not an origin alone, and never derives it from a request's `Host` or `X-Forwarded-*` headers.
+
 Every token carries it as `iss`, the discovery document names it, and the server accepts a bearer only when its
-`iss` matches. Emailed links and the KYC callback are built from it too (`core/utils/ServerUtils.kt`).
-
-When it is not set (local development), the issuer is derived from each request's scheme, host and port, so it
-equals the URL the client used. Then:
-
-- Behind a proxy the server must see the original scheme and host (`FORWARD_HEADERS_STRATEGY=framework`, the
-  default, and a proxy that sends `X-Forwarded-Proto`/`X-Forwarded-Host`). Otherwise `iss` becomes
-  `http://internal-host:8080` and validation fails.
-- Always reach the auth server by one canonical public URL, from browsers and from backends alike.
+`iss` matches. Emailed links, the KYC callback and the Google sign-in's redirect URI
+(`<issuer>/login/oauth2/code/google`) are built from it too (`core/utils/ServerUtils.kt`). So `iss` is the same
+whichever hostname a client happened to reach the server by; validate it against exactly this value.
 
 ### 2.3 Registering an OAuth client (needed for approach A)
 
@@ -209,9 +206,12 @@ public client.
 Refresh tokens: the authorization-code exchange returns a `refresh_token`, public clients included (komposeauth
 issues one to every client with the `refresh_token` grant, which all registered clients have; stock Spring
 Authorization Server would withhold it from public clients). It lasts the client's `refreshTokenTtlDays` and is
-reused, not rotated: refreshing returns a new access token and the same refresh token. Refresh with a form POST
-to the token endpoint, authenticated as the code exchange was (a public client's `client_id` alone is shown here;
-a confidential client adds its secret):
+rotated: refreshing returns a new access token and a new refresh token; store the new one and discard the old.
+Several refreshes with the same token within two minutes of the first (concurrent requests that each noticed the
+expiry) all succeed and all get the same new token. Presented after that, a replaced refresh token is taken as
+stolen: the whole authorization is revoked and the user has to sign in again. Refresh with a form POST to the
+token endpoint, authenticated as the code exchange was (a public client's `client_id` alone is shown here; a
+confidential client adds its secret):
 
 ```http
 POST /oauth2/token
@@ -224,9 +224,23 @@ If the refresh is rejected (expired or revoked), run the authorize redirect agai
 session on the auth server (24 hours by default, `SESSION_TIMEOUT`) it completes without a login page.
 `prompt=none` makes that explicit. Iframe-based silent renew does not work because the server forbids framing.
 
-Logout: clear your own tokens, then end the auth server session with the `end_session_endpoint` from the discovery
-document (RP-initiated logout, pass `id_token_hint` and a `post_logout_redirect_uri`) or with `POST /logout` on the
-auth server using the browser's session.
+Logout: revoke the refresh token, clear your own tokens, then end the auth server session with the
+`end_session_endpoint` from the discovery document (RP-initiated logout, pass `id_token_hint` and a
+`post_logout_redirect_uri`) or with `POST /logout` on the auth server using the browser's session. A confidential
+client revokes at the token revocation endpoint (RFC 7009), authenticated as at the token endpoint. It answers 200
+with an empty body, also for a token that is unknown or already revoked, and 401 for bad client credentials:
+
+```http
+POST /oauth2/revoke
+Content-Type: application/x-www-form-urlencoded
+
+token=<refresh_token>&token_type_hint=refresh_token&client_id=<clientId>&client_secret=<clientSecret>
+```
+
+Revoking the refresh token ends the whole authorization, including a token it was replaced by in the last two
+minutes, so revoking the one a sign-out read before a concurrent refresh replaced it still signs the user out. Access
+tokens already issued are JWTs and stay valid until they expire. A public client cannot authenticate to the
+revocation endpoint; it sends `{"refreshToken":"<refresh_token>"}` to `POST /logout` instead.
 
 #### Example: SPA with `oidc-client-ts`
 
@@ -308,7 +322,7 @@ these libraries). Private-scheme redirects are supported. Kotlin Multiplatform a
 
 | `type` | Fields | Notes |
 |---|---|---|
-| `USERNAME_PASSWORD` | `username`, `password`, optional `countryNameCode` | `username` is an email or phone number; `countryNameCode` (e.g. `"NP"`) lets a local phone number be parsed. |
+| `USERNAME_PASSWORD` | `username`, `password`, optional `countryNameCode` | `username` is an email or phone number. A phone number with a leading `+` and country code is read as written; one without is read in `countryNameCode` (e.g. `"IN"`) when sent, otherwise in the default phone region (below). |
 | `OTP` | `username`, `otp` | Code previously sent with `POST /send-otp`. Creates the user if new. A phone number without a leading `+` is read in the default phone region (below). |
 | `GOOGLE_ID` | `idToken` | A Google ID token for the Google client ID the server is configured with. |
 | `APPLE_ID` | `idToken` | A Sign in with Apple ID token. |
@@ -326,7 +340,8 @@ these libraries). Private-scheme redirects are supported. Kotlin Multiplatform a
 
 Tokens from `/login` last 24 hours. The refresh token lasts 30 days and is **single-use**: each refresh returns a
 new access token and a new refresh token; store the new one and discard the old. Presenting a spent refresh token
-returns 400.
+returns 400 and also revokes every refresh token issued since the sign-in it came from, since either holder may be
+the one who copied it. Refresh one request at a time.
 
 ```bash
 # Password login, tokens in the body
@@ -360,23 +375,51 @@ curl -X POST 'https://auth.example.com/login?responseType=TOKEN' -H 'Content-Typ
   -d '{"type":"OTP","username":"+9779812345678","otp":"123456"}'
 ```
 
-`/send-otp`, `/verify-otp` and OTP sign-in carry no country, so a phone number typed without a leading `+`
-(`9812345678`) is read in the **default phone region** (`defaultPhoneRegion` on the configuration page, an ISO
-country code; Nepal, `NP`, when unset) and stored in E.164. A number with a `+` and country code is read as written.
+`/send-otp`, `/verify-otp`, OTP sign-in and the hosted sign-in page carry no country (nor does a password sign-in
+without `countryNameCode`), so a phone number typed without a leading `+` (`9812345678`) is read in the **default
+phone region** (`defaultPhoneRegion` on the configuration page, an ISO country code; Nepal, `NP`, when unset) and
+stored in E.164. A number with a `+` and country code is read as written.
 
-Passkey sign-in: `GET /login-options?platform=WEB` returns `{"googleClientId", "publicKeyAuthOptionsJson"}` and
-stores the WebAuthn challenge in a session cookie. Pass `publicKeyAuthOptionsJson` to
-`navigator.credentials.get()`, then post the serialized result as
-`{"type":"PUBLIC_KEY","authenticationResponseJson":"..."}` to `/login` **with the same cookie**
-(`credentials: "include"`). Registering a passkey for a signed-in user: `POST /webauthn/register/options`, then
-`POST /webauthn/register` with `{"publicKey": ...}`.
+`POST /verify-otp` (signed in, `{"username","type","otp"}`) attaches the address or number the code was sent to.
+Setting one for the first time, or proving the same one again, needs nothing more. **Replacing one the account has
+already verified needs proof that the caller is the account holder**, checked before the code is spent: an account
+with a password sends it as `"currentPassword"`; one without has to have signed in within the last 10 minutes (the
+token's `auth_time`; a refreshed `/login` token has none, so sign in again, or for an OAuth client redirect with
+`prompt=login`). Otherwise the answer is `403` with `Content-Type: application/problem+json` and a `code` saying
+which proof is missing:
+
+```json
+{"title":"Forbidden","status":403,"detail":"Enter your current password to replace your verified email address.","instance":"/verify-otp","code":"CURRENT_PASSWORD_REQUIRED"}
+{"title":"Forbidden","status":403,"detail":"Sign in again to replace your verified phone number.","instance":"/verify-otp","code":"RECENT_SIGN_IN_REQUIRED"}
+```
+
+Branch on `code`, not on `detail`. A replaced email address is told at that address, and a replaced phone number at
+the account's verified email address, if it has one. An address or number that belongs to another account is
+refused with `403` and no `code`.
+
+Passkey sign-in: `GET /login-options?platform=WEB` returns `{"googleClientId", "publicKeyAuthOptionsJson"}`. Pass
+`publicKeyAuthOptionsJson` to `navigator.credentials.get()` (or the platform's passkey API), then post the
+serialized result as `{"type":"PUBLIC_KEY","authenticationResponseJson":"..."}` to `/login`. No cookie is needed:
+the server keeps the options it handed out and finds them again by the challenge inside the signed answer. Each set
+of options answers once and lapses after its `timeout` (milliseconds); fetch new ones for every attempt.
+
+Registering a passkey for a signed-in user: `POST /webauthn/register/options` returns
+`PublicKeyCredentialCreationOptions` JSON for `navigator.credentials.create()`; then `POST /webauthn/register` with
+`{"publicKey":{"credential":<the created credential, serialized>,"label":"<a name the user will recognise>"}}`,
+which answers `{"message":"Passkey added"}`. Options issued to one account cannot add a passkey to another. A passkey
+answer is accepted from the configured CORS origins, an allowed Android signing key, and `https://<rpId>`, which is
+the origin an iOS app's passkey reports.
 
 Logout: `POST /logout` clears the cookie and the server session; a `GET` does not, so another site cannot sign the
-user out with a link or an image. Bearer-token apps simply delete their stored tokens.
+user out with a link or an image. Bearer-token apps delete their stored tokens and send the refresh token as
+`{"refreshToken":"<refresh_token>"}` (`Content-Type: application/json`), which ends it and every refresh token issued
+since the same sign-in; the body is optional and the answer is 200 either way. Access tokens already issued stay
+valid until they expire.
 
 Error responses are RFC 7807 problem details (`{"type","title","status","detail"}`): 400 for malformed input or a
 bad/spent token or OTP, 401 for a missing, expired or invalid bearer token, 403 for wrong credentials, a
-deactivated account or insufficient rights, 409 for a duplicate email/phone, 429 when rate limited.
+deactivated account or insufficient rights, 409 for a duplicate email/phone, 429 when rate limited. A refusal the
+client is expected to act on also carries a `code` (`CURRENT_PASSWORD_REQUIRED`, `RECENT_SIGN_IN_REQUIRED`).
 
 ### 3.3 Kotlin Multiplatform / Compose Multiplatform apps: use the SDK
 
@@ -402,6 +445,22 @@ with the `REFRESH_TOKEN` credential, and clears tokens when the refresh is rejec
 `rememberKmpCredentialManager()` for Google/passkey sign-in, `OtpViewModel` for codes, `ProfileViewModel`,
 `KycViewModel`, and `rememberAuthenticatedUser()` for the signed-in user. Your resource servers only have to validate the
 bearer token.
+
+Adding a passkey from your profile screen:
+
+```kotlin
+val credentialManager = rememberKmpCredentialManager()
+if (credentialManager.canCreatePasskeys) {
+    Button(onClick = { profileViewModel.onEvent(ProfileEvent.AddPasskey(credentialManager)) }) {
+        Text("Add a passkey")
+    }
+}
+```
+
+The options are fetched only when the button is pressed. The passkey is labelled with the device or browser it was
+made on (`passkeyLabel`), and the outcome lands in `state.infoMsg`: "Passkey added", or what went wrong; nothing when
+the person closes the system prompt. Android 9+ and browsers can add passkeys; iOS and desktop can't yet, so
+`canCreatePasskeys` is false there.
 
 ### 3.4 Reading the current user in a frontend
 
@@ -438,7 +497,7 @@ All tokens are JWS compact JWTs signed with **RS256**. The header carries a `kid
 | `sub` | all | **User id** (24-char hex). For `client_credentials` tokens it is the client id. |
 | `aud` | authorization-code tokens | The OAuth `client_id`. Tokens from `/login` have **no `aud`**. |
 | `exp`, `iat`, `nbf` | all | Standard times (seconds) |
-| `scope` | all | JSON array of scope strings, e.g. `["openid","profile","email"]` |
+| `scope` | all but a token whose request named no scope | JSON array of scope strings, e.g. `["openid","profile","email"]` |
 | `authorities` | user tokens | JSON array of roles, **prefixed**: `["ROLE_ADMIN"]` (empty for users with no role) |
 | `email` | user tokens, if the user has one | |
 | `emailVerified` | user tokens with an `email` | boolean: whether the user proved they own `email`. Check it before granting access by email address. |
@@ -446,11 +505,13 @@ All tokens are JWS compact JWTs signed with **RS256**. The header carries a `kid
 | `picture` | user tokens, if set | URL |
 | `kycVerified` | user tokens | boolean |
 | `phoneNumberVerified` | user tokens | boolean |
+| `auth_time` | user tokens issued by a sign-in, and those refreshed from one at `/oauth2/token` | When the user signed in (seconds). A token from a `/login` refresh has none. |
 
 Sources: `core/security/WebAuthorizationConfig.kt` (`jwtCustomizer`) and
 `user/controller/ResourceOwnerLoginController.kt`. The ID token from the authorization-code flow carries the same
-custom claims except `authorities`, plus the standard OIDC ones (`nonce`, `auth_time`, ...). Authorize with the
-access token, never the ID token.
+custom claims except `authorities`, plus the standard OIDC ones (`azp`, `nonce`, `auth_time`, ...). Authorize with the
+access token, never the ID token: this server's own API answers an ID token with 401 `invalid_token`, telling the two
+apart by `nbf`, which every access token carries, and `azp`, which only an ID token does.
 
 ### 4.2 UserInfo claims (`GET /userinfo`)
 
@@ -484,7 +545,7 @@ consent. A token whose user has been deleted is answered with 401 `invalid_token
 |---|---|
 | `/login` access token | 24 h |
 | `/login` refresh token | 30 days, single use, rotated |
-| Authorization-code refresh token | per client, `refreshTokenTtlDays`; reusable, not rotated |
+| Authorization-code refresh token | per client, `refreshTokenTtlDays`; rotated on every use |
 | Authorization-code access token | per client, `accessTokenTtlSeconds` (default 900 s, min 60 s) |
 | Auth-server browser session | `SESSION_TIMEOUT`, default 24 h |
 
@@ -502,10 +563,12 @@ consent. A token whose user has been deleted is answered with 401 `invalid_token
 4. Check `iss == "https://auth.example.com"` (exact string, no trailing slash).
 5. **Do not require `aud`** unless you only accept authorization-code tokens from specific clients: tokens from
    `/login` (and so from the KMP SDK) have no audience. If you do check it, allow the client ids you trust.
-6. Authorize with `authorities` (roles, `ROLE_` prefixed) and `scope`. Identify the user by `sub`.
-7. Reject with 401 and `WWW-Authenticate: Bearer error="invalid_token"` on any failure; 403 when authenticated but
+6. Refuse an ID token presented as a bearer: one that carries `azp`, or no `nbf`. It is signed with the same key and
+   names the same user, and for a client registered here it even has the same `aud`.
+7. Authorize with `authorities` (roles, `ROLE_` prefixed) and `scope`. Identify the user by `sub`.
+8. Reject with 401 and `WWW-Authenticate: Bearer error="invalid_token"` on any failure; 403 when authenticated but
    not allowed.
-8. The resource server does not need a client id or secret just to validate tokens.
+9. The resource server does not need a client id or secret just to validate tokens.
 
 If your API is called from browsers on other origins, configure CORS on the API itself; the auth server's CORS list
 does not apply to your API.
@@ -744,16 +807,17 @@ stated. Admin-only endpoints accept `ADMIN` or `SUPER_ADMIN`.
 | Method & path | Who | Purpose |
 |---|---|---|
 | `POST /login?responseType=` | public | Sign in with a credential (section 3.2) |
-| `POST /logout` | public | Clear cookie and session |
+| `POST /logout` | public | Clear cookie and session; optional `{"refreshToken"}` revokes it |
 | `GET /login-options?platform=` | public | Google client id + WebAuthn request options |
 | `POST /send-otp` | public (optional auth) | `{"username","type":"PHONE"|"EMAIL"}` |
-| `POST /verify-otp` | user | `{"username","type","otp"}` verify a phone/email on the current account |
+| `POST /verify-otp` | user | `{"username","type","otp","currentPassword"?}` verify a phone/email on the current account; replacing a verified one needs proof (section 3.2) |
 | `GET /verify-email?token=` | public | Email verification link target |
 | `PUT /reset-password?email=` | public | Send a reset link |
 | `GET /me` | user | Current profile |
 | `POST /update-profile` | user | Update profile (section 3.4) |
 | `POST /webauthn/register/options`, `POST /webauthn/register` | user | Register a passkey |
 | `GET /kyc`, `POST /kyc/personal-info`, `POST /kyc/address`, `POST /kyc/documents` | user | KYC submission |
+| `GET /kyc/{userId}/documents/{front|back|selfie}` | that user, or admin | A submitted KYC file; the address `documentFrontUrl`, `documentBackUrl` and `selfieUrl` give. Fetch it with the bearer or cookie: the stored copy is encrypted |
 | `GET /third-factor-kyc` | user | URL for third-party KYC verification |
 | `GET /organizations?ids=`, `GET /organizations/{id}`, `POST /organizations`, `DELETE /organizations/{id}` | user | Organizations: list yours (or by `ids`), read, create or update, delete |
 | `GET /users/{id}` | self, admin, or `user.read.any` | One user |
@@ -778,11 +842,12 @@ or open Swagger UI at `/swagger-ui.html` as an admin.
 - Validating `aud` and then rejecting every token from `/login` or the KMP SDK (they have no `aud`).
 - Looking for `given_name`/`family_name`/`roles` in the access token. Use `givenName`, `familyName` and
   `authorities` (with `ROLE_` prefix). `/userinfo` has unprefixed `roles`.
-- Hard-coding an issuer with a trailing slash, or reaching the auth server through an internal hostname so `iss`
-  does not match.
+- Hard-coding an issuer with a trailing slash, or any spelling other than the operator's configured one: `iss` is
+  that value byte for byte, whichever hostname the token was requested through.
 - Sending the user back through the authorize redirect on every access-token expiry instead of using the
   `refresh_token` from the authorization-code exchange (section 3.1).
-- Reusing a `/login` refresh token after it has been redeemed; always store the new one.
+- Reusing a refresh token after it has been redeemed, from `/login` or `/oauth2/token`; always store the new one.
+  An old one presented again (after two minutes, at `/oauth2/token`) signs the user out.
 - Forgetting to add the browser app's origin to the auth server's CORS list (token endpoint and `/login` calls
   fail as opaque CORS errors).
 - Putting the client secret in browser or mobile code. Only backend clients using `client_credentials` need it.

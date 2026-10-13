@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import pitampoudel.core.domain.Result
@@ -72,12 +73,18 @@ internal class AuthStateHandler(
         }
     }
 
-    /** Signing out on this device does not depend on the server answering. */
+    /**
+     * Signing out on this device does not depend on the server answering. The server is told
+     * afterwards, with the refresh token, so that a copy of it stops working too.
+     */
     suspend fun logout() {
-        authClient.logout()
-        authPreferences.clear()
-        // A request sent before the stored tokens were cleared may have loaded them back into the cache.
+        // Under the lock a refresh cannot be halfway through replacing the token being revoked.
+        val refreshToken = storedTokensLock.withLock {
+            authPreferences.tokenData()?.refreshToken.also { authPreferences.clear() }
+        }
+        // Only now: emptied first, the cache would be loaded back from storage by the next request.
         authClient.clearCachedToken()
+        authClient.logout(refreshToken)
     }
 }
 

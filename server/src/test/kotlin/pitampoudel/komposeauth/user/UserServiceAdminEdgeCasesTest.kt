@@ -66,13 +66,13 @@ class UserServiceAdminEdgeCasesTest {
         organizationRepository = mock(),
         oneTimeTokenRepository = mock(),
         storageService = mock(),
-        objectMapper = mock(),
-        webAuthnRelyingPartyOperations = mock(),
+        passkeys = mock(),
         roleChangeEmailNotifier = mock(),
         emailVerificationService = mock(),
         appleTokenValidator = mock(),
         accessRevocation = accessRevocation,
-        consentRepository = consentRepository
+        consentRepository = consentRepository,
+        contactChangeNotifier = mock()
     )
 
     private fun user(roles: List<String> = emptyList()) = User(

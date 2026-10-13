@@ -24,6 +24,8 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import pitampoudel.core.data.asResource
 import pitampoudel.core.data.safeApiCall
@@ -31,7 +33,9 @@ import pitampoudel.core.domain.Result
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.LOGIN
 import pitampoudel.komposeauth.login.domain.AuthPreferences
 import pitampoudel.komposeauth.core.domain.Config
+import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.ResponseType
+import pitampoudel.komposeauth.core.domain.currentPlatform
 import pitampoudel.komposeauth.user.data.Credential
 
 internal fun HttpClientConfig<*>.installKomposeAuth(
@@ -61,11 +65,14 @@ internal fun HttpClientConfig<*>.installKomposeAuth(
     authPreferences: AuthPreferences,
     resourceServerUrls: List<String>
 ) {
-    // Passkey sign-in needs the auth server's session cookie on every platform: `/login-options`
-    // keeps the WebAuthn challenge in that session and `/login` reads it back. The bearer token is
-    // still the credential, so the jar holds the auth server's cookies and no other host's.
-    install(HttpCookies) {
-        storage = AuthServerCookies()
+    // Only the web target signs in with a cookie (`LoginUser` alone passes `ResponseType.COOKIE`).
+    // Elsewhere the bearer token is the credential and nothing else needs a cookie sent back --
+    // passkey sign-in included, since the server finds its options by the signed challenge -- so a
+    // native client keeps none. On the web the jar holds the auth server's cookies and no other host's.
+    if (currentPlatform() == Platform.WEB) {
+        install(HttpCookies) {
+            storage = AuthServerCookies()
+        }
     }
     install(ContentNegotiation) {
         json(
@@ -116,12 +123,24 @@ private fun tokenHosts(resourceServerUrls: List<String>): Set<String> {
     return (resourceServerUrls + authServerUrl).map { Url(it).host }.toSet()
 }
 
+/**
+ * Held while the stored tokens are refreshed or cleared, by every client in the process. A refresh
+ * token answers once, and Ktor serialises refreshes only within one client: two clients sharing the
+ * stored tokens would otherwise redeem the same one, and the server takes the second as a replay.
+ */
+internal val storedTokensLock = Mutex()
+
 private suspend fun refresh(
     engine: HttpClientEngine,
     authServerUrl: String,
     refreshToken: String,
     authPreferences: AuthPreferences
-): BearerTokens? {
+): BearerTokens? = storedTokensLock.withLock {
+    // Another client may have refreshed while this one waited, or the user signed out.
+    val stored = authPreferences.tokenData() ?: return@withLock null
+    if (stored.refreshToken != refreshToken) {
+        return@withLock BearerTokens(accessToken = stored.accessToken, refreshToken = stored.refreshToken)
+    }
     val refreshClient = HttpClient(engine) {
         install(DefaultRequest) {
             contentType(ContentType.Application.Json)
@@ -147,7 +166,7 @@ private suspend fun refresh(
         refreshClient.close()
     }
 
-    return when (result) {
+    when (result) {
         is Result.Success -> {
             authPreferences.saveTokenData(result.data)
             BearerTokens(

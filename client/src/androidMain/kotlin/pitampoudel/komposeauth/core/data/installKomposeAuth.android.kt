@@ -10,9 +10,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import pitampoudel.komposeauth.login.data.AuthPreferencesImpl
 
+/** The app's private `auth_prefs`, every string in them sealed by a Keystore key ([KeystoreEncryptedSettings]). */
 fun createSettings(context: Context): Settings {
     val sp = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
-    return SharedPreferencesSettings(sp)
+    return KeystoreEncryptedSettings(SharedPreferencesSettings(sp))
 }
 
 fun HttpClientConfig<*>.installKomposeAuth(

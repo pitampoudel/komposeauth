@@ -42,11 +42,10 @@ class UsersController(
     )
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_$SCOPE_WRITE_ANY_USER')")
     fun findOrCreateUser(
-        @RequestBody request: CreateUserRequest,
-        req: HttpServletRequest
+        @RequestBody request: CreateUserRequest
     ): ResponseEntity<UserResponse> {
         return ResponseEntity.ok().body(
-            userService.findOrCreateUser(serverUrl.of(req), request).let {
+            userService.findOrCreateUser(serverUrl.value, request).let {
                 it.mapToResponseDto(kycService.isVerified(it.id))
             }
         )

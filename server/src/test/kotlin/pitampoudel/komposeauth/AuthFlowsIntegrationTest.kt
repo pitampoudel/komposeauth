@@ -15,18 +15,21 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.user.data.Credential
+import pitampoudel.komposeauth.user.data.LogoutRequest
 import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.repository.OneTimeTokenRepository
 import pitampoudel.komposeauth.user.repository.UserRepository
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.hours
@@ -88,6 +91,83 @@ class AuthFlowsIntegrationTest {
         assertThrows(ResponseStatusException::class.java) {
             oneTimeTokenService.consume(refreshToken, OneTimeToken.Purpose.REFRESH_TOKEN)
         }
+    }
+
+    private fun tokenLogin(credential: Credential): MockHttpServletResponse = mockMvc.post("/${ApiEndpoints.LOGIN}") {
+        param("responseType", ResponseType.TOKEN.name)
+        contentType = MediaType.APPLICATION_JSON
+        content = json.encodeToString<Credential>(credential)
+    }.andReturn().response
+
+    private fun refreshTokenOf(response: MockHttpServletResponse): String {
+        assertEquals(200, response.status, response.contentAsString)
+        return assertNotNull(json.parseToJsonElement(response.contentAsString).jsonObject["refresh_token"]).jsonPrimitive.content
+    }
+
+    @Test
+    fun `a refresh hands out a new refresh token, and replaying the old one ends both`() {
+        createUser("rotation@example.com")
+        val first = refreshTokenOf(tokenLogin(Credential.UsernamePassword(username = "rotation@example.com", password = "Password1")))
+        val second = refreshTokenOf(tokenLogin(Credential.RefreshToken(first)))
+        assertNotEquals(first, second)
+
+        assertEquals(400, tokenLogin(Credential.RefreshToken(first)).status)
+        // Either of the two holders may be the one who copied it, so the newer token goes as well.
+        assertEquals(400, tokenLogin(Credential.RefreshToken(second)).status)
+    }
+
+    @Test
+    fun `a replay ends only the sign-in it descends from`() {
+        createUser("two-devices@example.com")
+        val password = Credential.UsernamePassword(username = "two-devices@example.com", password = "Password1")
+        val phone = refreshTokenOf(tokenLogin(password))
+        val laptop = refreshTokenOf(tokenLogin(password))
+
+        val phoneNext = refreshTokenOf(tokenLogin(Credential.RefreshToken(phone)))
+        assertEquals(400, tokenLogin(Credential.RefreshToken(phone)).status)
+        assertEquals(400, tokenLogin(Credential.RefreshToken(phoneNext)).status)
+
+        refreshTokenOf(tokenLogin(Credential.RefreshToken(laptop)))
+    }
+
+    private fun logout(body: String?): MockHttpServletResponse = mockMvc.post("/${ApiEndpoints.LOGOUT}") {
+        if (body != null) {
+            contentType = MediaType.APPLICATION_JSON
+            content = body
+        }
+    }.andReturn().response
+
+    @Test
+    fun `signing out with the refresh token ends it and the sign-in it was refreshed from`() {
+        createUser("signout-family@example.com")
+        val password = Credential.UsernamePassword(username = "signout-family@example.com", password = "Password1")
+        val first = refreshTokenOf(tokenLogin(password))
+        val second = refreshTokenOf(tokenLogin(Credential.RefreshToken(first)))
+        val otherDevice = refreshTokenOf(tokenLogin(password))
+
+        assertEquals(200, logout(json.encodeToString(LogoutRequest(refreshToken = second))).status)
+
+        assertEquals(400, tokenLogin(Credential.RefreshToken(second)).status)
+        refreshTokenOf(tokenLogin(Credential.RefreshToken(otherDevice)))
+    }
+
+    @Test
+    fun `a sign-out holding a token already refreshed still ends the one that replaced it`() {
+        createUser("logout-stale@example.com")
+        val first = refreshTokenOf(tokenLogin(Credential.UsernamePassword(username = "logout-stale@example.com", password = "Password1")))
+        val second = refreshTokenOf(tokenLogin(Credential.RefreshToken(first)))
+
+        assertEquals(200, logout(json.encodeToString(LogoutRequest(refreshToken = first))).status)
+
+        assertEquals(400, tokenLogin(Credential.RefreshToken(second)).status)
+    }
+
+    @Test
+    fun `a sign-out without a refresh token, or with one nobody issued, still succeeds`() {
+        assertEquals(200, logout(null).status)
+        assertEquals(200, logout("{}").status)
+        assertEquals(200, logout("not json").status)
+        assertEquals(200, logout(json.encodeToString(LogoutRequest(refreshToken = "never-issued"))).status)
     }
 
     @Test

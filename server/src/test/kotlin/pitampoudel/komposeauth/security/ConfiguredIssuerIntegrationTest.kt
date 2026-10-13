@@ -6,9 +6,13 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.Primary
 import org.springframework.http.MediaType
+import org.thymeleaf.TemplateEngine
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
@@ -16,23 +20,31 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.patch
+import org.springframework.test.web.servlet.put
 import org.springframework.test.web.servlet.request.RequestPostProcessor
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
 import pitampoudel.komposeauth.core.domain.ResponseType
+import pitampoudel.komposeauth.user.data.CreateUserRequest
 import pitampoudel.komposeauth.user.data.Credential
+import pitampoudel.komposeauth.user.repository.UserRepository
 import java.time.Instant
 import java.util.Base64
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
- * With `spring.security.oauth2.authorizationserver.issuer` set, nothing a caller writes into the Host
- * or forwarded headers reaches a token's issuer, and a bearer is held to that issuer.
+ * Nothing a caller writes into the Host or forwarded headers reaches a token's issuer or an emailed
+ * link, and a bearer is held to the configured issuer.
  */
 @SpringBootTest(properties = ["spring.security.oauth2.authorizationserver.issuer=${ConfiguredIssuerIntegrationTest.ISSUER}"])
 @ActiveProfiles("test")
-@Import(TestConfig::class)
+@Import(TestConfig::class, ConfiguredIssuerIntegrationTest.RecordedMail::class)
 @AutoConfigureMockMvc
 class ConfiguredIssuerIntegrationTest {
 
@@ -43,10 +55,87 @@ class ConfiguredIssuerIntegrationTest {
     @Autowired private lateinit var mockMvc: MockMvc
     @Autowired private lateinit var json: Json
     @Autowired private lateinit var jwtEncoder: JwtEncoder
+    @Autowired private lateinit var userRepository: UserRepository
 
     private val forgedHost = RequestPostProcessor { request ->
         request.serverName = "attacker.example"
+        request.addHeader("Host", "attacker.example")
+        request.addHeader("X-Forwarded-Host", "attacker.example")
+        request.addHeader("X-Forwarded-Proto", "https")
         request
+    }
+
+    /** What would have gone out by mail, so the links in it can be read. */
+    @TestConfiguration(proxyBeanMethods = false)
+    class RecordedMail {
+        @Bean
+        @Primary
+        fun recordingEmailService(appConfigService: AppConfigService, templateEngine: TemplateEngine): EmailService =
+            object : EmailService(appConfigService, templateEngine) {
+                override fun sendHtmlMail(
+                    baseUrl: String,
+                    to: String,
+                    subject: String,
+                    template: String,
+                    model: Map<String, Any?>
+                ): Boolean {
+                    sent += Mail(baseUrl, to, subject, model)
+                    return true
+                }
+            }
+
+        data class Mail(val baseUrl: String, val to: String, val subject: String, val model: Map<String, Any?>)
+
+        companion object {
+            val sent = CopyOnWriteArrayList<Mail>()
+        }
+    }
+
+    /** Waits, since the reset mail goes out after the answer, on another thread. */
+    private fun mailTo(address: String, subject: String): RecordedMail.Mail {
+        repeat(100) {
+            RecordedMail.sent.lastOrNull { it.to == address && it.subject.startsWith(subject) }?.let { return it }
+            Thread.sleep(50)
+        }
+        error("no '$subject' mail reached $address")
+    }
+
+    @Test
+    fun `a reset link points at the configured issuer whatever host the request named`() {
+        val email = "issuer-reset@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email)
+
+        mockMvc.put("/${ApiEndpoints.RESET_PASSWORD}") {
+            with(forgedHost)
+            accept = MediaType.APPLICATION_JSON
+            param("email", email)
+        }.andExpect { status { isOk() } }
+
+        val mail = mailTo(email, "Reset Your Password")
+        assertEquals(ISSUER, mail.baseUrl)
+        val link = mail.model["actionUrl"].toString()
+        assertTrue(link.startsWith("$ISSUER/${ApiEndpoints.RESET_PASSWORD}?token="), link)
+    }
+
+    @Test
+    fun `a verification link points at the configured issuer whatever host the request named`() {
+        val (_, adminCookie) = TestAuthHelpers.createAdminAndLogin(mockMvc, json, userRepository, "issuer-admin@example.com")
+        val email = "issuer-verify@example.com"
+
+        mockMvc.patch("/${ApiEndpoints.USERS}") {
+            with(forgedHost)
+            cookie(adminCookie)
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString(
+                CreateUserRequest(firstName = "New", lastName = "User", email = email, password = "Password1", confirmPassword = "Password1")
+            )
+        }.andExpect { status { isOk() } }
+
+        val mail = mailTo(email, "Welcome")
+        assertEquals(ISSUER, mail.baseUrl)
+        val link = mail.model["actionUrl"].toString()
+        assertTrue(link.startsWith("$ISSUER/${ApiEndpoints.VERIFY_EMAIL}?token="), link)
     }
 
     @Test

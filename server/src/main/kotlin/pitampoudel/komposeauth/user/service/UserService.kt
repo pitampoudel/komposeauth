@@ -1,7 +1,5 @@
 package pitampoudel.komposeauth.user.service
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -15,17 +13,13 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.web.webauthn.api.AuthenticatorAssertionResponse
-import org.springframework.security.web.webauthn.api.PublicKeyCredential
-import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions
-import org.springframework.security.web.webauthn.management.RelyingPartyAuthenticationRequest
-import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.core.domain.isValidEmail
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.authorization.OAuth2AuthorizationConsentDocumentRepository
+import pitampoudel.komposeauth.core.domain.ErrorCode
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.core.service.EmailService
@@ -36,7 +30,6 @@ import pitampoudel.komposeauth.core.utils.normalizedEmail
 import pitampoudel.komposeauth.core.utils.validateGoogleIdToken
 import pitampoudel.komposeauth.kyc.service.KycService
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
-import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.repository.OneTimeTokenRepository
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
@@ -51,6 +44,7 @@ import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import pitampoudel.komposeauth.webauthn.repository.PublicKeyCredentialRepository
 import pitampoudel.komposeauth.webauthn.repository.PublicKeyUserRepository
+import pitampoudel.komposeauth.webauthn.service.PasskeyService
 import java.net.URI
 import java.net.URLEncoder
 import java.net.http.HttpClient
@@ -76,13 +70,13 @@ class UserService(
     private val organizationRepository: OrganizationRepository,
     private val oneTimeTokenRepository: OneTimeTokenRepository,
     val storageService: StorageService,
-    private val objectMapper: ObjectMapper,
-    private val webAuthnRelyingPartyOperations: WebAuthnRelyingPartyOperations,
+    private val passkeys: PasskeyService,
     private val roleChangeEmailNotifier: RoleChangeEmailNotifier,
     private val emailVerificationService: EmailVerificationService,
     private val appleTokenValidator: AppleTokenValidator,
     private val accessRevocation: AccessRevocation,
-    private val consentRepository: OAuth2AuthorizationConsentDocumentRepository
+    private val consentRepository: OAuth2AuthorizationConsentDocumentRepository,
+    private val contactChangeNotifier: ContactChangeNotifier
 ) {
     private val googleTokenClient = HttpClient.newBuilder().connectTimeout(GOOGLE_TOKEN_TIMEOUT).build()
 
@@ -387,13 +381,21 @@ class UserService(
         } ?: createUser(baseUrl, req)
     }
 
+    /**
+     * @param currentPassword and [signedInAt] are the proof [requireAccountHolder] asks for when the
+     * number replaces one the account had already verified.
+     */
     fun verifyPhoneNumber(
         userId: ObjectId,
         phoneNumber: String,
-        otp: String
+        otp: String,
+        currentPassword: String? = null,
+        signedInAt: Instant? = null
     ): UserResponse {
         val user = userRepository.findById(userId).orElse(null)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
+        val replaced = user.phoneNumber?.takeIf { user.phoneNumberVerified && it != phoneNumber }
+        if (replaced != null) requireAccountHolder(user, currentPassword, signedInAt, "phone number")
         val verified = phoneNumberVerificationService.verify(
             phoneNumber,
             otp
@@ -409,16 +411,22 @@ class UserService(
         )
 
         val result = userRepository.save(updatedUser)
+        replaced?.let { contactChangeNotifier.phoneNumberReplaced(result, previous = it) }
         return result.mapToResponseDto(kycService.isVerified(result.id))
     }
 
+    /** As [verifyPhoneNumber], for an email address. */
     fun verifyEmail(
         userId: ObjectId,
         email: String,
-        otp: String
+        otp: String,
+        currentPassword: String? = null,
+        signedInAt: Instant? = null
     ): UserResponse {
         val user = userRepository.findById(userId).orElse(null)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
+        val replaced = user.verifiedEmail()?.takeIf { it.normalizedEmail() != email.normalizedEmail() }
+        if (replaced != null) requireAccountHolder(user, currentPassword, signedInAt, "email address")
         val verified = emailVerificationService.verify(email, otp)
         if (!verified) throw ResponseStatusException(
             HttpStatus.BAD_REQUEST,
@@ -430,8 +438,38 @@ class UserService(
             updatedAt = Instant.now()
         )
         val result = userRepository.save(updatedUser)
+        replaced?.let { contactChangeNotifier.emailReplaced(result, previous = it) }
         return result.mapToResponseDto(kycService.isVerified(result.id))
     }
+
+    /**
+     * Replacing a verified email or phone number hands whoever does it the account: it is what a
+     * password reset or a code sign-in is sent to. So a session alone is not enough, since a stolen
+     * one would be. An account with a password proves it with that password; one without, with a
+     * sign-in in the last [RECENT_SIGN_IN]. Checked before the code is spent, so a client told what
+     * is missing can repeat the request with it.
+     */
+    private fun requireAccountHolder(user: User, currentPassword: String?, signedInAt: Instant?, what: String) {
+        val passwordHash = user.passwordHash
+        if (passwordHash != null) {
+            if (currentPassword.isNullOrEmpty() || !passwordEncoder.matches(currentPassword, passwordHash)) {
+                throw proofRequired(
+                    ErrorCode.CURRENT_PASSWORD_REQUIRED,
+                    "Enter your current password to replace your verified $what."
+                )
+            }
+        } else if (signedInAt == null || signedInAt.isBefore(Instant.now().minus(RECENT_SIGN_IN))) {
+            throw proofRequired(
+                ErrorCode.RECENT_SIGN_IN_REQUIRED,
+                "Sign in again to replace your verified $what."
+            )
+        }
+    }
+
+    private fun proofRequired(code: ErrorCode, detail: String) =
+        ResponseStatusException(HttpStatus.FORBIDDEN, detail).apply {
+            body.setProperty(ErrorCode.PROPERTY, code.name)
+        }
 
     /**
      * For a raw ID token this server has to check itself — what a native client posts to the login
@@ -512,12 +550,10 @@ class UserService(
         return claimed
     }
 
-    fun resolveUserFromCredential(
-        request: Credential,
-        loadPublicKeyCredentialRequestOptions: () -> PublicKeyCredentialRequestOptions?
-    ): User {
+    fun resolveUserFromCredential(request: Credential): User {
         val user = when (request) {
-            is Credential.UsernamePassword -> findByUserName(request.username())
+            is Credential.UsernamePassword -> userRepository
+                .findByLoginName(request.username, request.countryNameCode ?: appConfigService.defaultPhoneRegion())
                 ?.takeIf {
                     passwordEncoder.matches(request.password, it.passwordHash)
                 }
@@ -530,35 +566,14 @@ class UserService(
             )
 
             is Credential.RefreshToken -> {
-                val token = oneTimeTokenService.consume(
-                    request.refreshToken,
-                    purpose = OneTimeToken.Purpose.REFRESH_TOKEN
-                )
+                val token = oneTimeTokenService.redeemRefreshToken(request.refreshToken)
                 findUser(token.userId.toHexString()) ?: throw AccessDeniedException(
                     "Invalid credentials"
                 )
             }
 
             is Credential.AppleId -> findOrCreateUserByAppleIdToken(request.idToken)
-            is Credential.PublicKey -> {
-                val json = objectMapper.readValue(
-                    request.authenticationResponseJson,
-                    object :
-                        TypeReference<PublicKeyCredential<AuthenticatorAssertionResponse>>() {}
-                )
-                val requestOptions = loadPublicKeyCredentialRequestOptions()
-                val publicKeyUser = requestOptions?.let {
-                    webAuthnRelyingPartyOperations.authenticate(
-                        RelyingPartyAuthenticationRequest(
-                            requestOptions,
-                            json
-                        )
-                    )
-                }
-                publicKeyUser?.let {
-                    findByUserName(publicKeyUser.name)
-                }
-            }
+            is Credential.PublicKey -> passkeys.signIn(request.authenticationResponseJson)
 
             is Credential.OTP -> {
                 resolveOtpLogin(request.username, request.otp)
@@ -675,3 +690,6 @@ class UserService(
 }
 
 private val GOOGLE_TOKEN_TIMEOUT: Duration = Duration.ofSeconds(10)
+
+/** How recent a sign-in has to be to stand in for the password an account doesn't have. */
+val RECENT_SIGN_IN: Duration = Duration.ofMinutes(10)

@@ -10,9 +10,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pitampoudel.core.domain.Result
 import pitampoudel.core.domain.validators.ValidateNotBlank
+import pitampoudel.core.presentation.InfoMessage
 import pitampoudel.core.presentation.ResultUiEvent
 import pitampoudel.komposeauth.core.data.AuthStateHandler
 import pitampoudel.komposeauth.login.domain.AuthClient
+import pitampoudel.komposeauth.login.presentation.KmpCredentialManager
+import pitampoudel.komposeauth.login.presentation.PasskeyCancelled
 import pitampoudel.komposeauth.user.data.ProfileResponse
 import pitampoudel.komposeauth.core.data.RegisterPublicKeyRequest
 import pitampoudel.komposeauth.organization.domain.OrganizationsClient
@@ -27,6 +30,7 @@ class ProfileViewModel internal constructor(
     val uiEvents = uiEventChannel.receiveAsFlow()
     private val _state = MutableStateFlow(ProfileState())
     val state = _state.asStateFlow()
+    private var addingPasskey = false
 
     init {
         viewModelScope.launch {
@@ -68,27 +72,7 @@ class ProfileViewModel internal constructor(
                     }
                 }
 
-                is ProfileEvent.RegisterPublicKey -> {
-                    _state.update {
-                        it.copy(progress = 0.0F)
-                    }
-                    val res = client.registerPublicKey(
-                        RegisterPublicKeyRequest(event.credential)
-                    )
-                    when (res) {
-                        is Result.Error -> _state.update {
-                            it.copy(infoMsg = res.message)
-                        }
-
-                        is Result.Success -> {
-
-                        }
-                    }
-                    _state.update {
-                        it.copy(progress = null)
-                    }
-
-                }
+                is ProfileEvent.AddPasskey -> addPasskey(event.credentialManager)
 
                 ProfileEvent.LogOut -> authStateHandler.logout()
 
@@ -156,6 +140,40 @@ class ProfileViewModel internal constructor(
                     _state.update { it.copy(progress = null) }
                 }
             }
+        }
+    }
+
+    /** Options are fetched only when asked for: each set answers once and lapses within minutes. */
+    private suspend fun addPasskey(credentialManager: KmpCredentialManager) {
+        if (addingPasskey) return
+        addingPasskey = true
+        _state.update { it.copy(progress = 0.0F) }
+        try {
+            val message = createAndRegisterPasskey(credentialManager)
+            _state.update { it.copy(infoMsg = message ?: it.infoMsg) }
+        } finally {
+            addingPasskey = false
+            _state.update { it.copy(progress = null) }
+        }
+    }
+
+    /** What to tell the person, or null when they closed the prompt themselves. */
+    private suspend fun createAndRegisterPasskey(credentialManager: KmpCredentialManager): InfoMessage? {
+        val options = when (val res = client.fetchWebAuthnRegistrationOptions()) {
+            is Result.Error -> return res.message
+            is Result.Success -> res.data
+        }
+        val credential = when (val res = credentialManager.createPassKeyAndRetrieveJson(options)) {
+            PasskeyCancelled -> return null
+            is Result.Error -> return res.message
+            is Result.Success -> res.data
+        }
+        val request = RegisterPublicKeyRequest(
+            RegisterPublicKeyRequest.PublicKeyCredential(credential = credential, label = credentialManager.passkeyLabel)
+        )
+        return when (val res = client.registerPublicKey(request)) {
+            is Result.Error -> res.message
+            is Result.Success -> InfoMessage.Success("Passkey added")
         }
     }
 }

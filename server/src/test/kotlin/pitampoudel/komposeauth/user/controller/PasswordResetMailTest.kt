@@ -6,7 +6,6 @@ import io.mockk.verify
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.springframework.core.task.TaskExecutor
-import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.utils.ServerUrl
@@ -51,7 +50,7 @@ class PasswordResetMailTest {
             "https://auth.example.com/reset-password?token=t"
         every { emailService.sendHtmlMail(any(), any(), any(), any(), any()) } returns true
 
-        assertEquals(200, controller.sendResetLink("owner@example.com", MockHttpServletRequest()).statusCode.value())
+        assertEquals(200, controller.sendResetLink("owner@example.com").statusCode.value())
         verify(exactly = 0) { oneTimeTokenService.generateResetPasswordLink(any(), any(), any()) }
         verify(exactly = 0) { emailService.sendHtmlMail(any(), any(), any(), any(), any()) }
 
@@ -64,7 +63,7 @@ class PasswordResetMailTest {
         every { userService.findByUserName("owner@example.com") } returns user
         every { oneTimeTokenService.generateResetPasswordLink(any(), any(), any()) } throws IllegalStateException("db down")
 
-        controller.sendResetLink("owner@example.com", MockHttpServletRequest())
+        controller.sendResetLink("owner@example.com")
         scheduled.single().run()
     }
 
@@ -72,7 +71,7 @@ class PasswordResetMailTest {
     fun `an address with no account schedules nothing`() {
         every { userService.findByUserName(any()) } returns null
 
-        assertEquals(200, controller.sendResetLink("nobody@example.com", MockHttpServletRequest()).statusCode.value())
+        assertEquals(200, controller.sendResetLink("nobody@example.com").statusCode.value())
         assertTrue(scheduled.isEmpty())
     }
 }

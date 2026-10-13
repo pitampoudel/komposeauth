@@ -31,7 +31,7 @@ class KycServiceBusinessRulesTest {
         val repo = mock<KycVerificationRepository>()
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
-        val service = KycService(repo, storage, email, userRepository = mock(), slackNotifier = mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepository = mock(), slackNotifier = mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         val existing = KycVerification(

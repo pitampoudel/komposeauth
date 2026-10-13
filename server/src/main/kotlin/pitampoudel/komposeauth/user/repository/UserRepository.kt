@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.stereotype.Repository
+import pitampoudel.core.data.parsePhoneNumber
 import pitampoudel.komposeauth.core.utils.normalizedEmail
 import pitampoudel.komposeauth.user.entity.User
 import kotlin.jvm.optionals.getOrNull
@@ -30,6 +31,14 @@ interface UserRepository : MongoRepository<User, ObjectId>, UserRepositoryCustom
         user = user ?: findByPhoneNumber(value)
         return user
     }
+
+    /**
+     * The account somebody signs in to by typing [value]: the one it names as typed, or else the
+     * phone number it reads as in [region]. A number written with its own country code (`+977...`)
+     * is that number whatever the region; [region] only places a local one (`98...`).
+     */
+    fun findByLoginName(value: String, region: String): User? =
+        findByUserName(value) ?: parsePhoneNumber(region, value)?.fullNumberInE164Format?.let { findByPhoneNumber(it) }
 }
 
 interface UserRepositoryCustom {

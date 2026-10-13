@@ -47,7 +47,7 @@ class OtpVerifyPhoneNormalisationTest {
         rateLimiter = rateLimiter,
         // Off, so the target quota never touches the rate limiter in a plain unit test.
         rateLimitProperties = RateLimitProperties().apply { enabled = false },
-        serverUrl = ServerUrl(AuthorizationServerSettings.builder().build()),
+        serverUrl = ServerUrl(AuthorizationServerSettings.builder().issuer("https://auth.example.com").build()),
         appConfigService = appConfigService
     )
 
@@ -77,7 +77,7 @@ class OtpVerifyPhoneNormalisationTest {
         val phone = slot<String>()
         every { phoneNumberVerificationService.initiate(capture(phone)) } returns MessageResponse("sent")
 
-        controller.sendOtp(SendOtpRequest(username = username, type = OtpType.PHONE), mockk(relaxed = true))
+        controller.sendOtp(SendOtpRequest(username = username, type = OtpType.PHONE))
 
         return phone.captured
     }

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -20,6 +21,7 @@ import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
 import pitampoudel.komposeauth.kyc.data.UpdateAddressDetailsRequest
 import pitampoudel.komposeauth.kyc.domain.DocumentType
+import pitampoudel.komposeauth.kyc.entity.KycDocument
 import pitampoudel.komposeauth.kyc.entity.KycVerification
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
 import pitampoudel.komposeauth.kyc.service.KycService
@@ -28,6 +30,7 @@ import pitampoudel.komposeauth.user.repository.UserRepository
 import java.time.LocalDate
 import java.util.Optional
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 
 class KycServiceTest {
@@ -53,7 +56,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
 
@@ -70,7 +73,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(null)
@@ -105,7 +108,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(null)
@@ -129,7 +132,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         val existing = baseKyc(userId, status = KycResponse.Status.DRAFT)
@@ -163,6 +166,60 @@ class KycServiceTest {
         assertEquals("selfie-url", captor.firstValue.selfieUrl)
         assertEquals("ABC123", captor.firstValue.documentNumber)
         assertEquals(DocumentType.NATIONAL_ID, captor.firstValue.documentType)
+
+        // What reaches the bucket is sealed, not the file, and is typed as nothing a browser renders.
+        val stored = argumentCaptor<ByteArray>()
+        verify(storage).upload(eq("kyc/${userId.toHexString()}/front"), eq("application/octet-stream"), stored.capture())
+        assertFalse(stored.firstValue.decodeToString().contains("hello"))
+
+        // And the storage address is never handed out: the response names this server's.
+        assertEquals("$TEST_ISSUER/kyc/${userId.toHexString()}/documents/front", res.documentInformation.documentFrontUrl)
+        assertEquals("$TEST_ISSUER/kyc/${userId.toHexString()}/documents/back", res.documentInformation.documentBackUrl)
+        assertEquals("$TEST_ISSUER/kyc/${userId.toHexString()}/documents/selfie", res.documentInformation.selfieUrl)
+    }
+
+    @Test
+    fun `a submitted document reads back as it was sent, and only as the file it was stored as`() {
+        val repo = mock<KycVerificationRepository>()
+        val bucket = mutableMapOf<String, ByteArray>()
+        val storage = mock<StorageService> {
+            on { upload(any(), any(), any()) } doAnswer { call ->
+                "bucket://${call.getArgument<String>(0)}".also { bucket[it] = call.getArgument(2) }
+            }
+            on { download(any()) } doAnswer { call -> bucket[call.getArgument<String>(0)] }
+        }
+        val service = KycService(repo, kycDocumentsOver(storage), mock(), mock(), mock<SlackNotifier>())
+        val userId = ObjectId.get()
+        whenever(repo.findByUserId(userId)).thenReturn(baseKyc(userId))
+        whenever(repo.save(any<KycVerification>())).thenAnswer { it.arguments[0] }
+
+        fun encoded(text: String) = EncodedData(
+            base64EncodedData = java.util.Base64.getEncoder().encodeToString(text.toByteArray()),
+            mimeType = "image/png",
+            name = "$text.png"
+        )
+        service.submitDocumentDetails(
+            userId,
+            DocumentInformation(
+                documentType = DocumentType.NATIONAL_ID,
+                documentNumber = "ABC123",
+                documentIssuedDate = kotlinx.datetime.LocalDate.parse("2010-01-01"),
+                documentExpiryDate = null,
+                documentIssuedPlace = "Kathmandu",
+                documentFront = encoded("front side"),
+                documentBack = encoded("back side"),
+                selfie = encoded("a face"),
+            )
+        )
+        val saved = argumentCaptor<KycVerification>().also { verify(repo).save(it.capture()) }.firstValue
+        whenever(repo.findByUserId(userId)).thenReturn(saved)
+
+        assertEquals("front side", service.document(userId, KycDocument.FRONT)?.decodeToString())
+        assertEquals("a face", service.document(userId, KycDocument.SELFIE)?.decodeToString())
+
+        // A sealed file moved under another name does not open there.
+        whenever(repo.findByUserId(userId)).thenReturn(saved.copy(selfieUrl = saved.documentFrontUrl))
+        assertThrows<javax.crypto.AEADBadTagException> { service.document(userId, KycDocument.SELFIE) }
     }
 
     @Test
@@ -171,7 +228,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(baseKyc(userId, status = KycResponse.Status.PENDING))
@@ -200,7 +257,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         val existing = baseKyc(userId, status = KycResponse.Status.PENDING)
@@ -237,7 +294,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, storage, email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
 
         val userId = ObjectId.get()
         val kyc = baseKyc(userId, status = KycResponse.Status.PENDING)
@@ -274,7 +331,7 @@ class KycServiceTest {
     fun `a KYC that is not waiting for review cannot be approved or rejected`() {
         val repo = mock<KycVerificationRepository>()
         val email = mock<EmailService>()
-        val service = KycService(repo, mock<StorageService>(), email, mock<UserRepository>(), mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(mock()), email, mock<UserRepository>(), mock<SlackNotifier>())
         val user = User(id = ObjectId.get(), firstName = "A", lastName = "B", email = "a@example.com", phoneNumber = null)
 
         listOf(KycResponse.Status.DRAFT, KycResponse.Status.APPROVED, KycResponse.Status.REJECTED).forEach { status ->

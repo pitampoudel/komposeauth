@@ -1,8 +1,16 @@
 package pitampoudel.komposeauth.authorization
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
+import org.springframework.security.oauth2.core.AuthorizationGrantType
+import org.springframework.security.oauth2.core.OAuth2AccessToken
+import org.springframework.security.oauth2.core.OAuth2RefreshToken
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import java.time.Instant
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class OAuth2AuthorizationMappersTest {
@@ -95,5 +103,31 @@ class OAuth2AuthorizationMappersTest {
         val nested = fixed["nested"] as Map<*, *>
         assertTrue(nested["iat"] is Instant)
         assertEquals(nowSeconds, (nested["iat"] as Instant).epochSecond)
+    }
+
+    @Test
+    fun `a revoked refresh token is still revoked when read back`() {
+        val client = RegisteredClient.withId("c1")
+            .clientId("c1")
+            .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+            .build()
+        val now = Instant.now()
+        val issued = OAuth2Authorization.withRegisteredClient(client)
+            .principalName("user")
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+            .accessToken(OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, "a1", now, now.plusSeconds(900)))
+            .refreshToken(OAuth2RefreshToken("r1", now, now.plusSeconds(86_400)))
+            .build()
+        val revoked = OAuth2Authorization.from(issued).invalidate(issued.refreshToken!!.token).build()
+        val objectMapper = ObjectMapper()
+
+        val read = assertNotNull(
+            fromOAuth2AuthorizationDocument(toOAuth2AuthorizationDocument(revoked, objectMapper), client, objectMapper)
+        )
+
+        assertTrue(read.refreshToken!!.isInvalidated)
+        assertFalse(read.refreshToken!!.isActive)
+        assertTrue(read.accessToken!!.isInvalidated)
     }
 }

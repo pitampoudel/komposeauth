@@ -12,19 +12,29 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.web.servlet.MockHttpServletRequestDsl
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
+import pitampoudel.komposeauth.authorization.MongoOAuth2AuthorizationService
+import pitampoudel.komposeauth.authorization.OAuth2AuthorizationDocumentRepository
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.Constants.ACCESS_TOKEN_COOKIE_NAME
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.oauth_clients.dto.CreateClientRequest
+import pitampoudel.komposeauth.user.data.LogoutRequest
 import pitampoudel.komposeauth.user.repository.UserRepository
 import java.net.URI
 import java.security.MessageDigest
+import java.time.Duration
+import java.time.Instant
 import java.util.Base64
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
@@ -46,6 +56,11 @@ class PublicClientRefreshTokenIntegrationTest {
     @Autowired private lateinit var mockMvc: MockMvc
     @Autowired private lateinit var json: Json
     @Autowired private lateinit var userRepository: UserRepository
+    @Autowired private lateinit var authorizations: OAuth2AuthorizationDocumentRepository
+
+    private companion object {
+        const val CONTENDERS = 6
+    }
 
     private val redirectUri = "https://spa.example.com/auth/callback"
     private val password = "Password1"
@@ -85,12 +100,12 @@ class PublicClientRefreshTokenIntegrationTest {
     }
 
     /** Signs in through the hosted login page and returns the authorization code. */
-    private fun authorize(clientId: String, email: String): String {
+    private fun authorize(clientId: String, email: String, scope: String? = "openid%20user.read.any"): String {
         val challenge = Base64.getUrlEncoder().withoutPadding().encodeToString(
             MessageDigest.getInstance("SHA-256").digest(codeVerifier.toByteArray())
         )
         var url: String? = "/oauth2/authorize?response_type=code&client_id=$clientId&redirect_uri=$redirectUri" +
-            "&scope=openid%20user.read.any&state=s1&code_challenge=$challenge&code_challenge_method=S256"
+            scope?.let { "&scope=$it" }.orEmpty() + "&state=s1&code_challenge=$challenge&code_challenge_method=S256"
         var hops = 0
         while (url != null && hops++ < 12) {
             // As a URI, so the already-encoded query (the space in `scope`) is not encoded again.
@@ -153,8 +168,88 @@ class PublicClientRefreshTokenIntegrationTest {
         )
         assertNotNull(refreshed["access_token"])
         assertNotEquals(first["access_token"], refreshed["access_token"])
-        // Reused rather than rotated (see the client's token settings), so it keeps working.
-        assertEquals(refreshToken, refreshed["refresh_token"])
+        // Rotated: the refresh hands back a new refresh token, which is the one that works from now on.
+        val rotated = assertNotNull(refreshed["refresh_token"])
+        assertNotEquals(refreshToken, rotated)
+        assertNotNull(token("grant_type" to "refresh_token", "refresh_token" to rotated, "client_id" to clientId)["access_token"])
+    }
+
+    private fun signIn(adminEmail: String, email: String): Pair<String, String> {
+        val clientId = createClient(adminEmail).getValue("clientId")
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        val refreshToken = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "code_verifier" to codeVerifier
+        ).getValue("refresh_token")
+        return clientId to refreshToken
+    }
+
+    private fun refresh(clientId: String, refreshToken: String) = tokenRequest(
+        "grant_type" to "refresh_token",
+        "refresh_token" to refreshToken,
+        "client_id" to clientId
+    )
+
+    private fun refreshedToken(result: MvcResult): String {
+        assertEquals(200, result.response.status, result.response.contentAsString)
+        return json.parseToJsonElement(result.response.contentAsString).jsonObject.getValue("refresh_token").jsonPrimitive.content
+    }
+
+    private fun assertRefused(result: MvcResult) {
+        assertEquals(400, result.response.status, result.response.contentAsString)
+        assertTrue("invalid_grant" in result.response.contentAsString, result.response.contentAsString)
+    }
+
+    @Test
+    fun `a refresh made again with the token it replaced gets the same new token`() {
+        val (clientId, first) = signIn("spa-admin-7@example.com", "spa-rotation@example.com")
+
+        val second = refreshedToken(refresh(clientId, first))
+        // What a second request of the same page load does: it read the cookie before the first
+        // request's answer replaced it.
+        assertEquals(second, refreshedToken(refresh(clientId, first)))
+        assertNotEquals(second, refreshedToken(refresh(clientId, second)))
+    }
+
+    @Test
+    fun `concurrent refreshes with one token all end up holding the same token`() {
+        val (clientId, first) = signIn("spa-admin-8@example.com", "spa-concurrent@example.com")
+
+        val pool = Executors.newFixedThreadPool(CONTENDERS)
+        val start = CountDownLatch(1)
+        val answers = try {
+            (1..CONTENDERS).map {
+                pool.submit<MvcResult> {
+                    start.await()
+                    refresh(clientId, first)
+                }
+            }.also { start.countDown() }.map { it.get(30, TimeUnit.SECONDS) }
+        } finally {
+            pool.shutdownNow()
+        }
+
+        val held = answers.map(::refreshedToken).toSet()
+        assertEquals(1, held.size, "the requests came away with ${held.size} different refresh tokens")
+        assertNotEquals(first, held.single())
+        refreshedToken(refresh(clientId, held.single()))
+    }
+
+    @Test
+    fun `a replaced refresh token used after the grace ends the authorization`() {
+        val (clientId, first) = signIn("spa-admin-9@example.com", "spa-replay@example.com")
+        val second = refreshedToken(refresh(clientId, first))
+        val stored = assertNotNull(authorizations.findByRefreshTokenValue(second))
+        authorizations.save(
+            stored.copy(refreshTokenRotatedAt = Instant.now() - MongoOAuth2AuthorizationService.ROTATION_GRACE - Duration.ofSeconds(1))
+        )
+
+        assertRefused(refresh(clientId, first))
+        // Whoever was holding the newer token is out too: either of them may be the one who stole it.
+        assertRefused(refresh(clientId, second))
+        assertNull(authorizations.findById(stored.id).orElse(null))
     }
 
     @Test
@@ -255,6 +350,128 @@ class PublicClientRefreshTokenIntegrationTest {
             "client_secret" to secret
         )
         assertNotNull(withSecret["access_token"])
+        // Rotated for a confidential client too, and the new token is the one that refreshes.
+        val rotated = withSecret.getValue("refresh_token")
+        assertNotEquals(refreshToken, rotated)
+        val again = token(
+            "grant_type" to "refresh_token",
+            "refresh_token" to rotated,
+            "client_id" to clientId,
+            "client_secret" to secret
+        )
+        assertNotNull(again["access_token"])
+    }
+
+    private data class ConfidentialSignIn(val clientId: String, val secret: String, val refreshToken: String)
+
+    private fun signInConfidential(adminEmail: String, email: String): ConfidentialSignIn {
+        val client = createClient(adminEmail, publicClient = false)
+        val clientId = client.getValue("clientId")
+        val secret = client.getValue("clientSecret")
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        val refreshToken = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "client_secret" to secret,
+            "code_verifier" to codeVerifier
+        ).getValue("refresh_token")
+        return ConfidentialSignIn(clientId, secret, refreshToken)
+    }
+
+    /** What a server-side app sends when its user signs out (RFC 7009, `client_secret_post`). */
+    private fun revoke(clientId: String, secret: String, token: String): MvcResult = mockMvc.post("/oauth2/revoke") {
+        param("token", token)
+        param("token_type_hint", "refresh_token")
+        param("client_id", clientId)
+        param("client_secret", secret)
+    }.andReturn()
+
+    private fun refreshWithSecret(signIn: ConfidentialSignIn, refreshToken: String) = tokenRequest(
+        "grant_type" to "refresh_token",
+        "refresh_token" to refreshToken,
+        "client_id" to signIn.clientId,
+        "client_secret" to signIn.secret
+    )
+
+    @Test
+    fun `a confidential client revokes a refresh token with its secret in the form, and it stops working`() {
+        val signIn = signInConfidential("spa-admin-10@example.com", "spa-revoke@example.com")
+
+        assertEquals(401, revoke(signIn.clientId, "not-the-secret", signIn.refreshToken).response.status)
+        val revoked = revoke(signIn.clientId, signIn.secret, signIn.refreshToken)
+        assertEquals(200, revoked.response.status, revoked.response.contentAsString)
+        assertEquals("", revoked.response.contentAsString)
+
+        assertRefused(refreshWithSecret(signIn, signIn.refreshToken))
+        // Revoking again, or revoking anything unknown, is not an error.
+        assertEquals(200, revoke(signIn.clientId, signIn.secret, signIn.refreshToken).response.status)
+        assertEquals(200, revoke(signIn.clientId, signIn.secret, "never-issued").response.status)
+    }
+
+    @Test
+    fun `revoking the refresh token a refresh just replaced signs out the one that replaced it`() {
+        val signIn = signInConfidential("spa-admin-11@example.com", "spa-revoke-retired@example.com")
+        val replacement = refreshedToken(refreshWithSecret(signIn, signIn.refreshToken))
+        val authorizationId = assertNotNull(authorizations.findByRefreshTokenValue(replacement)).id
+
+        // A sign-out reading the cookie the request arrived with, before the refresh replaced it.
+        assertEquals(200, revoke(signIn.clientId, signIn.secret, signIn.refreshToken).response.status)
+
+        assertRefused(refreshWithSecret(signIn, replacement))
+        assertRefused(refreshWithSecret(signIn, signIn.refreshToken))
+        assertNull(authorizations.findById(authorizationId).orElse(null))
+    }
+
+    @Test
+    fun `a client cannot revoke another client's replaced refresh token`() {
+        val signIn = signInConfidential("spa-admin-12@example.com", "spa-revoke-owner@example.com")
+        val replacement = refreshedToken(refreshWithSecret(signIn, signIn.refreshToken))
+        val other = createClient("spa-admin-13@example.com", publicClient = false)
+
+        // Answered as for any token it never issued.
+        assertEquals(200, revoke(other.getValue("clientId"), other.getValue("clientSecret"), signIn.refreshToken).response.status)
+
+        assertNotNull(refreshedToken(refreshWithSecret(signIn, replacement)))
+    }
+
+    @Test
+    fun `a public client, which cannot authenticate to the revocation endpoint, signs out at logout`() {
+        val (clientId, refreshToken) = signIn("spa-admin-14@example.com", "spa-logout@example.com")
+
+        val result = mockMvc.post("/${ApiEndpoints.LOGOUT}") {
+            contentType = MediaType.APPLICATION_JSON
+            content = json.encodeToString(LogoutRequest(refreshToken = refreshToken))
+        }.andReturn()
+        assertEquals(200, result.response.status, result.response.contentAsString)
+
+        assertRefused(refresh(clientId, refreshToken))
+    }
+
+    private fun claimsOf(jwt: String) = json.parseToJsonElement(
+        Base64.getUrlDecoder().decode(jwt.split(".")[1]).decodeToString()
+    ).jsonObject
+
+    @Test
+    fun `an access token says when the user signed in, and a refreshed one keeps saying it`() {
+        val clientId = createClient("spa-admin-15@example.com").getValue("clientId")
+        val email = "spa-auth-time@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email)
+        val before = Instant.now().epochSecond
+
+        val first = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "code_verifier" to codeVerifier
+        )
+        val signedInAt = assertNotNull(claimsOf(first.getValue("access_token"))["auth_time"]).jsonPrimitive.content.toLong()
+        assertTrue(signedInAt in before..Instant.now().epochSecond, "auth_time $signedInAt")
+
+        val refreshed = token("grant_type" to "refresh_token", "refresh_token" to first.getValue("refresh_token"), "client_id" to clientId)
+        assertEquals(signedInAt, claimsOf(refreshed.getValue("access_token"))["auth_time"]?.jsonPrimitive?.content?.toLong())
     }
 
     @Test
@@ -279,5 +496,50 @@ class PublicClientRefreshTokenIntegrationTest {
 
         userRepository.deleteById(assertNotNull(userRepository.findByEmail(email)).id)
         assertEquals(401, userInfo().status)
+    }
+
+    @Test
+    fun `an ID token is not a bearer on this server's API, though the access token issued beside it is`() {
+        val clientId = createClient("spa-admin-16@example.com").getValue("clientId")
+        val email = "spa-id-token@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        val tokens = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "code_verifier" to codeVerifier
+        )
+        val idToken = tokens.getValue("id_token")
+        // Same key, same user, and the audience of a client registered here: only its shape differs.
+        assertEquals(claimsOf(tokens.getValue("access_token"))["sub"], claimsOf(idToken)["sub"])
+
+        fun me(build: MockHttpServletRequestDsl.() -> Unit) = mockMvc.get("/${ApiEndpoints.ME}") { build() }.andReturn().response
+
+        assertEquals(200, me { header("Authorization", "Bearer ${tokens.getValue("access_token")}") }.status)
+        val refused = me { header("Authorization", "Bearer $idToken") }
+        assertEquals(401, refused.status, refused.contentAsString)
+        assertTrue("invalid_token" in refused.getHeader("WWW-Authenticate").orEmpty(), refused.getHeader("WWW-Authenticate"))
+        assertEquals(401, me { cookie(Cookie(ACCESS_TOKEN_COOKIE_NAME, idToken)) }.status)
+    }
+
+    @Test
+    fun `an access token from a grant that asked for no scope carries none and is still a bearer`() {
+        val clientId = createClient("spa-admin-17@example.com").getValue("clientId")
+        val email = "spa-no-scope@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, email, password)
+        val tokens = token(
+            "grant_type" to "authorization_code",
+            "code" to authorize(clientId, email, scope = null),
+            "redirect_uri" to redirectUri,
+            "client_id" to clientId,
+            "code_verifier" to codeVerifier
+        )
+        assertNull(tokens["id_token"])
+        val accessToken = tokens.getValue("access_token")
+        assertFalse("scope" in claimsOf(accessToken), "${claimsOf(accessToken)}")
+
+        val me = mockMvc.get("/${ApiEndpoints.ME}") { header("Authorization", "Bearer $accessToken") }.andReturn().response
+        assertEquals(200, me.status, me.contentAsString)
     }
 }

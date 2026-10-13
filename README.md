@@ -42,8 +42,13 @@ docker pull pitampoudel/komposeauth:latest
 docker run -p 80:8080 \
   -e MONGODB_URI="mongodb://your-mongo-host:27017" \
   -e BASE64_ENCRYPTION_KEY="<paste-your-base64-key>" \
+  -e SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER="http://localhost" \
   pitampoudel/komposeauth:latest
 ```
+
+All three are required; the server refuses to start without any of them. The issuer is the address
+you reach the server at, `http://localhost` here — see
+[Tell the server its public address](#tell-the-server-its-public-address).
 
 - The data lives in a database named `komposeauth`, fixed in `application.yml`, so `MONGODB_URI`
   does not name one.
@@ -69,12 +74,16 @@ docker run -p 80:8080 \
 -e SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER="https://auth.example.com"
 ```
 
-This is the issuer your apps validate (`iss`, and the discovery document's `issuer`), and it is also
-the address every emailed link (password reset, email verification) and the KYC callback point at.
-Write it exactly as your apps check it, with no trailing slash. Left unset, the server reads it off
-each request's `Host` and `X-Forwarded-*` headers, which the caller writes, so a reset link could be
-made to point anywhere; the server logs a warning at startup when it is unset. Leave it unset only for
-local development.
+Required. This is the issuer your apps validate (`iss`, and the discovery document's `issuer`), and it
+is also the address every emailed link (password reset, email verification), the KYC callback and the
+Google sign-in's redirect URI point at. Write it exactly as your apps check it: `https://` (or
+`http://` for local development), the host, a port if it is not the default, and nothing after that —
+no trailing slash, path, query or fragment. The server refuses to start without it, or with anything
+else, and never falls back to a request's `Host` and `X-Forwarded-*` headers, which the caller writes:
+a reset link built from them could be made to point anywhere.
+
+If you sign in with Google, the authorized redirect URI to register in the Google console is this
+address followed by `/login/oauth2/code/google`.
 
 #### Tell the server how it is reached
 
@@ -130,8 +139,7 @@ and use `TRUSTED_PROXY_COUNT`.
 
 The last row is the only one that should turn off `FORWARD_HEADERS_STRATEGY`. Everywhere else it must
 stay at its default of `framework`, because that is what tells the server it was reached over HTTPS —
-without it, session cookies lose `Secure`, cross-site sign-in stops working, and verification emails
-carry `http://` links.
+without it, session cookies lose `Secure` and cross-site sign-in stops working.
 
 ##### Cloud Run
 
@@ -184,6 +192,10 @@ val httpClient = HttpClient {
     )
 }
 ```
+
+On Android the overload takes a `Context` too, and the tokens are encrypted with an Android Keystore key. On
+desktop, also pass `appId` (your package name, say) so that your app's sign-in is kept apart from other apps';
+desktop tokens are stored unencrypted in the user's Java preferences.
 
 Initialize SDK
 
@@ -276,6 +288,21 @@ There are no CSRF tokens. Instead, the browser's `Sec-Fetch-Site` header decides
 
 So a browser app on another origin that calls this server with `credentials: "include"` only needs
 its origin in that list.
+
+### KYC documents
+
+Profile photos and KYC uploads go to the same bucket, and a profile photo is meant to be readable by
+anyone with its address. KYC documents (the document scans and the selfie) are not: they are
+encrypted with `BASE64_ENCRYPTION_KEY` before they are uploaded, so the stored copy is unreadable,
+and a KYC response's `documentFrontUrl`, `documentBackUrl` and `selfieUrl` point at this server
+(`GET /kyc/{userId}/documents/{front|back|selfie}`), which serves them only to that user and to
+admins. Fetch them with the user's bearer token or session cookie, not as a bare `<img src>` from
+another site. Files uploaded by an earlier version are encrypted where they are, in the background,
+once a server with this version starts.
+
+Keep the key: a server started with a different one cannot open the documents already stored. And
+if your bucket keeps old object versions (GCS object versioning, S3 versioning), delete the old
+versions under `kyc/`, which are the unencrypted originals.
 
 ### Reporting
 

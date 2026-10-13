@@ -7,6 +7,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
@@ -128,6 +130,60 @@ class ResourceOwnerLoginControllerIntegrationTest {
         val claims = json.parseToJsonElement(String(Base64.getUrlDecoder().decode(accessToken.split(".")[1]))).jsonObject
         assertEquals(email, claims["email"]?.jsonPrimitive?.content)
         assertEquals(false, claims["emailVerified"]?.jsonPrimitive?.boolean)
+    }
+
+    @Test
+    fun `the access token from login is a bearer on this server's API, as a header and as the cookie`() {
+        val email = "login-bearer@example.com"
+        val password = "Password1"
+        createUser(email, password)
+        fun login(responseType: ResponseType) = mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            param("responseType", responseType.name)
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString<Credential>(Credential.UsernamePassword(username = email, password = password))
+        }.andExpect { status { isOk() } }.andReturn().response
+
+        val accessToken = json.parseToJsonElement(login(ResponseType.TOKEN).contentAsString)
+            .jsonObject["access_token"]!!.jsonPrimitive.content
+        mockMvc.get("/${ApiEndpoints.ME}") { header("Authorization", "Bearer $accessToken") }
+            .andExpect { status { isOk() } }
+
+        val cookie = login(ResponseType.COOKIE).getCookie(Constants.ACCESS_TOKEN_COOKIE_NAME)!!
+        mockMvc.get("/${ApiEndpoints.ME}") { cookie(cookie) }.andExpect { status { isOk() } }
+    }
+
+    @Test
+    fun `a phone number signs in as written with its country code, and without one in the default region`() {
+        val password = "Password1"
+        userService.createUser(
+            baseUrl = null,
+            req = CreateUserRequest(phoneNumber = "+9779809990001", password = password, confirmPassword = password)
+        )
+        fun login(username: String, countryNameCode: String? = null) = mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            param("responseType", ResponseType.TOKEN.name)
+            contentType = MediaType.APPLICATION_JSON
+            accept = MediaType.APPLICATION_JSON
+            content = json.encodeToString<Credential>(
+                Credential.UsernamePassword(countryNameCode = countryNameCode, username = username, password = password)
+            )
+        }.andReturn().response.status
+
+        assertEquals(200, login("+9779809990001"))
+        // No country in the request: read in the default region, Nepal when unconfigured.
+        assertEquals(200, login("9809990001"))
+        assertEquals(200, login("980-999-0001"))
+        // A country the request does name is the one it is read in.
+        assertEquals(200, login("9809990001", countryNameCode = "NP"))
+        assertEquals(403, login("9809990001", countryNameCode = "IN"))
+
+        // The hosted sign-in page has no country field at all.
+        val signedIn = mockMvc.post("/session-login") {
+            param("username", "9809990001")
+            param("password", password)
+        }.andReturn().response
+        assertEquals(302, signedIn.status)
+        assertTrue(signedIn.redirectedUrl?.contains("error") != true, "sign-in failed, redirected to ${signedIn.redirectedUrl}")
     }
 
     @Test

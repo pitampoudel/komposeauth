@@ -1,6 +1,8 @@
 package pitampoudel.komposeauth.user.controller
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -9,6 +11,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.mock.web.MockHttpServletResponse
+import org.springframework.test.web.servlet.MockHttpServletRequestDsl
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
@@ -16,9 +20,13 @@ import pitampoudel.komposeauth.TestAuthHelpers
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.NoopEmailTestConfig
 import pitampoudel.komposeauth.core.domain.ApiEndpoints
+import pitampoudel.komposeauth.core.domain.ErrorCode
+import pitampoudel.komposeauth.core.domain.ResponseType
 import pitampoudel.komposeauth.one_time_token.entity.OneTimeToken
 import pitampoudel.komposeauth.one_time_token.service.OneTimeTokenService
 import pitampoudel.komposeauth.otp.repository.OtpRepository
+import pitampoudel.komposeauth.otp.service.OtpCodes
+import pitampoudel.komposeauth.user.data.Credential
 import pitampoudel.komposeauth.user.data.SendOtpRequest
 import pitampoudel.komposeauth.user.data.UpdateProfileRequest
 import pitampoudel.komposeauth.user.data.VerifyOtpRequest
@@ -47,6 +55,9 @@ class EmailVerifyControllerIntegrationTest {
 
     @Autowired
     private lateinit var otpRepository: OtpRepository
+
+    @Autowired
+    private lateinit var otpCodes: OtpCodes
 
 
     @Test
@@ -233,6 +244,98 @@ class EmailVerifyControllerIntegrationTest {
         }.andExpect { status { isBadRequest() } }
 
         assertEquals(email, userRepository.findById(ObjectId(userId)).orElseThrow().email)
+    }
+
+    private fun otpFor(email: String, signIn: MockHttpServletRequestDsl.() -> Unit): String {
+        mockMvc.post("/${ApiEndpoints.SEND_OTP}") {
+            signIn()
+            contentType = MediaType.APPLICATION_JSON
+            content = json.encodeToString(SendOtpRequest.serializer(), SendOtpRequest(email, type = OtpType.EMAIL))
+        }.andExpect { status { isOk() } }
+        return otpRepository.findByReceiverOrderByCreatedAtDesc(email).first().otp
+    }
+
+    private fun verifyOtp(
+        email: String,
+        otp: String,
+        currentPassword: String? = null,
+        signIn: MockHttpServletRequestDsl.() -> Unit
+    ): MockHttpServletResponse = mockMvc.post("/${ApiEndpoints.VERIFY_OTP}") {
+        signIn()
+        contentType = MediaType.APPLICATION_JSON
+        content = json.encodeToString(
+            VerifyOtpRequest.serializer(),
+            VerifyOtpRequest(username = email, otp = otp, type = OtpType.EMAIL, currentPassword = currentPassword)
+        )
+    }.andReturn().response
+
+    private fun codeOf(response: MockHttpServletResponse): String? =
+        json.parseToJsonElement(response.contentAsString).jsonObject[ErrorCode.PROPERTY]?.jsonPrimitive?.content
+
+    private fun tokenLogin(credential: Credential): Pair<String, String> {
+        val response = mockMvc.post("/${ApiEndpoints.LOGIN}") {
+            param("responseType", ResponseType.TOKEN.name)
+            contentType = MediaType.APPLICATION_JSON
+            content = json.encodeToString<Credential>(credential)
+        }.andExpect { status { isOk() } }.andReturn().response
+        val body = json.parseToJsonElement(response.contentAsString).jsonObject
+        return body.getValue("access_token").jsonPrimitive.content to body.getValue("refresh_token").jsonPrimitive.content
+    }
+
+    @Test
+    fun `replacing a verified email takes the current password, and the refusal says so in a code`() {
+        val email = "replace-verified@example.com"
+        val userId = TestAuthHelpers.createUser(mockMvc, json, email)
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, email)
+        val signedIn: MockHttpServletRequestDsl.() -> Unit = { cookie(cookie) }
+        // Proving the address the account was created with is setting it, not replacing it.
+        assertEquals(200, verifyOtp(email, otpFor(email, signedIn), signIn = signedIn).status)
+
+        val replacement = "replace-verified-new@example.com"
+        val otp = otpFor(replacement, signedIn)
+        // Freshly signed in, but the account has a password, and the password is the proof.
+        val refused = verifyOtp(replacement, otp, signIn = signedIn)
+        assertEquals(403, refused.status, refused.contentAsString)
+        assertEquals(ErrorCode.CURRENT_PASSWORD_REQUIRED.name, codeOf(refused))
+        assertEquals(403, verifyOtp(replacement, otp, currentPassword = "wrong", signIn = signedIn).status)
+
+        val replaced = verifyOtp(replacement, otp, currentPassword = "Password1", signIn = signedIn)
+        assertEquals(200, replaced.status, replaced.contentAsString)
+        assertEquals(replacement, userRepository.findById(ObjectId(userId)).orElseThrow().email)
+    }
+
+    @Test
+    fun `an account without a password replaces its verified email only with a fresh sign-in`() {
+        val email = "replace-passwordless@example.com"
+        val userId = ObjectId(TestAuthHelpers.createUser(mockMvc, json, email))
+        val (signInToken, refreshToken) = tokenLogin(Credential.UsernamePassword(username = email, password = "Password1"))
+        val (refreshedToken, _) = tokenLogin(Credential.RefreshToken(refreshToken))
+        userRepository.save(userRepository.findById(userId).orElseThrow().copy(passwordHash = null, emailVerified = true))
+        val fresh: MockHttpServletRequestDsl.() -> Unit = { header("Authorization", "Bearer $signInToken") }
+        val refreshed: MockHttpServletRequestDsl.() -> Unit = { header("Authorization", "Bearer $refreshedToken") }
+
+        val replacement = "replace-passwordless-new@example.com"
+        val otp = otpFor(replacement, fresh)
+        // A refreshed token says nothing about when the person last signed in.
+        val refused = verifyOtp(replacement, otp, signIn = refreshed)
+        assertEquals(403, refused.status, refused.contentAsString)
+        assertEquals(ErrorCode.RECENT_SIGN_IN_REQUIRED.name, codeOf(refused))
+
+        assertEquals(200, verifyOtp(replacement, otp, signIn = fresh).status)
+        assertEquals(replacement, userRepository.findById(userId).orElseThrow().email)
+    }
+
+    @Test
+    fun `a code for an address that belongs to someone else is refused`() {
+        val owner = "otp-owner-a@example.com"
+        val other = "otp-owner-b@example.com"
+        TestAuthHelpers.createUser(mockMvc, json, owner)
+        TestAuthHelpers.createUser(mockMvc, json, other)
+        val cookie = TestAuthHelpers.loginCookie(mockMvc, json, owner)
+
+        val refused = verifyOtp(other, otpCodes.issue(other), currentPassword = "Password1") { cookie(cookie) }
+
+        assertEquals(403, refused.status, refused.contentAsString)
     }
 
     /** A link issued the way the application issues one, with the address recorded on the token. */

@@ -1,3 +1,10 @@
+# The server does not start without an issuer. This is the address MockMvc requests arrive at;
+# ConfiguredIssuerIntegrationTest sets another to show that what a request names changes nothing.
+spring:
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: http://localhost
 # The whole suite runs from one client address, so the per-address abuse limits would count every
 # test's sign-in against the same budget and start rejecting partway through a run. Rate limiting is
 # covered by its own unit tests and by RateLimitIntegrationTest, which turns it back on deliberately.

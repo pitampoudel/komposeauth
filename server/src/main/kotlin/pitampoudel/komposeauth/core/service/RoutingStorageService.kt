@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * The [StorageService] everything is handed: new files go to the store `storageProvider` names (or
  * the only bucket configured; neither cloud is a default, see [AppConfig.resolvedStorageProvider]),
- * and a delete goes to whichever store the address is in.
+ * and a read or a delete goes to whichever store the address is in.
  *
  * Files are never copied between the two. One written to either store before a switch stays there
  * and is still read from its own address, so both stores' settings stay while any files are left.
@@ -58,7 +58,15 @@ class RoutingStorageService(
         writeStore().upload(blobName, contentType, bytes)
 
     override fun delete(url: String): Boolean {
-        val store = s3OrNull()?.takeIf { it.owns(url) } ?: gcsOrNull()?.takeIf { it.owns(url) } ?: return false
+        val store = storeHolding(url) ?: return false
         return store.delete(url)
     }
+
+    override fun download(url: String): ByteArray? {
+        val store = storeHolding(url) ?: error("No configured store holds $url")
+        return store.download(url)
+    }
+
+    private fun storeHolding(url: String): StorageService? =
+        s3OrNull()?.takeIf { it.owns(url) } ?: gcsOrNull()?.takeIf { it.owns(url) }
 }

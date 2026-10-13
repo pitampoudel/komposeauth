@@ -39,6 +39,11 @@ class GcpStorageService(val settings: Settings) : StorageService {
         return blob?.delete() ?: true
     }
 
+    override fun download(url: String): ByteArray? {
+        val blobName = blobNameOf(url) ?: throw IllegalArgumentException("$url is not in bucket ${settings.bucket}")
+        return bucket.get(blobName)?.getContent()
+    }
+
     private fun blobNameOf(url: String): String? {
         // Example: https://storage.googleapis.com/download/storage/v1/b/bucket-name/o/blob-name?generation=123&alt=media
         val mediaLinkRegex =

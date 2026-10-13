@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2Authorization
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver
 import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.core.utils.ServerUrl
 
 @Configuration
 class OAuthClientConfig {
@@ -16,9 +17,12 @@ class OAuthClientConfig {
      * Read from the config on every lookup rather than once at boot: the Google credentials are set
      * on the config page of an already running server, and a registration captured at startup left
      * the login page sending people to Google with a client that did not exist until a restart.
+     *
+     * The redirect URI is the configured address rather than Spring's `{baseUrl}`, which is worked
+     * out from each request's Host and forwarded headers.
      */
     @Bean
-    fun clientRegistrationRepository(appConfigService: AppConfigService) =
+    fun clientRegistrationRepository(appConfigService: AppConfigService, serverUrl: ServerUrl) =
         ClientRegistrationRepository { registrationId ->
             val config = appConfigService.getConfig()
             val clientId = config.googleAuthClientId
@@ -29,6 +33,7 @@ class OAuthClientConfig {
                 CommonOAuth2Provider.GOOGLE.getBuilder(GOOGLE)
                     .clientId(clientId)
                     .clientSecret(clientSecret)
+                    .redirectUri("${serverUrl.value}/{action}/oauth2/code/{registrationId}")
                     .build()
             }
         }

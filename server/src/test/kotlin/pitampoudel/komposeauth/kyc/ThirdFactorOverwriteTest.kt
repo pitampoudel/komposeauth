@@ -34,7 +34,7 @@ class ThirdFactorOverwriteTest {
     private val storage = mock<StorageService>()
     private val userRepo = mock<UserRepository>()
 
-    private val service = KycService(repo, storage, mock<EmailService>(), userRepo, mock<SlackNotifier>())
+    private val service = KycService(repo, kycDocumentsOver(storage), mock<EmailService>(), userRepo, mock<SlackNotifier>())
 
     /** Declared by the user: Nepali male. */
     private val declared = KycVerification(

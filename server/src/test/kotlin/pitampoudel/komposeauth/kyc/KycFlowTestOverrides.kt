@@ -17,17 +17,30 @@ import pitampoudel.komposeauth.jwk.service.JwkService
 import java.security.KeyPairGenerator
 import java.util.Optional
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 @TestConfiguration
 class KycFlowTestOverrides {
 
+    /** A bucket in memory, so a test can look at what was stored. */
+    class InMemoryStorage : StorageService {
+        val files = ConcurrentHashMap<String, ByteArray>()
+
+        override fun upload(blobName: String, contentType: String?, bytes: ByteArray): String =
+            "test://$blobName".also { files[it] = bytes }
+
+        override fun delete(url: String): Boolean {
+            files.remove(url)
+            return true
+        }
+
+        override fun download(url: String): ByteArray? = files[url]
+    }
+
     // Named after RoutingStorageService's bean so it replaces it; a second @Primary would be ambiguous.
     @Bean("routingStorageService")
     @Primary
-    fun storageService(): StorageService = object : StorageService {
-        override fun upload(blobName: String, contentType: String?, bytes: ByteArray): String = "test://$blobName"
-        override fun delete(url: String): Boolean = true
-    }
+    fun storageService(): InMemoryStorage = InMemoryStorage()
 
     @Bean
     @Primary
