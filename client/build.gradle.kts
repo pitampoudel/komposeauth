@@ -11,6 +11,7 @@ plugins {
 }
 
 kotlin {
+    applyDefaultHierarchyTemplate()
     androidLibrary {
         namespace = "komposeauth.client"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -37,8 +38,8 @@ kotlin {
     iosSimulatorArm64()
 
     jvm {
-        // Published for consumers still on Java 21, whatever JDK builds it.
-        compilerOptions { jvmTarget.set(JvmTarget.JVM_21) }
+        // Published for consumers on Java 17+, whatever JDK builds it.
+        compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
     }
 
     @OptIn(ExperimentalWasmDsl::class)
