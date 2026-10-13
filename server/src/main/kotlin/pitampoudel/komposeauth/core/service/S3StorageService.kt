@@ -67,16 +67,16 @@ class S3StorageService(
     }
 
     /** True when [url] is an address this bucket handed out. */
-    fun owns(url: String): Boolean = keyOf(url) != null
+    fun owns(url: String): Boolean = blobNameOf(url) != null
 
     override fun delete(url: String): Boolean {
-        val key = keyOf(url) ?: return false
+        val key = blobNameOf(url) ?: return false
         client.deleteObject(DeleteObjectRequest.builder().bucket(settings.bucket).key(key).build())
         return true
     }
 
     override fun download(url: String): ByteArray? {
-        val key = keyOf(url) ?: throw IllegalArgumentException("$url is not in bucket ${settings.bucket}")
+        val key = blobNameOf(url) ?: throw IllegalArgumentException("$url is not in bucket ${settings.bucket}")
         return try {
             client.getObjectAsBytes(GetObjectRequest.builder().bucket(settings.bucket).key(key).build()).asByteArray()
         } catch (_: NoSuchKeyException) {
@@ -84,7 +84,7 @@ class S3StorageService(
         }
     }
 
-    private fun keyOf(url: String): String? {
+    override fun blobNameOf(url: String): String? {
         if (!url.startsWith(baseUrl)) return null
         val path = URI(url).rawPath.removePrefix("/")
         if (path.isEmpty()) return null

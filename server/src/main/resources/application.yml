@@ -42,6 +42,9 @@ logging:
     root: WARN
     # Security decisions (rate-limit trips, rejected clients, failed logins) need to be visible.
     pitampoudel.komposeauth: INFO
+    # The form sign-in's provider is declared on purpose (WebSecurityConfig.daoAuthenticationProvider);
+    # this is how Spring says to quiet its warning that the UserDetailsService is then not used alone.
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
 
 server:
   port: ${PORT:8080}

@@ -143,7 +143,8 @@ class KycServiceTest {
         whenever(storage.upload(eq("kyc/${userId.toHexString()}/selfie"), any(), any())).thenReturn("selfie-url")
 
         val captor = argumentCaptor<KycVerification>()
-        whenever(repo.save(captor.capture())).thenAnswer { it.arguments[0] as KycVerification }
+        whenever(repo.replaceIfStatus(eq(KycResponse.Status.DRAFT), captor.capture()))
+            .thenAnswer { it.arguments[1] as KycVerification }
 
         val encoded = EncodedData(base64EncodedData = "aGVsbG8=", mimeType = "image/png", name = "doc.png")
         val res = service.submitDocumentDetails(
@@ -191,7 +192,7 @@ class KycServiceTest {
         val service = KycService(repo, kycDocumentsOver(storage), mock(), mock(), mock<SlackNotifier>())
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(baseKyc(userId))
-        whenever(repo.save(any<KycVerification>())).thenAnswer { it.arguments[0] }
+        whenever(repo.replaceIfStatus(any(), any())).thenAnswer { it.arguments[1] }
 
         fun encoded(text: String) = EncodedData(
             base64EncodedData = java.util.Base64.getEncoder().encodeToString(text.toByteArray()),
@@ -211,7 +212,7 @@ class KycServiceTest {
                 selfie = encoded("a face"),
             )
         )
-        val saved = argumentCaptor<KycVerification>().also { verify(repo).save(it.capture()) }.firstValue
+        val saved = argumentCaptor<KycVerification>().also { verify(repo).replaceIfStatus(any(), it.capture()) }.firstValue
         whenever(repo.findByUserId(userId)).thenReturn(saved)
 
         assertEquals("front side", service.document(userId, KycDocument.FRONT)?.decodeToString())
@@ -262,7 +263,7 @@ class KycServiceTest {
         val userId = ObjectId.get()
         val existing = baseKyc(userId, status = KycResponse.Status.PENDING)
         whenever(repo.findById(userId)).thenReturn(Optional.of(existing))
-        whenever(repo.save(any())).thenAnswer { it.arguments[0] as KycVerification }
+        whenever(repo.replaceIfStatus(eq(KycResponse.Status.PENDING), any())).thenAnswer { it.arguments[1] as KycVerification }
 
         val user = User(
             id = userId,
@@ -299,7 +300,7 @@ class KycServiceTest {
         val userId = ObjectId.get()
         val kyc = baseKyc(userId, status = KycResponse.Status.PENDING)
         whenever(repo.findById(userId)).thenReturn(Optional.of(kyc))
-        whenever(repo.save(any())).thenAnswer { it.arguments[0] as KycVerification }
+        whenever(repo.replaceIfStatus(eq(KycResponse.Status.PENDING), any())).thenAnswer { it.arguments[1] as KycVerification }
         val savedUser = argumentCaptor<User>()
         whenever(userRepo.save(savedUser.capture())).thenAnswer { it.arguments[0] as User }
 
@@ -339,7 +340,54 @@ class KycServiceTest {
             assertThrows<BadRequestException> { service.approve(baseUrl = "http://localhost", user = user) }
             assertThrows<BadRequestException> { service.reject(baseUrl = "http://localhost", user = user, reason = null) }
         }
+        verify(repo, never()).replaceIfStatus(any(), any())
+        verify(email, never()).sendHtmlMail(any(), any(), any(), any(), any())
+    }
+
+    @Test
+    fun `a decision another reviewer got to first is refused and mails nobody`() {
+        val repo = mock<KycVerificationRepository>()
+        val email = mock<EmailService>()
+        val service = KycService(repo, kycDocumentsOver(mock()), email, mock<UserRepository>(), mock<SlackNotifier>())
+        val user = User(id = ObjectId.get(), firstName = "A", lastName = "B", email = "a@example.com", phoneNumber = null)
+        // Read as waiting for review, decided by somebody else before this decision is stored.
+        whenever(repo.findById(user.id)).thenReturn(Optional.of(baseKyc(user.id, status = KycResponse.Status.PENDING)))
+        whenever(repo.replaceIfStatus(any(), any())).thenReturn(null)
+
+        assertThrows<BadRequestException> { service.approve(baseUrl = "http://localhost", user = user) }
+        assertThrows<BadRequestException> { service.reject(baseUrl = "http://localhost", user = user, reason = null) }
         verify(repo, never()).save(any())
         verify(email, never()).sendHtmlMail(any(), any(), any(), any(), any())
+    }
+
+    @Test
+    fun `an edit read before a submission landed does not overwrite it`() {
+        val repo = mock<KycVerificationRepository>()
+        val service = KycService(repo, kycDocumentsOver(mock()), mock(), mock<UserRepository>(), mock<SlackNotifier>())
+        val userId = ObjectId.get()
+        val draft = baseKyc(userId, status = KycResponse.Status.DRAFT)
+        whenever(repo.findByUserId(userId)).thenReturn(draft)
+        // Submitted for review between this edit's read and its save.
+        whenever(repo.replaceIfStatus(any(), any())).thenReturn(null)
+
+        assertThrows<BadRequestException> {
+            service.submitPersonalInformation(
+                userId,
+                PersonalInformation(
+                    country = "NP",
+                    nationality = "NP",
+                    firstName = "Changed",
+                    middleName = null,
+                    lastName = "B",
+                    dateOfBirth = kotlinx.datetime.LocalDate.parse("2000-01-01"),
+                    gender = KycResponse.Gender.MALE,
+                    fatherName = null,
+                    grandFatherName = null,
+                    maritalStatus = null
+                )
+            )
+        }
+        verify(repo).replaceIfStatus(eq(KycResponse.Status.DRAFT), any())
+        verify(repo, never()).save(any())
     }
 }

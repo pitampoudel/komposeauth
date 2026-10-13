@@ -89,8 +89,8 @@ data class AppConfig(
      * Name of a header the platform guarantees, holding the client address on its own.
      *
      * Some edges do not merely append to `X-Forwarded-For`, they *replace* what the caller sent and
-     * publish the address they observed under a header of their own — `X-Envoy-External-Address` on
-     * Railway, `Fly-Client-IP` on Fly, `CF-Connecting-IP` behind Cloudflare. Where that is offered it
+     * publish the address they observed under a header of their own — `X-Real-IP` on Railway,
+     * `Fly-Client-IP` on Fly, `CF-Connecting-IP` behind Cloudflare. Where that is offered it
      * is the better signal: one value, written by the edge, with no positions to count and nothing
      * of the caller's left in it. [trustedProxyCount] is then unnecessary and is not consulted.
      *

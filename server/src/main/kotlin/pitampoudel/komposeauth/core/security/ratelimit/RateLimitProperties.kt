@@ -24,10 +24,16 @@ class RateLimitProperties {
     /** Password and OTP sign-in attempts, per client address. */
     var login: Rule = Rule(limit = 10, window = Duration.ofMinutes(5))
 
-    /** Requests to send a code. Each one spends money or mail reputation. */
+    /**
+     * Login options, per client address. Public, and each one stores a passkey challenge until it
+     * expires, so generous enough for a crowded office and too tight to fill the collection.
+     */
+    var loginOptions: Rule = Rule(limit = 30, window = Duration.ofMinutes(1))
+
+    /** Requests to send a code, per account when signed in. Each one spends money or mail reputation. */
     var otpSend: Rule = Rule(limit = 5, window = Duration.ofMinutes(15))
 
-    /** Attempts to redeem a code, which is what makes guessing one impractical. */
+    /** Attempts to redeem a code, per account when signed in; what makes guessing one impractical. */
     var otpVerify: Rule = Rule(limit = 10, window = Duration.ofMinutes(15))
 
     /** Password-reset mail requests, per client address. */
@@ -41,6 +47,9 @@ class RateLimitProperties {
      * stop a distributed sender from flooding a single victim.
      */
     var otpPerTarget: Rule = Rule(limit = 5, window = Duration.ofHours(1))
+
+    /** Password-reset mails sent to one address, whoever asks; the same flood as [otpPerTarget]. */
+    var passwordResetPerRecipient: Rule = Rule(limit = 5, window = Duration.ofHours(1))
 
     class Rule(
         var limit: Int = 10,

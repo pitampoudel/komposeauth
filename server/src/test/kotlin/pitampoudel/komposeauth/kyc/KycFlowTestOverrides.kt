@@ -35,6 +35,8 @@ class KycFlowTestOverrides {
         }
 
         override fun download(url: String): ByteArray? = files[url]
+
+        override fun blobNameOf(url: String): String? = url.takeIf { files.containsKey(it) }?.removePrefix("test://")
     }
 
     // Named after RoutingStorageService's bean so it replaces it; a second @Primary would be ambiguous.

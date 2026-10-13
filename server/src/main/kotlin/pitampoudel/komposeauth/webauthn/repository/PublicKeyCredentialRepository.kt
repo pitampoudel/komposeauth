@@ -9,6 +9,6 @@ import pitampoudel.komposeauth.webauthn.entity.PublicKeyCredential
 @Repository
 interface PublicKeyCredentialRepository : MongoRepository<PublicKeyCredential, Bytes> {
     fun findAllByPublicKeyUserId(publicKeyUserId: Bytes): List<PublicKeyCredential>
-    fun deleteAllByPublicKeyUserId(publicKeyUserId: Bytes)
-    fun deleteAllByUserId(userId: ObjectId)
+    fun deleteAllByPublicKeyUserId(publicKeyUserId: Bytes): Long
+    fun deleteAllByUserId(userId: ObjectId): Long
 }
