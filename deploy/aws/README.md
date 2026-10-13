@@ -46,8 +46,26 @@ back a release that doesn't become healthy.
   gcloud storage rsync gs://<gcpBucketName> s3://<s3BucketName> --recursive
   ```
   Then set `gcsFilesReadFrom` to `s3` in the admin config. An address recorded under GCS is then
-  read and deleted in S3 and nothing in the database is rewritten. Keep the GCS bucket while
-  profile photos are still shown from their old addresses, since a browser loads those straight
-  from GCS.
+  read and deleted in S3, with no Google credential.
+- **Profile photos and organization logos** are loaded by browsers straight from the address on
+  the record, so the S3 bucket has to let anyone read those two prefixes, as the GCS bucket did.
+  KYC documents stay private: this server serves them. A bucket policy is refused while Block
+  Public Access covers policies, so lift that part of it first:
+  ```bash
+  aws s3api put-public-access-block --bucket <s3BucketName> --public-access-block-configuration \
+    BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=false,RestrictPublicBuckets=false
+  aws s3api put-bucket-policy --bucket <s3BucketName> --policy '{"Version": "2012-10-17",
+    "Statement": [{"Effect": "Allow", "Principal": "*", "Action": "s3:GetObject",
+    "Resource": ["arn:aws:s3:::<s3BucketName>/users/*", "arn:aws:s3:::<s3BucketName>/organization_logos/*"]}]}'
+  ```
+  Photos copied from GCS are still shown from GCS until their addresses are rewritten. Once the
+  copy is checked, `rewrite-gcs-addresses.js` rewrites every address of a GCS file on the record to
+  its S3 address (the comment at its top has the command). It writes nothing without `APPLY=1`,
+  listing what it would change field by field instead, and the run after `APPLY=1` should find
+  nothing left. After that the GCS bucket can be deleted, and `gcpBucketName` and
+  `gcsFilesReadFrom` cleared together.
+- **The database** moves as it is: signing keys, sessions and the admin config are all in it. Keep
+  `BASE64_ENCRYPTION_KEY` with it, since the config and the KYC documents are encrypted under that
+  key.
 - **Scale:** at least one task always runs, so there are no cold starts and no CPU throttling between
   requests.
