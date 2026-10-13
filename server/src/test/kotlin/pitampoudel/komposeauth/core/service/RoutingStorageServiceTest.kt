@@ -101,6 +101,39 @@ class RoutingStorageServiceTest {
         }
     }
 
+    /** Runs [block] with every S3 store the router builds replaced by a mock holding the copied file. */
+    private fun <T> withMockS3(block: (built: () -> List<S3StorageService>) -> T): T =
+        mockConstruction(S3StorageService::class.java) { s3, _ ->
+            whenever(s3.owns(any())) doReturn false
+            whenever(s3.downloadKey("users/u1/photo")) doReturn "copied".toByteArray()
+            whenever(s3.deleteKey(any())) doReturn true
+        }.use { construction -> block { construction.constructed() } }
+
+    private val copiedToS3 = onS3.copy(storageProvider = null, gcsFilesReadFrom = AppConfig.STORAGE_S3)
+
+    @Test
+    fun `once the GCS files are on S3, an old address is read and deleted there and no GCS store is built`() =
+        withMockGcs { gcs ->
+            withMockS3 { s3 ->
+                assertEquals("copied", router(copiedToS3).download(gcsUrl)?.decodeToString())
+                assertTrue(router(copiedToS3).delete(gcsUrl))
+                verify(s3().last()).deleteKey("users/u1/photo")
+                assertFalse(router(copiedToS3).delete("https://storage.googleapis.com/another/users/u1/photo"))
+                assertTrue(gcs().isEmpty())
+            }
+        }
+
+    @Test
+    fun `once the GCS files are on S3, GCS takes no new files, and the move needs both buckets`() {
+        assertEquals("s3", copiedToS3.resolvedStorageProvider())
+        assertFailsWith<IllegalStateException> {
+            copiedToS3.copy(storageProvider = AppConfig.STORAGE_GCS).resolvedStorageProvider()
+        }
+        assertFailsWith<IllegalStateException> { copiedToS3.copy(s3BucketName = null).gcsFilesAreOnS3() }
+        assertFailsWith<IllegalStateException> { copiedToS3.copy(gcpBucketName = null).gcsFilesAreOnS3() }
+        assertFalse(onS3.gcsFilesAreOnS3())
+    }
+
     @Test
     fun `the S3 store recognises only its own addresses, version and all`() {
         val s3 = S3StorageService(S3StorageService.Settings(bucket = "new-files", region = "ap-south-1"))

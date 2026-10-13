@@ -71,18 +71,26 @@ class S3StorageService(
 
     override fun delete(url: String): Boolean {
         val key = keyOf(url) ?: return false
-        client.deleteObject(DeleteObjectRequest.builder().bucket(settings.bucket).key(key).build())
-        return true
+        return deleteKey(key)
     }
 
     override fun download(url: String): ByteArray? {
         val key = keyOf(url) ?: throw IllegalArgumentException("$url is not in bucket ${settings.bucket}")
-        return try {
+        return downloadKey(key)
+    }
+
+    /** By name rather than by address, for [GcsAddressesOnS3]: a copied GCS file keeps its name here. */
+    fun deleteKey(key: String): Boolean {
+        client.deleteObject(DeleteObjectRequest.builder().bucket(settings.bucket).key(key).build())
+        return true
+    }
+
+    fun downloadKey(key: String): ByteArray? =
+        try {
             client.getObjectAsBytes(GetObjectRequest.builder().bucket(settings.bucket).key(key).build()).asByteArray()
         } catch (_: NoSuchKeyException) {
             null
         }
-    }
 
     private fun keyOf(url: String): String? {
         if (!url.startsWith(baseUrl)) return null

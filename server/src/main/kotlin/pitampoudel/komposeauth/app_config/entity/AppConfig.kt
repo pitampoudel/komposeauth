@@ -51,6 +51,12 @@ data class AppConfig(
     var storageProvider: String? = null,
     var gcpProjectId: String? = null,
     var gcpBucketName: String? = null,
+    /**
+     * Where the files recorded under [gcpBucketName]'s addresses are read from: "s3" once that bucket
+     * has been copied into [s3BucketName] under the same names (deploy/aws/README.md), so no Google
+     * credential is needed for them; empty, GCS itself.
+     */
+    var gcsFilesReadFrom: String? = null,
     var s3BucketName: String? = null,
     var s3Region: String? = null,
     /** With [s3SecretAccessKey], or both empty to use the host's own role (an ECS task role). */
@@ -151,7 +157,7 @@ data class AppConfig(
 
     fun resolvedStorageProvider(): String {
         val configured = listOfNotNull(
-            STORAGE_GCS.takeIf { gcpBucketName != null },
+            STORAGE_GCS.takeIf { gcpBucketName != null && !gcsFilesAreOnS3() },
             STORAGE_S3.takeIf { s3BucketName != null }
         )
         val chosen = storageProvider?.lowercase()?.takeIf { it.isNotBlank() }
@@ -160,8 +166,23 @@ data class AppConfig(
                 if (configured.isEmpty()) "No storage bucket configured"
                 else "Both a GCS and an S3 bucket are configured; set storageProvider to say which takes new files"
             )
-        check(chosen in configured) { "storageProvider is '$chosen' but that bucket is not configured" }
+        check(chosen in configured) {
+            if (chosen == STORAGE_GCS && gcsFilesAreOnS3())
+                "storageProvider is 'gcs' but gcsFilesReadFrom says the GCS files have moved to S3"
+            else "storageProvider is '$chosen' but that bucket is not configured"
+        }
         return chosen
+    }
+
+    /**
+     * Whether the GCS bucket's files are now read from the S3 bucket they were copied into. Once they
+     * are, GCS is only a name for old addresses: it takes no new files and needs no credential.
+     */
+    fun gcsFilesAreOnS3(): Boolean {
+        if (gcsFilesReadFrom?.lowercase() != STORAGE_S3) return false
+        check(gcpBucketName != null) { "gcsFilesReadFrom is 's3' but gcpBucketName is empty, so no old address can be recognised" }
+        check(s3BucketName != null) { "gcsFilesReadFrom is 's3' but no S3 bucket is configured" }
+        return true
     }
 
     fun clean(): AppConfig {
@@ -178,6 +199,7 @@ data class AppConfig(
         storageProvider = storageProvider?.lowercase()?.takeIf { it.isNotBlank() }
         if (gcpProjectId.isNullOrBlank()) gcpProjectId = null
         if (gcpBucketName.isNullOrBlank()) gcpBucketName = null
+        gcsFilesReadFrom = gcsFilesReadFrom?.lowercase()?.takeIf { it.isNotBlank() }
         if (s3BucketName.isNullOrBlank()) s3BucketName = null
         if (s3Region.isNullOrBlank()) s3Region = null
         if (s3AccessKeyId.isNullOrBlank()) s3AccessKeyId = null

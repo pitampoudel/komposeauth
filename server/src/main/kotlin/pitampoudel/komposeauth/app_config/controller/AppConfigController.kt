@@ -49,11 +49,12 @@ class AppConfigController(
                 members = listOf("supportEmail", "rpId", "defaultPhoneRegion")
             ),
             Group(
-                title = "Storage (storageProvider picks where new files go when both buckets are set; old files stay where they are)",
+                title = "Storage (storageProvider picks where new files go when both buckets are set; old files stay where they are until the GCS bucket is copied to S3 and gcsFilesReadFrom says so)",
                 members = listOf(
                     "storageProvider",
                     "gcpProjectId",
                     "gcpBucketName",
+                    "gcsFilesReadFrom",
                     "s3BucketName",
                     "s3Region",
                     "s3AccessKeyId",
@@ -134,6 +135,11 @@ class AppConfigController(
                     ConfigFieldGroup.ConfigField.SelectOption(AppConfig.STORAGE_S3, "Amazon S3")
                 )
 
+                "gcsFilesReadFrom" -> listOf(
+                    ConfigFieldGroup.ConfigField.SelectOption("", "Google Cloud Storage"),
+                    ConfigFieldGroup.ConfigField.SelectOption(AppConfig.STORAGE_S3, "Amazon S3 (copied there)")
+                )
+
                 else -> null
             }
         },
@@ -144,6 +150,7 @@ class AppConfigController(
                 "rolesCatalog" -> "textarea"
                 "smsProvider" -> "select"
                 "storageProvider" -> "select"
+                "gcsFilesReadFrom" -> "select"
                 else -> null
             }
         }
@@ -207,9 +214,13 @@ class AppConfigController(
      */
     private fun storageChoiceProblem(form: AppConfig): String? {
         val candidate = form.copy().clean()
-        val touched = candidate.gcpBucketName != null || candidate.s3BucketName != null || candidate.storageProvider != null
+        val touched = candidate.gcpBucketName != null || candidate.s3BucketName != null ||
+            candidate.storageProvider != null || candidate.gcsFilesReadFrom != null
         if (!touched) return null
-        return runCatching { candidate.resolvedStorageProvider() }.exceptionOrNull()?.message
+        return runCatching {
+            candidate.gcsFilesAreOnS3()
+            candidate.resolvedStorageProvider()
+        }.exceptionOrNull()?.message
     }
 
     /** A region libphonenumber doesn't know would refuse every number typed without a `+`. */

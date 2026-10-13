@@ -44,22 +44,30 @@ class GcpStorageService(val settings: Settings) : StorageService {
         return bucket.get(blobName)?.getContent()
     }
 
-    private fun blobNameOf(url: String): String? {
-        // Example: https://storage.googleapis.com/download/storage/v1/b/bucket-name/o/blob-name?generation=123&alt=media
-        val mediaLinkRegex =
-            Regex("https://storage\\.googleapis\\.com/download/storage/v1/b/([^/]+)/o/([^?]+)")
-        mediaLinkRegex.find(url)?.let { match ->
-            if (match.groupValues[1] != settings.bucket) return null
-            return java.net.URLDecoder.decode(match.groupValues[2], "UTF-8")
-        }
+    private fun blobNameOf(url: String): String? = blobNameIn(settings.bucket, url)
 
-        // Example: gs://bucket-name/blob-name or https://storage.googleapis.com/bucket-name/blob-name
-        val directUrlRegex = Regex("(?:gs://|https://storage\\.googleapis\\.com/)([^/]+)/(.+)")
-        directUrlRegex.find(url)?.let { match ->
-            if (match.groupValues[1] != settings.bucket) return null
-            return match.groupValues[2]
-        }
+    companion object {
+        /**
+         * The object [url] names in [bucket], or null. Needs no client, so [GcsAddressesOnS3] reads the
+         * same addresses after the bucket has been copied to S3 without ever building one.
+         */
+        fun blobNameIn(bucket: String, url: String): String? {
+            // Example: https://storage.googleapis.com/download/storage/v1/b/bucket-name/o/blob-name?generation=123&alt=media
+            val mediaLinkRegex =
+                Regex("https://storage\\.googleapis\\.com/download/storage/v1/b/([^/]+)/o/([^?]+)")
+            mediaLinkRegex.find(url)?.let { match ->
+                if (match.groupValues[1] != bucket) return null
+                return java.net.URLDecoder.decode(match.groupValues[2], "UTF-8")
+            }
 
-        return null
+            // Example: gs://bucket-name/blob-name or https://storage.googleapis.com/bucket-name/blob-name
+            val directUrlRegex = Regex("(?:gs://|https://storage\\.googleapis\\.com/)([^/]+)/(.+)")
+            directUrlRegex.find(url)?.let { match ->
+                if (match.groupValues[1] != bucket) return null
+                return match.groupValues[2]
+            }
+
+            return null
+        }
     }
 }

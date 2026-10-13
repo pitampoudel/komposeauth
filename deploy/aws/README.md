@@ -37,8 +37,17 @@ back a release that doesn't become healthy.
 - **Client addresses:** the load balancer appends the caller's address as the last
   `X-Forwarded-For` entry, as Cloud Run does, so `trustedProxyCount` stays `1`. Check it with
   `/admin/client-ip` after the switch.
-- **Files already on GCS** stay there. New files go where `storageProvider` says once an S3 bucket is
-  configured. The image has no Google credentials on AWS, so a file still on GCS can't be deleted
-  from there until it is given some.
+- **Files already on GCS** are copied to S3 under the same names, because the tasks hold no Google
+  credential and could neither read a KYC document nor delete a photo still there. Set `storageProvider`
+  to `s3` first (and restart the old deployment, so nothing still writes to GCS), then copy from a
+  machine signed in to both clouds; it sends only what S3 lacks, deletes nothing, and is safe to
+  run again:
+  ```bash
+  gcloud storage rsync gs://<gcpBucketName> s3://<s3BucketName> --recursive
+  ```
+  Then set `gcsFilesReadFrom` to `s3` in the admin config. An address recorded under GCS is then
+  read and deleted in S3 and nothing in the database is rewritten. Keep the GCS bucket while
+  profile photos are still shown from their old addresses, since a browser loads those straight
+  from GCS.
 - **Scale:** at least one task always runs, so there are no cold starts and no CPU throttling between
   requests.
