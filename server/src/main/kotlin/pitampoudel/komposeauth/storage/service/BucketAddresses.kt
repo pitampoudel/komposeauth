@@ -6,8 +6,8 @@ import java.net.URLEncoder
 /**
  * How one bucket's addresses are written and read.
  *
- * Built from where the bucket is and never from how to sign in to it, so every store's addresses are
- * known even when its client is never built: a store whose files were copied elsewhere still
+ * Built from where the bucket is and never from how to sign in to it, so every bucket's addresses are
+ * known even when its client is never built: a bucket whose files were copied elsewhere still
  * recognises the addresses on record without a credential for its own cloud.
  */
 interface BucketAddresses {
@@ -22,9 +22,6 @@ interface BucketAddresses {
 
     /** The address this bucket hands out for [name], without the version an upload puts on the end. */
     fun addressOf(name: String): String
-
-    /** Whether [text] mentions an address in this bucket anywhere, inside longer text included. */
-    fun mentionedIn(text: String): Boolean
 
     /** Every form of address this bucket recognises for [name]. */
     fun formsOf(name: String): List<String>
@@ -61,8 +58,6 @@ internal class UnderBase(base: String) {
     }
 
     fun addressOf(name: String): String = prefix + BucketAddresses.encodePath(name)
-
-    fun mentionedIn(text: String): Boolean = text.contains(prefix)
 }
 
 /**
@@ -83,8 +78,6 @@ class S3Addresses(
 
     override fun addressOf(name: String): String = (publicBase ?: bucketBase).addressOf(name)
 
-    override fun mentionedIn(text: String): Boolean = bucketBase.mentionedIn(text) || publicBase?.mentionedIn(text) == true
-
     override fun formsOf(name: String): List<String> = listOfNotNull(publicBase?.addressOf(name), bucketBase.addressOf(name))
 }
 
@@ -102,12 +95,6 @@ class GcsAddresses(private val bucket: String, publicBaseUrl: String? = null) : 
     }
 
     override fun addressOf(name: String): String = publicBase?.addressOf(name) ?: mediaLinkOf(name)
-
-    override fun mentionedIn(text: String): Boolean =
-        text.contains("gs://$bucket/") ||
-            text.contains("storage.googleapis.com/$bucket/") ||
-            text.contains("storage.googleapis.com/download/storage/v1/b/$bucket/o/") ||
-            publicBase?.mentionedIn(text) == true
 
     override fun formsOf(name: String): List<String> = listOfNotNull(
         publicBase?.addressOf(name),

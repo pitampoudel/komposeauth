@@ -17,10 +17,10 @@ import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.storage.service.StorageService
 import pitampoudel.komposeauth.core.service.security.CryptoService
-import pitampoudel.komposeauth.storage.entity.StorageStore
-import pitampoudel.komposeauth.storage.migration.StorageStoresFromConfig
-import pitampoudel.komposeauth.storage.repository.StorageStoreRepository
-import pitampoudel.komposeauth.storage.service.StorageStores
+import pitampoudel.komposeauth.storage.entity.StorageBucket
+import pitampoudel.komposeauth.storage.migration.StorageBucketsFromConfig
+import pitampoudel.komposeauth.storage.repository.StorageBucketRepository
+import pitampoudel.komposeauth.storage.service.StorageBuckets
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -32,7 +32,7 @@ import kotlin.test.assertTrue
 @SpringBootTest
 @ActiveProfiles("test")
 @Import(TestConfig::class)
-class StorageStoresFromConfigIntegrationTest {
+class StorageBucketsFromConfigIntegrationTest {
 
     @Autowired
     private lateinit var mongoTemplate: MongoTemplate
@@ -44,10 +44,10 @@ class StorageStoresFromConfigIntegrationTest {
     private lateinit var crypto: CryptoService
 
     @Autowired
-    private lateinit var storeRepository: StorageStoreRepository
+    private lateinit var bucketRepository: StorageBucketRepository
 
     @Autowired
-    private lateinit var stores: StorageStores
+    private lateinit var buckets: StorageBuckets
 
     @Autowired
     private lateinit var storageService: StorageService
@@ -61,14 +61,14 @@ class StorageStoresFromConfigIntegrationTest {
     @BeforeEach
     fun setUp() {
         configExisted = mongoTemplate.exists(singleton, "config")
-        storeRepository.deleteAll()
-        stores.forget()
+        bucketRepository.deleteAll()
+        buckets.forget()
     }
 
     @AfterEach
     fun tearDown() {
-        storeRepository.deleteAll()
-        stores.forget()
+        bucketRepository.deleteAll()
+        buckets.forget()
         if (configExisted) {
             mongoTemplate.updateFirst(
                 singleton,
@@ -97,22 +97,22 @@ class StorageStoresFromConfigIntegrationTest {
             "config"
         )
 
-        val migration = StorageStoresFromConfig(crypto)
+        val migration = StorageBucketsFromConfig(crypto)
         migration.migrate(mongoTemplate)
         migration.migrate(mongoTemplate)
 
-        val rows = storeRepository.findAll().sortedBy(StorageStore::createdAt)
-        assertEquals(listOf("legacy-gcs-files", "legacy-s3-files"), rows.map { it.bucket }, "listed once, not twice")
+        val rows = bucketRepository.findAll().sortedBy(StorageBucket::createdAt)
+        assertEquals(listOf("legacy-gcs-files", "legacy-s3-files"), rows.map { it.bucketName }, "listed once, not twice")
         assertEquals(listOf(false, true), rows.map { it.primary })
         assertEquals("s3-secret", crypto.decrypt(rows[1].secretAccessKey!!))
         assertTrue(crypto.isEncrypted(rows[1].secretAccessKey), "kept encrypted at rest")
 
-        stores.forget()
+        buckets.forget()
         assertEquals(
             "users/u1/photo",
             storageService.blobNameOf("https://legacy-s3-files.s3.ap-south-1.amazonaws.com/users/u1/photo")
         )
-        assertEquals("legacy-s3-files", stores.primary()?.row?.bucket)
+        assertEquals("legacy-s3-files", buckets.primary()?.row?.bucketName)
 
         val afterMigration = storedConfig()
         assertEquals("legacy-gcs-files", afterMigration.getString("gcpBucketName"))
@@ -137,12 +137,12 @@ class StorageStoresFromConfigIntegrationTest {
             "config"
         )
 
-        StorageStoresFromConfig(crypto).migrate(mongoTemplate)
+        StorageBucketsFromConfig(crypto).migrate(mongoTemplate)
 
-        val rows = storeRepository.findAll()
+        val rows = bucketRepository.findAll()
         assertEquals(2, rows.size)
         assertFalse(rows.any { it.primary })
-        stores.forget()
+        buckets.forget()
         val refused = runCatching { storageService.upload("users/u1/photo", null, ByteArray(1)) }.exceptionOrNull()
         assertTrue(refused is IllegalStateException && refused.message!!.contains("choose one"), "was $refused")
     }

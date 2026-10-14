@@ -40,16 +40,15 @@ back a release that doesn't become healthy.
   `/admin/client-ip` after the switch.
 - **Files** are kept wherever the Storage page says (`/admin/storage`, see "Where files are kept" in
   the main README), and the database brings that list with it. To bring files kept on GCS over to S3:
-  1. Add the S3 bucket on the Storage page with no access key and test it.
-  2. Edit the GCS store and give it a service account key that can list, read and delete in its
-     bucket, since the tasks hold no Google identity of their own. Test it.
-  3. **Move files** from the GCS store to the S3 one. New files go to S3 at once; then every file is
-     copied under the same name, GCS addresses start opening the copies in S3, and every saved
-     address is changed to the S3 one. Keep the page open until it is done.
-  4. Once the move says nothing points at the GCS store, remove its entry, then delete the bucket
-     whenever you are sure.
+  1. Add the S3 bucket on the Storage page with no access key, test it, and press **Send new files
+     here** on it.
+  2. Copy the GCS bucket into the S3 one under the same names, from anywhere that can reach both:
+     `rclone copy gcs:<gcs-bucket> s3:<s3-bucket>`. Run it again a minute later.
+  3. On the GCS bucket, press **Files copied to…** and choose the S3 one. Its saved addresses open
+     the copies from then on, so the tasks need no Google identity. Keep its entry listed, and
+     delete the GCS bucket itself whenever you are sure.
 
-  The same steps move files between any two stores, in either direction.
+  The same steps move files between any two buckets, in either direction.
 - **Profile photos and organization logos** are loaded by browsers straight from the address on
   the record, so the S3 bucket has to let anyone read those two prefixes, as the GCS bucket did.
   KYC documents stay private: this server serves them. A bucket policy is refused while Block

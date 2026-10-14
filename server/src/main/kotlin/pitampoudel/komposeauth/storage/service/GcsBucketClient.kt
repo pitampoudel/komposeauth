@@ -5,16 +5,14 @@ import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
-import java.io.InputStream
-import java.nio.channels.Channels
 
 /**
- * [BucketStore] over a GCS bucket. Not a bean of its own: the storage page's stores are built into
- * one each, by [pitampoudel.komposeauth.storage.service.CloudBucketStores].
+ * [BucketClient] over a GCS bucket. Not a bean of its own: each bucket on the Storage page gets one,
+ * built by [pitampoudel.komposeauth.storage.service.CloudBucketClients].
  *
  * The bucket has to exist; nothing here creates one.
  */
-class GcsBucketStore(val settings: Settings) : BucketStore {
+class GcsBucketClient(val settings: Settings) : BucketClient {
 
     data class Settings(
         val projectId: String?,
@@ -59,37 +57,6 @@ class GcsBucketStore(val settings: Settings) : BucketStore {
         return true
     }
 
-    override fun list(prefix: String, after: String?, limit: Int): List<StoredObject> {
-        val options = buildList {
-            if (prefix.isNotEmpty()) add(Storage.BlobListOption.prefix(prefix))
-            // Inclusive, unlike S3's startAfter, so the one named is skipped below.
-            after?.let { add(Storage.BlobListOption.startOffset(it)) }
-            add(Storage.BlobListOption.pageSize(limit + 1L))
-        }
-        return storage.list(settings.bucket, *options.toTypedArray()).values
-            .asSequence()
-            .filter { it.name != after }
-            .take(limit)
-            .map { StoredObject(it.name, it.size ?: 0L, it.updateTimeOffsetDateTime?.toInstant()) }
-            .toList()
-    }
-
     override fun stat(name: String): StoredObject? =
         storage.get(idOf(name))?.let { StoredObject(it.name, it.size ?: 0L, it.updateTimeOffsetDateTime?.toInstant()) }
-
-    override fun <T> open(name: String, read: (OpenedObject) -> T): T? {
-        val blob = storage.get(idOf(name)) ?: return null
-        return storage.reader(blob.blobId).use { channel ->
-            read(OpenedObject(Channels.newInputStream(channel), blob.size ?: 0L, blob.contentType))
-        }
-    }
-
-    override fun write(name: String, contentType: String?, size: Long, content: InputStream) {
-        val channel = storage.writer(BlobInfo.newBuilder(idOf(name)).setContentType(contentType).build())
-        // Not `use`: closing the channel is what commits the upload, so a stream that fails part-way
-        // has to leave it open rather than store the part that arrived.
-        val written = content.copyTo(Channels.newOutputStream(channel))
-        check(written == size) { "Read $written of the $size bytes of $name" }
-        channel.close()
-    }
 }

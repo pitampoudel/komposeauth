@@ -8,11 +8,11 @@ import org.springframework.stereotype.Component
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.core.migration.MongoMigration
 import pitampoudel.komposeauth.core.service.security.CryptoService
-import pitampoudel.komposeauth.storage.entity.StorageStore
+import pitampoudel.komposeauth.storage.entity.StorageBucket
 import java.time.Instant
 
 /**
- * Lists the buckets the app config used to name as stores on the Storage page, once.
+ * Lists the buckets the app config used to name on the Storage page, once.
  *
  * The config held a GCS bucket and an S3 bucket in fixed fields, with `storageProvider` saying which
  * took new files and `gcsFilesReadFrom` saying the GCS files had been copied into S3. Each becomes a
@@ -23,10 +23,10 @@ import java.time.Instant
  * them (see [AppConfig.RETIRED_STORAGE_FIELDS]).
  */
 @Component
-class StorageStoresFromConfig(private val crypto: CryptoService) : MongoMigration {
+class StorageBucketsFromConfig(private val crypto: CryptoService) : MongoMigration {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    override val id: String = "storage-stores-from-config"
+    override val id: String = "storage-buckets-from-config"
 
     /** After the indexes, which keep a second primary out. */
     override val order: Int = 0
@@ -34,17 +34,17 @@ class StorageStoresFromConfig(private val crypto: CryptoService) : MongoMigratio
     override fun migrate(mongoTemplate: MongoTemplate) {
         val config = mongoTemplate.getCollection(mongoTemplate.getCollectionName(AppConfig::class.java))
             .find(Filters.eq("_id", AppConfig.SINGLETON_ID)).first() ?: return
-        val existing = mongoTemplate.findAll(StorageStore::class.java)
-        val carried = storesFrom(config, Instant.now())
+        val existing = mongoTemplate.findAll(StorageBucket::class.java)
+        val carried = bucketsFrom(config, Instant.now())
         if (carried.isNotEmpty() && carried.none { it.primary }) {
             log.warn("The app config doesn't say which of its buckets takes new files, so none does until one is chosen on the Storage page")
         }
         carried
-            .filter { row -> existing.none { it.kind == row.kind && it.bucket == row.bucket } }
+            .filter { row -> existing.none { it.kind == row.kind && it.bucketName == row.bucketName } }
             .map { row -> if (existing.any { it.primary }) row.copy(primary = false) else row }
             .forEach { row ->
                 mongoTemplate.insert(row.copy(secretAccessKey = row.secretAccessKey?.let(crypto::encrypt)))
-                log.info("Listed {} as a storage store{}", row, if (row.primary) ", taking new files" else "")
+                log.info("Listed {} as a storage bucket{}", row, if (row.primary) ", taking new files" else "")
             }
     }
 
@@ -54,23 +54,23 @@ class StorageStoresFromConfig(private val crypto: CryptoService) : MongoMigratio
         private const val S3 = "s3"
 
         /**
-         * The stores [config] (the stored `config` document) names, the way the release before this one
+         * The buckets [config] (the stored `config` document) names, the way the release before this one
          * read it. Secrets are left as stored, which is already encrypted.
          */
-        fun storesFrom(config: Document, now: Instant): List<StorageStore> {
+        fun bucketsFrom(config: Document, now: Instant): List<StorageBucket> {
             fun field(name: String) = config.getString(name)?.trim()?.takeIf { it.isNotEmpty() }
 
             val s3Bucket = field("s3BucketName")
             val s3Region = field("s3Region")
             if (s3Bucket != null && s3Region == null) {
-                LoggerFactory.getLogger(StorageStoresFromConfig::class.java)
+                LoggerFactory.getLogger(StorageBucketsFromConfig::class.java)
                     .error("s3BucketName {} has no s3Region, so it can't be listed; add it on the Storage page", s3Bucket)
             }
-            val s3 = s3Bucket?.takeIf { s3Region != null }?.let { bucket ->
-                StorageStore(
+            val s3 = s3Bucket?.takeIf { s3Region != null }?.let { bucketName ->
+                StorageBucket(
                     name = "Amazon S3",
-                    kind = StorageStore.Kind.S3,
-                    bucket = bucket,
+                    kind = StorageBucket.Kind.S3,
+                    bucketName = bucketName,
                     region = s3Region,
                     accessKeyId = field("s3AccessKeyId"),
                     secretAccessKey = field("s3SecretAccessKey"),
@@ -79,13 +79,13 @@ class StorageStoresFromConfig(private val crypto: CryptoService) : MongoMigratio
                 )
             }
             val gcsOnS3 = field("gcsFilesReadFrom")?.lowercase() == S3 && s3 != null
-            val gcs = field("gcpBucketName")?.let { bucket ->
-                StorageStore(
+            val gcs = field("gcpBucketName")?.let { bucketName ->
+                StorageBucket(
                     name = "Google Cloud Storage",
-                    kind = StorageStore.Kind.GCS,
-                    bucket = bucket,
+                    kind = StorageBucket.Kind.GCS,
+                    bucketName = bucketName,
                     projectId = field("gcpProjectId"),
-                    readFromStoreId = if (gcsOnS3) s3?.id else null,
+                    readFromBucketId = if (gcsOnS3) s3?.id else null,
                     // Listed first, being the older of the two wherever both are set.
                     createdAt = now.minusMillis(1),
                     updatedAt = now

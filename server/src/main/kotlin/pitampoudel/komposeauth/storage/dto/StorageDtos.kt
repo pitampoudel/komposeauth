@@ -1,13 +1,13 @@
 package pitampoudel.komposeauth.storage.dto
 
 import kotlinx.serialization.Serializable
-import pitampoudel.komposeauth.storage.entity.StorageStore
+import pitampoudel.komposeauth.storage.entity.StorageBucket
 
 @Serializable
-data class CreateStoreRequest(
+data class CreateBucketRequest(
     val name: String,
-    val kind: StorageStore.Kind,
-    val bucket: String,
+    val kind: StorageBucket.Kind,
+    val bucketName: String,
     val region: String? = null,
     val endpoint: String? = null,
     val publicBaseUrl: String? = null,
@@ -18,9 +18,9 @@ data class CreateStoreRequest(
     val serviceAccountJson: String? = null
 )
 
-/** Only what does not change the store's addresses can be edited. */
+/** Only what does not change the bucket's addresses can be edited. */
 @Serializable
-data class EditStoreRequest(
+data class EditBucketRequest(
     val name: String,
     val projectId: String? = null,
     val credentials: CredentialChange = CredentialChange.KEEP,
@@ -37,15 +37,16 @@ data class EditStoreRequest(
     }
 }
 
+/** The bucket an admin copied this one's files to. */
 @Serializable
-data class StartMoveRequest(val fromStoreId: String, val toStoreId: String)
+data class ReadFromRequest(val bucketId: String)
 
-data class StoreResponse(
+data class BucketResponse(
     val id: String,
     val name: String,
     val kind: String,
     val kindLabel: String,
-    val bucket: String,
+    val bucketName: String,
     val region: String?,
     val endpoint: String?,
     val publicBaseUrl: String?,
@@ -56,54 +57,22 @@ data class StoreResponse(
     val credentials: String,
     val usesHostIdentity: Boolean,
     val primary: Boolean,
-    val readFromStoreId: String?,
+    val readFromBucketId: String?,
     val readFromName: String?,
-    /** The stores whose files are read from this one. */
+    /** The buckets whose files are read from this one. */
     val readBy: List<String>,
-    /** What the store is for now, in plain words. */
+    /** What the bucket is for now, in plain words. */
     val role: String
-)
-
-data class MoveResponse(
-    val id: String,
-    val fromStoreId: String,
-    val toStoreId: String,
-    val fromName: String,
-    val toName: String,
-    val state: String,
-    val active: Boolean,
-    /** What is happening, or what happened, in a line. */
-    val summary: String,
-    val startedBy: String?,
-    val readNotBefore: String,
-    val filesTotal: Long,
-    val bytesTotal: Long,
-    val filesCopied: Long,
-    val bytesCopied: Long,
-    val filesAlreadyThere: Long,
-    val filesGone: Long,
-    val filesFailed: Long,
-    val failedNames: List<String>,
-    val recordsTotal: Long,
-    val recordsRead: Long,
-    val linksUpdated: Long,
-    val linksLeft: Long,
-    val error: String?,
-    val startedAt: String,
-    val updatedAt: String,
-    val finishedAt: String?
 )
 
 data class StorageStateResponse(
     val canManage: Boolean,
-    val stores: List<StoreResponse>,
-    /** The move under way, or else the last one, so its outcome stays readable. */
-    val move: MoveResponse?,
-    /** Something an admin has to put right, such as no store taking new files. */
+    val buckets: List<BucketResponse>,
+    /** Something an admin has to put right, such as no bucket taking new files. */
     val problem: String?
 )
 
-data class ProbeResponse(val storeName: String, val ok: Boolean, val steps: List<ProbeStep>) {
+data class ProbeResponse(val bucketName: String, val ok: Boolean, val steps: List<ProbeStep>) {
     data class ProbeStep(val step: String, val outcome: Outcome, val detail: String)
 
     enum class Outcome { OK, FAILED, SKIPPED }

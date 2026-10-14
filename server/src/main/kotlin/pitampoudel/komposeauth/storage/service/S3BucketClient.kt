@@ -11,26 +11,24 @@ import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Request
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
-import java.io.InputStream
 import java.net.URI
 import java.time.Clock
 
 /**
- * [BucketStore] over a bucket on any service speaking the S3 API: AWS itself, or, through an
+ * [BucketClient] over a bucket on any service speaking the S3 API: AWS itself, or, through an
  * [Settings.endpoint], Cloudflare R2, DigitalOcean Spaces, Backblaze B2, Wasabi, Hetzner or MinIO. Not
- * a bean of its own: the storage page's stores are built into one each, by
- * [pitampoudel.komposeauth.storage.service.CloudBucketStores].
+ * a bean of its own: each bucket on the Storage page gets one, built by
+ * [pitampoudel.komposeauth.storage.service.CloudBucketClients].
  *
  * Which objects anyone can read is the bucket policy's business, as it is on GCS.
  */
-class S3BucketStore(
+class S3BucketClient(
     val settings: Settings,
     private val clock: Clock = Clock.systemUTC()
-) : BucketStore {
+) : BucketClient {
 
     data class Settings(
         val bucket: String,
@@ -100,16 +98,6 @@ class S3BucketStore(
         return true
     }
 
-    override fun list(prefix: String, after: String?, limit: Int): List<StoredObject> =
-        client.listObjectsV2(
-            ListObjectsV2Request.builder()
-                .bucket(settings.bucket)
-                .apply { if (prefix.isNotEmpty()) prefix(prefix) }
-                .apply { after?.let { startAfter(it) } }
-                .maxKeys(limit)
-                .build()
-        ).contents().map { StoredObject(it.key(), it.size() ?: 0L, it.lastModified()) }
-
     override fun stat(name: String): StoredObject? =
         try {
             val head = client.headObject(HeadObjectRequest.builder().bucket(settings.bucket).key(name).build())
@@ -118,25 +106,4 @@ class S3BucketStore(
             // A HEAD has no body to name the error by, so a missing key is only a 404.
             if (ex.statusCode() == 404) null else throw ex
         }
-
-    override fun <T> open(name: String, read: (OpenedObject) -> T): T? {
-        val response = try {
-            client.getObject(GetObjectRequest.builder().bucket(settings.bucket).key(name).build())
-        } catch (_: NoSuchKeyException) {
-            return null
-        }
-        return response.use { read(OpenedObject(it, it.response().contentLength() ?: 0L, it.response().contentType())) }
-    }
-
-    override fun write(name: String, contentType: String?, size: Long, content: InputStream) {
-        client.putObject(
-            PutObjectRequest.builder()
-                .bucket(settings.bucket)
-                .key(name)
-                .contentLength(size)
-                .apply { contentType?.let { contentType(it) } }
-                .build(),
-            RequestBody.fromInputStream(content, size)
-        )
-    }
 }

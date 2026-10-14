@@ -62,7 +62,7 @@ class TemplateRenderingTest {
     private fun consoleContext(vararg extra: Pair<String, Any>) = brandingContext(
         "userCount" to 142L,
         "clientCount" to 3L,
-        "storeCount" to 2L,
+        "bucketCount" to 2L,
         "viewerName" to "Pitam Poudel",
         "viewerSub" to "ADMIN",
         "viewerRoles" to listOf("ADMIN"),
@@ -203,19 +203,18 @@ class TemplateRenderingTest {
         val html = engine.process("admin/storage", consoleContext("canManageStorage" to true))
 
         assertContains(html, "Where files are kept")
-        assertContains(html, "id=\"newStoreBtn\"")
-        assertContains(html, "id=\"cancelMoveBtn\"")
+        assertContains(html, "id=\"newBucketBtn\"")
+        assertContains(html, "id=\"emptyNewBtn\"")
         assertContains(html, "const CAN_MANAGE = true")
     }
 
     @Test
-    fun `storage page shows a plain admin the stores and the move without its writes`() {
+    fun `storage page shows a plain admin the buckets without its writes`() {
         val html = engine.process("admin/storage", consoleContext("canManageStorage" to false))
 
-        assertContains(html, "Only a SUPER_ADMIN can add, change or move a store.")
-        assertFalse(html.contains("id=\"newStoreBtn\""), "a plain admin's add would answer 403")
+        assertContains(html, "Only a SUPER_ADMIN can add or change a bucket.")
+        assertFalse(html.contains("id=\"newBucketBtn\""), "a plain admin's add would answer 403")
         assertFalse(html.contains("id=\"emptyNewBtn\""), "a plain admin's add would answer 403")
-        assertFalse(html.contains("id=\"cancelMoveBtn\""), "a plain admin's cancel would answer 403")
         assertContains(html, "const CAN_MANAGE = false")
     }
 

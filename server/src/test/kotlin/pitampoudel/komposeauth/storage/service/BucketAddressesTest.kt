@@ -107,16 +107,7 @@ class BucketAddressesTest {
     }
 
     @Test
-    fun `an address is found inside longer text, which is how a move counts what it leaves`() {
-        assertTrue(aws.mentionedIn("see https://new-files.s3.ap-south-1.amazonaws.com/users/u1/photo for it"))
-        assertTrue(gcs.mentionedIn("""{"url": "gs://b/users/u1/photo"}"""))
-        assertTrue(behindCdn.mentionedIn("<img src=\"https://cdn.example.com/users/u1/photo\">"))
-        assertFalse(aws.mentionedIn("https://other.s3.ap-south-1.amazonaws.com/users/u1/photo"))
-        assertFalse(gcs.mentionedIn("gs://bb/users/u1/photo"))
-    }
-
-    @Test
-    fun `two stores answering one bucket's addresses overlap, and two buckets don't`() {
+    fun `two entries answering one bucket's addresses overlap, and two buckets don't`() {
         assertTrue(BucketAddresses.overlap(aws, S3Addresses("new-files", "ap-south-1", publicBaseUrl = "https://cdn.example.com")))
         assertTrue(BucketAddresses.overlap(behindCdn, S3Addresses("elsewhere", "us-east-1", publicBaseUrl = "https://cdn.example.com")))
         assertTrue(BucketAddresses.overlap(r2, S3Addresses("x", "auto", publicBaseUrl = "https://acc.r2.cloudflarestorage.com/files")))

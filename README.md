@@ -116,39 +116,42 @@ Use the Admin Console to configure SMTP credentials, SMS providers, Google OAuth
 
 Profile photos, organization logos and KYC documents are kept in a bucket listed on the admin
 console's **Storage** page (`/admin/storage`). Any admin can see it; a `SUPER_ADMIN` adds and
-changes stores. Until one is listed, uploads fail, so add one once you have signed in as a
+changes buckets. Until one is listed, uploads fail, so add one once you have signed in as a
 `SUPER_ADMIN`.
 
-A store is a Google Cloud Storage bucket or one on anything that speaks the S3 API: Amazon S3,
+A bucket is a Google Cloud Storage one or one on anything that speaks the S3 API: Amazon S3,
 Cloudflare R2, MinIO, Backblaze B2 and so on. For anything but AWS, give its endpoint; those buckets
 are addressed path-style (`{endpoint}/{bucket}/{name}`). Put a CDN or a domain of your own in front
-as the store's public address and new files are handed out under it. Leave the credentials empty to
+as the bucket's public address and new files are handed out under it. Leave the credentials empty to
 use the server's own identity (a Cloud Run service account, an ECS task role), or paste an access key
 or a service account key, which is stored encrypted like the configuration's secrets. **Test** writes,
-reads, lists and deletes a small file, which is everything the server ever does in a bucket.
+reads and deletes a small file, which is everything the server ever does in a bucket.
 
 Profile photos and organization logos are loaded by browsers straight from the bucket, so it has to
 let anyone read the `users/` and `organization_logos/` prefixes. KYC documents stay private (see
 [Encrypted KYC Documents](#encrypted-kyc-documents)).
 
-One store takes new files. Every other file stays where it was written and opens from the address
-saved for it, so choosing another store for new files moves nothing already stored. To move to
-another bucket, in the same cloud or another one:
+One bucket takes new files. Every other file stays where it was written and opens from the address
+saved for it, so choosing another bucket for new files moves nothing already stored. The server
+copies no file itself; moving to another bucket, in the same cloud or another one, is:
 
-1. Add the new bucket on the Storage page and test it. Test the old one too: the server has to list
-   and read it, so it needs credentials for that cloud while the move runs.
-2. **Move files** from the old store to the new one. New files go to the new one at once. Then every
-   file is copied under the same name, the old store's addresses start opening the copies, and every
-   saved address of an old file, wherever in the database it is, is changed to the new store's own.
-   The move runs while the page is open: closing the page pauses it, and opening it again carries on.
-   Files already copied are skipped, so a move that stopped can be started again.
-3. When the finished move says nothing on record points at the old store any more, remove its entry.
-   Removing an entry never touches the bucket. Delete the old bucket yourself once you are sure.
+1. Add the new bucket on the Storage page and test it.
+2. Press **Send new files here** on it, and wait a minute for every server to switch.
+3. Copy everything from the old bucket into the new one under the same names: `rclone copy` between
+   any two providers, or `gcloud storage rsync` / `aws s3 sync` within one. Run it once more after
+   that minute, so nothing written meanwhile is left behind.
+4. On the old bucket, press **Files copied to…** and choose the new one. From then on the old
+   bucket's saved addresses open the copies, so the old bucket needs no credentials any more. Open a
+   few old photos to check.
+
+Keep the old entry listed: it is how the server recognises the addresses saved for its files, which
+are never rewritten. **Open from its own bucket** undoes step 4. Going back is the same steps the
+other way, starting with that button on the bucket you return to.
 
 Upgrading from a release that set the buckets on the configuration page: the first start lists them
 on the Storage page, with the same choice of where new files go and, after a GCS-to-S3 copy, the
 same link between the two. If both a GCS and an S3 bucket were set and `storageProvider` named
-neither, no store takes new files until you choose one there. The old fields are left in the stored
+neither, no bucket takes new files until you choose one there. The old fields are left in the stored
 configuration so the release before can still be rolled back to, but nothing reads them.
 
 ### 3. Environment Variables
