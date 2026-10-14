@@ -12,11 +12,20 @@ class StartupRunner(
 ) : ApplicationRunner {
 
     override fun run(args: ApplicationArguments) {
-        val dsn = appConfigService.getConfig().sentryDsn
-        if (!dsn.isNullOrBlank()) {
-            Sentry.init { options ->
-                options.dsn = dsn
-            }
+        applyErrorReporting(appConfigService.getConfig().sentryDsn)
+    }
+
+    /**
+     * Starts or stops error reporting for [dsn]. Also called when the DSN is saved, so a change takes
+     * effect on the instance that saved it without a restart; the others pick it up when they next start.
+     */
+    fun applyErrorReporting(dsn: String?) {
+        if (dsn.isNullOrBlank()) {
+            if (Sentry.isEnabled()) Sentry.close()
+            return
+        }
+        Sentry.init { options ->
+            options.dsn = dsn
         }
     }
 }

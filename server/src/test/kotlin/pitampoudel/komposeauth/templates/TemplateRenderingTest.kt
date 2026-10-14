@@ -11,6 +11,9 @@ import org.thymeleaf.spring6.expression.ThymeleafEvaluationContext
 import org.thymeleaf.templatemode.TemplateMode
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver
 import org.thymeleaf.web.servlet.JakartaServletWebApplication
+import pitampoudel.komposeauth.app_config.controller.ConfigContext
+import pitampoudel.komposeauth.app_config.controller.ConfigSections
+import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.core.controller.ConsoleCheck
 import pitampoudel.komposeauth.user.data.RoleResponse
 import kotlin.test.assertContains
@@ -66,6 +69,16 @@ class TemplateRenderingTest {
         "viewerName" to "Pitam Poudel",
         "viewerSub" to "ADMIN",
         "viewerRoles" to listOf("ADMIN"),
+        "canConfigure" to true,
+        *extra
+    )
+
+    /** What `AppConfigController` hands the configuration page, for [config]. */
+    private fun configPage(config: AppConfig, vararg extra: Pair<String, Any>) = consoleContext(
+        "connections" to ConfigSections.connections.map { ConfigSections.view(it, config, ConfigContext("https://auth.example.com")) },
+        "settings" to ConfigSections.settings.map { ConfigSections.view(it, config, ConfigContext("https://auth.example.com")) },
+        "storageReady" to false,
+        "viewerEmail" to "",
         *extra
     )
 
@@ -142,26 +155,33 @@ class TemplateRenderingTest {
     }
 
     @Test
-    fun `configuration page renders its groups inside the console`() {
+    fun `configuration page renders its sections inside the console`() {
         val html = engine.process(
             "admin/config",
-            consoleContext("saved" to true, "fieldGroups" to emptyList<Any>())
+            configPage(AppConfig(smtpHost = "smtp.example.com", smtpPassword = "hunter2"), "saved" to "Email saved.")
         )
 
-        assertContains(html, "Save configuration")
-        assertContains(html, "Configuration saved.")
+        assertContains(html, "Save branding")
+        assertContains(html, "Email saved.")
+        assertContains(html, "Google sign-in")
+        assertContains(html, "https://auth.example.com/login/oauth2/code/google")
+        assertFalse(html.contains("hunter2"), "a saved secret is never written into the page")
         assertFalse(html.contains("name=\"key\""), "no key was posted, so none is carried forward")
     }
 
     @Test
     fun `configuration carries a posted master key in the form, not the address`() {
-        val html = engine.process(
-            "admin/config",
-            consoleContext("fieldGroups" to emptyList<Any>(), "masterKey" to "a+b/c=")
-        )
+        val html = engine.process("admin/config", configPage(AppConfig(), "masterKey" to "a+b/c="))
 
         assertContains(html, """<form method="post" action="/admin/config">""")
         assertContains(html, """name="key" value="a+b/c="""")
+    }
+
+    @Test
+    fun `a plain admin is not shown the way into configuration`() {
+        val html = engine.process("admin/users", consoleContext("canConfigure" to false))
+
+        assertFalse(html.substringAfter("<nav").substringBefore("</nav>").contains("/admin/config"))
     }
 
     @Test
@@ -234,7 +254,7 @@ class TemplateRenderingTest {
         pages.forEach { (template, href) ->
             val html = engine.process(
                 template,
-                consoleContext("fieldGroups" to emptyList<Any>(), "canManageStorage" to false)
+                configPage(AppConfig(), "canManageStorage" to false)
             )
             // Scoped to the rendered <nav>: the layout's stylesheet also mentions the attribute.
             val nav = html.substringAfter("<nav class=\"rail-nav\"").substringBefore("</nav>")

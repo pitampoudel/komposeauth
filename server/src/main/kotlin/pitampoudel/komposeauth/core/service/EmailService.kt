@@ -68,28 +68,64 @@ class EmailService(
         model: Map<String, Any?> = emptyMap(),
     ): Boolean {
         return try {
-            val html = render(
-                template = template,
-                baseUrl = baseUrl,
-                variables = model + mapOf("subject" to subject)
-            )
-            val sender = javaMailSender()
-            val message: MimeMessage = sender.createMimeMessage()
-            val helper = MimeMessageHelper(message, true, "UTF-8")
-            val fromEmail = appConfigService.getConfig().smtpFromEmail
-            val fromName = appConfigService.getConfig().smtpFromName
-            if (!fromEmail.isNullOrBlank()) {
-                helper.setFrom(InternetAddress(fromEmail, fromName))
-            }
-            helper.setTo(to)
-            helper.setSubject(subject)
-            helper.setText(html, true)
-            sender.send(message)
+            deliver(baseUrl, to, subject, template, model)
             true
         } catch (e: Exception) {
             log.error("Could not send the '{}' email", template, e)
             false
         }
+    }
+
+    /**
+     * Sends a short message through the configured mail server, for the Test button on the
+     * configuration page. Answers why it failed, in the mail server's words, rather than only that it
+     * did, since that is what an operator needs to fix it.
+     */
+    fun sendTestMail(baseUrl: String, to: String): String? = runCatching {
+        deliver(
+            baseUrl = baseUrl,
+            to = to,
+            subject = "Email is working",
+            template = "email/generic",
+            model = mapOf("message" to "This is a test from your sign-in server's admin console. Emails will be sent like this one.")
+        )
+    }.exceptionOrNull()?.let { e ->
+        log.warn("Test email to the configured mail server failed", e)
+        val causes = generateSequence(e) { it.cause }.toList()
+        val root = causes.last()
+        when {
+            causes.any { it is java.net.UnknownHostException } -> "There is no mail server at ${root.message ?: "that address"}."
+            causes.any { it is jakarta.mail.AuthenticationFailedException } -> "The mail server refused the username or password."
+            causes.any { it is java.net.SocketTimeoutException || it is java.net.ConnectException } ->
+                "The mail server didn't answer. Check the server and port."
+            else -> "The mail server refused it: ${root.message ?: root.javaClass.simpleName}"
+        }
+    }
+
+    private fun deliver(
+        baseUrl: String,
+        to: String,
+        subject: String,
+        template: String,
+        model: Map<String, Any?>,
+    ) {
+        val html = render(
+            template = template,
+            baseUrl = baseUrl,
+            variables = model + mapOf("subject" to subject)
+        )
+        val sender = javaMailSender()
+        val message: MimeMessage = sender.createMimeMessage()
+        val helper = MimeMessageHelper(message, true, "UTF-8")
+        val fromEmail = appConfigService.getConfig().smtpFromEmail
+        val fromName = appConfigService.getConfig().smtpFromName
+        if (!fromEmail.isNullOrBlank()) {
+            helper.setFrom(InternetAddress(fromEmail, fromName))
+        }
+        helper.setTo(to)
+        helper.setSubject(subject)
+        helper.setText(html, true)
+        sender.send(message)
     }
 
     private companion object {

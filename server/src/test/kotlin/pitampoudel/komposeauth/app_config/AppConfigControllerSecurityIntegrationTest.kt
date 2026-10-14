@@ -42,7 +42,7 @@ class AppConfigControllerSecurityIntegrationTest {
             .andExpect {
                 status { isOk() }
                 content { string(containsString("Master key")) }
-                content { string(not(containsString("Save configuration"))) }
+                content { string(not(containsString("Save branding"))) }
             }
     }
 
@@ -55,7 +55,7 @@ class AppConfigControllerSecurityIntegrationTest {
             header(AppConfigController.MASTER_KEY_HEADER, TestConfig.testKey)
         }.andExpect {
             status { isOk() }
-            content { string(containsString("Save configuration")) }
+            content { string(containsString("Save branding")) }
         }
     }
 
@@ -69,20 +69,21 @@ class AppConfigControllerSecurityIntegrationTest {
             .andExpect {
                 status { isOk() }
                 content { string(containsString("not read from the address")) }
-                content { string(not(containsString("Save configuration"))) }
+                content { string(not(containsString("Save branding"))) }
             }
 
         mockMvc.post("/admin/config?key={key}", TestConfig.testKey) {
             param("unlock", "true")
         }.andExpect {
-            content { string(not(containsString("Save configuration"))) }
+            content { string(not(containsString("Save branding"))) }
         }
 
         val before = appConfigProvider.get().name
         mockMvc.post("/admin/config?key={key}", TestConfig.testKey) {
+            param("section", "branding")
             param("name", "Saved through the address")
         }.andExpect {
-            content { string(not(containsString("Configuration saved."))) }
+            content { string(not(containsString("Saved."))) }
         }
         assertEquals(before, appConfigProvider.get().name)
     }
@@ -95,7 +96,7 @@ class AppConfigControllerSecurityIntegrationTest {
         }.andExpect {
             status { isForbidden() }
             content { string(containsString("That is not the master key.")) }
-            content { string(not(containsString("Save configuration"))) }
+            content { string(not(containsString("Save branding"))) }
         }
     }
 
@@ -107,19 +108,20 @@ class AppConfigControllerSecurityIntegrationTest {
             param("key", TestConfig.testKey)
         }.andExpect {
             status { isOk() }
-            content { string(containsString("Save configuration")) }
+            content { string(containsString("Save branding")) }
             content { string(containsString("""name="key" value="${TestConfig.testKey}"""")) }
-            content { string(not(containsString("Configuration saved."))) }
+            content { string(not(containsString("Saved."))) }
         }
 
         val before = appConfigProvider.get()
         try {
             mockMvc.post("/admin/config") {
                 param("key", TestConfig.testKey)
+                param("section", "branding")
                 param("name", "Saved through the form")
             }.andExpect {
                 status { isOk() }
-                content { string(containsString("Configuration saved.")) }
+                content { string(containsString("Saved.")) }
             }
             assertEquals("Saved through the form", appConfigProvider.get().name)
         } finally {

@@ -6,6 +6,8 @@ import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import pitampoudel.komposeauth.app_config.controller.ConfigSections
+import pitampoudel.komposeauth.app_config.controller.ConnectionStatus
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.oauth_clients.repository.OAuth2ClientRepository
@@ -17,7 +19,9 @@ import pitampoudel.komposeauth.user.service.UserService
 data class ConsoleCheck(
     val name: String,
     val ready: Boolean,
-    val detail: String
+    val detail: String,
+    /** Where it is set up, if it can be. */
+    val link: String? = null
 )
 
 /**
@@ -80,58 +84,35 @@ class AdminPageController(
         }
     }
 
-    private fun isSet(value: String?) = !value.isNullOrBlank()
+    /**
+     * A connection as the Configuration page judges it, so the two pages never disagree about
+     * whether something works.
+     */
+    private fun connection(config: AppConfig, id: String, name: String): ConsoleCheck {
+        val status = ConfigSections.byId(id)!!.status!!(config)
+        return ConsoleCheck(
+            name = name,
+            ready = status.state == ConnectionStatus.State.CONNECTED,
+            detail = status.detail,
+            link = "/admin/config#$id"
+        )
+    }
 
     private fun signInMethods(config: AppConfig): List<ConsoleCheck> = listOf(
         ConsoleCheck(name = "Password", ready = true, detail = "Built in"),
-        ConsoleCheck(
-            name = "Google",
-            ready = isSet(config.googleAuthClientId),
-            detail = if (isSet(config.googleAuthClientId)) "Client ID set" else "Needs a client ID"
-        ),
-        ConsoleCheck(
-            name = "Apple",
-            ready = isSet(config.appleAuthClientId),
-            detail = if (isSet(config.appleAuthClientId)) "Client ID set" else "Needs a client ID"
-        ),
+        connection(config, "google", "Google"),
+        connection(config, "apple", "Apple"),
         ConsoleCheck(
             name = "Passkeys",
-            ready = isSet(config.rpId),
-            detail = if (isSet(config.rpId)) config.rpId.orEmpty() else "Needs a relying party ID"
+            ready = !config.rpId.isNullOrBlank(),
+            detail = config.rpId?.takeIf { it.isNotBlank() } ?: "Needs a passkey domain",
+            link = "/admin/config#signin"
         ),
-        ConsoleCheck(
-            name = "One-time code by text",
-            ready = isSet(config.smsProvider),
-            detail = if (isSet(config.smsProvider)) {
-                providerName(config.smsProvider)
-            } else {
-                "Needs an SMS provider"
-            }
-        )
+        connection(config, "sms", "One-time code by text")
     )
 
     private fun deliveryChannels(config: AppConfig): List<ConsoleCheck> = listOf(
-        ConsoleCheck(
-            name = "Email",
-            ready = isSet(config.smtpHost),
-            detail = if (isSet(config.smtpHost)) config.smtpHost.orEmpty() else "Needs an SMTP host"
-        ),
-        ConsoleCheck(
-            name = "Text messages",
-            ready = isSet(config.smsProvider),
-            detail = if (isSet(config.smsProvider)) {
-                providerName(config.smsProvider)
-            } else {
-                "Needs an SMS provider"
-            }
-        )
+        connection(config, "email", "Email"),
+        connection(config, "sms", "Text messages")
     )
-
-    private fun providerName(provider: String?): String = when (provider?.lowercase()) {
-        "twilio" -> "Twilio"
-        "samaye" -> "Samaye"
-        "sparrow" -> "Sparrow"
-        "whatsapp" -> "WhatsApp"
-        else -> provider.orEmpty()
-    }
 }

@@ -39,6 +39,7 @@ object PublicEndpoints {
         // The configuration page also accepts a master key, so the filter chain has to let it
         // through to the controller's own access check.
         "/admin/config",
+        "/admin/config/test/*",
         "/${ApiEndpoints.SEND_OTP}"
     )
 

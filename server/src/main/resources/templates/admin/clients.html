@@ -13,7 +13,7 @@
             border-radius: 12px;
             object-fit: cover;
             background: color-mix(in oklab, var(--brand) 12%, transparent);
-            color: var(--brand);
+            color: var(--brand-text);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -38,7 +38,7 @@
             transition: color 0.2s;
         }
 
-        .copy-id:hover { color: var(--brand); }
+        .copy-id:hover { color: var(--brand-text); }
 
         .copy-id .id-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -82,6 +82,7 @@
 
         <div id="empty" class="empty hidden">
             <h3>No app is registered yet</h3>
+            <p>Register each website or app that signs people in here. It gets a client ID to start the sign-in with.</p>
             <button class="btn btn-secondary btn-sm" type="button" id="emptyNewBtn" th:if="${canManageClients}">Register an app</button>
         </div>
     </section>
