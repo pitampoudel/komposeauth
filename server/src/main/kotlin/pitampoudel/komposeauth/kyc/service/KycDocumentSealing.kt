@@ -10,21 +10,19 @@ import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Component
-import pitampoudel.komposeauth.core.migration.SchemaMigration
 import pitampoudel.komposeauth.kyc.entity.KycDocument
 import pitampoudel.komposeauth.kyc.entity.KycVerification
-import java.time.Instant
+import java.util.Date
 import kotlin.concurrent.thread
 
 /**
  * Seals the KYC files stored before [KycDocuments] sealed them, which until then anyone holding or
  * guessing their bucket address could read.
  *
- * Not a `MongoMigration`, though it is recorded as done in the same `schema_migrations`. A migration
- * holds back readiness while it runs and keeps its reservation if the process is stopped part-way;
- * this reads and rewrites every file in the bucket, which can outlast a health check, and would then
- * never run again. So it runs in the background once the server is up, and is recorded as done only
- * when every file is sealed or gone: a run that fails or is stopped is repeated on the next start.
+ * Not a Flamingock change: a change holds back readiness while it runs, and this reads and rewrites
+ * every file in the bucket, which can outlast a health check. So it runs in the background once the
+ * server is up, and is recorded as done in its own `kyc_document_sealing` only when every file is
+ * sealed or gone: a run that fails or is stopped is repeated on the next start.
  * Repeating it is safe, since a sealed file is left as it is and a record is pointed at the sealed
  * copy only while it still names the file that was sealed.
  */
@@ -37,6 +35,7 @@ class KycDocumentSealing(
 
     companion object {
         const val ID = "kyc-documents-sealed"
+        const val COLLECTION = "kyc_document_sealing"
     }
 
     data class Outcome(val sealed: Int, val missing: List<String>, val failed: List<String>)
@@ -45,7 +44,7 @@ class KycDocumentSealing(
     fun sealInBackground() {
         thread(name = "kyc-document-sealing", isDaemon = true) {
             try {
-                if (mongoTemplate.exists(Query(Criteria.where("_id").`is`(ID)), SchemaMigration.COLLECTION_NAME)) {
+                if (mongoTemplate.exists(Query(Criteria.where("_id").`is`(ID)), COLLECTION)) {
                     return@thread
                 }
                 if (sealStoredFiles().failed.isEmpty()) markDone()
@@ -106,7 +105,7 @@ class KycDocumentSealing(
 
     private fun markDone() {
         try {
-            mongoTemplate.insert(SchemaMigration(ID, Instant.now()), SchemaMigration.COLLECTION_NAME)
+            mongoTemplate.insert(Document("_id", ID).append("sealedAt", Date()), COLLECTION)
         } catch (_: DuplicateKeyException) {
             // Another instance finished the same work first.
         }

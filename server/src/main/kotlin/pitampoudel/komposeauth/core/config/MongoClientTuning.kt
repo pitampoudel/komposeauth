@@ -52,10 +52,9 @@ data class MongoConnectionProperties(
      * TCP connect timeout for a single socket.
      *
      * There is deliberately no matching read timeout. A socket-level one applies to every command
-     * alike, including the `createIndex` calls [pitampoudel.komposeauth.core.migration
-     * .MongoIndexMigration] issues, which on a collection large enough to matter can legitimately
-     * run for minutes — cutting those off would fail startup on exactly the databases that most need
-     * the index. Bounding a slow *query* is a per-operation concern (`maxTimeMS`), not a property of
+     * alike, including the `createIndex` calls Spring Data issues at startup, which on a collection
+     * large enough to matter can legitimately run for minutes — cutting those off would fail startup
+     * on exactly the databases that most need the index. Bounding a slow *query* is a per-operation concern (`maxTimeMS`), not a property of
      * the connection.
      */
     val connectTimeout: Duration = Duration.ofSeconds(5),

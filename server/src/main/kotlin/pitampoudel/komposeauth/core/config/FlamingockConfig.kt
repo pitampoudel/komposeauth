@@ -21,21 +21,26 @@ import org.springframework.data.mongodb.core.MongoTemplate
  * somebody resolves it by hand. So each change is written to be safe to run twice, and says so.
  *
  * A change is a class in the `migration` package of the feature whose data it rewrites, named
- * `_NNNN__Description` (the number is its order within the stage), with `@Change` and an `@Apply`
- * method taking the `MongoTemplate`. It works on stored documents rather than through a service,
- * whose rules are the current release's and not the data's. A feature's first change also adds its
- * [Stage] here, and `FlamingockStagesTest` fails until it does, because a stage nobody declares never
- * runs.
+ * `_NNNN__Description` (the number is its order within the stage, and the stages run in the order
+ * listed here), with `@Change` and an `@Apply` method taking the `MongoTemplate`. It works on stored
+ * documents rather than through a service, whose rules are the current release's and not the data's.
+ * A feature's first change also adds its [Stage] here, and `FlamingockStagesTest` fails until it
+ * does, because a stage nobody declares never runs.
  *
- * Indexes are not changes: `MongoIndexMigration` re-runs whenever an index annotation changes, which
- * a change, run once by its id, cannot.
+ * Indexes are not changes: Spring Data creates the ones the entities declare at every start
+ * (`spring.data.mongodb.auto-index-creation`), before Flamingock runs, so a change can rely on them.
  */
 @Configuration
 @EnableFlamingock(
     stages = [
         Stage(name = "storage", location = "pitampoudel.komposeauth.storage.migration"),
         Stage(name = "user", location = "pitampoudel.komposeauth.user.migration"),
-        Stage(name = "authorization", location = "pitampoudel.komposeauth.authorization.migration")
+        Stage(name = "authorization", location = "pitampoudel.komposeauth.authorization.migration"),
+        Stage(name = "oauth_clients", location = "pitampoudel.komposeauth.oauth_clients.migration"),
+        Stage(name = "kyc", location = "pitampoudel.komposeauth.kyc.migration"),
+        Stage(name = "organization", location = "pitampoudel.komposeauth.organization.migration"),
+        Stage(name = "webauthn", location = "pitampoudel.komposeauth.webauthn.migration"),
+        Stage(name = "core", location = "pitampoudel.komposeauth.core.migration")
     ]
 )
 class FlamingockConfig {

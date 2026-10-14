@@ -20,6 +20,11 @@ spring:
     # MONGODB_URI never names a database; this one is fixed here and wins over one in the URI.
     uri: ${MONGODB_URI}
     database: komposeauth
+  data:
+    mongodb:
+      # The indexes the @Indexed and @CompoundIndex annotations declare are created at every start,
+      # before the Flamingock changes run. An index exists only if an entity declares it.
+      auto-index-creation: true
   jmx:
     enabled: false
   threads:
