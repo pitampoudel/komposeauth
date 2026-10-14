@@ -20,7 +20,6 @@
     <section>
         <div class="section-head">
             <h2>Ways in</h2>
-            <a class="section-hint inline-link" href="/admin/config">Configure</a>
         </div>
         <div class="rows">
             <div class="row" th:each="check : ${signInMethods}">
@@ -30,6 +29,8 @@
                 </div>
                 <span class="badge" th:classappend="${check.ready} ? ' badge-ok' : ''"
                       th:text="${check.ready} ? 'On' : 'Off'">Off</span>
+                <a th:if="${check.link != null and canConfigure}" class="btn btn-secondary btn-xs" th:href="${check.link}"
+                   th:text="${check.ready} ? 'Edit' : 'Set up'">Set up</a>
             </div>
         </div>
     </section>
@@ -37,7 +38,6 @@
     <section>
         <div class="section-head">
             <h2>Delivery</h2>
-            <a class="section-hint inline-link" href="/admin/config">Configure</a>
         </div>
         <div class="rows">
             <div class="row" th:each="check : ${deliveryChannels}">
@@ -47,6 +47,8 @@
                 </div>
                 <span class="badge" th:classappend="${check.ready} ? ' badge-ok' : ''"
                       th:text="${check.ready} ? 'On' : 'Off'">Off</span>
+                <a th:if="${check.link != null and canConfigure}" class="btn btn-secondary btn-xs" th:href="${check.link}"
+                   th:text="${check.ready} ? 'Edit' : 'Set up'">Set up</a>
             </div>
         </div>
     </section>

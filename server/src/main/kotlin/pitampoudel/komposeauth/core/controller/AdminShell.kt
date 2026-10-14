@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component
 import org.springframework.ui.Model
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.config.UserContextService
+import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.oauth_clients.repository.OAuth2ClientRepository
 import pitampoudel.komposeauth.storage.repository.StorageBucketRepository
 import pitampoudel.komposeauth.user.service.UserService
@@ -53,5 +54,7 @@ class AdminShell(
             viewer?.roles?.takeIf { it.isNotEmpty() }?.joinToString(" · ") ?: "No role"
         )
         model.addAttribute("viewerRoles", viewer?.roles.orEmpty())
+        // Configuration is a super admin's (or the master key holder's), so nobody else is shown a way in.
+        model.addAttribute("canConfigure", viewer == null || viewer.roles.contains(Roles.SUPER_ADMIN))
     }
 }

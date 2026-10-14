@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<!-- One configuration field, drawn the same way in a connection's dialog and in a settings section. -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="field(f, idPrefix)" class="config-field"
+     th:classappend="${f.wide} ? ' full-width' : ''"
+     th:attr="data-show-field=${f.showWhenField},data-show-values=${f.showWhenValues}">
+    <label th:for="${idPrefix + '-' + f.name}">
+        <span th:text="${f.label}">Label</span>
+        <span th:if="${f.type == 'secret' and f.saved}" class="saved-mark">Saved</span>
+    </label>
+
+    <textarea th:if="${f.type == 'textarea'}"
+              th:id="${idPrefix + '-' + f.name}" th:name="${f.name}"
+              th:placeholder="${f.placeholder}" spellcheck="false"
+              th:text="${f.value}"></textarea>
+
+    <select th:if="${f.type == 'select'}" th:id="${idPrefix + '-' + f.name}" th:name="${f.name}">
+        <option th:each="option : ${f.options}" th:value="${option.value}" th:text="${option.label}"
+                th:selected="${#strings.equalsIgnoreCase(option.value, f.value)}"></option>
+    </select>
+
+    <div th:if="${f.type == 'color'}" class="color-field">
+        <input type="color" th:id="${idPrefix + '-' + f.name}" th:name="${f.name}"
+               th:value="${f.value.isEmpty()} ? ${brandColor} : ${f.value}"/>
+        <span class="mono" th:text="${f.value.isEmpty()} ? 'Default' : ${f.value}"></span>
+    </div>
+
+    <input th:if="${f.type == 'secret'}" type="password" autocomplete="new-password" spellcheck="false"
+           th:id="${idPrefix + '-' + f.name}" th:name="${f.name}" th:placeholder="${f.placeholder}"/>
+
+    <input th:if="${f.type == 'text' or f.type == 'url' or f.type == 'email' or f.type == 'number'}"
+           th:type="${f.type == 'number'} ? 'number' : (${f.type == 'text'} ? 'text' : ${f.type})"
+           th:attr="min=${f.type == 'number'} ? '0' : null" spellcheck="false"
+           th:id="${idPrefix + '-' + f.name}" th:name="${f.name}"
+           th:value="${f.value}" th:placeholder="${f.placeholder}"/>
+
+    <p th:if="${f.help != null}" class="field-help" th:text="${f.help}"></p>
+</div>
+</body>
+</html>

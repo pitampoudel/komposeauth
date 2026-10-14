@@ -4,96 +4,304 @@
 <head>
     <title th:text="${appName.isEmpty()} ? 'Configuration · Admin' : ${appName} + ' · Configuration'">Configuration</title>
     <style>
-        .field-group { margin-top: 40px; }
+        #notice { margin-top: 24px; }
 
-        .field-group-title {
-            padding-bottom: 12px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--divider);
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 0.16em;
-            text-transform: uppercase;
-            color: var(--muted);
-        }
+        .row-main .row-sub { white-space: normal; }
+
+        .row-facts { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+
+        .status-detail { font-size: 12px; color: var(--muted); text-align: right; max-width: 28ch; }
+
+        .settings-block + .settings-block { margin-top: 56px; }
 
         .group-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
 
         .config-field.full-width { grid-column: 1 / -1; }
 
-        /* A long form needs its commit within reach wherever you stopped reading. */
-        .save-bar {
-            position: sticky;
-            bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 14px;
-            margin-top: 40px;
-            padding: 16px 0;
-            background: linear-gradient(180deg, transparent, var(--background) 40%);
+        .field-help { margin-top: 6px; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+
+        .saved-mark {
+            margin-left: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--ok-text);
         }
 
-        .save-note { font-size: 13px; color: var(--muted); margin-right: auto; }
+        .color-field { display: flex; align-items: center; gap: 12px; }
+
+        .color-field input[type=color] {
+            width: 44px;
+            height: 40px;
+            padding: 4px;
+            border: none;
+            border-radius: 12px;
+            background: color-mix(in oklab, var(--surface-soft) 55%, transparent);
+            cursor: pointer;
+        }
+
+        .block-title { font-size: 15px; font-weight: 600; }
+
+        .block-foot { display: flex; align-items: center; justify-content: flex-end; gap: 14px; margin-top: 20px; }
+
+        .saved-note { font-size: 13px; font-weight: 600; color: var(--ok-text); }
+
+        dialog { width: min(600px, calc(100vw - 32px)); }
+
+        .dialog-body { max-height: min(62vh, 560px); overflow-y: auto; padding: 2px 4px 2px 2px; margin-top: 18px; }
+
+        .dialog-body .group-grid { gap: 16px 14px; }
+
+        /* The browser focuses a scrolling area when the dialog opens; the fields are what take focus. */
+        .dialog-body:focus-visible { outline: none; }
+
+        .guide {
+            margin-bottom: 18px;
+            font-size: 13px;
+            line-height: 1.55;
+            color: var(--muted);
+            overflow-wrap: anywhere;
+        }
+
+        .test-box { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--divider); }
+
+        .test-row { display: flex; gap: 8px; }
+
+        .test-row input { flex: 1; }
+
+        .test-result { margin-top: 10px; }
+
+        .dialog-foot { align-items: center; }
+
+        .dialog-foot .spacer { margin-right: auto; }
 
         @media (max-width: 620px) {
             .group-grid { grid-template-columns: minmax(0, 1fr); }
+            .row { flex-wrap: wrap; }
+            .row-facts { align-items: flex-start; width: 100%; }
+            .status-detail { text-align: left; max-width: none; }
         }
     </style>
 </head>
 <body>
 
 <main>
-    <p class="eyebrow">Settings</p>
-    <h1 class="font-display">Configuration</h1>
-
-    <div th:if="${saved}" class="alert alert-success" role="status" style="margin-top: 24px;">
-        Configuration saved.
+    <div class="page-head">
+        <div>
+            <p class="eyebrow">Settings</p>
+            <h1 class="font-display">Configuration</h1>
+            <p class="lede">
+                The services this server talks to, and how it presents itself. Each part is saved on its own,
+                and a saved secret is never shown again.
+            </p>
+        </div>
     </div>
-    <div th:if="${error != null}" class="alert alert-error" role="alert" style="margin-top: 24px;" th:text="${error}"></div>
 
-    <form method="post" action="/admin/config">
-        <input th:if="${masterKey != null}" type="hidden" name="key" th:value="${masterKey}"/>
-        <div th:each="group : ${fieldGroups}" class="field-group">
-            <h2 th:if="${group.title != null}" class="field-group-title" th:text="${group.title}"></h2>
+    <div id="notice">
+        <div th:if="${saved != null and savedSection == null}" class="alert alert-success" role="status" th:text="${saved}"></div>
+        <div th:if="${error != null and errorSection == null}" class="alert alert-error" role="alert" th:text="${error}"></div>
+    </div>
 
-            <div class="group-grid">
-                <div th:each="field : ${group.fields}" class="config-field"
-                     th:classappend="${field.inputType == 'textarea'} ? ' full-width' : ''">
-                    <label th:for="${field.name}" th:text="${field.label}"></label>
+    <section id="connections" aria-labelledby="connectionsTitle">
+        <div class="section-head">
+            <h2 id="connectionsTitle">Connections</h2>
+            <span class="section-hint">Every connection is optional. Sign-in by password works without any of them.</span>
+        </div>
+        <div class="rows">
+            <div class="row" th:each="c : ${connections}" th:id="${c.id}">
+                <div class="row-main">
+                    <div class="row-name" th:text="${c.title}"></div>
+                    <div class="row-sub" th:text="${c.summary}"></div>
+                </div>
+                <div class="row-facts">
+                    <span class="badge"
+                          th:classappend="${c.status.state.name() == 'CONNECTED'} ? ' badge-ok' : (${c.status.state.name() == 'INCOMPLETE'} ? ' badge-warn' : '')"
+                          th:text="${c.status.label}"></span>
+                    <span class="status-detail" th:text="${c.status.detail}"></span>
+                </div>
+                <div class="row-actions">
+                    <button class="btn btn-secondary btn-xs" type="button" th:attr="data-open=${c.id}"
+                            th:text="${c.hasValues} ? 'Edit' : 'Set up'">Set up</button>
+                </div>
+            </div>
 
-                    <textarea th:if="${field.inputType == 'textarea'}"
-                              th:id="${field.name}"
-                              th:name="${field.name}"
-                              th:text="${field.value}"></textarea>
-
-                    <select th:if="${field.inputType == 'select'}"
-                            th:id="${field.name}"
-                            th:name="${field.name}">
-                        <option th:each="option : ${field.options}"
-                                th:value="${option.value}"
-                                th:text="${option.label}"
-                                th:selected="${option.value == (field.value ?: '')}">
-                        </option>
-                    </select>
-
-                    <input th:if="${field.inputType != 'textarea' and field.inputType != 'select'}"
-                           th:id="${field.name}"
-                           th:name="${field.name}"
-                           th:type="${field.inputType}"
-                           th:value="${field.value}"/>
+            <div class="row" id="storage">
+                <div class="row-main">
+                    <div class="row-name">File storage</div>
+                    <div class="row-sub">Profile photos, organization logos and identity documents, in Google Cloud Storage or any S3-compatible bucket.</div>
+                </div>
+                <div class="row-facts">
+                    <span class="badge" th:classappend="${storageReady} ? ' badge-ok' : ''"
+                          th:text="${storageReady} ? 'Connected' : 'Not set up'"></span>
+                    <span class="status-detail" th:text="${storageReady} ? 'New files have a bucket' : 'Uploads fail until a bucket is listed'"></span>
+                </div>
+                <div class="row-actions">
+                    <a class="btn btn-secondary btn-xs" href="/admin/storage">Open Storage</a>
                 </div>
             </div>
         </div>
+    </section>
 
-        <div class="save-bar">
-            <button class="btn btn-primary btn-md" type="submit">Save configuration</button>
+    <section id="settings" aria-labelledby="settingsTitle">
+        <div class="section-head">
+            <h2 id="settingsTitle">Settings</h2>
         </div>
-    </form>
+
+        <form th:each="s : ${settings}" th:id="${s.id}" class="settings-block" method="post" action="/admin/config">
+            <input th:if="${masterKey != null}" type="hidden" name="key" th:value="${masterKey}"/>
+            <input type="hidden" name="section" th:value="${s.id}"/>
+            <div class="section-head">
+                <div>
+                    <h3 class="block-title" th:text="${s.title}"></h3>
+                    <p class="section-hint" th:text="${s.summary}"></p>
+                </div>
+            </div>
+            <div class="group-grid">
+                <th:block th:each="f : ${s.fields}">
+                    <div th:replace="~{admin/config-field :: field(${f}, ${s.id})}"></div>
+                </th:block>
+            </div>
+            <p th:if="${s.id == 'network'}" class="field-help">
+                Check what the server sees as your address at <a class="inline-link" href="/admin/client-ip">/admin/client-ip</a>.
+            </p>
+            <div class="alert alert-error" role="alert" style="margin-top: 20px;"
+                 th:if="${error != null and errorSection == s.id}" th:text="${error}"></div>
+            <div class="block-foot">
+                <span th:if="${savedSection == s.id}" class="saved-note" role="status">Saved.</span>
+                <button class="btn btn-primary btn-sm" type="submit" th:text="'Save ' + ${#strings.toLowerCase(s.title)}">Save</button>
+            </div>
+        </form>
+    </section>
+
+    <dialog th:each="c : ${connections}" th:id="${'dialog-' + c.id}" th:attr="aria-labelledby=${'dialog-title-' + c.id}">
+        <form method="post" action="/admin/config">
+            <input th:if="${masterKey != null}" type="hidden" name="key" th:value="${masterKey}"/>
+            <input type="hidden" name="section" th:value="${c.id}"/>
+            <div class="dialog-head">
+                <div class="dialog-title" th:id="${'dialog-title-' + c.id}" th:text="${c.title}"></div>
+                <div class="dialog-sub" th:text="${c.summary}"></div>
+            </div>
+
+            <div class="dialog-body">
+                <p th:if="${c.guide != null}" class="guide" th:text="${c.guide}"></p>
+                <div class="alert alert-error" role="alert" style="margin-bottom: 16px;"
+                     th:if="${error != null and errorSection == c.id}" th:text="${error}"></div>
+                <div class="group-grid">
+                    <th:block th:each="f : ${c.fields}">
+                        <div th:replace="~{admin/config-field :: field(${f}, ${c.id})}"></div>
+                    </th:block>
+                </div>
+
+                <div th:if="${c.test != null}" class="test-box" th:attr="data-test=${c.test}">
+                    <label th:for="${'test-' + c.id}"
+                           th:text="${c.test == 'email'} ? 'Send a test email to' : (${c.test == 'sms'} ? 'Send a test code to' : 'Post a test message to the channel')">
+                        Send a test
+                    </label>
+                    <div class="test-row">
+                        <input th:if="${c.test != 'alerts'}" th:id="${'test-' + c.id}"
+                               th:type="${c.test == 'email'} ? 'email' : 'tel'"
+                               th:value="${c.test == 'email'} ? ${viewerEmail} : ''"
+                               th:placeholder="${c.test == 'email'} ? 'you@example.com' : '+977 98…'"/>
+                        <button class="btn btn-secondary btn-sm" type="button" data-run-test>Send test</button>
+                    </div>
+                    <p class="field-help">Tests what is saved. Save your changes first.</p>
+                    <div class="test-result hidden" role="status" aria-live="polite"></div>
+                </div>
+            </div>
+
+            <div class="dialog-foot">
+                <button th:if="${c.hasValues}" class="btn btn-danger btn-sm spacer" type="submit" name="disconnect" value="true"
+                        formnovalidate data-confirm-disconnect>Disconnect</button>
+                <span th:unless="${c.hasValues}" class="spacer"></span>
+                <button class="btn btn-ghost btn-sm" type="button" data-close>Cancel</button>
+                <button class="btn btn-primary btn-sm" type="submit">Save</button>
+            </div>
+        </form>
+    </dialog>
 </main>
 
-<script>
-    // The configuration form is a plain server-rendered post; nothing to wire up.
+<script th:inline="javascript">
+    const MASTER_KEY = /*[[${masterKey}]]*/ null;
+    const ERROR_SECTION = /*[[${errorSection}]]*/ null;
+    const SAVED_SECTION = /*[[${savedSection}]]*/ null;
+
+    // A field that belongs to one choice of a select, such as one SMS provider's token, is shown only
+    // while that choice is made. Hidden fields are disabled, so they are not posted and keep their value.
+    function syncConditionalFields(scope) {
+        scope.querySelectorAll("[data-show-field]").forEach(field => {
+            const select = scope.querySelector(`[name="${field.dataset.showField}"]`);
+            const on = select && field.dataset.showValues.split(",").includes(select.value.toLowerCase());
+            field.classList.toggle("hidden", !on);
+            field.querySelectorAll("input, select, textarea").forEach(input => input.disabled = !on);
+        });
+    }
+
+    document.querySelectorAll("dialog form, form.settings-block").forEach(form => {
+        syncConditionalFields(form);
+        form.querySelectorAll("select").forEach(select =>
+            select.addEventListener("change", () => syncConditionalFields(form)));
+    });
+
+    document.querySelectorAll("[data-open]").forEach(button => button.addEventListener("click", () =>
+        document.getElementById("dialog-" + button.dataset.open).showModal()));
+
+    document.querySelectorAll("dialog [data-close]").forEach(button => button.addEventListener("click", () =>
+        button.closest("dialog").close()));
+
+    document.querySelectorAll("[data-confirm-disconnect]").forEach(button => button.addEventListener("click", event => {
+        const title = button.closest("dialog").querySelector(".dialog-title").textContent;
+        if (!confirm(`Disconnect ${title}? Everything saved for it, secrets included, is cleared.`)) event.preventDefault();
+    }));
+
+    document.querySelectorAll("[data-run-test]").forEach(button => button.addEventListener("click", async () => {
+        const box = button.closest("[data-test]");
+        const input = box.querySelector("input");
+        const result = box.querySelector(".test-result");
+        button.disabled = true;
+        result.className = "test-result alert";
+        result.textContent = "Sending…";
+        try {
+            const headers = {Accept: "application/json", "Content-Type": "application/json"};
+            if (MASTER_KEY) headers["X-Master-Key"] = MASTER_KEY;
+            const res = await fetch("/admin/config/test/" + box.dataset.test, {
+                method: "POST",
+                credentials: "same-origin",
+                headers,
+                body: JSON.stringify({to: input ? input.value : null})
+            });
+            const body = await res.json().catch(() => ({}));
+            const ok = res.ok && body.ok;
+            result.className = "test-result alert " + (ok ? "alert-success" : "alert-error");
+            result.textContent = body.message || "The test couldn't run. Try again.";
+            result.scrollIntoView({block: "nearest"});
+        } catch (err) {
+            result.className = "test-result alert alert-error";
+            result.textContent = "The test couldn't run. Check your connection and try again.";
+        } finally {
+            button.disabled = false;
+        }
+    }));
+
+    // After a refused save, reopen what was being edited so the message sits beside the fields.
+    if (ERROR_SECTION) {
+        const dialog = document.getElementById("dialog-" + ERROR_SECTION);
+        if (dialog) dialog.showModal();
+        else document.getElementById(ERROR_SECTION)?.scrollIntoView({block: "start"});
+    } else if (SAVED_SECTION) {
+        document.getElementById(SAVED_SECTION)?.scrollIntoView({block: "center"});
+    } else {
+        openFromAddress();
+    }
+
+    // /admin/config#email opens Email's dialog, which is how the overview links to a connection.
+    function openFromAddress() {
+        const target = location.hash.slice(1);
+        if (!target) return;
+        const dialog = document.getElementById("dialog-" + target);
+        if (dialog && !dialog.open) dialog.showModal();
+        else document.getElementById(target)?.scrollIntoView({block: "start"});
+    }
+
+    window.addEventListener("hashchange", openFromAddress);
 </script>
 
 </body>

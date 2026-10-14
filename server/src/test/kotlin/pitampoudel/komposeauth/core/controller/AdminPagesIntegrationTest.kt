@@ -98,7 +98,7 @@ class AdminPagesIntegrationTest {
         mockMvc.get("/admin/config") { header(AppConfigController.MASTER_KEY_HEADER, TestConfig.testKey) }
             .andExpect {
                 status { isOk() }
-                content { string(org.hamcrest.Matchers.containsString("Save configuration")) }
+                content { string(org.hamcrest.Matchers.containsString("Save branding")) }
                 content { string(org.hamcrest.Matchers.containsString("Skip to content")) }
             }
     }
@@ -107,10 +107,11 @@ class AdminPagesIntegrationTest {
     fun `configuration refuses a phone region that is not a country`() {
         mockMvc.post("/admin/config") {
             param("key", TestConfig.testKey)
+            param("section", "signin")
             param("defaultPhoneRegion", "ZZ")
         }.andExpect {
-            status { isOk() }
-            content { string(org.hamcrest.Matchers.containsString("defaultPhoneRegion must be a two-letter country code")) }
+            status { isBadRequest() }
+            content { string(org.hamcrest.Matchers.containsString("Default country for phone numbers isn&#39;t one of the choices")) }
         }
         kotlin.test.assertNull(appConfigProvider.get().defaultPhoneRegion)
     }

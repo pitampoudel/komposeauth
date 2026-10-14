@@ -17,6 +17,8 @@
             --brand: /*[(${brandColor})]*/ #3458d4;
             --brand-strong: color-mix(in oklab, var(--brand) 82%, #000);
             --on-brand: #ffffff;
+            /* The brand as text on the page background, which a dark page needs lighter to read. */
+            --brand-text: var(--brand);
 
             --background: #f6f8fc;
             --foreground: #141e32;
@@ -33,6 +35,8 @@
             --danger-line: color-mix(in oklab, #ef4444 30%, transparent);
             --ok-bg: color-mix(in oklab, #12c07e 12%, transparent);
             --ok-text: #077a4f;
+            --warn-bg: color-mix(in oklab, #f59e0b 14%, transparent);
+            --warn-text: #a15c07;
 
             --rail: 248px;
         }
@@ -40,6 +44,7 @@
         @media (prefers-color-scheme: dark) {
             :root {
                 --brand-strong: color-mix(in oklab, var(--brand) 78%, #fff);
+                --brand-text: color-mix(in oklab, var(--brand) 55%, #fff);
 
                 --background: #0a1020;
                 --foreground: #e7ebf6;
@@ -51,6 +56,7 @@
 
                 --danger-text: #f87171;
                 --ok-text: #7dffc8;
+                --warn-text: #fbbf24;
             }
         }
 
@@ -116,7 +122,7 @@
             border-radius: 9px;
             flex-shrink: 0;
             background: color-mix(in oklab, var(--brand) 14%, transparent);
-            color: var(--brand);
+            color: var(--brand-text);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -173,7 +179,7 @@
 
         .rail-link[aria-current="page"] {
             background: color-mix(in oklab, var(--brand) 11%, transparent);
-            color: var(--brand);
+            color: var(--brand-text);
             font-weight: 600;
         }
 
@@ -228,7 +234,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.18em;
-            color: var(--brand);
+            color: var(--brand-text);
         }
 
         h1 { font-size: 36px; line-height: 1.1; margin-top: 8px; font-weight: 600; }
@@ -250,7 +256,7 @@
 
         .section-hint { font-size: 13px; color: var(--muted); }
 
-        .inline-link { color: var(--brand); font-weight: 600; text-decoration: none; }
+        .inline-link { color: var(--brand-text); font-weight: 600; text-decoration: none; }
         .inline-link:hover { text-decoration: underline; }
 
         /* ---- chips ------------------------------------------------------------ */
@@ -322,6 +328,7 @@
         input[type=text],
         input[type=search],
         input[type=email],
+        input[type=tel],
         input[type=url],
         input[type=password],
         input[type=number],
@@ -377,7 +384,7 @@
             height: 38px;
             border-radius: 999px;
             background: color-mix(in oklab, var(--brand) 12%, transparent);
-            color: var(--brand);
+            color: var(--brand-text);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -398,8 +405,9 @@
             color: var(--muted);
         }
 
-        .badge-brand { background: color-mix(in oklab, var(--brand) 10%, transparent); color: var(--brand); }
+        .badge-brand { background: color-mix(in oklab, var(--brand) 10%, transparent); color: var(--brand-text); }
         .badge-ok { background: var(--ok-bg); color: var(--ok-text); }
+        .badge-warn { background: var(--warn-bg); color: var(--warn-text); }
         .badge-none { color: var(--muted); opacity: 0.8; font-style: italic; background: none; padding-left: 0; }
 
         .alert { padding: 12px 15px; border-radius: 16px; font-size: 13px; line-height: 1.5; }
@@ -510,6 +518,9 @@
                 gap: 4px;
                 overflow-x: auto;
                 scrollbar-width: none;
+                /* The pills scroll sideways; fading the edge shows there is more past it. */
+                mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+                padding-right: 24px;
             }
 
             .rail-nav::-webkit-scrollbar { display: none; }
@@ -572,7 +583,7 @@
                 <span class="count" th:text="${bucketCount}">0</span>
             </a>
 
-            <a class="rail-link" href="/admin/config"
+            <a th:if="${canConfigure}" class="rail-link" href="/admin/config"
                th:attr="aria-current=${active == 'config'} ? 'page' : null">
                 Configuration
             </a>
