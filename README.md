@@ -201,7 +201,6 @@ Every option runs the same image and keeps everything in MongoDB, so moving betw
 |---|---|---|
 | Google Cloud Run | the `gcloud` command below | Yes |
 | Render | [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/pitampoudel/komposeauth) (`render.yaml`) | On the free plan |
-| AWS ECS Fargate | [`deploy/aws`](deploy/aws/README.md), one CloudFormation stack | No |
 | Any machine with Docker | `docker compose up -d` ([Quickstart](#1-run-the-authorization-server-docker)) | No |
 
 #### Google Cloud Run
