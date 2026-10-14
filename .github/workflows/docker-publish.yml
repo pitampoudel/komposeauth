@@ -14,10 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # A push or a release runs the same check inside deploy/publish-image.sh, before it builds.
   test:
     name: Run tests
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -36,7 +34,8 @@ jobs:
         run: ./gradlew clean :server:check --parallel --build-cache --no-daemon
 
   build-and-push:
-    name: Test, build and push image (Buildpacks)
+    name: Build and Push Image (Buildpacks)
+    needs: test
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
@@ -60,8 +59,21 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # The same script a release published by hand runs, so the tags and the build are the same.
-      - name: Test, build and push
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # Spring Boot builds and pushes every tag itself, signed in through the login above.
+      - name: Build image with Buildpacks and push tags
+        if: steps.meta.outputs.tags != ''
         env:
-          IMAGE: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth
-        run: deploy/publish-image.sh
+          IMAGE_NAME: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          IMAGE_TAGS: ${{ join(fromJSON(steps.meta.outputs.json).tags, ',') }}
+        run: ./gradlew :server:bootBuildImage --publishImage --imageName="$IMAGE_NAME" -PimageTags="$IMAGE_TAGS" --no-daemon
