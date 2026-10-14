@@ -64,26 +64,16 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
 
+      # Spring Boot builds and pushes every tag itself, signed in through the login above.
       - name: Build image with Buildpacks and push tags
-        shell: bash
-        run: |
-          TAGS="${{ steps.meta.outputs.tags }}"
-          PRIMARY_TAG="$(printf '%s\n' "$TAGS" | head -n1)"
-
-          if [ -z "$PRIMARY_TAG" ]; then
-            echo "No image tags were generated."
-            exit 1
-          fi
-
-          ./gradlew :server:bootBuildImage --imageName="$PRIMARY_TAG" --no-daemon
-
-          printf '%s\n' "$TAGS" | while IFS= read -r tag; do
-            [ -z "$tag" ] && continue
-
-            if [ "$tag" != "$PRIMARY_TAG" ]; then
-              docker tag "$PRIMARY_TAG" "$tag"
-            fi
-
-            docker push "$tag"
-          done
+        if: steps.meta.outputs.tags != ''
+        env:
+          IMAGE_NAME: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          IMAGE_TAGS: ${{ join(fromJSON(steps.meta.outputs.json).tags, ',') }}
+        run: ./gradlew :server:bootBuildImage --publishImage --imageName="$IMAGE_NAME" -PimageTags="$IMAGE_TAGS" --no-daemon

@@ -1,4 +1,5 @@
 import org.gradle.kotlin.dsl.named
+import org.springframework.boot.gradle.tasks.bundling.BootBuildImage
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
@@ -53,9 +54,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
 
     // HTTP client
-    implementation("org.apache.httpcomponents.client5:httpclient5:5.6.1")
-    implementation("org.apache.httpcomponents.core5:httpcore5:5.4")
-    implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.4")
+    implementation("org.apache.httpcomponents.client5:httpclient5:5.6.4")
+    implementation("org.apache.httpcomponents.core5:httpcore5:5.5-beta2")
+    implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.5-beta2")
 
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
@@ -121,5 +122,13 @@ tasks.processResources {
 
 tasks.named<BootJar>("bootJar") {
     archiveFileName.set("app.jar")
+}
+
+tasks.named<BootBuildImage>("bootBuildImage") {
+    val effectiveTag = project.version.toString().takeIf { it.isNotBlank() && it != "unspecified" } ?: "latest"
+    imageName.convention("docker.io/pitampoudel/komposeauth:$effectiveTag")
+    environment.put("BP_SPRING_CLOUD_BINDINGS_DISABLED", "true")
+    // bootBuildImage has no command-line option for extra tags; full references, comma-separated.
+    tags.set(providers.gradleProperty("imageTags").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }.orElse(emptyList()))
 }
 

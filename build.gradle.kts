@@ -59,9 +59,23 @@ subprojects {
     }
 }
 
-val tag: String? = System.getenv("GITHUB_REF_NAME")
-val versionFromTag = tag?.takeIf { it.startsWith("v") }?.removePrefix("v") ?: "1.0.0-SNAPSHOT"
-version = versionFromTag
+val versionFromGit: Provider<String> = providers.exec {
+    isIgnoreExitValue = true
+    commandLine("git", "describe", "--tags", "--exact-match")
+}.standardOutput.asText.map { it.trim().removePrefix("v") }
+    .orElse(
+        providers.exec {
+            isIgnoreExitValue = true
+            commandLine("git", "describe", "--tags", "--abbrev=0")
+        }.standardOutput.asText.map { it.trim().removePrefix("v") }
+    )
+
+val resolvedVersion: String = findProperty("version")?.toString()?.takeIf { it != "unspecified" }
+    ?: System.getenv("GITHUB_REF_NAME")?.takeIf { it.isNotBlank() }?.removePrefix("v")
+    ?: versionFromGit.orNull?.takeIf { it.isNotBlank() }
+    ?: "1.0.0-SNAPSHOT"
+
+version = resolvedVersion
 allprojects {
-    version = versionFromTag
+    version = resolvedVersion
 }
