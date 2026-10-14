@@ -52,7 +52,7 @@ class PasskeyService(
             log.debug("Unreadable passkey assertion", ex)
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, UNREADABLE)
         }
-        val challenge = credential.response?.clientDataJSON?.let(webAuthnJson::challengeOf)
+        val challenge = credential.response.clientDataJSON.let(webAuthnJson::challengeOf)
             ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, UNREADABLE)
         val options = challenges.takeRequestOptions(challenge)
             ?: throw AccessDeniedException("This passkey sign-in has expired. Try again.")
@@ -89,7 +89,7 @@ class PasskeyService(
             log.debug("Unreadable passkey registration", ex)
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, UNREADABLE)
         }
-        val challenge = publicKey.credential?.response?.clientDataJSON?.let(webAuthnJson::challengeOf)
+        val challenge = publicKey.credential.response?.clientDataJSON?.let(webAuthnJson::challengeOf)
             ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, UNREADABLE)
         val options = challenges.takeCreationOptions(challenge, user.id)
             ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "This passkey request has expired. Try again.")

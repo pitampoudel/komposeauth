@@ -64,7 +64,7 @@ class UserCredentialRepositoryImpl(
                 backupState = credentialRecord.isBackupState,
                 uvInitialized = credentialRecord.isUvInitialized,
                 credentialType = credentialRecord.credentialType,
-                createdAt = credentialRecord.created ?: Instant.now(),
+                createdAt = credentialRecord.created,
                 lastUsedAt = credentialRecord.lastUsed
             )
         )

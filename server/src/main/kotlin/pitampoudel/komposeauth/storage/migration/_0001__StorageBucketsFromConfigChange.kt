@@ -92,7 +92,7 @@ class _0001__StorageBucketsFromConfigChange {
                     kind = StorageBucket.Kind.GCS,
                     bucketName = bucketName,
                     projectId = field("gcpProjectId"),
-                    readFromBucketId = if (gcsOnS3) s3?.id else null,
+                    readFromBucketId = if (gcsOnS3) s3.id else null,
                     // Listed first, being the older of the two wherever both are set.
                     createdAt = now.minusMillis(1),
                     updatedAt = now
