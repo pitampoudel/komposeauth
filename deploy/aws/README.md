@@ -21,9 +21,10 @@ pointed at the same database is the same server: tokens it issued on Cloud Run s
    APP_SECRET_ARN=arn:aws:secretsmanager:... ISSUER=https://auth.example.com \
    IMAGE=docker.io/pitampoudel/komposeauth:<release> bash setup.sh
    ```
-   Optional: `FILES_BUCKET` to give the tasks access to an S3 bucket through their role (then leave
-   `s3AccessKeyId` and `s3SecretAccessKey` blank in the admin config), and `ALERT_EMAIL` for the
-   unreachable, 5xx and memory alarms. `REGION` defaults to `ap-south-1` and `STACK` to `komposeauth`.
+   Optional: `FILES_BUCKET` to give the tasks access to an S3 bucket through their role (then list
+   it on the admin console's Storage page with no access key, so the server signs in as the task
+   role), and `ALERT_EMAIL` for the unreachable, 5xx and memory alarms. `REGION` defaults to
+   `ap-south-1` and `STACK` to `komposeauth`.
 4. **MongoDB:** allow the tasks in your database's network access. They get public addresses that
    change, so either allow `0.0.0.0/0` or put them behind a NAT gateway with a fixed address.
 5. **Switch:** point the domain at the stack's `LoadBalancerDnsName` output. Keep the issuer exactly
@@ -37,33 +38,29 @@ back a release that doesn't become healthy.
 - **Client addresses:** the load balancer appends the caller's address as the last
   `X-Forwarded-For` entry, as Cloud Run does, so `trustedProxyCount` stays `1`. Check it with
   `/admin/client-ip` after the switch.
-- **Files already on GCS** are copied to S3 under the same names, because the tasks hold no Google
-  credential and could neither read a KYC document nor delete a photo still there. Set `storageProvider`
-  to `s3` first (and restart the old deployment, so nothing still writes to GCS), then copy from a
-  machine signed in to both clouds; it sends only what S3 lacks, deletes nothing, and is safe to
-  run again:
-  ```bash
-  gcloud storage rsync gs://<gcpBucketName> s3://<s3BucketName> --recursive
-  ```
-  Then set `gcsFilesReadFrom` to `s3` in the admin config. An address recorded under GCS is then
-  read and deleted in S3, with no Google credential.
+- **Files** are kept wherever the Storage page says (`/admin/storage`, see "Where files are kept" in
+  the main README), and the database brings that list with it. To bring files kept on GCS over to S3:
+  1. Add the S3 bucket on the Storage page with no access key and test it.
+  2. Edit the GCS store and give it a service account key that can list, read and delete in its
+     bucket, since the tasks hold no Google identity of their own. Test it.
+  3. **Move files** from the GCS store to the S3 one. New files go to S3 at once; then every file is
+     copied under the same name, GCS addresses start opening the copies in S3, and every saved
+     address is changed to the S3 one. Keep the page open until it is done.
+  4. Once the move says nothing points at the GCS store, remove its entry, then delete the bucket
+     whenever you are sure.
+
+  The same steps move files between any two stores, in either direction.
 - **Profile photos and organization logos** are loaded by browsers straight from the address on
   the record, so the S3 bucket has to let anyone read those two prefixes, as the GCS bucket did.
   KYC documents stay private: this server serves them. A bucket policy is refused while Block
   Public Access covers policies, so lift that part of it first:
   ```bash
-  aws s3api put-public-access-block --bucket <s3BucketName> --public-access-block-configuration \
+  aws s3api put-public-access-block --bucket <bucket> --public-access-block-configuration \
     BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=false,RestrictPublicBuckets=false
-  aws s3api put-bucket-policy --bucket <s3BucketName> --policy '{"Version": "2012-10-17",
+  aws s3api put-bucket-policy --bucket <bucket> --policy '{"Version": "2012-10-17",
     "Statement": [{"Effect": "Allow", "Principal": "*", "Action": "s3:GetObject",
-    "Resource": ["arn:aws:s3:::<s3BucketName>/users/*", "arn:aws:s3:::<s3BucketName>/organization_logos/*"]}]}'
+    "Resource": ["arn:aws:s3:::<bucket>/users/*", "arn:aws:s3:::<bucket>/organization_logos/*"]}]}'
   ```
-  Photos copied from GCS are still shown from GCS until their addresses are rewritten. Once the
-  copy is checked, `rewrite-gcs-addresses.js` rewrites every address of a GCS file on the record to
-  its S3 address (the comment at its top has the command). It writes nothing without `APPLY=1`,
-  listing what it would change field by field instead, and the run after `APPLY=1` should find
-  nothing left. After that the GCS bucket can be deleted, and `gcpBucketName` and
-  `gcsFilesReadFrom` cleared together.
 - **The database** moves as it is: signing keys, sessions and the admin config are all in it. Keep
   `BASE64_ENCRYPTION_KEY` with it, since the config and the KYC documents are encrypted under that
   key.

@@ -5,6 +5,7 @@ import org.springframework.ui.Model
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.oauth_clients.repository.OAuth2ClientRepository
+import pitampoudel.komposeauth.storage.repository.StorageStoreRepository
 import pitampoudel.komposeauth.user.service.UserService
 
 /**
@@ -18,7 +19,8 @@ class AdminShell(
     private val appConfigService: AppConfigService,
     private val userContextService: UserContextService,
     private val userService: UserService,
-    private val oAuth2ClientRepository: OAuth2ClientRepository
+    private val oAuth2ClientRepository: OAuth2ClientRepository,
+    private val storageStoreRepository: StorageStoreRepository
 ) {
 
     /** Default brand colour, matching the one the sign-in page falls back to. */
@@ -32,6 +34,7 @@ class AdminShell(
 
         model.addAttribute("userCount", userService.countUsers())
         model.addAttribute("clientCount", oAuth2ClientRepository.count())
+        model.addAttribute("storeCount", storageStoreRepository.count())
 
         // The configuration page is also reachable with a master key before anyone has signed up,
         // so the viewer block is left out entirely rather than rendered empty.

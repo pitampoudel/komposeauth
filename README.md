@@ -168,6 +168,45 @@ Scaling to several instances is already accounted for — sessions, OAuth2 autho
 abuse counters all live in MongoDB rather than in one container's memory, so limits hold across
 instances and survive cold starts.
 
+#### Where files are kept
+
+Profile photos, organization logos and KYC documents are kept in a bucket listed on the admin
+console's **Storage** page (`/admin/storage`). Any admin can see it; a `SUPER_ADMIN` adds and
+changes stores. Until one is listed, uploads fail, so add one once you have signed in as a
+`SUPER_ADMIN`.
+
+A store is a Google Cloud Storage bucket or one on anything that speaks the S3 API: Amazon S3,
+Cloudflare R2, MinIO, Backblaze B2 and so on. For anything but AWS, give its endpoint; those buckets
+are addressed path-style (`{endpoint}/{bucket}/{name}`). Put a CDN or a domain of your own in front
+as the store's public address and new files are handed out under it. Leave the credentials empty to
+use the server's own identity (a Cloud Run service account, an ECS task role), or paste an access key
+or a service account key, which is stored encrypted like the configuration's secrets. **Test** writes,
+reads, lists and deletes a small file, which is everything the server ever does in a bucket.
+
+Profile photos and organization logos are loaded by browsers straight from the bucket, so it has to
+let anyone read the `users/` and `organization_logos/` prefixes. KYC documents stay private (see
+[KYC documents](#kyc-documents)).
+
+One store takes new files. Every other file stays where it was written and opens from the address
+saved for it, so choosing another store for new files moves nothing already stored. To move to
+another bucket, in the same cloud or another one:
+
+1. Add the new bucket on the Storage page and test it. Test the old one too: the server has to list
+   and read it, so it needs credentials for that cloud while the move runs.
+2. **Move files** from the old store to the new one. New files go to the new one at once. Then every
+   file is copied under the same name, the old store's addresses start opening the copies, and every
+   saved address of an old file, wherever in the database it is, is changed to the new store's own.
+   The move runs while the page is open: closing the page pauses it, and opening it again carries on.
+   Files already copied are skipped, so a move that stopped can be started again.
+3. When the finished move says nothing on record points at the old store any more, remove its entry.
+   Removing an entry never touches the bucket. Delete the old bucket yourself once you are sure.
+
+Upgrading from a release that set the buckets on the configuration page: the first start lists them
+on the Storage page, with the same choice of where new files go and, after a GCS-to-S3 copy, the
+same link between the two. If both a GCS and an S3 bucket were set and `storageProvider` named
+neither, no store takes new files until you choose one there. The old fields are left in the stored
+configuration so the release before can still be rolled back to, but nothing reads them.
+
 ### 2) Add the SDK to your KMP project
 
 Shared module (optional and also included already on client module)
@@ -295,8 +334,8 @@ its origin in that list.
 
 ### KYC documents
 
-Profile photos and KYC uploads go to the same bucket, and a profile photo is meant to be readable by
-anyone with its address. KYC documents (the document scans and the selfie) are not: they are
+Profile photos and KYC uploads go to the same store (see [Where files are kept](#where-files-are-kept)),
+and a profile photo is meant to be readable by anyone with its address. KYC documents (the document scans and the selfie) are not: they are
 encrypted with `BASE64_ENCRYPTION_KEY` before they are uploaded, so the stored copy is unreadable,
 and a KYC response's `documentFrontUrl`, `documentBackUrl` and `selfieUrl` point at this server
 (`GET /kyc/{userId}/documents/{front|back|selfie}`), which serves them only to that user and to

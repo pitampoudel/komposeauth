@@ -566,6 +566,12 @@
                 <span class="count" th:text="${clientCount}">0</span>
             </a>
 
+            <a class="rail-link" href="/admin/storage"
+               th:attr="aria-current=${active == 'storage'} ? 'page' : null">
+                Storage
+                <span class="count" th:text="${storeCount}">0</span>
+            </a>
+
             <a class="rail-link" href="/admin/config"
                th:attr="aria-current=${active == 'config'} ? 'page' : null">
                 Configuration

@@ -43,25 +43,6 @@ data class AppConfig(
      * password sign-in at `/login` without `countryNameCode`. Nepal when unset.
      */
     var defaultPhoneRegion: String? = null,
-    /**
-     * Which bucket takes new files, "gcs" or "s3"; needed only when both are set. Neither cloud is a
-     * default, see [resolvedStorageProvider]. A stored file is still read and deleted in the bucket
-     * its address names, so keep the other bucket's settings while any of its files are left.
-     */
-    var storageProvider: String? = null,
-    var gcpProjectId: String? = null,
-    var gcpBucketName: String? = null,
-    /**
-     * Where the files recorded under [gcpBucketName]'s addresses are read from: "s3" once that bucket
-     * has been copied into [s3BucketName] under the same names (deploy/aws/README.md), so no Google
-     * credential is needed for them; empty, GCS itself.
-     */
-    var gcsFilesReadFrom: String? = null,
-    var s3BucketName: String? = null,
-    var s3Region: String? = null,
-    /** With [s3SecretAccessKey], or both empty to use the host's own role (an ECS task role). */
-    var s3AccessKeyId: String? = null,
-    var s3SecretAccessKey: String? = null,
 
     var googleAuthClientId: String? = null,
     var googleAuthClientSecret: String? = null,
@@ -155,36 +136,6 @@ data class AppConfig(
     val updatedAt: Instant = Instant.now()
 ) {
 
-    fun resolvedStorageProvider(): String {
-        val configured = listOfNotNull(
-            STORAGE_GCS.takeIf { gcpBucketName != null && !gcsFilesAreOnS3() },
-            STORAGE_S3.takeIf { s3BucketName != null }
-        )
-        val chosen = storageProvider?.lowercase()?.takeIf { it.isNotBlank() }
-            ?: configured.singleOrNull()
-            ?: error(
-                if (configured.isEmpty()) "No storage bucket configured"
-                else "Both a GCS and an S3 bucket are configured; set storageProvider to say which takes new files"
-            )
-        check(chosen in configured) {
-            if (chosen == STORAGE_GCS && gcsFilesAreOnS3())
-                "storageProvider is 'gcs' but gcsFilesReadFrom says the GCS files have moved to S3"
-            else "storageProvider is '$chosen' but that bucket is not configured"
-        }
-        return chosen
-    }
-
-    /**
-     * Whether the GCS bucket's files are now read from the S3 bucket they were copied into. Once they
-     * are, GCS is only a name for old addresses: it takes no new files and needs no credential.
-     */
-    fun gcsFilesAreOnS3(): Boolean {
-        if (gcsFilesReadFrom?.lowercase() != STORAGE_S3) return false
-        check(gcpBucketName != null) { "gcsFilesReadFrom is 's3' but gcpBucketName is empty, so no old address can be recognised" }
-        check(s3BucketName != null) { "gcsFilesReadFrom is 's3' but no S3 bucket is configured" }
-        return true
-    }
-
     fun clean(): AppConfig {
         if (name.isNullOrBlank()) name = null
         if (websiteUrl.isNullOrBlank()) websiteUrl = null
@@ -196,14 +147,6 @@ data class AppConfig(
         if (privacyLink.isNullOrBlank()) privacyLink = null
 
         if (logoUrl.isNullOrBlank()) logoUrl = null
-        storageProvider = storageProvider?.lowercase()?.takeIf { it.isNotBlank() }
-        if (gcpProjectId.isNullOrBlank()) gcpProjectId = null
-        if (gcpBucketName.isNullOrBlank()) gcpBucketName = null
-        gcsFilesReadFrom = gcsFilesReadFrom?.lowercase()?.takeIf { it.isNotBlank() }
-        if (s3BucketName.isNullOrBlank()) s3BucketName = null
-        if (s3Region.isNullOrBlank()) s3Region = null
-        if (s3AccessKeyId.isNullOrBlank()) s3AccessKeyId = null
-        if (s3SecretAccessKey.isNullOrBlank()) s3SecretAccessKey = null
         if (googleAuthClientId.isNullOrBlank()) googleAuthClientId = null
         if (googleAuthClientSecret.isNullOrBlank()) googleAuthClientSecret = null
         if (googleAuthDesktopClientId.isNullOrBlank()) googleAuthDesktopClientId = null
@@ -244,8 +187,16 @@ data class AppConfig(
 
     companion object {
         const val SINGLETON_ID: String = "singleton"
-        const val STORAGE_GCS = "gcs"
-        const val STORAGE_S3 = "s3"
         const val DEFAULT_PHONE_REGION = "NP"
+
+        /**
+         * Where files were kept before the Storage page listed them. Nothing reads these any more, but
+         * they stay in the stored document, saves included, so a rollback to the release before still
+         * finds its buckets.
+         */
+        val RETIRED_STORAGE_FIELDS: List<String> = listOf(
+            "storageProvider", "gcpProjectId", "gcpBucketName", "gcsFilesReadFrom",
+            "s3BucketName", "s3Region", "s3AccessKeyId", "s3SecretAccessKey"
+        )
     }
 }

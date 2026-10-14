@@ -34,8 +34,8 @@ Parameters:
     Type: String
     Default: ''
     Description: >-
-      An S3 bucket set as s3BucketName in the admin config. The tasks get access to it through their
-      role, so s3AccessKeyId and s3SecretAccessKey can stay blank there. Empty grants nothing.
+      An S3 bucket listed on the admin console's Storage page. The tasks get access to it through their
+      role, so its access key can stay blank there. Empty grants nothing.
   Cpu:
     Type: Number
     Default: 512

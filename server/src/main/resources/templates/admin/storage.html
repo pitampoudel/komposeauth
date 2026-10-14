@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html th:replace="~{admin/layout :: page(~{::title}, 'storage', ~{::style}, ~{::main}, ~{::script})}"
+      lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${appName.isEmpty()} ? 'Storage · Admin' : ${appName} + ' · Storage'">Storage</title>
+    <style>
+        #status, #problem { margin-top: 20px; }
+
+        .head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .row { align-items: flex-start; }
+
+        .row-main .row-sub { white-space: normal; }
+
+        .row-facts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 46%; }
+
+        .row-actions { flex-wrap: wrap; justify-content: flex-end; }
+
+        .move-summary { font-size: 15px; line-height: 1.5; max-width: 70ch; }
+
+        .meter { margin-top: 18px; }
+
+        .meter-line { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--muted); }
+
+        .meter-line strong { color: var(--foreground); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+        .bar { margin-top: 7px; height: 6px; border-radius: 999px; background: var(--surface-soft); overflow: hidden; }
+
+        .bar > span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--brand); transition: width 0.4s; }
+
+        .pause-note { margin-top: 18px; font-size: 13px; color: var(--muted); max-width: 70ch; }
+
+        .failed-names { margin-top: 12px; font-size: 12.5px; color: var(--muted); }
+
+        .failed-names li { margin-left: 18px; }
+
+        .move-actions { margin-top: 18px; display: flex; gap: 8px; }
+
+        .field { margin-bottom: 16px; }
+
+        .field-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+        .fixed-note { margin-bottom: 16px; font-size: 13px; color: var(--muted); }
+
+        .dialog-body { max-height: min(60vh, 520px); overflow-y: auto; padding-right: 4px; margin-top: 18px; }
+
+        .steps { margin-top: 18px; }
+
+        .move-plan { margin-top: 14px; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+
+        .move-plan li { margin: 6px 0 0 18px; }
+
+        @media (max-width: 620px) {
+            .row { flex-wrap: wrap; }
+            .row-facts, .row-actions { justify-content: flex-start; width: 100%; max-width: none; }
+            .field-pair { grid-template-columns: minmax(0, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<main>
+    <div class="page-head">
+        <div>
+            <p class="eyebrow">Storage</p>
+            <h1 class="font-display">Where files are kept</h1>
+            <p class="lede">
+                Profile photos, organization logos and identity documents. New files go to one bucket, and
+                every file still opens from the bucket it was saved in.
+            </p>
+            <p class="lede" th:unless="${canManageStorage}">Only a SUPER_ADMIN can add, change or move a store.</p>
+        </div>
+        <div class="head-actions" th:if="${canManageStorage}">
+            <button class="btn btn-secondary btn-md hidden" type="button" id="moveBtn">Move files</button>
+            <button class="btn btn-primary btn-md" type="button" id="newStoreBtn">Add a bucket</button>
+        </div>
+    </div>
+
+    <div id="problem" class="alert alert-error hidden" role="alert"></div>
+    <div id="status" class="hidden" role="status" aria-live="polite"></div>
+
+    <section id="moveSection" class="hidden" aria-live="polite">
+        <div class="section-head">
+            <h2 id="moveTitle">Moving files</h2>
+            <span class="section-hint" id="moveWho"></span>
+        </div>
+        <p class="move-summary" id="moveSummary"></p>
+
+        <div class="meter" id="filesMeter">
+            <div class="meter-line"><span>Files</span><strong id="filesText"></strong></div>
+            <div class="bar"><span id="filesBar"></span></div>
+        </div>
+        <div class="meter" id="recordsMeter">
+            <div class="meter-line"><span>Saved addresses</span><strong id="recordsText"></strong></div>
+            <div class="bar"><span id="recordsBar"></span></div>
+        </div>
+
+        <div class="failed-names hidden" id="failedNames"></div>
+        <p class="pause-note hidden" id="pauseNote"></p>
+        <div class="move-actions" th:if="${canManageStorage}">
+            <button class="btn btn-danger btn-sm hidden" type="button" id="cancelMoveBtn">Cancel the move</button>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <h2>Stores</h2>
+            <span class="section-hint">Removing a store takes it off this list. Its bucket and files are never touched.</span>
+        </div>
+        <div id="rows" class="rows" aria-busy="false"></div>
+
+        <div id="empty" class="empty hidden">
+            <h3>No bucket is listed yet</h3>
+            <p>Uploads fail until one is. Add the bucket files should be kept in, then test it.</p>
+            <button class="btn btn-secondary btn-sm" type="button" id="emptyNewBtn" th:if="${canManageStorage}">Add a bucket</button>
+        </div>
+    </section>
+
+    <dialog id="storeDialog" aria-labelledby="storeTitle">
+        <div class="dialog-head">
+            <div class="dialog-title" id="storeTitle">Add a bucket</div>
+            <div class="dialog-sub" id="storeSub"></div>
+        </div>
+
+        <form id="storeForm">
+            <div class="dialog-body">
+                <div class="field">
+                    <label for="storeName">Name <span class="hint">— what this page calls it</span></label>
+                    <input id="storeName" type="text" required maxlength="60" placeholder="Cloudflare R2"/>
+                </div>
+                <p class="fixed-note hidden" id="fixedNote">
+                    The bucket and how its addresses are written can't change once it is listed: every address
+                    already saved depends on them. To use a different bucket, add it and move the files.
+                </p>
+                <div class="field">
+                    <label for="storeKind">Kind</label>
+                    <select id="storeKind">
+                        <option value="S3">S3-compatible (Amazon S3, Cloudflare R2, MinIO and others)</option>
+                        <option value="GCS">Google Cloud Storage</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="storeBucket">Bucket</label>
+                    <input id="storeBucket" type="text" required placeholder="my-files"/>
+                </div>
+                <div class="field field-pair" data-kind="S3">
+                    <div>
+                        <label for="storeRegion">Region <span class="hint">— auto on R2</span></label>
+                        <input id="storeRegion" type="text" placeholder="ap-south-1"/>
+                    </div>
+                    <div>
+                        <label for="storeEndpoint">Endpoint <span class="hint">— blank for AWS</span></label>
+                        <input id="storeEndpoint" type="url" placeholder="https://ACCOUNT.r2.cloudflarestorage.com"/>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="storePublicBase">Public address <span class="hint">— optional: a CDN or domain in front of the bucket</span></label>
+                    <input id="storePublicBase" type="url" placeholder="https://files.example.com"/>
+                </div>
+                <div class="field" data-kind="GCS">
+                    <label for="storeProject">Project <span class="hint">— optional</span></label>
+                    <input id="storeProject" type="text" placeholder="my-project"/>
+                </div>
+                <div class="field">
+                    <label for="storeCredentials">Signs in with</label>
+                    <select id="storeCredentials"></select>
+                </div>
+                <div class="field field-pair" data-kind="S3" data-credentials="REPLACE">
+                    <div>
+                        <label for="storeKeyId">Access key ID</label>
+                        <input id="storeKeyId" type="text" autocomplete="off"/>
+                    </div>
+                    <div>
+                        <label for="storeSecret">Secret access key</label>
+                        <input id="storeSecret" type="password" autocomplete="new-password"/>
+                    </div>
+                </div>
+                <div class="field" data-kind="GCS" data-credentials="REPLACE">
+                    <label for="storeServiceAccount">Service account key <span class="hint">— the whole JSON file</span></label>
+                    <textarea id="storeServiceAccount" spellcheck="false" autocomplete="off"></textarea>
+                </div>
+            </div>
+
+            <div id="storeDialogStatus" class="alert alert-error hidden" role="alert" style="margin-top:14px;"></div>
+
+            <div class="dialog-foot">
+                <button class="btn btn-ghost btn-sm" type="button" id="storeCancelBtn">Cancel</button>
+                <button class="btn btn-primary btn-sm" type="submit" id="storeSubmitBtn">Add bucket</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="moveDialog" aria-labelledby="moveDialogTitle">
+        <div class="dialog-head">
+            <div class="dialog-title" id="moveDialogTitle">Move files</div>
+            <div class="dialog-sub">Every file in one store, into another, and every saved address with it.</div>
+        </div>
+
+        <form id="moveForm">
+            <div class="dialog-body">
+                <div class="field field-pair">
+                    <div>
+                        <label for="moveFrom">From</label>
+                        <select id="moveFrom"></select>
+                    </div>
+                    <div>
+                        <label for="moveTo">To</label>
+                        <select id="moveTo"></select>
+                    </div>
+                </div>
+                <ol class="move-plan" id="movePlan"></ol>
+            </div>
+
+            <div id="moveDialogStatus" class="alert alert-error hidden" role="alert" style="margin-top:14px;"></div>
+
+            <div class="dialog-foot">
+                <button class="btn btn-ghost btn-sm" type="button" id="moveCancelBtn">Cancel</button>
+                <button class="btn btn-primary btn-sm" type="submit" id="moveSubmitBtn">Start moving</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="testDialog" aria-labelledby="testTitle">
+        <div class="dialog-head">
+            <div class="dialog-title" id="testTitle">Testing</div>
+            <div class="dialog-sub" id="testSub">Writing a small file, reading it back, finding it by listing and deleting it.</div>
+        </div>
+        <div class="rows steps" id="testSteps"></div>
+        <div class="dialog-foot">
+            <button class="btn btn-primary btn-sm" type="button" id="testCloseBtn">Close</button>
+        </div>
+    </dialog>
+</main>
+
+<script th:inline="javascript">
+    const API_BASE = "/admin/storage";
+    /** Writes and stepping a move need SUPER_ADMIN (`StorageController`), so a plain admin gets the page without its buttons. */
+    const CAN_MANAGE = /*[[${canManageStorage}]]*/ false;
+    const STEP_EVERY_MS = 1500;
+    const WATCH_EVERY_MS = 5000;
+
+    const el = id => document.getElementById(id);
+    const ui = {
+        rows: el("rows"), empty: el("empty"), status: el("status"), problem: el("problem"),
+        moveBtn: el("moveBtn"), newStoreBtn: el("newStoreBtn"), emptyNewBtn: el("emptyNewBtn"),
+        moveSection: el("moveSection"), moveTitle: el("moveTitle"), moveWho: el("moveWho"),
+        moveSummary: el("moveSummary"), filesMeter: el("filesMeter"), filesText: el("filesText"),
+        filesBar: el("filesBar"), recordsMeter: el("recordsMeter"), recordsText: el("recordsText"),
+        recordsBar: el("recordsBar"), failedNames: el("failedNames"), pauseNote: el("pauseNote"),
+        cancelMoveBtn: el("cancelMoveBtn"),
+        storeDialog: el("storeDialog"), storeForm: el("storeForm"), storeTitle: el("storeTitle"),
+        storeSub: el("storeSub"), fixedNote: el("fixedNote"), storeDialogStatus: el("storeDialogStatus"),
+        storeSubmitBtn: el("storeSubmitBtn"),
+        moveDialog: el("moveDialog"), moveForm: el("moveForm"), moveFrom: el("moveFrom"), moveTo: el("moveTo"),
+        movePlan: el("movePlan"), moveDialogStatus: el("moveDialogStatus"), moveSubmitBtn: el("moveSubmitBtn"),
+        testDialog: el("testDialog"), testTitle: el("testTitle"), testSteps: el("testSteps")
+    };
+    const fields = {
+        name: el("storeName"), kind: el("storeKind"), bucket: el("storeBucket"), region: el("storeRegion"),
+        endpoint: el("storeEndpoint"), publicBase: el("storePublicBase"), project: el("storeProject"),
+        credentials: el("storeCredentials"), keyId: el("storeKeyId"), secret: el("storeSecret"),
+        serviceAccount: el("storeServiceAccount")
+    };
+
+    let state = {stores: [], move: null, problem: null};
+    let editing = null;
+    let timer = null;
+
+    const number = n => Number(n || 0).toLocaleString();
+
+    function bytes(n) {
+        n = Number(n || 0);
+        const units = ["bytes", "KB", "MB", "GB", "TB"];
+        let unit = 0;
+        while (n >= 1024 && unit < units.length - 1) {
+            n /= 1024;
+            unit++;
+        }
+        return (unit === 0 ? n : n.toFixed(n < 10 ? 1 : 0)) + " " + units[unit];
+    }
+
+    const share = (part, whole) => whole > 0 ? Math.min(100, Math.round(part / whole * 100)) : 0;
+
+    function showStatus(target, kind, text) {
+        target.textContent = text;
+        target.className = "alert alert-" + kind;
+    }
+
+    function request(path, method, body) {
+        const init = {method: method || "GET", credentials: "same-origin", headers: {Accept: "application/json"}};
+        if (body !== undefined) {
+            init.headers["Content-Type"] = "application/json";
+            init.body = JSON.stringify(body);
+        }
+        return fetch(API_BASE + path, init);
+    }
+
+    // ---- state -----------------------------------------------------------------
+
+    async function loadState() {
+        ui.rows.setAttribute("aria-busy", "true");
+        try {
+            const res = await request("/state");
+            if (!res.ok) throw new Error(await problemText(res, "Couldn't load the stores. Reload the page to try again."));
+            state = await res.json();
+            render();
+        } catch (err) {
+            showStatus(ui.status, "error", err.message || "Couldn't load the stores. Reload the page to try again.");
+        } finally {
+            ui.rows.setAttribute("aria-busy", "false");
+        }
+        schedule();
+    }
+
+    function render() {
+        ui.problem.textContent = state.problem || "";
+        ui.problem.classList.toggle("hidden", !state.problem);
+        renderStores();
+        renderMove();
+    }
+
+    function renderStores() {
+        const stores = state.stores;
+        const moving = !!(state.move && state.move.active);
+        ui.empty.classList.toggle("hidden", stores.length > 0);
+        ui.moveBtn?.classList.toggle("hidden", stores.length < 2 || moving);
+
+        ui.rows.innerHTML = stores.map((store, index) => {
+            const badges = [
+                `<span class="badge${store.primary ? " badge-ok" : ""}">${escapeHtml(store.role)}</span>`,
+                `<span class="badge">${escapeHtml(store.kindLabel)}</span>`
+            ];
+            const actions = [];
+            if (CAN_MANAGE) {
+                actions.push(`<button class="btn btn-secondary btn-xs" type="button" data-test="${index}">Test</button>`);
+                actions.push(`<button class="btn btn-secondary btn-xs" type="button" data-edit="${index}">Edit</button>`);
+                if (!store.primary && !store.readFromStoreId && !moving) {
+                    actions.push(`<button class="btn btn-secondary btn-xs" type="button" data-primary="${index}">Send new files here</button>`);
+                }
+                if (!store.primary && store.readBy.length === 0 && !moving) {
+                    actions.push(`<button class="btn btn-danger btn-xs" type="button" data-remove="${index}">Remove</button>`);
+                }
+            }
+            const readBy = store.readBy.length
+                ? `<div class="row-sub">Files of ${escapeHtml(store.readBy.join(", "))} open from here.</div>` : "";
+            return `
+                <div class="row">
+                    <div class="row-main">
+                        <div class="row-name">${escapeHtml(store.name)}</div>
+                        <div class="row-sub">${escapeHtml(store.location)}</div>
+                        <div class="row-sub">${escapeHtml(store.credentials)}</div>
+                        ${readBy}
+                    </div>
+                    <div class="row-facts">${badges.join("")}</div>
+                    ${actions.length ? `<div class="row-actions">${actions.join("")}</div>` : ""}
+                </div>`;
+        }).join("");
+
+        const on = (attr, handler) => ui.rows.querySelectorAll(`[data-${attr}]`).forEach(btn =>
+            btn.addEventListener("click", () => handler(stores[Number(btn.dataset[attr])], btn)));
+        on("test", testStore);
+        on("edit", openEdit);
+        on("primary", makePrimary);
+        on("remove", removeStore);
+    }
+
+    function renderMove() {
+        const move = state.move;
+        ui.moveSection.classList.toggle("hidden", !move);
+        if (!move) return;
+
+        ui.moveTitle.textContent = move.active
+            ? `Moving files from ${move.fromName} to ${move.toName}`
+            : `Last move: ${move.fromName} to ${move.toName}`;
+        ui.moveWho.textContent = move.startedBy ? `Started by ${move.startedBy}` : "";
+        ui.moveSummary.textContent = move.summary;
+
+        const handled = move.filesCopied + move.filesAlreadyThere + move.filesGone + move.filesFailed;
+        const counting = move.state === "SWITCHING" || move.state === "COUNTING";
+        ui.filesMeter.classList.toggle("hidden", move.state === "SWITCHING");
+        ui.filesText.textContent = counting
+            ? `${number(move.filesTotal)} counted so far`
+            : `${number(handled)} of ${number(move.filesTotal)} files · ${bytes(move.bytesCopied)} copied of ${bytes(move.bytesTotal)}`;
+        ui.filesBar.style.width = (counting ? 0 : share(handled, move.filesTotal)) + "%";
+
+        const rewriting = move.state === "REWRITING" || move.recordsTotal > 0;
+        ui.recordsMeter.classList.toggle("hidden", !rewriting);
+        ui.recordsText.textContent = `${number(move.recordsRead)} of ${number(move.recordsTotal)} records read · ` +
+            `${number(move.linksUpdated)} updated, ${number(move.linksLeft)} left`;
+        ui.recordsBar.style.width = share(move.recordsRead, move.recordsTotal) + "%";
+
+        if (move.failedNames.length) {
+            const more = move.filesFailed - move.failedNames.length;
+            ui.failedNames.innerHTML = `Couldn't copy:<ul>${move.failedNames.map(n => `<li>${escapeHtml(n)}</li>`).join("")}</ul>` +
+                (more > 0 ? `and ${number(more)} more.` : "");
+        }
+        ui.failedNames.classList.toggle("hidden", move.failedNames.length === 0);
+
+        // Nothing moves a move along but an open page, and saying so is the only way anyone finds out.
+        ui.pauseNote.textContent = !move.active ? ""
+            : CAN_MANAGE
+                ? "The move goes on only while this page is open. Close it and the move pauses where it is; open the page again to carry on."
+                : "The move goes on only while a SUPER_ADMIN has this page open, and is paused otherwise.";
+        ui.pauseNote.classList.toggle("hidden", !move.active);
+        ui.cancelMoveBtn?.classList.toggle("hidden", !move.active);
+    }
+
+    // ---- moving ----------------------------------------------------------------
+
+    function schedule() {
+        clearTimeout(timer);
+        if (!state.move || !state.move.active) return;
+        timer = setTimeout(CAN_MANAGE ? step : loadState, CAN_MANAGE ? STEP_EVERY_MS : WATCH_EVERY_MS);
+    }
+
+    async function step() {
+        const before = state.move;
+        try {
+            const res = await request(`/moves/${before.id}/step`, "POST");
+            if (res.status === 401) {
+                clearTimeout(timer);
+                showStatus(ui.status, "error", "Your sign-in has run out, so the move is paused. Sign in again and open this page to carry on.");
+                return;
+            }
+            if (!res.ok) throw new Error(await problemText(res, "The move couldn't take its next step. Trying again shortly."));
+            const move = await res.json();
+            // Which store takes new files, and which reads from which, change as the state does.
+            if (move.state !== before.state || !move.active) {
+                await loadState();
+                return;
+            }
+            state.move = move;
+            renderMove();
+            schedule();
+        } catch (err) {
+            showStatus(ui.status, "error", err.message || "The move couldn't take its next step. Trying again shortly.");
+            clearTimeout(timer);
+            timer = setTimeout(step, WATCH_EVERY_MS);
+        }
+    }
+
+    function describePlan() {
+        const from = state.stores.find(s => s.id === ui.moveFrom.value);
+        const to = state.stores.find(s => s.id === ui.moveTo.value);
+        if (!from || !to || from.id === to.id) {
+            ui.movePlan.innerHTML = "<li>Choose two different stores.</li>";
+            return;
+        }
+        ui.movePlan.innerHTML = [
+            `New files go to ${escapeHtml(to.name)} straight away.`,
+            `Every file in ${escapeHtml(from.name)} is copied to ${escapeHtml(to.name)} under the same name. One already there with the same size is skipped.`,
+            `Once every file is copied, ${escapeHtml(from.name)}'s addresses open the copies, and each saved address is changed to ${escapeHtml(to.name)}'s own.`,
+            `Nothing is deleted from ${escapeHtml(from.name)}. Keep this page open until it is done: closing it pauses the move.`
+        ].map(line => `<li>${line}</li>`).join("");
+    }
+
+    function openMove() {
+        const options = state.stores.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join("");
+        ui.moveFrom.innerHTML = options;
+        ui.moveTo.innerHTML = options;
+        const primary = state.stores.find(s => s.primary);
+        const source = state.stores.find(s => !s.primary && !s.readFromStoreId) || state.stores.find(s => !s.primary);
+        if (source) ui.moveFrom.value = source.id;
+        if (primary) ui.moveTo.value = primary.id;
+        ui.moveDialogStatus.className = "alert alert-error hidden";
+        describePlan();
+        ui.moveDialog.showModal();
+    }
+
+    ui.moveForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        ui.moveSubmitBtn.disabled = true;
+        try {
+            const res = await request("/moves", "POST", {fromStoreId: ui.moveFrom.value, toStoreId: ui.moveTo.value});
+            if (!res.ok) throw new Error(await problemText(res, "Couldn't start the move. Try again."));
+            ui.moveDialog.close();
+            ui.status.className = "hidden";
+            await loadState();
+        } catch (err) {
+            showStatus(ui.moveDialogStatus, "error", err.message || "Couldn't start the move. Try again.");
+        } finally {
+            ui.moveSubmitBtn.disabled = false;
+        }
+    });
+
+    async function cancelMove() {
+        const move = state.move;
+        if (!move || !confirm(`Cancel moving files from ${move.fromName}? New files keep going to ${move.toName}, and every saved address still opens.`)) return;
+        clearTimeout(timer);
+        try {
+            const res = await request(`/moves/${move.id}/cancel`, "POST");
+            if (!res.ok) throw new Error(await problemText(res, "Couldn't cancel the move. Try again."));
+        } catch (err) {
+            showStatus(ui.status, "error", err.message || "Couldn't cancel the move. Try again.");
+        }
+        await loadState();
+    }
+
+    // ---- stores ----------------------------------------------------------------
+
+    function syncStoreFields() {
+        const kind = fields.kind.value;
+        const credentials = fields.credentials.value;
+        ui.storeForm.querySelectorAll("[data-kind]").forEach(node => {
+            const kindMatches = node.dataset.kind === kind;
+            const credentialsMatch = !node.dataset.credentials || node.dataset.credentials === credentials;
+            node.classList.toggle("hidden", !(kindMatches && credentialsMatch));
+        });
+    }
+
+    function credentialChoices(isEdit, store) {
+        const key = fields.kind.value === "GCS" ? "A service account key" : "An access key";
+        const choices = isEdit
+            ? [
+                {value: "KEEP", label: `Keep as it is (${store.credentials})`},
+                {value: "HOST", label: "The server's own identity"},
+                {value: "REPLACE", label: `${key} (replace it)`}
+            ]
+            : [
+                {value: "HOST", label: "The server's own identity: the role or service account it runs as"},
+                {value: "REPLACE", label: key}
+            ];
+        fields.credentials.innerHTML = choices.map(choice =>
+            `<option value="${choice.value}">${escapeHtml(choice.label)}</option>`).join("");
+    }
+
+    function openCreate() {
+        editing = null;
+        ui.storeTitle.textContent = "Add a bucket";
+        ui.storeSub.textContent = "It takes new files at once if it is the first one listed; otherwise it waits until you send them there.";
+        ui.storeSubmitBtn.textContent = "Add bucket";
+        ui.fixedNote.classList.add("hidden");
+        for (const f of Object.values(fields)) {
+            if (f.tagName !== "SELECT") f.value = "";
+            f.disabled = false;
+        }
+        fields.kind.value = "S3";
+        credentialChoices(false);
+        fields.credentials.value = "HOST";
+        syncStoreFields();
+        ui.storeDialogStatus.className = "alert alert-error hidden";
+        ui.storeDialog.showModal();
+    }
+
+    function openEdit(store) {
+        editing = store;
+        ui.storeTitle.textContent = store.name;
+        ui.storeSub.textContent = store.location;
+        ui.storeSubmitBtn.textContent = "Save changes";
+        ui.fixedNote.classList.remove("hidden");
+        fields.name.value = store.name;
+        fields.kind.value = store.kind;
+        fields.bucket.value = store.bucket;
+        fields.region.value = store.region || "";
+        fields.endpoint.value = store.endpoint || "";
+        fields.publicBase.value = store.publicBaseUrl || "";
+        fields.project.value = store.projectId || "";
+        fields.keyId.value = "";
+        fields.secret.value = "";
+        fields.serviceAccount.value = "";
+        for (const f of [fields.kind, fields.bucket, fields.region, fields.endpoint, fields.publicBase]) f.disabled = true;
+        for (const f of [fields.name, fields.project, fields.credentials, fields.keyId, fields.secret, fields.serviceAccount]) f.disabled = false;
+        credentialChoices(true, store);
+        fields.credentials.value = "KEEP";
+        syncStoreFields();
+        ui.storeDialogStatus.className = "alert alert-error hidden";
+        ui.storeDialog.showModal();
+    }
+
+    ui.storeForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        ui.storeDialogStatus.className = "alert alert-error hidden";
+        ui.storeSubmitBtn.disabled = true;
+        const value = f => f.value.trim() || null;
+        const replacing = fields.credentials.value === "REPLACE";
+        const gcs = fields.kind.value === "GCS";
+        const credentials = {
+            accessKeyId: replacing && !gcs ? value(fields.keyId) : null,
+            secretAccessKey: replacing && !gcs ? value(fields.secret) : null,
+            serviceAccountJson: replacing && gcs ? value(fields.serviceAccount) : null
+        };
+        try {
+            const res = editing
+                ? await request(`/stores/${editing.id}`, "PATCH", {
+                    name: fields.name.value.trim(),
+                    projectId: gcs ? value(fields.project) : null,
+                    credentials: fields.credentials.value,
+                    ...credentials
+                })
+                : await request("/stores", "POST", {
+                    name: fields.name.value.trim(),
+                    kind: fields.kind.value,
+                    bucket: fields.bucket.value.trim(),
+                    region: gcs ? null : value(fields.region),
+                    endpoint: gcs ? null : value(fields.endpoint),
+                    publicBaseUrl: value(fields.publicBase),
+                    projectId: gcs ? value(fields.project) : null,
+                    ...credentials
+                });
+            if (!res.ok) throw new Error(await problemText(res, "Couldn't save that store. Try again."));
+            const saved = await res.json();
+            ui.storeDialog.close();
+            showStatus(ui.status, "success", editing
+                ? `${saved.name} was updated.`
+                : `${saved.name} was added. Test it before sending files there.`);
+            await loadState();
+        } catch (err) {
+            showStatus(ui.storeDialogStatus, "error", err.message || "Couldn't save that store. Try again.");
+        } finally {
+            ui.storeSubmitBtn.disabled = false;
+        }
+    });
+
+    async function testStore(store, button) {
+        button.disabled = true;
+        ui.testTitle.textContent = `Testing ${store.name}`;
+        ui.testSteps.innerHTML = `<div class="row"><div class="row-main"><div class="row-sub">Working…</div></div></div>`;
+        ui.testDialog.showModal();
+        try {
+            const res = await request(`/stores/${store.id}/test`, "POST");
+            if (!res.ok) throw new Error(await problemText(res, "Couldn't run the test. Try again."));
+            const probe = await res.json();
+            ui.testTitle.textContent = probe.ok ? `${probe.storeName} works` : `${probe.storeName} didn't pass`;
+            const label = {OK: "Done", FAILED: "Failed", SKIPPED: "Not tried"};
+            ui.testSteps.innerHTML = probe.steps.map(s => `
+                <div class="row">
+                    <div class="row-main">
+                        <div class="row-name">${escapeHtml(s.step)}</div>
+                        <div class="row-sub">${escapeHtml(s.detail)}</div>
+                    </div>
+                    <span class="badge${s.outcome === "OK" ? " badge-ok" : ""}">${label[s.outcome] || escapeHtml(s.outcome)}</span>
+                </div>`).join("");
+        } catch (err) {
+            ui.testSteps.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    async function makePrimary(store) {
+        if (!confirm(`Send new files to ${store.name}? Files already saved stay where they are and keep opening from there.`)) return;
+        await write(`/stores/${store.id}/primary`, "POST", `New files now go to ${store.name}.`, "Couldn't change where new files go. Try again.");
+    }
+
+    async function removeStore(store) {
+        if (!confirm(`Remove ${store.name} from this list? Its bucket and files are left alone, but any address of it still saved will stop opening.`)) return;
+        await write(`/stores/${store.id}`, "DELETE", `${store.name} was removed from the list.`, "Couldn't remove that store. Try again.");
+    }
+
+    async function write(path, method, done, fallback) {
+        try {
+            const res = await request(path, method);
+            if (!res.ok) throw new Error(await problemText(res, fallback));
+            state = await res.json();
+            render();
+            showStatus(ui.status, "success", done);
+        } catch (err) {
+            showStatus(ui.status, "error", err.message || fallback);
+        }
+    }
+
+    fields.kind.addEventListener("change", () => {
+        credentialChoices(!!editing, editing);
+        syncStoreFields();
+    });
+    fields.credentials.addEventListener("change", syncStoreFields);
+    ui.moveFrom.addEventListener("change", describePlan);
+    ui.moveTo.addEventListener("change", describePlan);
+    ui.newStoreBtn?.addEventListener("click", openCreate);
+    ui.emptyNewBtn?.addEventListener("click", openCreate);
+    ui.moveBtn?.addEventListener("click", openMove);
+    ui.cancelMoveBtn?.addEventListener("click", cancelMove);
+    el("storeCancelBtn").addEventListener("click", () => ui.storeDialog.close());
+    el("moveCancelBtn").addEventListener("click", () => ui.moveDialog.close());
+    el("testCloseBtn").addEventListener("click", () => ui.testDialog.close());
+
+    loadState();
+</script>
+</body>
+</html>

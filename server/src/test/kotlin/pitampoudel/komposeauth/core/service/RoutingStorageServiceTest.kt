@@ -1,15 +1,18 @@
 package pitampoudel.komposeauth.core.service
 
-import org.mockito.Mockito.mockConstruction
+import org.bson.types.ObjectId
 import org.mockito.kotlin.any
-import org.mockito.kotlin.anyOrNull
-import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
-import pitampoudel.komposeauth.app_config.entity.AppConfig
-import pitampoudel.komposeauth.app_config.service.AppConfigService
+import pitampoudel.komposeauth.core.service.security.CryptoService
+import pitampoudel.komposeauth.storage.InMemoryBucket
+import pitampoudel.komposeauth.storage.entity.StorageStore
+import pitampoudel.komposeauth.storage.repository.StorageStoreRepository
+import pitampoudel.komposeauth.storage.service.BucketStoreFactory
+import pitampoudel.komposeauth.storage.service.StorageStores
+import java.time.Instant
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -17,133 +20,106 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RoutingStorageServiceTest {
+    private var rows: List<StorageStore> = emptyList()
+    private val repository: StorageStoreRepository = mock { on { findAll() } doAnswer { rows } }
+    private val crypto: CryptoService = mock { on { decrypt(any()) } doAnswer { it.getArgument(0) } }
+
+    private val buckets = mutableMapOf<ObjectId, InMemoryBucket>()
+    /** Every client built, by store, so a test can see which were never needed. */
+    private val built = mutableListOf<ObjectId>()
+    private val stores = StorageStores(repository, crypto, BucketStoreFactory { row ->
+        built += row.id
+        bucketOf(row)
+    })
+    private val router = RoutingStorageService(stores)
+
+    private val old = StorageStore(name = "Old", kind = StorageStore.Kind.GCS, bucket = "old", createdAt = Instant.EPOCH)
+    private val new = StorageStore(
+        name = "New", kind = StorageStore.Kind.S3, bucket = "new-files", region = "ap-south-1", primary = true
+    )
     private val gcsUrl = "https://storage.googleapis.com/download/storage/v1/b/old/o/users%2Fu1%2Fphoto?alt=media"
 
-    private fun router(config: AppConfig): RoutingStorageService {
-        val appConfigService: AppConfigService = mock { on { getConfig() } doReturn config }
-        return RoutingStorageService(appConfigService)
-    }
+    private fun bucketOf(row: StorageStore) = buckets.getOrPut(row.id) { InMemoryBucket(row.addresses()) }
 
-    /** Runs [block] with every GCS store the router builds replaced by a mock that answers [gcsUrl]. */
-    private fun <T> withMockGcs(block: (built: () -> List<GcpStorageService>) -> T): T =
-        mockConstruction(GcpStorageService::class.java) { gcs, context ->
-            whenever(gcs.settings) doReturn context.arguments().single() as GcpStorageService.Settings
-            whenever(gcs.upload(any(), anyOrNull(), any())) doReturn gcsUrl
-            whenever(gcs.owns(gcsUrl)) doReturn true
-            whenever(gcs.delete(any())) doReturn true
-            whenever(gcs.download(gcsUrl)) doReturn "stored".toByteArray()
-        }.use { construction -> block { construction.constructed() } }
-
-    private val onS3 = AppConfig(
-        storageProvider = AppConfig.STORAGE_S3,
-        gcpProjectId = "p",
-        gcpBucketName = "old",
-        s3BucketName = "new-files",
-        s3Region = "ap-south-1"
-    )
-
-    @Test
-    fun `with only GCS configured new files go to GCS`() = withMockGcs { built ->
-        assertEquals(gcsUrl, router(AppConfig(gcpProjectId = "p", gcpBucketName = "old")).upload("a", null, ByteArray(1)))
-        assertEquals(1, built().size)
+    private fun list(vararg stores: StorageStore) {
+        rows = stores.toList()
+        this.stores.forget()
     }
 
     @Test
-    fun `with both buckets storageProvider decides, and GCS can be chosen`() = withMockGcs {
-        assertEquals(gcsUrl, router(onS3.copy(storageProvider = AppConfig.STORAGE_GCS)).upload("a", null, ByteArray(1)))
+    fun `new files go to the store that takes them`() {
+        list(old, new)
+        assertEquals(
+            "https://new-files.s3.ap-south-1.amazonaws.com/users/u1/photo",
+            router.upload("users/u1/photo", "image/png", "photo".toByteArray())
+        )
+        assertEquals("photo", bucketOf(new).text("users/u1/photo"))
+        assertEquals(listOf(new.id), built, "nothing else needed a client")
     }
 
     @Test
-    fun `with both buckets and no choice neither cloud is picked`() = withMockGcs { built ->
-        assertFailsWith<IllegalStateException> { router(onS3.copy(storageProvider = null)).upload("a", null, ByteArray(1)) }
-        assertTrue(built().isEmpty())
+    fun `with no store, or none taking new files, an upload is refused saying what to do`() {
+        list()
+        assertContains(assertFailsWith<IllegalStateException> { router.upload("a", null, ByteArray(1)) }.message!!, "add a bucket")
+        list(old)
+        assertContains(assertFailsWith<IllegalStateException> { router.upload("a", null, ByteArray(1)) }.message!!, "choose one")
     }
 
     @Test
-    fun `the only bucket configured is used, and a choice with no bucket is refused`() {
-        assertEquals("s3", onS3.copy(storageProvider = null, gcpBucketName = null).resolvedStorageProvider())
-        assertFailsWith<IllegalStateException> {
-            AppConfig(gcpBucketName = "old", storageProvider = AppConfig.STORAGE_S3).resolvedStorageProvider()
-        }
+    fun `a read and a delete go to the store the address is in, not the one new files go to`() {
+        list(old, new)
+        bucketOf(old).put("users/u1/photo", "stored")
+
+        assertEquals("users/u1/photo", router.blobNameOf(gcsUrl))
+        assertEquals("stored", router.download(gcsUrl)?.decodeToString())
+        assertTrue(router.delete(gcsUrl))
+        assertNull(bucketOf(old).text("users/u1/photo"))
+        assertNull(router.download(gcsUrl), "an address of a listed store with nothing behind it is an absent file")
     }
 
     @Test
-    fun `the GCS store is built once and reused`() = withMockGcs { built ->
-        val router = router(AppConfig(gcpProjectId = "p", gcpBucketName = "old"))
+    fun `an address no store holds is not an absent file`() {
+        list(old, new)
+        assertFailsWith<IllegalStateException> { router.download("https://example.com/elsewhere") }
+        assertFalse(router.delete("https://example.com/elsewhere"))
+        assertNull(router.blobNameOf("https://example.com/elsewhere"))
+        assertNull(router.blobNameOf("https://evil.example/?https://new-files.s3.ap-south-1.amazonaws.com/users/u1/photo"))
+    }
+
+    @Test
+    fun `a store whose files were copied elsewhere answers its addresses from there, with no client of its own`() {
+        list(old.copy(readFromStoreId = new.id), new)
+        bucketOf(new).put("users/u1/photo", "copied")
+
+        assertEquals("users/u1/photo", router.blobNameOf(gcsUrl))
+        assertEquals("copied", router.download(gcsUrl)?.decodeToString())
+        assertTrue(router.delete(gcsUrl))
+        assertNull(bucketOf(new).text("users/u1/photo"))
+        assertFalse(old.id in built, "the old store's cloud was never signed in to")
+    }
+
+    @Test
+    fun `copies are followed one after another`() {
+        val newest = StorageStore(name = "Newest", kind = StorageStore.Kind.S3, bucket = "newest", region = "auto",
+            endpoint = "https://minio.internal:9000", primary = true)
+        list(old.copy(readFromStoreId = new.id), new.copy(primary = false, readFromStoreId = newest.id), newest)
+        bucketOf(newest).put("users/u1/photo", "twice copied")
+
+        assertEquals("twice copied", router.download(gcsUrl)?.decodeToString())
+        assertEquals("twice copied", router.download("https://new-files.s3.ap-south-1.amazonaws.com/users/u1/photo")?.decodeToString())
+        assertEquals(listOf(newest.id), built)
+    }
+
+    @Test
+    fun `a client is built once, and again only when how to reach the bucket changes`() {
+        list(new)
         router.upload("a", null, ByteArray(1))
+        list(new.copy(name = "Renamed"))
         router.upload("b", null, ByteArray(1))
-        assertEquals(1, built().size)
-    }
+        assertEquals(1, built.size, "a new name is not a new connection")
 
-    @Test
-    fun `the GCS store is rebuilt when its bucket changes`() = withMockGcs { built ->
-        val config = AppConfig(gcpProjectId = "p", gcpBucketName = "old")
-        val router = router(config)
-        router.upload("a", null, ByteArray(1))
-        config.gcpBucketName = "newer"
-        router.upload("b", null, ByteArray(1))
-        assertEquals(listOf("old", "newer"), built().map { it.settings.bucket })
-    }
-
-    @Test
-    fun `a delete goes to the store the address is in, not the one new files go to`() = withMockGcs { built ->
-        // New files go to S3, and a file written to GCS before the switch is still deleted there.
-        assertTrue(router(onS3).delete(gcsUrl))
-        verify(built().single()).delete(gcsUrl)
-
-        assertFalse(router(onS3).delete("https://example.com/elsewhere"), "no store holds that address")
-    }
-
-    @Test
-    fun `a read goes to the store the address is in, and an address no store holds is not an absent file`() {
-        withMockGcs {
-            assertEquals("stored", router(onS3).download(gcsUrl)?.decodeToString())
-            assertFailsWith<IllegalStateException> { router(onS3).download("https://example.com/elsewhere") }
-        }
-    }
-
-    /** Runs [block] with every S3 store the router builds replaced by a mock holding the copied file. */
-    private fun <T> withMockS3(block: (built: () -> List<S3StorageService>) -> T): T =
-        mockConstruction(S3StorageService::class.java) { s3, _ ->
-            whenever(s3.owns(any())) doReturn false
-            whenever(s3.downloadKey("users/u1/photo")) doReturn "copied".toByteArray()
-            whenever(s3.deleteKey(any())) doReturn true
-        }.use { construction -> block { construction.constructed() } }
-
-    private val copiedToS3 = onS3.copy(storageProvider = null, gcsFilesReadFrom = AppConfig.STORAGE_S3)
-
-    @Test
-    fun `once the GCS files are on S3, an old address is read and deleted there and no GCS store is built`() =
-        withMockGcs { gcs ->
-            withMockS3 { s3 ->
-                assertEquals("copied", router(copiedToS3).download(gcsUrl)?.decodeToString())
-                assertTrue(router(copiedToS3).delete(gcsUrl))
-                verify(s3().last()).deleteKey("users/u1/photo")
-                assertFalse(router(copiedToS3).delete("https://storage.googleapis.com/another/users/u1/photo"))
-                assertTrue(gcs().isEmpty())
-            }
-        }
-
-    @Test
-    fun `once the GCS files are on S3, GCS takes no new files, and the move needs both buckets`() {
-        assertEquals("s3", copiedToS3.resolvedStorageProvider())
-        assertFailsWith<IllegalStateException> {
-            copiedToS3.copy(storageProvider = AppConfig.STORAGE_GCS).resolvedStorageProvider()
-        }
-        assertFailsWith<IllegalStateException> { copiedToS3.copy(s3BucketName = null).gcsFilesAreOnS3() }
-        assertFailsWith<IllegalStateException> { copiedToS3.copy(gcpBucketName = null).gcsFilesAreOnS3() }
-        assertFalse(onS3.gcsFilesAreOnS3())
-    }
-
-    @Test
-    fun `the S3 store recognises only its own addresses, version and all`() {
-        val s3 = S3StorageService(S3StorageService.Settings(bucket = "new-files", region = "ap-south-1"))
-
-        assertTrue(s3.owns("https://new-files.s3.ap-south-1.amazonaws.com/users/u1/photo?v=1700000000000"))
-        assertFalse(s3.owns("https://other.s3.ap-south-1.amazonaws.com/users/u1/photo"))
-        assertFalse(s3.owns(gcsUrl))
-        assertFalse(s3.delete(gcsUrl))
-        assertEquals("users/u1/photo", s3.blobNameOf("https://new-files.s3.ap-south-1.amazonaws.com/users/u1/photo?v=1"))
-        assertNull(s3.blobNameOf("https://evil.example/?https://new-files.s3.ap-south-1.amazonaws.com/users/u1/photo"))
+        list(new.copy(accessKeyId = "AKIA", secretAccessKey = "secret"))
+        router.upload("c", null, ByteArray(1))
+        assertEquals(2, built.size, "new credentials are")
     }
 }
