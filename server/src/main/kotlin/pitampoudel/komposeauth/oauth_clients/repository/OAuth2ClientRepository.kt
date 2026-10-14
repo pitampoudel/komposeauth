@@ -18,7 +18,7 @@ class RegisteredOAuth2ClientRepository(
     val repository: OAuth2ClientRepository,
     private val metadataDocuments: ClientIdMetadataDocuments,
 ) : RegisteredClientRepository {
-    override fun save(registeredClient: RegisteredClient?) {
+    override fun save(registeredClient: RegisteredClient) {
         // No-op implementation as we don't need to save clients from the authorization server
         // Clients are managed through the admin API
     }

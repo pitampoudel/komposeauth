@@ -45,6 +45,8 @@ kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
+        // Compose's wasm test check needs a webpack-bundled binary to load Skiko (CMP-4906).
+        binaries.executable()
     }
     sourceSets {
         val commonMain by getting {
