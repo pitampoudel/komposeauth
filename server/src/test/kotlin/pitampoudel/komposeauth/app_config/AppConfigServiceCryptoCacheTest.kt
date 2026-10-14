@@ -37,7 +37,7 @@ class AppConfigServiceCryptoCacheTest {
             googleAuthClientSecret = "secret",
         )
 
-        whenever(repo.save(any())).thenAnswer { it.arguments[0] as AppConfig }
+        whenever(repo.save(any<AppConfig>())).thenAnswer { it.arguments[0] as AppConfig }
 
         val saved = configProvider.save(toSave)
         assertEquals("secret", saved.googleAuthClientSecret)

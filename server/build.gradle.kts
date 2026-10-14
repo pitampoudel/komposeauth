@@ -7,7 +7,8 @@ plugins {
     // Flamingock's annotation processor only speaks JSR-269.
     kotlin("kapt")
     alias(libs.plugins.kotlin.spring)
-    id("org.springframework.boot") version "4.1.1"
+    // Held on 4.0: on 4.1.1, 111 of the server's tests fail, most of them signed-in requests answered 401.
+    id("org.springframework.boot") version "4.0.8"
     id("io.spring.dependency-management") version "1.1.7"
     alias(libs.plugins.kotlinx.serialization)
 }
@@ -43,7 +44,8 @@ dependencies {
     implementation("org.springframework.security:spring-security-crypto")
     // Not a reactive stack -- the servlet dispatcher adapts `suspend` controller methods through
     // this bridge, so the handful of them in the codebase stop resolving without it.
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.11.0")
+    // Held on 1.10: on 1.11.0 the KYC submission's suspend handler never answers.
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.10.2")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.mongodb:mongodb-spring-session:4.0.0")
@@ -92,7 +94,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("org.testcontainers:testcontainers-mongodb")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("io.mockk:mockk:1.14.11")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.4.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

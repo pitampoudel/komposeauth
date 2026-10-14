@@ -107,7 +107,7 @@ class JwkServiceTest {
             .thenReturn(Optional.empty())
             .thenReturn(Optional.of(Jwk(kid = "spring-boot-jwk", publicKeyPem = persistedPubPem, privateKeyPem = "enc:persisted")))
 
-        whenever(repo.save(any())).thenThrow(DuplicateKeyException("duplicate kid"))
+        whenever(repo.save(any<Jwk>())).thenThrow(DuplicateKeyException("duplicate kid"))
         whenever(crypto.decrypt("enc:persisted")).thenReturn(persistedPrivPem)
         whenever(crypto.encrypt(any())).thenAnswer { inv -> "enc:" + inv.arguments[0] as String }
 
