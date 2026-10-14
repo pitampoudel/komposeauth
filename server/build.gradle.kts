@@ -7,7 +7,7 @@ plugins {
     // Flamingock's annotation processor only speaks JSR-269.
     kotlin("kapt")
     alias(libs.plugins.kotlin.spring)
-    id("org.springframework.boot") version "4.0.1"
+    id("org.springframework.boot") version "4.1.1"
     id("io.spring.dependency-management") version "1.1.7"
     alias(libs.plugins.kotlinx.serialization)
 }
@@ -38,8 +38,8 @@ dependencies {
     implementation("org.springframework.security:spring-security-crypto")
     // Not a reactive stack -- the servlet dispatcher adapts `suspend` controller methods through
     // this bridge, so the handful of them in the codebase stop resolving without it.
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.10.2")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.11.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.mongodb:mongodb-spring-session:4.0.0")
     // Changes to stored data: ordered, run once per database and recorded in Flamingock's own audit
@@ -55,17 +55,17 @@ dependencies {
     // Google Cloud Platform
     implementation("com.google.cloud:spring-cloud-gcp-storage:7.4.2")
     // The sync client only; the async Netty transport would be a second HTTP stack nothing calls.
-    implementation("software.amazon.awssdk:s3:2.55.7") {
+    implementation("software.amazon.awssdk:s3:2.55.14") {
         exclude(group = "software.amazon.awssdk", module = "netty-nio-client")
     }
 
     // kotlinx
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
 
     // HTTP client
-    implementation("org.apache.httpcomponents.client5:httpclient5:5.6.4")
+    implementation("org.apache.httpcomponents.client5:httpclient5:5.6.5")
     implementation("org.apache.httpcomponents.core5:httpcore5:5.5-beta2")
     implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.5-beta2")
 
@@ -86,9 +86,9 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("org.testcontainers:testcontainers-mongodb")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-    testImplementation("io.mockk:mockk:1.13.11")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:6.1.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+    testImplementation("io.mockk:mockk:1.14.11")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:6.4.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
