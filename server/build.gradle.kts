@@ -7,7 +7,7 @@ plugins {
     // Flamingock's annotation processor only speaks JSR-269.
     kotlin("kapt")
     alias(libs.plugins.kotlin.spring)
-    id("org.springframework.boot") version "4.0.1"
+    id("org.springframework.boot") version "4.0.8"
     id("io.spring.dependency-management") version "1.1.7"
     alias(libs.plugins.kotlinx.serialization)
 }
@@ -17,6 +17,11 @@ configurations.all {
 }
 
 extra["sentryVersion"] = "8.27.0"
+// Ahead of Spring Boot 4.0.8's managed versions, each for a published advisory; drop a line once Boot ships it.
+extra["tomcat.version"] = "11.0.25"
+extra["jackson-bom.version"] = "3.1.7"
+extra["jackson-2-bom.version"] = "2.21.7"
+extra["opentelemetry.version"] = "1.62.0"
 extra["flamingockVersion"] = "1.4.5"
 
 dependencies {

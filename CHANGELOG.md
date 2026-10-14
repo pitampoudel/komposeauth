@@ -26,6 +26,11 @@ What changed for people running the server or using the SDK. Versions follow
 - The Configuration link is shown only to super admins, who are the only ones it opens for. (#68)
 - A saved Sentry DSN takes effect without a restart. (#68)
 
+### Security
+- Spring Boot 4.0.1 → 4.0.8, with Tomcat 11.0.25, Jackson 3.1.7 / 2.21.7 and OpenTelemetry 1.62.0
+  ahead of it. The server's dependencies had 100 published advisories (Tomcat, Spring Framework,
+  Spring Security, Jackson, Thymeleaf, Logback and others) and now have none.
+
 ### Fixed
 - The overview could call text messages "On" while the provider was missing a required key; it now
   shows the same status as the configuration page. (#68)

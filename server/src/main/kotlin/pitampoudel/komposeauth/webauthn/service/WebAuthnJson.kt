@@ -64,7 +64,7 @@ class WebAuthnJson {
             .apply {
                 node.present("timeout")?.let { timeout(Duration.ofMillis(it.longValue())) }
                 node.present("rpId")?.let { rpId(it.stringValue()) }
-                node.present("allowCredentials")?.let { allowCredentials(it.map(::descriptor)) }
+                node.present("allowCredentials")?.let { allowCredentials(it.values().map(::descriptor)) }
                 node.present("userVerification")?.let { userVerification(userVerification(it.stringValue())) }
                 node.present("extensions")?.let { extensions(extensions(it)) }
             }
@@ -90,13 +90,13 @@ class WebAuthnJson {
                     .build()
             )
             .challenge(Bytes.fromBase64(node.required("challenge").stringValue()))
-            .pubKeyCredParams(node.required("pubKeyCredParams").map { param ->
+            .pubKeyCredParams(node.required("pubKeyCredParams").values().map { param ->
                 val alg = param.required("alg").longValue()
                 PARAMETERS.single { it.alg.value == alg }
             })
             .apply {
                 node.present("timeout")?.let { timeout(Duration.ofMillis(it.longValue())) }
-                node.present("excludeCredentials")?.let { excludeCredentials(it.map(::descriptor)) }
+                node.present("excludeCredentials")?.let { excludeCredentials(it.values().map(::descriptor)) }
                 node.present("authenticatorSelection")?.let { authenticatorSelection(selection(it)) }
                 node.present("attestation")?.let { attestation(AttestationConveyancePreference.valueOf(it.stringValue())) }
                 node.present("extensions")?.let { extensions(extensions(it)) }
@@ -112,7 +112,7 @@ class WebAuthnJson {
             .id(Bytes.fromBase64(node.required("id").stringValue()))
             .apply {
                 node.present("transports")?.let { transports ->
-                    transports(transports.map { AuthenticatorTransport.valueOf(it.stringValue()) }.toSet())
+                    transports(transports.values().map { AuthenticatorTransport.valueOf(it.stringValue()) }.toSet())
                 }
             }
             .build()
