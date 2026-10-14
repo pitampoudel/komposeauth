@@ -5,7 +5,7 @@ import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
 import pitampoudel.core.data.EncodedData
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.SlackNotifier
+import pitampoudel.komposeauth.core.service.AlertNotifier
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
@@ -32,7 +32,7 @@ class KycService(
     private val documents: KycDocuments,
     val emailService: EmailService,
     private val userRepository: UserRepository,
-    private val slackNotifier: SlackNotifier
+    private val alertNotifier: AlertNotifier
 ) {
 
     fun find(userId: ObjectId): KycResponse? = kycRepo.findByUserId(userId)?.response()
@@ -265,7 +265,7 @@ class KycService(
         val user = userRepository.findById(userId).orElse(null)
         if (user != null) {
             val warnings = saved.thirdFactorWarnings
-            slackNotifier.send(
+            alertNotifier.send(
                 if (warnings.isEmpty()) "📝 KYC documents submitted by ${user.fullName}"
                 else "⚠️ KYC documents submitted by ${user.fullName} — needs a closer look:\n" +
                     warnings.joinToString("\n") { "• $it" }

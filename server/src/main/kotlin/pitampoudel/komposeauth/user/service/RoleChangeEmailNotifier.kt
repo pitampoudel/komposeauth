@@ -3,14 +3,14 @@ package pitampoudel.komposeauth.user.service
 import org.springframework.stereotype.Service
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.SlackNotifier
+import pitampoudel.komposeauth.core.service.AlertNotifier
 import pitampoudel.komposeauth.user.entity.User
 
 @Service
 class RoleChangeEmailNotifier(
     private val emailService: EmailService,
     private val appConfigService: AppConfigService,
-    private val slackNotifier: SlackNotifier,
+    private val alertNotifier: AlertNotifier,
 ) {
     enum class Action { GRANTED, REVOKED }
 
@@ -23,8 +23,8 @@ class RoleChangeEmailNotifier(
         val targetLabel = target.email ?: target.phoneNumber ?: target.id.toHexString()
 
         when (action) {
-            Action.GRANTED -> slackNotifier.send("🛡️ $role role granted to $targetLabel by $actorLabel")
-            Action.REVOKED -> slackNotifier.send("🛡️ $role role revoked for $targetLabel by $actorLabel")
+            Action.GRANTED -> alertNotifier.send("🛡️ $role role granted to $targetLabel by $actorLabel")
+            Action.REVOKED -> alertNotifier.send("🛡️ $role role revoked for $targetLabel by $actorLabel")
         }
 
         val to = target.email

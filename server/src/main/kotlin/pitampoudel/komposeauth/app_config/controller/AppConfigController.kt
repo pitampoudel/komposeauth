@@ -24,7 +24,7 @@ import pitampoudel.komposeauth.core.config.UserContextService
 import pitampoudel.komposeauth.core.controller.AdminShell
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.SlackNotifier
+import pitampoudel.komposeauth.core.service.AlertNotifier
 import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
 import pitampoudel.komposeauth.storage.repository.StorageBucketRepository
@@ -38,7 +38,7 @@ class AppConfigController(
     private val adminShell: AdminShell,
     private val serverUrl: ServerUrl,
     private val emailService: EmailService,
-    private val slackNotifier: SlackNotifier,
+    private val alertNotifier: AlertNotifier,
     private val phoneNumberVerificationService: PhoneNumberVerificationService,
     private val storageBucketRepository: StorageBucketRepository,
     private val startupRunner: StartupRunner,
@@ -173,7 +173,7 @@ class AppConfigController(
                 )
             }
 
-            "alerts" -> slackNotifier.sendTest("✅ Alerts from ${appConfigService.getConfig().name ?: "your sign-in server"} will arrive in this channel.")
+            "alerts" -> alertNotifier.sendTest("✅ Alerts from ${appConfigService.getConfig().name ?: "your sign-in server"} will arrive in this channel.")
                 ?.let { TestResponse(false, it) }
                 ?: TestResponse(true, "Posted to the channel.")
 

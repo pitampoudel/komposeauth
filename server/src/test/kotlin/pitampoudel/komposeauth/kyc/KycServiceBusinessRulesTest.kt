@@ -10,7 +10,7 @@ import org.springframework.test.context.ActiveProfiles
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.storage.service.StorageService
-import pitampoudel.komposeauth.core.service.SlackNotifier
+import pitampoudel.komposeauth.core.service.AlertNotifier
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.entity.KycVerification
 import pitampoudel.komposeauth.kyc.repository.KycVerificationRepository
@@ -31,7 +31,7 @@ class KycServiceBusinessRulesTest {
         val repo = mock<KycVerificationRepository>()
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
-        val service = KycService(repo, kycDocumentsOver(storage), email, userRepository = mock(), slackNotifier = mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepository = mock(), alertNotifier = mock<AlertNotifier>())
 
         val userId = ObjectId.get()
         val existing = KycVerification(
