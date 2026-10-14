@@ -110,7 +110,9 @@ Once the container is running, navigate to the web administration console:
 curl -H "X-Master-Key: <paste-your-base64-key>" http://localhost/admin/config
 ```
 
-Use the Admin Console to configure SMTP credentials, SMS providers, Google OAuth credentials, allowed CORS origins, and rate limits. Once an admin account with the `SUPER_ADMIN` role is created, you can sign in directly.
+While nobody holds `SUPER_ADMIN`, the page opens with **Create the first admin**: enter an email and password (or the address of an account that already exists) and that account becomes a super admin. From then on, sign in at `/admin` with it instead of the master key; the form disappears once a super admin exists, and further roles are granted from the **Users** page.
+
+Use the Admin Console to connect email, SMS, Google and Apple sign-in, error reporting and alerts, and to set branding, CORS origins and rate limits. Every connection is optional.
 
 #### Where files are kept
 

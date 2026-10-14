@@ -28,6 +28,7 @@ import pitampoudel.komposeauth.core.service.SlackNotifier
 import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.otp.service.PhoneNumberVerificationService
 import pitampoudel.komposeauth.storage.repository.StorageBucketRepository
+import pitampoudel.komposeauth.user.service.FirstAdminService
 
 @Controller
 class AppConfigController(
@@ -41,6 +42,7 @@ class AppConfigController(
     private val phoneNumberVerificationService: PhoneNumberVerificationService,
     private val storageBucketRepository: StorageBucketRepository,
     private val startupRunner: StartupRunner,
+    private val firstAdminService: FirstAdminService,
     val userContextService: UserContextService
 ) {
 
@@ -72,6 +74,7 @@ class AppConfigController(
         model.addAttribute("masterKey", postedKey(request)?.takeIf(masterKeyValidator::isValid))
         val current = appConfigProvider.get()
         if (request.getParameter(UNLOCK_PARAM) != null) return render(model, current)
+        if (request.getParameter(FIRST_ADMIN_PARAM) != null) return createFirstAdmin(model, request, response, current)
 
         val section = request.getParameter(SECTION_PARAM)?.let(ConfigSections::byId)
             ?: return render(model, current)
@@ -102,6 +105,31 @@ class AppConfigController(
                 render(model, current, draft = section.id to posted)
             }
         }
+    }
+
+    private fun createFirstAdmin(
+        model: Model,
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        current: AppConfig
+    ): String {
+        val email = request.getParameter("adminEmail")
+        val name = request.getParameter("adminName")
+        when (val result = firstAdminService.create(email, name, request.getParameter("adminPassword"))) {
+            is FirstAdminService.Result.Done -> model.addAttribute(
+                "firstAdmin",
+                if (result.created) "${result.user.email} is now a super admin. Sign in with it to manage this server."
+                else "${result.user.email} already had an account and is now a super admin. Sign in with its own password."
+            )
+
+            is FirstAdminService.Result.Refused -> {
+                response.status = HttpServletResponse.SC_BAD_REQUEST
+                model.addAttribute("firstAdminError", result.problem)
+                model.addAttribute("adminEmail", email.orEmpty())
+                model.addAttribute("adminName", name.orEmpty())
+            }
+        }
+        return render(model, current)
     }
 
     /**
@@ -181,6 +209,7 @@ class AppConfigController(
         model.addAttribute("connections", views(ConfigSections.connections))
         model.addAttribute("settings", views(ConfigSections.settings))
         model.addAttribute("storageReady", storageBucketRepository.findAll().any { it.primary })
+        model.addAttribute("needsFirstAdmin", firstAdminService.isNeeded())
         model.addAttribute("viewerEmail", userContextService.authenticatedUserOrNull()?.email.orEmpty())
         return "admin/config"
     }
@@ -245,6 +274,9 @@ class AppConfigController(
 
         /** Sent by the locked page: show the form for the key it carries, rather than save it. */
         private const val UNLOCK_PARAM = "unlock"
+
+        /** Sent by the "Create the first admin" form, shown while nobody is a super admin. */
+        const val FIRST_ADMIN_PARAM = "firstAdmin"
 
         /** Which [ConfigSection] a post saves. */
         const val SECTION_PARAM = "section"

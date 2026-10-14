@@ -14,6 +14,13 @@
 
         .settings-block + .settings-block { margin-top: 56px; }
 
+        .first-admin {
+            margin-top: 24px;
+            padding: 24px;
+            border-radius: 20px;
+            background: color-mix(in oklab, var(--warn-bg) 60%, transparent);
+        }
+
         .group-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
 
         .config-field.full-width { grid-column: 1 / -1; }
@@ -100,6 +107,48 @@
         <div th:if="${saved != null and savedSection == null}" class="alert alert-success" role="status" th:text="${saved}"></div>
         <div th:if="${error != null and errorSection == null}" class="alert alert-error" role="alert" th:text="${error}"></div>
     </div>
+
+    <div th:if="${firstAdmin != null}" class="alert alert-success" role="status">
+        <span th:text="${firstAdmin}"></span>
+        <a class="inline-link" href="/admin">Open the console</a>
+    </div>
+    <div th:if="${firstAdminError != null and !needsFirstAdmin}" class="alert alert-error" role="alert"
+         th:text="${firstAdminError}"></div>
+
+    <form th:if="${needsFirstAdmin}" id="first-admin" class="first-admin" method="post" action="/admin/config">
+        <input th:if="${masterKey != null}" type="hidden" name="key" th:value="${masterKey}"/>
+        <input type="hidden" name="firstAdmin" value="1"/>
+        <div class="section-head">
+            <div>
+                <h2>Create the first admin</h2>
+                <p class="section-hint">
+                    Nobody can sign in to this console yet. Make an account a super admin, and from then on sign in
+                    with it instead of the master key. If the address already has an account, it keeps its password.
+                </p>
+            </div>
+        </div>
+        <div class="group-grid">
+            <div class="config-field">
+                <label for="adminEmail">Email</label>
+                <input id="adminEmail" name="adminEmail" type="email" required autocomplete="email" spellcheck="false"
+                       th:value="${adminEmail}" placeholder="you@example.com"/>
+            </div>
+            <div class="config-field">
+                <label for="adminName">Name</label>
+                <input id="adminName" name="adminName" type="text" autocomplete="name" th:value="${adminName}"/>
+            </div>
+            <div class="config-field full-width">
+                <label for="adminPassword">Password</label>
+                <input id="adminPassword" name="adminPassword" type="password" minlength="8" autocomplete="new-password"/>
+                <p class="field-help">At least 8 characters. Not needed for an address that already has an account.</p>
+            </div>
+        </div>
+        <div class="alert alert-error" role="alert" style="margin-top: 20px;"
+             th:if="${firstAdminError != null}" th:text="${firstAdminError}"></div>
+        <div class="block-foot">
+            <button class="btn btn-primary btn-sm" type="submit">Create admin</button>
+        </div>
+    </form>
 
     <section id="connections" aria-labelledby="connectionsTitle">
         <div class="section-head">
