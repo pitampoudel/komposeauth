@@ -62,6 +62,7 @@ class TemplateRenderingTest {
     private fun consoleContext(vararg extra: Pair<String, Any>) = brandingContext(
         "userCount" to 142L,
         "clientCount" to 3L,
+        "bucketCount" to 2L,
         "viewerName" to "Pitam Poudel",
         "viewerSub" to "ADMIN",
         "viewerRoles" to listOf("ADMIN"),
@@ -197,6 +198,26 @@ class TemplateRenderingTest {
         assertContains(html, ">Off<")
     }
 
+    @Test
+    fun `storage page offers its writes to a super admin`() {
+        val html = engine.process("admin/storage", consoleContext("canManageStorage" to true))
+
+        assertContains(html, "Where files are kept")
+        assertContains(html, "id=\"newBucketBtn\"")
+        assertContains(html, "id=\"emptyNewBtn\"")
+        assertContains(html, "const CAN_MANAGE = true")
+    }
+
+    @Test
+    fun `storage page shows a plain admin the buckets without its writes`() {
+        val html = engine.process("admin/storage", consoleContext("canManageStorage" to false))
+
+        assertContains(html, "Only a SUPER_ADMIN can add or change a bucket.")
+        assertFalse(html.contains("id=\"newBucketBtn\""), "a plain admin's add would answer 403")
+        assertFalse(html.contains("id=\"emptyNewBtn\""), "a plain admin's add would answer 403")
+        assertContains(html, "const CAN_MANAGE = false")
+    }
+
     /**
      * Every console page shares one layout, so the navigation is only ever as correct as the
      * `active` argument each page passes into it.
@@ -206,13 +227,14 @@ class TemplateRenderingTest {
         val pages = mapOf(
             "admin/users" to "/admin/users",
             "admin/clients" to "/admin/clients",
+            "admin/storage" to "/admin/storage",
             "admin/config" to "/admin/config"
         )
 
         pages.forEach { (template, href) ->
             val html = engine.process(
                 template,
-                consoleContext("fieldGroups" to emptyList<Any>())
+                consoleContext("fieldGroups" to emptyList<Any>(), "canManageStorage" to false)
             )
             // Scoped to the rendered <nav>: the layout's stylesheet also mentions the attribute.
             val nav = html.substringAfter("<nav class=\"rail-nav\"").substringBefore("</nav>")

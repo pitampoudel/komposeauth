@@ -1,5 +1,10 @@
 package pitampoudel.komposeauth.app_config.service
 
+import org.bson.Document
+import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
 import pitampoudel.komposeauth.core.service.security.CryptoService
 import pitampoudel.komposeauth.app_config.entity.AppConfig
@@ -11,7 +16,9 @@ import java.util.concurrent.atomic.AtomicReference
 @Service
 class AppConfigProvider(
     private val repo: AppConfigRepository,
-    private val crypto: CryptoService
+    private val crypto: CryptoService,
+    /** Absent only where a test builds this by hand; then nothing retired is kept across a save. */
+    private val mongoTemplate: MongoTemplate? = null
 ) {
     private data class Cached(val value: AppConfig, val loadedAt: Instant)
 
@@ -29,10 +36,30 @@ class AppConfigProvider(
     fun save(appConfig: AppConfig): AppConfig {
         // Persist encrypted, cache decrypted
         val toSave = encrypt(appConfig.copy(id = AppConfig.SINGLETON_ID).clean())
+        val retired = retiredFields()
         val savedEncrypted = repo.save(toSave)
+        restore(retired)
         val saved = decrypt(savedEncrypted)
         cache.set(Cached(saved, Instant.now()))
         return saved
+    }
+
+    /**
+     * A save replaces the whole document, which would drop the fields this release no longer maps.
+     * They are read first and put back, so the release before can still be rolled back to.
+     */
+    private fun retiredFields(): Document? {
+        val template = mongoTemplate ?: return null
+        val stored = template.getCollection(template.getCollectionName(AppConfig::class.java))
+            .find(Document("_id", AppConfig.SINGLETON_ID)).first() ?: return null
+        return Document(AppConfig.RETIRED_STORAGE_FIELDS.filter(stored::containsKey).associateWith(stored::get))
+    }
+
+    private fun restore(retired: Document?) {
+        if (retired.isNullOrEmpty()) return
+        val update = Update()
+        retired.forEach { (field, value) -> update.set(field, value) }
+        mongoTemplate!!.updateFirst(Query(Criteria.where("_id").`is`(AppConfig.SINGLETON_ID)), update, AppConfig::class.java)
     }
 
     fun clearCache() {
@@ -63,7 +90,6 @@ class AppConfigProvider(
         googleAuthDesktopClientSecret = googleAuthDesktopClientSecret?.let(transform),
         twilioAuthToken = twilioAuthToken?.let(transform),
         smtpPassword = smtpPassword?.let(transform),
-        s3SecretAccessKey = s3SecretAccessKey?.let(transform),
         samayeApiKey = samayeApiKey?.let(transform),
         sparrowApiToken = sparrowApiToken?.let(transform),
         whatsappAccessToken = whatsappAccessToken?.let(transform),

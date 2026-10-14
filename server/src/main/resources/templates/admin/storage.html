@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html th:replace="~{admin/layout :: page(~{::title}, 'storage', ~{::style}, ~{::main}, ~{::script})}"
+      lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${appName.isEmpty()} ? 'Storage · Admin' : ${appName} + ' · Storage'">Storage</title>
+    <style>
+        #status, #problem { margin-top: 20px; }
+
+        .head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .row { align-items: flex-start; }
+
+        .row-main .row-sub { white-space: normal; }
+
+        .row-facts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 46%; }
+
+        .row-actions { flex-wrap: wrap; justify-content: flex-end; }
+
+        .field { margin-bottom: 16px; }
+
+        .field-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+        .fixed-note { margin-bottom: 16px; font-size: 13px; color: var(--muted); }
+
+        .dialog-body { max-height: min(60vh, 520px); overflow-y: auto; padding-right: 4px; margin-top: 18px; }
+
+        .steps { margin-top: 18px; }
+
+        .copy-note { margin-top: 14px; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+
+        .how-to { max-width: 72ch; font-size: 14px; line-height: 1.6; color: var(--muted); }
+
+        .how-to li { margin: 6px 0 0 20px; }
+
+        .how-to strong { color: var(--foreground); font-weight: 600; }
+
+        .how-to code { font-size: 12.5px; }
+
+        .how-to-tail { margin-top: 12px; max-width: 72ch; font-size: 13.5px; color: var(--muted); }
+
+        @media (max-width: 620px) {
+            .row { flex-wrap: wrap; }
+            .row-facts, .row-actions { justify-content: flex-start; width: 100%; max-width: none; }
+            .field-pair { grid-template-columns: minmax(0, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<main>
+    <div class="page-head">
+        <div>
+            <p class="eyebrow">Storage</p>
+            <h1 class="font-display">Where files are kept</h1>
+            <p class="lede">
+                Profile photos, organization logos and identity documents. New files go to one bucket, and
+                every file still opens from the bucket it was saved in.
+            </p>
+            <p class="lede" th:unless="${canManageStorage}">Only a SUPER_ADMIN can add or change a bucket.</p>
+        </div>
+        <div class="head-actions" th:if="${canManageStorage}">
+            <button class="btn btn-primary btn-md" type="button" id="newBucketBtn">Add a bucket</button>
+        </div>
+    </div>
+
+    <div id="problem" class="alert alert-error hidden" role="alert"></div>
+    <div id="status" class="hidden" role="status" aria-live="polite"></div>
+
+    <section>
+        <div class="section-head">
+            <h2>Buckets</h2>
+            <span class="section-hint">Removing a bucket takes it off this list. The bucket and its files are never touched.</span>
+        </div>
+        <div id="rows" class="rows" aria-busy="false"></div>
+
+        <div id="empty" class="empty hidden">
+            <h3>No bucket is listed yet</h3>
+            <p>Uploads fail until one is. Add the bucket files should be kept in, then test it.</p>
+            <button class="btn btn-secondary btn-sm" type="button" id="emptyNewBtn" th:if="${canManageStorage}">Add a bucket</button>
+        </div>
+    </section>
+
+    <section id="howTo" class="hidden">
+        <div class="section-head">
+            <h2>Moving files to another bucket</h2>
+            <span class="section-hint">This server copies no file; the providers' own tools do.</span>
+        </div>
+        <ol class="how-to">
+            <li>Add the new bucket and test it.</li>
+            <li>Press <strong>Send new files here</strong> on it, then wait a minute for every server to switch.</li>
+            <li>
+                Copy everything from the old bucket into the new one under the same names, with
+                <code>rclone copy</code> between any two providers, or <code>gcloud storage rsync</code> /
+                <code>aws s3 sync</code> within one. Run it once more after that minute so nothing written
+                meanwhile is left behind.
+            </li>
+            <li>
+                On the old bucket, press <strong>Files copied to…</strong> and choose the new one, then open a few
+                old photos to check. Keep the old bucket listed: it is how this server recognises its old addresses.
+            </li>
+        </ol>
+        <p class="how-to-tail">
+            Saved addresses are never rewritten. Going back is the same steps the other way, starting with
+            <strong>Open from its own bucket</strong> on the bucket you return to.
+        </p>
+    </section>
+
+    <dialog id="bucketDialog" aria-labelledby="bucketTitle">
+        <div class="dialog-head">
+            <div class="dialog-title" id="bucketTitle">Add a bucket</div>
+            <div class="dialog-sub" id="bucketSub"></div>
+        </div>
+
+        <form id="bucketForm">
+            <div class="dialog-body">
+                <div class="field">
+                    <label for="bucketLabel">Name <span class="hint">— what this page calls it</span></label>
+                    <input id="bucketLabel" type="text" required maxlength="60" placeholder="Cloudflare R2"/>
+                </div>
+                <p class="fixed-note hidden" id="fixedNote">
+                    The bucket and how its addresses are written can't change once it is listed: every address
+                    already saved depends on them. To use a different bucket, add it and copy the files across.
+                </p>
+                <div class="field">
+                    <label for="bucketKind">Kind</label>
+                    <select id="bucketKind">
+                        <option value="S3">S3-compatible (Amazon S3, Cloudflare R2, MinIO and others)</option>
+                        <option value="GCS">Google Cloud Storage</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="bucketName">Bucket</label>
+                    <input id="bucketName" type="text" required placeholder="my-files"/>
+                </div>
+                <div class="field field-pair" data-kind="S3">
+                    <div>
+                        <label for="bucketRegion">Region <span class="hint">— auto on R2</span></label>
+                        <input id="bucketRegion" type="text" placeholder="ap-south-1"/>
+                    </div>
+                    <div>
+                        <label for="bucketEndpoint">Endpoint <span class="hint">— blank for AWS</span></label>
+                        <input id="bucketEndpoint" type="url" placeholder="https://ACCOUNT.r2.cloudflarestorage.com"/>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="bucketPublicBase">Public address <span class="hint">— optional: a CDN or domain in front of the bucket</span></label>
+                    <input id="bucketPublicBase" type="url" placeholder="https://files.example.com"/>
+                </div>
+                <div class="field" data-kind="GCS">
+                    <label for="bucketProject">Project <span class="hint">— optional</span></label>
+                    <input id="bucketProject" type="text" placeholder="my-project"/>
+                </div>
+                <div class="field">
+                    <label for="bucketCredentials">Signs in with</label>
+                    <select id="bucketCredentials"></select>
+                </div>
+                <div class="field field-pair" data-kind="S3" data-credentials="REPLACE">
+                    <div>
+                        <label for="bucketKeyId">Access key ID</label>
+                        <input id="bucketKeyId" type="text" autocomplete="off"/>
+                    </div>
+                    <div>
+                        <label for="bucketSecret">Secret access key</label>
+                        <input id="bucketSecret" type="password" autocomplete="new-password"/>
+                    </div>
+                </div>
+                <div class="field" data-kind="GCS" data-credentials="REPLACE">
+                    <label for="bucketServiceAccount">Service account key <span class="hint">— the whole JSON file</span></label>
+                    <textarea id="bucketServiceAccount" spellcheck="false" autocomplete="off"></textarea>
+                </div>
+            </div>
+
+            <div id="bucketDialogStatus" class="alert alert-error hidden" role="alert" style="margin-top:14px;"></div>
+
+            <div class="dialog-foot">
+                <button class="btn btn-ghost btn-sm" type="button" id="bucketCancelBtn">Cancel</button>
+                <button class="btn btn-primary btn-sm" type="submit" id="bucketSubmitBtn">Add bucket</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="readFromDialog" aria-labelledby="readFromTitle">
+        <div class="dialog-head">
+            <div class="dialog-title" id="readFromTitle">Files copied to another bucket</div>
+            <div class="dialog-sub">Once every file in it has been copied there under the same names.</div>
+        </div>
+
+        <form id="readFromForm">
+            <div class="dialog-body">
+                <div class="field">
+                    <label for="readFromTarget">Copied to</label>
+                    <select id="readFromTarget"></select>
+                </div>
+                <p class="copy-note" id="readFromNote"></p>
+            </div>
+
+            <div id="readFromDialogStatus" class="alert alert-error hidden" role="alert" style="margin-top:14px;"></div>
+
+            <div class="dialog-foot">
+                <button class="btn btn-ghost btn-sm" type="button" id="readFromCancelBtn">Cancel</button>
+                <button class="btn btn-primary btn-sm" type="submit" id="readFromSubmitBtn">Open from there</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="testDialog" aria-labelledby="testTitle">
+        <div class="dialog-head">
+            <div class="dialog-title" id="testTitle">Testing</div>
+            <div class="dialog-sub" id="testSub">Writing a small file, reading it back and deleting it.</div>
+        </div>
+        <div class="rows steps" id="testSteps"></div>
+        <div class="dialog-foot">
+            <button class="btn btn-primary btn-sm" type="button" id="testCloseBtn">Close</button>
+        </div>
+    </dialog>
+</main>
+
+<script th:inline="javascript">
+    const API_BASE = "/admin/storage";
+    /** Every write needs SUPER_ADMIN (`StorageController`), so a plain admin gets the page without its buttons. */
+    const CAN_MANAGE = /*[[${canManageStorage}]]*/ false;
+
+    const el = id => document.getElementById(id);
+    const ui = {
+        rows: el("rows"), empty: el("empty"), status: el("status"), problem: el("problem"), howTo: el("howTo"),
+        newBucketBtn: el("newBucketBtn"), emptyNewBtn: el("emptyNewBtn"),
+        bucketDialog: el("bucketDialog"), bucketForm: el("bucketForm"), bucketTitle: el("bucketTitle"),
+        bucketSub: el("bucketSub"), fixedNote: el("fixedNote"), bucketDialogStatus: el("bucketDialogStatus"),
+        bucketSubmitBtn: el("bucketSubmitBtn"),
+        readFromDialog: el("readFromDialog"), readFromForm: el("readFromForm"), readFromTitle: el("readFromTitle"),
+        readFromTarget: el("readFromTarget"), readFromNote: el("readFromNote"),
+        readFromDialogStatus: el("readFromDialogStatus"), readFromSubmitBtn: el("readFromSubmitBtn"),
+        testDialog: el("testDialog"), testTitle: el("testTitle"), testSteps: el("testSteps")
+    };
+    const fields = {
+        name: el("bucketLabel"), kind: el("bucketKind"), bucket: el("bucketName"), region: el("bucketRegion"),
+        endpoint: el("bucketEndpoint"), publicBase: el("bucketPublicBase"), project: el("bucketProject"),
+        credentials: el("bucketCredentials"), keyId: el("bucketKeyId"), secret: el("bucketSecret"),
+        serviceAccount: el("bucketServiceAccount")
+    };
+
+    let state = {buckets: [], problem: null};
+    let editing = null;
+    let copying = null;
+
+    function showStatus(target, kind, text) {
+        target.textContent = text;
+        target.className = "alert alert-" + kind;
+    }
+
+    function request(path, method, body) {
+        const init = {method: method || "GET", credentials: "same-origin", headers: {Accept: "application/json"}};
+        if (body !== undefined) {
+            init.headers["Content-Type"] = "application/json";
+            init.body = JSON.stringify(body);
+        }
+        return fetch(API_BASE + path, init);
+    }
+
+    // ---- state -----------------------------------------------------------------
+
+    async function loadState() {
+        ui.rows.setAttribute("aria-busy", "true");
+        try {
+            const res = await request("/state");
+            if (!res.ok) throw new Error(await problemText(res, "Couldn't load the buckets. Reload the page to try again."));
+            state = await res.json();
+            render();
+        } catch (err) {
+            showStatus(ui.status, "error", err.message || "Couldn't load the buckets. Reload the page to try again.");
+        } finally {
+            ui.rows.setAttribute("aria-busy", "false");
+        }
+    }
+
+    /** Where a bucket's files may be read from: one that holds its own files. The API refuses the rest. */
+    const copyTargets = bucket => state.buckets.filter(other => other.id !== bucket.id && !other.readFromBucketId);
+
+    function render() {
+        ui.problem.textContent = state.problem || "";
+        ui.problem.classList.toggle("hidden", !state.problem);
+        const buckets = state.buckets;
+        ui.empty.classList.toggle("hidden", buckets.length > 0);
+        ui.howTo.classList.toggle("hidden", buckets.length === 0);
+
+        ui.rows.innerHTML = buckets.map((bucket, index) => {
+            const badges = [
+                `<span class="badge${bucket.primary ? " badge-ok" : ""}">${escapeHtml(bucket.role)}</span>`,
+                `<span class="badge">${escapeHtml(bucket.kindLabel)}</span>`
+            ];
+            const actions = [];
+            if (CAN_MANAGE) {
+                // Only what the API would accept, so no button leads to a refusal.
+                const own = !bucket.primary && !bucket.readFromBucketId;
+                actions.push(`<button class="btn btn-secondary btn-xs" type="button" data-test="${index}">Test</button>`);
+                actions.push(`<button class="btn btn-secondary btn-xs" type="button" data-edit="${index}">Edit</button>`);
+                if (own) {
+                    actions.push(`<button class="btn btn-secondary btn-xs" type="button" data-primary="${index}">Send new files here</button>`);
+                }
+                if (own && copyTargets(bucket).length > 0) {
+                    actions.push(`<button class="btn btn-secondary btn-xs" type="button" data-copied="${index}">Files copied to…</button>`);
+                }
+                if (bucket.readFromBucketId) {
+                    actions.push(`<button class="btn btn-secondary btn-xs" type="button" data-own="${index}">Open from its own bucket</button>`);
+                }
+                if (own && bucket.readBy.length === 0) {
+                    actions.push(`<button class="btn btn-danger btn-xs" type="button" data-remove="${index}">Remove</button>`);
+                }
+            }
+            const readBy = bucket.readBy.length
+                ? `<div class="row-sub">Files of ${escapeHtml(bucket.readBy.join(", "))} open from here.</div>` : "";
+            return `
+                <div class="row">
+                    <div class="row-main">
+                        <div class="row-name">${escapeHtml(bucket.name)}</div>
+                        <div class="row-sub">${escapeHtml(bucket.location)}</div>
+                        <div class="row-sub">${escapeHtml(bucket.credentials)}</div>
+                        ${readBy}
+                    </div>
+                    <div class="row-facts">${badges.join("")}</div>
+                    ${actions.length ? `<div class="row-actions">${actions.join("")}</div>` : ""}
+                </div>`;
+        }).join("");
+
+        const on = (attr, handler) => ui.rows.querySelectorAll(`[data-${attr}]`).forEach(btn =>
+            btn.addEventListener("click", () => handler(buckets[Number(btn.dataset[attr])], btn)));
+        on("test", testBucket);
+        on("edit", openEdit);
+        on("primary", makePrimary);
+        on("copied", openReadFrom);
+        on("own", readOwnFiles);
+        on("remove", removeBucket);
+    }
+
+    // ---- adding and editing ------------------------------------------------------
+
+    function syncBucketFields() {
+        const kind = fields.kind.value;
+        const credentials = fields.credentials.value;
+        ui.bucketForm.querySelectorAll("[data-kind]").forEach(node => {
+            const kindMatches = node.dataset.kind === kind;
+            const credentialsMatch = !node.dataset.credentials || node.dataset.credentials === credentials;
+            node.classList.toggle("hidden", !(kindMatches && credentialsMatch));
+        });
+    }
+
+    function credentialChoices(isEdit, bucket) {
+        const key = fields.kind.value === "GCS" ? "A service account key" : "An access key";
+        const choices = isEdit
+            ? [
+                {value: "KEEP", label: `Keep as it is (${bucket.credentials})`},
+                {value: "HOST", label: "The server's own identity"},
+                {value: "REPLACE", label: `${key} (replace it)`}
+            ]
+            : [
+                {value: "HOST", label: "The server's own identity: the role or service account it runs as"},
+                {value: "REPLACE", label: key}
+            ];
+        fields.credentials.innerHTML = choices.map(choice =>
+            `<option value="${choice.value}">${escapeHtml(choice.label)}</option>`).join("");
+    }
+
+    function openCreate() {
+        editing = null;
+        ui.bucketTitle.textContent = "Add a bucket";
+        ui.bucketSub.textContent = "It takes new files at once if it is the first one listed; otherwise it waits until you send them there.";
+        ui.bucketSubmitBtn.textContent = "Add bucket";
+        ui.fixedNote.classList.add("hidden");
+        for (const f of Object.values(fields)) {
+            if (f.tagName !== "SELECT") f.value = "";
+            f.disabled = false;
+        }
+        fields.kind.value = "S3";
+        credentialChoices(false);
+        fields.credentials.value = "HOST";
+        syncBucketFields();
+        ui.bucketDialogStatus.className = "alert alert-error hidden";
+        ui.bucketDialog.showModal();
+    }
+
+    function openEdit(bucket) {
+        editing = bucket;
+        ui.bucketTitle.textContent = bucket.name;
+        ui.bucketSub.textContent = bucket.location;
+        ui.bucketSubmitBtn.textContent = "Save changes";
+        ui.fixedNote.classList.remove("hidden");
+        fields.name.value = bucket.name;
+        fields.kind.value = bucket.kind;
+        fields.bucket.value = bucket.bucketName;
+        fields.region.value = bucket.region || "";
+        fields.endpoint.value = bucket.endpoint || "";
+        fields.publicBase.value = bucket.publicBaseUrl || "";
+        fields.project.value = bucket.projectId || "";
+        fields.keyId.value = "";
+        fields.secret.value = "";
+        fields.serviceAccount.value = "";
+        for (const f of [fields.kind, fields.bucket, fields.region, fields.endpoint, fields.publicBase]) f.disabled = true;
+        for (const f of [fields.name, fields.project, fields.credentials, fields.keyId, fields.secret, fields.serviceAccount]) f.disabled = false;
+        credentialChoices(true, bucket);
+        fields.credentials.value = "KEEP";
+        syncBucketFields();
+        ui.bucketDialogStatus.className = "alert alert-error hidden";
+        ui.bucketDialog.showModal();
+    }
+
+    ui.bucketForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        ui.bucketDialogStatus.className = "alert alert-error hidden";
+        ui.bucketSubmitBtn.disabled = true;
+        const value = f => f.value.trim() || null;
+        const replacing = fields.credentials.value === "REPLACE";
+        const gcs = fields.kind.value === "GCS";
+        const credentials = {
+            accessKeyId: replacing && !gcs ? value(fields.keyId) : null,
+            secretAccessKey: replacing && !gcs ? value(fields.secret) : null,
+            serviceAccountJson: replacing && gcs ? value(fields.serviceAccount) : null
+        };
+        try {
+            const res = editing
+                ? await request(`/buckets/${editing.id}`, "PATCH", {
+                    name: fields.name.value.trim(),
+                    projectId: gcs ? value(fields.project) : null,
+                    credentials: fields.credentials.value,
+                    ...credentials
+                })
+                : await request("/buckets", "POST", {
+                    name: fields.name.value.trim(),
+                    kind: fields.kind.value,
+                    bucketName: fields.bucket.value.trim(),
+                    region: gcs ? null : value(fields.region),
+                    endpoint: gcs ? null : value(fields.endpoint),
+                    publicBaseUrl: value(fields.publicBase),
+                    projectId: gcs ? value(fields.project) : null,
+                    ...credentials
+                });
+            if (!res.ok) throw new Error(await problemText(res, "Couldn't save that bucket. Try again."));
+            const saved = await res.json();
+            ui.bucketDialog.close();
+            showStatus(ui.status, "success", editing
+                ? `${saved.name} was updated.`
+                : `${saved.name} was added. Test it before sending files there.`);
+            await loadState();
+        } catch (err) {
+            showStatus(ui.bucketDialogStatus, "error", err.message || "Couldn't save that bucket. Try again.");
+        } finally {
+            ui.bucketSubmitBtn.disabled = false;
+        }
+    });
+
+    // ---- testing -------------------------------------------------------------------
+
+    async function testBucket(bucket, button) {
+        button.disabled = true;
+        ui.testTitle.textContent = `Testing ${bucket.name}`;
+        ui.testSteps.innerHTML = `<div class="row"><div class="row-main"><div class="row-sub">Working…</div></div></div>`;
+        ui.testDialog.showModal();
+        try {
+            const res = await request(`/buckets/${bucket.id}/test`, "POST");
+            if (!res.ok) throw new Error(await problemText(res, "Couldn't run the test. Try again."));
+            const probe = await res.json();
+            ui.testTitle.textContent = probe.ok ? `${probe.bucketName} works` : `${probe.bucketName} didn't pass`;
+            const label = {OK: "Done", FAILED: "Failed", SKIPPED: "Not tried"};
+            ui.testSteps.innerHTML = probe.steps.map(s => `
+                <div class="row">
+                    <div class="row-main">
+                        <div class="row-name">${escapeHtml(s.step)}</div>
+                        <div class="row-sub">${escapeHtml(s.detail)}</div>
+                    </div>
+                    <span class="badge${s.outcome === "OK" ? " badge-ok" : ""}">${label[s.outcome] || escapeHtml(s.outcome)}</span>
+                </div>`).join("");
+        } catch (err) {
+            ui.testSteps.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    // ---- where files go and are read from -----------------------------------------
+
+    async function makePrimary(bucket) {
+        if (!confirm(`Send new files to ${bucket.name}? Files already saved stay where they are and keep opening from there. Nothing is copied.`)) return;
+        await write(`/buckets/${bucket.id}/primary`, "POST", undefined, `New files now go to ${bucket.name}.`, "Couldn't change where new files go. Try again.");
+    }
+
+    function describeCopy() {
+        const target = state.buckets.find(b => b.id === ui.readFromTarget.value);
+        const copy = target ? target.name : "the copy";
+        const name = copying.name;
+        ui.readFromSubmitBtn.textContent = `Open from ${copy}`;
+        ui.readFromNote.textContent = `Saved addresses of ${name}'s files then open from ${copy}, and ${name}'s own ` +
+            `credentials can be cleared. Nothing is copied or checked here, so open a few old photos afterwards: a file ` +
+            `missing from ${copy} won't open until it is copied, or until ${name}'s files open from its own bucket again.`;
+    }
+
+    function openReadFrom(bucket) {
+        copying = bucket;
+        const targets = copyTargets(bucket);
+        ui.readFromTitle.textContent = `${bucket.name}'s files were copied to another bucket`;
+        ui.readFromTarget.innerHTML = targets.map(b => `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)}</option>`).join("");
+        const primary = targets.find(b => b.primary);
+        if (primary) ui.readFromTarget.value = primary.id;
+        ui.readFromDialogStatus.className = "alert alert-error hidden";
+        describeCopy();
+        ui.readFromDialog.showModal();
+    }
+
+    ui.readFromForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        ui.readFromSubmitBtn.disabled = true;
+        try {
+            const res = await request(`/buckets/${copying.id}/read-from`, "PUT", {bucketId: ui.readFromTarget.value});
+            if (!res.ok) throw new Error(await problemText(res, "Couldn't save that. Try again."));
+            state = await res.json();
+            ui.readFromDialog.close();
+            render();
+            showStatus(ui.status, "success", `${copying.name}'s files now open from ${ui.readFromTarget.selectedOptions[0].text}.`);
+        } catch (err) {
+            showStatus(ui.readFromDialogStatus, "error", err.message || "Couldn't save that. Try again.");
+        } finally {
+            ui.readFromSubmitBtn.disabled = false;
+        }
+    });
+
+    async function readOwnFiles(bucket) {
+        if (!confirm(`Open ${bucket.name}'s files from its own bucket again, instead of from ${bucket.readFromName}? ` +
+            `${bucket.name} then needs its files and a way in: its own credentials, or the server's identity. ` +
+            `This is also the first step of moving files back to it.`)) return;
+        await write(`/buckets/${bucket.id}/read-from`, "DELETE", undefined, `${bucket.name}'s files open from its own bucket again.`, "Couldn't change that. Try again.");
+    }
+
+    async function removeBucket(bucket) {
+        if (!confirm(`Remove ${bucket.name} from this list? Its bucket and files are left alone, but any address of it still saved will stop opening.`)) return;
+        await write(`/buckets/${bucket.id}`, "DELETE", undefined, `${bucket.name} was removed from the list.`, "Couldn't remove that bucket. Try again.");
+    }
+
+    async function write(path, method, body, done, fallback) {
+        try {
+            const res = await request(path, method, body);
+            if (!res.ok) throw new Error(await problemText(res, fallback));
+            state = await res.json();
+            render();
+            showStatus(ui.status, "success", done);
+        } catch (err) {
+            showStatus(ui.status, "error", err.message || fallback);
+        }
+    }
+
+    fields.kind.addEventListener("change", () => {
+        credentialChoices(!!editing, editing);
+        syncBucketFields();
+    });
+    fields.credentials.addEventListener("change", syncBucketFields);
+    ui.readFromTarget.addEventListener("change", describeCopy);
+    ui.newBucketBtn?.addEventListener("click", openCreate);
+    ui.emptyNewBtn?.addEventListener("click", openCreate);
+    el("bucketCancelBtn").addEventListener("click", () => ui.bucketDialog.close());
+    el("readFromCancelBtn").addEventListener("click", () => ui.readFromDialog.close());
+    el("testCloseBtn").addEventListener("click", () => ui.testDialog.close());
+
+    loadState();
+</script>
+</body>
+</html>

@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.StorageService
+import pitampoudel.komposeauth.storage.service.StorageService
 import pitampoudel.komposeauth.core.service.SlackNotifier
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.entity.KycVerification

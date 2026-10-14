@@ -82,6 +82,18 @@ class AdminPagesIntegrationTest {
     }
 
     @Test
+    fun `storage page renders and marks its nav entry current`() {
+        val cookie = adminCookie("admin-storage@example.com")
+
+        mockMvc.get("/admin/storage") { cookie(cookie) }
+            .andExpect {
+                status { isOk() }
+                content { string(org.hamcrest.Matchers.containsString("Where files are kept")) }
+                content { string(org.hamcrest.Matchers.containsString("""href="/admin/storage" aria-current="page"""")) }
+            }
+    }
+
+    @Test
     fun `configuration renders in the shell at the admin address`() {
         mockMvc.get("/admin/config") { header(AppConfigController.MASTER_KEY_HEADER, TestConfig.testKey) }
             .andExpect {

@@ -49,18 +49,6 @@ class AppConfigController(
                 members = listOf("supportEmail", "rpId", "defaultPhoneRegion")
             ),
             Group(
-                title = "Storage (storageProvider picks where new files go when both buckets are set; old files stay where they are)",
-                members = listOf(
-                    "storageProvider",
-                    "gcpProjectId",
-                    "gcpBucketName",
-                    "s3BucketName",
-                    "s3Region",
-                    "s3AccessKeyId",
-                    "s3SecretAccessKey"
-                )
-            ),
-            Group(
                 title = "OAuth",
                 members = listOf(
                     "googleAuthClientId",
@@ -128,12 +116,6 @@ class AppConfigController(
                     ConfigFieldGroup.ConfigField.SelectOption("whatsapp", "WhatsApp")
                 )
 
-                "storageProvider" -> listOf(
-                    ConfigFieldGroup.ConfigField.SelectOption("", "Not set"),
-                    ConfigFieldGroup.ConfigField.SelectOption(AppConfig.STORAGE_GCS, "Google Cloud Storage"),
-                    ConfigFieldGroup.ConfigField.SelectOption(AppConfig.STORAGE_S3, "Amazon S3")
-                )
-
                 else -> null
             }
         },
@@ -143,7 +125,6 @@ class AppConfigController(
                 "allowedAndroidSha256List" -> "textarea"
                 "rolesCatalog" -> "textarea"
                 "smsProvider" -> "select"
-                "storageProvider" -> "select"
                 else -> null
             }
         }
@@ -186,7 +167,7 @@ class AppConfigController(
             model.addAttribute("fieldGroups", fieldGroups(config))
             return "admin/config"
         }
-        (storageChoiceProblem(form) ?: phoneRegionProblem(form))?.let { problem ->
+        phoneRegionProblem(form)?.let { problem ->
             adminShell.apply(model)
             model.addAttribute("config", form)
             model.addAttribute("fieldGroups", fieldGroups(form))
@@ -199,17 +180,6 @@ class AppConfigController(
         model.addAttribute("fieldGroups", fieldGroups(config))
         model.addAttribute("saved", true)
         return "admin/config"
-    }
-
-    /**
-     * Neither cloud is a default, so a form naming two buckets without saying which takes new files
-     * is refused here, before every upload starts failing.
-     */
-    private fun storageChoiceProblem(form: AppConfig): String? {
-        val candidate = form.copy().clean()
-        val touched = candidate.gcpBucketName != null || candidate.s3BucketName != null || candidate.storageProvider != null
-        if (!touched) return null
-        return runCatching { candidate.resolvedStorageProvider() }.exceptionOrNull()?.message
     }
 
     /** A region libphonenumber doesn't know would refuse every number typed without a `+`. */

@@ -21,9 +21,10 @@ pointed at the same database is the same server: tokens it issued on Cloud Run s
    APP_SECRET_ARN=arn:aws:secretsmanager:... ISSUER=https://auth.example.com \
    IMAGE=docker.io/pitampoudel/komposeauth:<release> bash setup.sh
    ```
-   Optional: `FILES_BUCKET` to give the tasks access to an S3 bucket through their role (then leave
-   `s3AccessKeyId` and `s3SecretAccessKey` blank in the admin config), and `ALERT_EMAIL` for the
-   unreachable, 5xx and memory alarms. `REGION` defaults to `ap-south-1` and `STACK` to `komposeauth`.
+   Optional: `FILES_BUCKET` to give the tasks access to an S3 bucket through their role (then list
+   it on the admin console's Storage page with no access key, so the server signs in as the task
+   role), and `ALERT_EMAIL` for the unreachable, 5xx and memory alarms. `REGION` defaults to
+   `ap-south-1` and `STACK` to `komposeauth`.
 4. **MongoDB:** allow the tasks in your database's network access. They get public addresses that
    change, so either allow `0.0.0.0/0` or put them behind a NAT gateway with a fixed address.
 5. **Switch:** point the domain at the stack's `LoadBalancerDnsName` output. Keep the issuer exactly
@@ -37,8 +38,30 @@ back a release that doesn't become healthy.
 - **Client addresses:** the load balancer appends the caller's address as the last
   `X-Forwarded-For` entry, as Cloud Run does, so `trustedProxyCount` stays `1`. Check it with
   `/admin/client-ip` after the switch.
-- **Files already on GCS** stay there. New files go where `storageProvider` says once an S3 bucket is
-  configured. The image has no Google credentials on AWS, so a file still on GCS can't be deleted
-  from there until it is given some.
+- **Files** are kept wherever the Storage page says (`/admin/storage`, see "Where files are kept" in
+  the main README), and the database brings that list with it. To bring files kept on GCS over to S3:
+  1. Add the S3 bucket on the Storage page with no access key, test it, and press **Send new files
+     here** on it.
+  2. Copy the GCS bucket into the S3 one under the same names, from anywhere that can reach both:
+     `rclone copy gcs:<gcs-bucket> s3:<s3-bucket>`. Run it again a minute later.
+  3. On the GCS bucket, press **Files copied to…** and choose the S3 one. Its saved addresses open
+     the copies from then on, so the tasks need no Google identity. Keep its entry listed, and
+     delete the GCS bucket itself whenever you are sure.
+
+  The same steps move files between any two buckets, in either direction.
+- **Profile photos and organization logos** are loaded by browsers straight from the address on
+  the record, so the S3 bucket has to let anyone read those two prefixes, as the GCS bucket did.
+  KYC documents stay private: this server serves them. A bucket policy is refused while Block
+  Public Access covers policies, so lift that part of it first:
+  ```bash
+  aws s3api put-public-access-block --bucket <bucket> --public-access-block-configuration \
+    BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=false,RestrictPublicBuckets=false
+  aws s3api put-bucket-policy --bucket <bucket> --policy '{"Version": "2012-10-17",
+    "Statement": [{"Effect": "Allow", "Principal": "*", "Action": "s3:GetObject",
+    "Resource": ["arn:aws:s3:::<bucket>/users/*", "arn:aws:s3:::<bucket>/organization_logos/*"]}]}'
+  ```
+- **The database** moves as it is: signing keys, sessions and the admin config are all in it. Keep
+  `BASE64_ENCRYPTION_KEY` with it, since the config and the KYC documents are encrypted under that
+  key.
 - **Scale:** at least one task always runs, so there are no cold starts and no CPU throttling between
   requests.

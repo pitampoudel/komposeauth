@@ -20,7 +20,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.authorization.OAuth2AuthorizationConsentDocumentRepository
 import pitampoudel.komposeauth.core.domain.Roles
-import pitampoudel.komposeauth.core.service.StorageService
+import pitampoudel.komposeauth.storage.service.StorageService
 import pitampoudel.komposeauth.user.entity.User
 import pitampoudel.komposeauth.user.repository.UserRepository
 import pitampoudel.komposeauth.user.service.AccessRevocation
