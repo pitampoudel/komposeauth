@@ -125,12 +125,15 @@ private fun deserializeAttributes(encoded: String): Map<String, Any> {
     }
 }
 
-// Jackson writes a Date as epoch milliseconds, and every timestamp claim is read back as epoch seconds.
-@Suppress("UNCHECKED_CAST")
-private fun Map<String, Any>.withDatesAsInstants(): Map<String, Any> = mapValues { (_, value) ->
+// Spring's JwtGenerator writes auth_time as a Date, which Jackson stores in milliseconds; the
+// readers above take every timestamp claim to be in seconds, as an Instant is stored.
+private fun datesToInstants(map: Map<String, Any?>): Map<String, Any?> = map.mapValues { (_, value) ->
     when (value) {
         is Date -> value.toInstant()
-        is Map<*, *> -> (value as Map<String, Any>).withDatesAsInstants()
+        is Map<*, *> -> {
+            @Suppress("UNCHECKED_CAST")
+            datesToInstants(value as Map<String, Any?>)
+        }
         else -> value
     }
 }
@@ -170,8 +173,8 @@ fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: Objec
         oidcIdTokenValue = idToken?.token?.tokenValue,
         oidcIdTokenIssuedAt = idToken?.token?.issuedAt,
         oidcIdTokenExpiresAt = idToken?.token?.expiresAt,
-        oidcIdTokenMetadata = idToken?.metadata?.let { objectMapper.writeValueAsString(it.withDatesAsInstants()) },
-        oidcIdTokenClaims = idToken?.token?.claims?.let { objectMapper.writeValueAsString(it.withDatesAsInstants()) },
+        oidcIdTokenMetadata = idToken?.metadata?.let { objectMapper.writeValueAsString(datesToInstants(it)) },
+        oidcIdTokenClaims = idToken?.token?.claims?.let { objectMapper.writeValueAsString(datesToInstants(it)) },
     )
 }
 
@@ -180,7 +183,7 @@ fun fromOAuth2AuthorizationDocument(
     registeredClient: RegisteredClient,
     objectMapper: ObjectMapper,
     claimTypeMode: OidcClaimTypeMode = OidcClaimTypeMode.SERIALIZATION
-): OAuth2Authorization? {
+): OAuth2Authorization {
 
     val builder = OAuth2Authorization.withRegisteredClient(registeredClient)
         .id(doc.id)

@@ -21,6 +21,9 @@ extra["sentryVersion"] = "8.27.0"
 extra["tomcat.version"] = "11.0.25"
 extra["jackson-bom.version"] = "3.1.7"
 extra["jackson-2-bom.version"] = "2.21.7"
+extra["opentelemetry.version"] = "1.62.0"
+// Boot 4.1.1 manages coroutines 1.10.2 while dependencies ask for 1.11; mixed modules fail at runtime.
+extra["kotlin-coroutines.version"] = "1.11.0"
 extra["flamingockVersion"] = "1.4.5"
 
 dependencies {
@@ -42,8 +45,6 @@ dependencies {
     implementation("org.springframework.security:spring-security-crypto")
     // Not a reactive stack -- the servlet dispatcher adapts `suspend` controller methods through
     // this bridge, so the handful of them in the codebase stop resolving without it.
-    // No version: Spring Boot manages kotlinx-coroutines-core, and a bridge newer than it fails at
-    // runtime (1.11.0 on core 1.10.2 threw NoSuchMethodError and the KYC submission never answered).
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
     implementation("tools.jackson.module:jackson-module-kotlin")
