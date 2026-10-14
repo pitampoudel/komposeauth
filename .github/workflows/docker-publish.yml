@@ -14,8 +14,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A push or a release runs the same check inside deploy/publish-image.sh, before it builds.
   test:
     name: Run tests
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -34,8 +36,7 @@ jobs:
         run: ./gradlew clean :server:check --parallel --build-cache --no-daemon
 
   build-and-push:
-    name: Build and Push Image (Buildpacks)
-    needs: test
+    name: Test, build and push image (Buildpacks)
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
@@ -59,31 +60,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build image with Buildpacks and push tags
-        shell: bash
-        run: |
-          ./gradlew :server:bootBuildImage --no-daemon
-
-          # Push generated tags from metadata-action
-          TAGS="${{ steps.meta.outputs.tags }}"
-          PRIMARY_TAG="$(printf '%s\n' "$TAGS" | head -n1)"
-
-          if [ -n "$PRIMARY_TAG" ]; then
-            # Tag Gradle build result to any additional metadata tags
-            printf '%s\n' "$TAGS" | while IFS= read -r tag; do
-              [ -z "$tag" ] && continue
-              docker tag "docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:latest" "$tag" 2>/dev/null || true
-              docker push "$tag"
-            done
-          fi
+      # The same script a release published by hand runs, so the tags and the build are the same.
+      - name: Test, build and push
+        env:
+          IMAGE: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth
+        run: deploy/publish-image.sh

@@ -285,20 +285,18 @@ Version resolution works uniformly across both local builds and CI:
 ### 1. Server Docker Image
 
 ```bash
-# Run tests
-./gradlew :server:check
-
-# Build Docker image locally
+# Build a local image to try (no tests, no push)
 ./gradlew :server:bootBuildImage
 
-# Build and tag custom image
-./gradlew :server:bootBuildImage --imageName=docker.io/pitampoudel/komposeauth:0.2.8
-
-# Push to Docker Hub
-docker push docker.io/pitampoudel/komposeauth:0.2.8
-docker tag docker.io/pitampoudel/komposeauth:0.2.8 docker.io/pitampoudel/komposeauth:latest
-docker push docker.io/pitampoudel/komposeauth:latest
+# Publish: test, build and push, exactly as CI does on a push to main or a release
+docker login
+deploy/publish-image.sh
 ```
+
+`deploy/publish-image.sh` is the script the *Publish Docker Image* workflow runs, so an image
+published by hand and one published by CI are built and tagged the same way. The tags come from git:
+a release tag `vX.Y.Z` publishes `X.Y.Z` and `X.Y`, `main` publishes `main` and `latest`, and any
+other branch publishes its own name. `IMAGE` overrides the repository.
 
 ### 2. Client SDK (KMP / CMP)
 
