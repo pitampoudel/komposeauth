@@ -4,6 +4,8 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
     kotlin("jvm")
+    // Flamingock's annotation processor only speaks JSR-269.
+    kotlin("kapt")
     alias(libs.plugins.kotlin.spring)
     id("org.springframework.boot") version "4.0.1"
     id("io.spring.dependency-management") version "1.1.7"
@@ -15,6 +17,7 @@ configurations.all {
 }
 
 extra["sentryVersion"] = "8.27.0"
+extra["flamingockVersion"] = "1.4.5"
 
 dependencies {
     //noinspection UseTomlInstead
@@ -39,6 +42,14 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.mongodb:mongodb-spring-session:4.0.0")
+    // Changes to stored data: ordered, run once per database and recorded in Flamingock's own audit
+    // collection, the same framework and shape as the bolnepage backend. See FlamingockConfig.
+    implementation(platform("io.flamingock:flamingock-bom:${property("flamingockVersion")}"))
+    implementation("io.flamingock:flamingock-community")
+    implementation("io.flamingock:flamingock-springboot-integration")
+    implementation("io.flamingock:flamingock-mongodb-sync-targetsystem")
+    implementation("io.flamingock:flamingock-mongodb-sync-auditstore")
+    kapt("io.flamingock:flamingock-processor:${property("flamingockVersion")}")
     implementation(project(":shared"))
 
     // Google Cloud Platform

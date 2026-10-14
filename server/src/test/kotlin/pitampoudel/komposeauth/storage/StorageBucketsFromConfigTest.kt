@@ -2,7 +2,7 @@ package pitampoudel.komposeauth.storage
 
 import org.bson.Document
 import pitampoudel.komposeauth.storage.entity.StorageBucket.Kind
-import pitampoudel.komposeauth.storage.migration.StorageBucketsFromConfig.Companion.bucketsFrom
+import pitampoudel.komposeauth.storage.migration._0001__StorageBucketsFromConfigChange.Companion.bucketsFrom
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
