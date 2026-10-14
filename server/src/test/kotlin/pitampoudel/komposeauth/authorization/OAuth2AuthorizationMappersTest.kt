@@ -5,9 +5,13 @@ import org.junit.jupiter.api.Test
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.OAuth2AccessToken
 import org.springframework.security.oauth2.core.OAuth2RefreshToken
+import org.springframework.security.oauth2.core.oidc.OidcIdToken
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
+import pitampoudel.komposeauth.core.config.SerializationConfig
 import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.util.Date
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -129,5 +133,34 @@ class OAuth2AuthorizationMappersTest {
         assertTrue(read.refreshToken!!.isInvalidated)
         assertFalse(read.refreshToken!!.isActive)
         assertTrue(read.accessToken!!.isInvalidated)
+    }
+
+    @Test
+    fun `a refreshed ID token keeps its auth_time however often it is stored and read back`() {
+        val client = RegisteredClient.withId("c1")
+            .clientId("c1")
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+            .build()
+        val now = Instant.now()
+        val signedInAt = now.minusSeconds(600).truncatedTo(ChronoUnit.SECONDS)
+        // Spring's JwtGenerator puts auth_time on a refreshed ID token as a Date.
+        val claims = mapOf<String, Any>("sub" to "user", "iat" to now, "auth_time" to Date.from(signedInAt))
+        var authorization = OAuth2Authorization.withRegisteredClient(client)
+            .principalName("user")
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+            .token(OidcIdToken("id1", now, now.plusSeconds(900), claims)) {
+                it[OAuth2Authorization.Token.CLAIMS_METADATA_NAME] = claims
+            }
+            .build()
+        val objectMapper = SerializationConfig().objectMapper()
+
+        repeat(3) {
+            authorization =
+                fromOAuth2AuthorizationDocument(toOAuth2AuthorizationDocument(authorization, objectMapper), client, objectMapper)
+        }
+
+        val idToken = assertNotNull(authorization.getToken(OidcIdToken::class.java))
+        assertEquals(Date.from(signedInAt), idToken.token.claims["auth_time"])
+        assertEquals(Date.from(signedInAt), idToken.claims!!["auth_time"])
     }
 }
