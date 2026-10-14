@@ -3,6 +3,8 @@ package pitampoudel.komposeauth.core.migration
 import org.slf4j.LoggerFactory
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -10,7 +12,9 @@ import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Component
 import java.time.Instant
 
+/** Ahead of Flamingock's runner, so a change finds the indexes it relies on already there. */
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
 class MongoMigrationRunner(
     private val mongoTemplate: MongoTemplate,
     private val migrations: List<MongoMigration>

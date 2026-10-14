@@ -18,7 +18,7 @@ import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.storage.service.StorageService
 import pitampoudel.komposeauth.core.service.security.CryptoService
 import pitampoudel.komposeauth.storage.entity.StorageBucket
-import pitampoudel.komposeauth.storage.migration.StorageBucketsFromConfig
+import pitampoudel.komposeauth.storage.migration._0001__StorageBucketsFromConfigChange
 import pitampoudel.komposeauth.storage.repository.StorageBucketRepository
 import pitampoudel.komposeauth.storage.service.StorageBuckets
 import kotlin.test.assertEquals
@@ -97,9 +97,9 @@ class StorageBucketsFromConfigIntegrationTest {
             "config"
         )
 
-        val migration = StorageBucketsFromConfig(crypto)
-        migration.migrate(mongoTemplate)
-        migration.migrate(mongoTemplate)
+        val change = _0001__StorageBucketsFromConfigChange()
+        change.apply(mongoTemplate)
+        change.apply(mongoTemplate)
 
         val rows = bucketRepository.findAll().sortedBy(StorageBucket::createdAt)
         assertEquals(listOf("legacy-gcs-files", "legacy-s3-files"), rows.map { it.bucketName }, "listed once, not twice")
@@ -137,7 +137,7 @@ class StorageBucketsFromConfigIntegrationTest {
             "config"
         )
 
-        StorageBucketsFromConfig(crypto).migrate(mongoTemplate)
+        _0001__StorageBucketsFromConfigChange().apply(mongoTemplate)
 
         val rows = bucketRepository.findAll()
         assertEquals(2, rows.size)

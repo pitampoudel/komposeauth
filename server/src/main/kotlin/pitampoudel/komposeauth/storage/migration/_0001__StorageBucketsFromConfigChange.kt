@@ -1,13 +1,17 @@
 package pitampoudel.komposeauth.storage.migration
 
 import com.mongodb.client.model.Filters
+import io.flamingock.api.RecoveryStrategy
+import io.flamingock.api.annotations.Apply
+import io.flamingock.api.annotations.Change
+import io.flamingock.api.annotations.Recovery
+import io.flamingock.api.annotations.Rollback
+import io.flamingock.api.annotations.TargetSystem
 import org.bson.Document
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.stereotype.Component
 import pitampoudel.komposeauth.app_config.entity.AppConfig
-import pitampoudel.komposeauth.core.migration.MongoMigration
-import pitampoudel.komposeauth.core.service.security.CryptoService
+import pitampoudel.komposeauth.core.config.FlamingockConfig
 import pitampoudel.komposeauth.storage.entity.StorageBucket
 import java.time.Instant
 
@@ -22,16 +26,15 @@ import java.time.Instant
  * The old fields are read and never unset: a rollback to the release before this one still reads
  * them (see [AppConfig.RETIRED_STORAGE_FIELDS]).
  */
-@Component
-class StorageBucketsFromConfig(private val crypto: CryptoService) : MongoMigration {
+@Change(id = "storage-buckets-from-config", author = "komposeauth", transactional = false)
+@TargetSystem(id = FlamingockConfig.TARGET_SYSTEM)
+@Recovery(strategy = RecoveryStrategy.ALWAYS_RETRY)
+class _0001__StorageBucketsFromConfigChange {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    override val id: String = "storage-buckets-from-config"
-
-    /** After the indexes, which keep a second primary out. */
-    override val order: Int = 0
-
-    override fun migrate(mongoTemplate: MongoTemplate) {
+    /** Safe to run again: a bucket already listed is not listed twice. */
+    @Apply
+    fun apply(mongoTemplate: MongoTemplate) {
         val config = mongoTemplate.getCollection(mongoTemplate.getCollectionName(AppConfig::class.java))
             .find(Filters.eq("_id", AppConfig.SINGLETON_ID)).first() ?: return
         val existing = mongoTemplate.findAll(StorageBucket::class.java)
@@ -43,10 +46,14 @@ class StorageBucketsFromConfig(private val crypto: CryptoService) : MongoMigrati
             .filter { row -> existing.none { it.kind == row.kind && it.bucketName == row.bucketName } }
             .map { row -> if (existing.any { it.primary }) row.copy(primary = false) else row }
             .forEach { row ->
-                mongoTemplate.insert(row.copy(secretAccessKey = row.secretAccessKey?.let(crypto::encrypt)))
+                mongoTemplate.insert(row)
                 log.info("Listed {} as a storage bucket{}", row, if (row.primary) ", taking new files" else "")
             }
     }
+
+    /** Nothing to undo: the config is never changed, and a run that failed lists the rest next time. */
+    @Rollback
+    fun rollback() = Unit
 
     companion object {
         /** How `storageProvider` and `gcsFilesReadFrom` named the two buckets. */
@@ -63,7 +70,7 @@ class StorageBucketsFromConfig(private val crypto: CryptoService) : MongoMigrati
             val s3Bucket = field("s3BucketName")
             val s3Region = field("s3Region")
             if (s3Bucket != null && s3Region == null) {
-                LoggerFactory.getLogger(StorageBucketsFromConfig::class.java)
+                LoggerFactory.getLogger(_0001__StorageBucketsFromConfigChange::class.java)
                     .error("s3BucketName {} has no s3Region, so it can't be listed; add it on the Storage page", s3Bucket)
             }
             val s3 = s3Bucket?.takeIf { s3Region != null }?.let { bucketName ->
