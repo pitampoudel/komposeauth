@@ -15,7 +15,7 @@ jetbrains-lifecycle = "2.9.6"
 kotlinx-datetime = "0.7.1"
 compose = "1.10.0"
 googleid = "1.2.0"
-playServicesAuth = "21.5.0"
+playServicesAuth = "22.0.0"
 playServicesAuthApiPhone = "18.3.0"
 ccp = "2.7.3"
 
