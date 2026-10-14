@@ -22,6 +22,8 @@ extra["tomcat.version"] = "11.0.25"
 extra["jackson-bom.version"] = "3.1.7"
 extra["jackson-2-bom.version"] = "2.21.7"
 extra["opentelemetry.version"] = "1.62.0"
+// Boot 4.1.1 manages coroutines 1.10.2 while dependencies ask for 1.11; mixed modules fail at runtime.
+extra["kotlin-coroutines.version"] = "1.11.0"
 extra["flamingockVersion"] = "1.4.5"
 
 dependencies {
@@ -43,7 +45,7 @@ dependencies {
     implementation("org.springframework.security:spring-security-crypto")
     // Not a reactive stack -- the servlet dispatcher adapts `suspend` controller methods through
     // this bridge, so the handful of them in the codebase stop resolving without it.
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.mongodb:mongodb-spring-session:4.0.0")
@@ -92,7 +94,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("org.testcontainers:testcontainers-mongodb")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
     testImplementation("io.mockk:mockk:1.14.11")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.4.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
