@@ -11,7 +11,10 @@ import org.bson.Document
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
 import pitampoudel.komposeauth.core.config.FlamingockConfig
+import pitampoudel.komposeauth.kyc.entity.KycDocument
 import pitampoudel.komposeauth.kyc.entity.KycVerification
+import pitampoudel.komposeauth.storage.service.StorageService
+import pitampoudel.komposeauth.storage.service.deleteUnsharedFiles
 
 /**
  * Deletes the KYC records saved before January 2026, which nothing has been able to read since.
@@ -21,8 +24,9 @@ import pitampoudel.komposeauth.kyc.entity.KycVerification
  * id. Such a record shows its owner as unverified and, through its document number, refuses the new
  * submission that would fix it. The unique index those records had on `userId` is dropped too.
  *
- * Their owners verify again. Their files stay in the bucket under `kyc/<user id>/`, and the user
- * ids are logged so somebody can remove them.
+ * Their owners verify again. Their scans and selfies go with them: nothing else names them, and the
+ * ones stored before sealing can be read by anyone holding the address. A file the owner's newer
+ * record also names stays, since the file names were by user even before the records were.
  */
 @Change(id = "delete-unreadable-kyc-records", author = "komposeauth", transactional = false)
 @TargetSystem(id = FlamingockConfig.TARGET_SYSTEM)
@@ -30,9 +34,12 @@ import pitampoudel.komposeauth.kyc.entity.KycVerification
 class _0001__DeleteUnreadableKycRecordsChange {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    /** Safe to run again: a record that reads is never matched. */
+    /**
+     * Safe to run again: a record that reads is never matched, and the files go before the records,
+     * so a run cut off between the two finds them again.
+     */
     @Apply
-    fun apply(mongoTemplate: MongoTemplate) {
+    fun apply(mongoTemplate: MongoTemplate, storage: StorageService) {
         val records = mongoTemplate.getCollection(KYC)
         records.listIndexes()
             .filter { (it["key"] as Document).keys == setOf(USER_ID) }
@@ -43,12 +50,15 @@ class _0001__DeleteUnreadableKycRecordsChange {
                 runCatching { mongoTemplate.converter.read(KycVerification::class.java, record) }.isFailure
         }.toList()
         if (unreadable.isEmpty()) return
-        records.deleteMany(Filters.`in`("_id", unreadable.map { it["_id"] }))
-        log.warn(
-            "Deleted {} KYC records saved before January 2026. Their files are under kyc/<user id>/ for users {}",
-            unreadable.size, unreadable.map { it[USER_ID] ?: it["_id"] }
-        )
+        val ids = unreadable.map { it["_id"] }
+        val kept = records.find(Filters.nin("_id", ids)).flatMap(::filesOf)
+        val left = storage.deleteUnsharedFiles(unreadable.flatMap(::filesOf), kept)
+        records.deleteMany(Filters.`in`("_id", ids))
+        log.warn("Deleted {} KYC records saved before January 2026, and their files", ids.size)
+        if (left.isNotEmpty()) log.warn("Could not delete these files of the deleted KYC records: {}", left)
     }
+
+    private fun filesOf(record: Document) = KycDocument.entries.mapNotNull { record[it.storedUrl.name] as? String }
 
     /** Nothing to undo: no release since January 2026 could read these. */
     @Rollback

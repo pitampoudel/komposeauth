@@ -25,6 +25,17 @@ What changed for people running the server or using the SDK. Versions follow
   leaving its field empty keeps it. (#68)
 - The Configuration link is shown only to super admins, who are the only ones it opens for. (#68)
 - A saved Sentry DSN takes effect without a restart. (#68)
+- **Stored data is updated on the first start.** Emails are stored lowercase and phone numbers in
+  E.164, so sign-in finds every account, and apps registered before February 2026 stop asking for
+  consent. Data no release since January 2026 could read is deleted: KYC records from before 2026
+  with their documents, passkeys from 2025, organizations from late December 2025 with their logos,
+  consents never finished, and the old `env` collection. Take a backup first if any of it matters.
+  (#67)
+
+### Security
+- Spring Boot 4.0.1 → 4.0.8, with Tomcat 11.0.25, Jackson 3.1.7 / 2.21.7 and OpenTelemetry 1.62.0
+  ahead of it. The server's dependencies had 100 published advisories (Tomcat, Spring Framework,
+  Spring Security, Jackson, Thymeleaf, Logback and others) and now have none.
 
 ### Fixed
 - The overview could call text messages "On" while the provider was missing a required key; it now

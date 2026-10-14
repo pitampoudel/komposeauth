@@ -17,6 +17,11 @@ configurations.all {
 }
 
 extra["sentryVersion"] = "8.27.0"
+// Ahead of Spring Boot 4.0.8's managed versions, each for a published advisory; drop a line once Boot ships it.
+extra["tomcat.version"] = "11.0.25"
+extra["jackson-bom.version"] = "3.1.7"
+extra["jackson-2-bom.version"] = "2.21.7"
+extra["opentelemetry.version"] = "1.62.0"
 extra["flamingockVersion"] = "1.4.5"
 
 dependencies {
@@ -53,7 +58,7 @@ dependencies {
     implementation(project(":shared"))
 
     // Google Cloud Platform
-    implementation("com.google.cloud:spring-cloud-gcp-storage:7.4.2")
+    implementation("com.google.cloud:spring-cloud-gcp-storage:8.2.3")
     // The sync client only; the async Netty transport would be a second HTTP stack nothing calls.
     implementation("software.amazon.awssdk:s3:2.55.14") {
         exclude(group = "software.amazon.awssdk", module = "netty-nio-client")
@@ -66,8 +71,9 @@ dependencies {
 
     // HTTP client
     implementation("org.apache.httpcomponents.client5:httpclient5:5.6.5")
-    implementation("org.apache.httpcomponents.core5:httpcore5:5.5-beta2")
-    implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.5-beta2")
+    implementation("org.apache.httpcomponents.core5:httpcore5:5.5-beta3")
+    implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.5-beta3")
+
 
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
