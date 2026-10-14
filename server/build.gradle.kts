@@ -71,8 +71,8 @@ dependencies {
 
     // HTTP client
     implementation("org.apache.httpcomponents.client5:httpclient5:5.6.4")
-    implementation("org.apache.httpcomponents.core5:httpcore5:5.5-beta2")
-    implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.5-beta2")
+    implementation("org.apache.httpcomponents.core5:httpcore5:5.5-beta3")
+    implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.5-beta3")
 
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
