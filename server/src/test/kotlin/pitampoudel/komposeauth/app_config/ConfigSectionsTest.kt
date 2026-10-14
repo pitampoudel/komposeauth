@@ -33,7 +33,7 @@ class ConfigSectionsTest {
     fun `every encrypted setting is a secret on the page`() {
         val encrypted = listOf(
             "googleAuthClientSecret", "googleAuthDesktopClientSecret", "twilioAuthToken", "smtpPassword",
-            "samayeApiKey", "sparrowApiToken", "whatsappAccessToken", "slackBotToken",
+            "samayeApiKey", "sparrowApiToken", "whatsappAccessToken", "slackBotToken", "alertWebhookUrl",
             "thirdFactorSecretKey", "thirdFactorToken"
         )
         encrypted.forEach { assertTrue(ConfigSections.isSecret(it), "$it is shown back to the browser") }

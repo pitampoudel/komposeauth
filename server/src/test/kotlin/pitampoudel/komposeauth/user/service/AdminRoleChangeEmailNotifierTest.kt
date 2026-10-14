@@ -15,7 +15,7 @@ import pitampoudel.komposeauth.app_config.service.AppConfigProvider
 import pitampoudel.komposeauth.app_config.service.AppConfigService
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.SlackNotifier
+import pitampoudel.komposeauth.core.service.AlertNotifier
 import pitampoudel.komposeauth.user.entity.User
 
 class AdminRoleChangeEmailNotifierTest {
@@ -23,7 +23,7 @@ class AdminRoleChangeEmailNotifierTest {
     @Test
     fun `notify does nothing when user has no email`() {
         val emailService = mock<EmailService>()
-        val slackNotifier = mock<SlackNotifier>()
+        val alertNotifier = mock<AlertNotifier>()
         val appConfigProvider = mock<AppConfigProvider>()
         whenever(appConfigProvider.get()).thenReturn(
             AppConfig(
@@ -34,7 +34,7 @@ class AdminRoleChangeEmailNotifierTest {
         val notifier = RoleChangeEmailNotifier(
             emailService = emailService,
             appConfigService = AppConfigService(appConfigProvider),
-            slackNotifier = slackNotifier
+            alertNotifier = alertNotifier
         )
 
         val target = User(
@@ -54,14 +54,14 @@ class AdminRoleChangeEmailNotifierTest {
             role = Roles.ADMIN
         )
         assertFalse(ok)
-        verify(slackNotifier).send(any())
+        verify(alertNotifier).send(any())
         verifyNoInteractions(emailService)
     }
 
     @Test
     fun `notify sends email when user has email`() {
         val emailService = mock<EmailService>()
-        val slackNotifier = mock<SlackNotifier>()
+        val alertNotifier = mock<AlertNotifier>()
         whenever(
             emailService.sendHtmlMail(
                 baseUrl = any(),
@@ -83,7 +83,7 @@ class AdminRoleChangeEmailNotifierTest {
         val notifier = RoleChangeEmailNotifier(
             emailService = emailService,
             appConfigService = AppConfigService(appConfigProvider),
-            slackNotifier = slackNotifier
+            alertNotifier = alertNotifier
         )
 
         val target = User(
@@ -104,7 +104,7 @@ class AdminRoleChangeEmailNotifierTest {
         )
         assertTrue(ok)
 
-        verify(slackNotifier).send(any())
+        verify(alertNotifier).send(any())
         verify(emailService).sendHtmlMail(
             baseUrl = eq("https://example.com"),
             to = eq("target@example.com"),

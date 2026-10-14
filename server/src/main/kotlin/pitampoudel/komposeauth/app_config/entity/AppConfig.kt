@@ -111,6 +111,8 @@ data class AppConfig(
     var emailFooterText: String? = null,
 
     var sentryDsn: String? = null,
+    // An incoming webhook in the operators' chat; it carries its own credential, so it is stored encrypted.
+    var alertWebhookUrl: String? = null,
     var slackBotToken: String? = null,
     var slackChannelId: String? = null,
     // Third-party SMS provider (Samaye) API key
@@ -172,6 +174,7 @@ data class AppConfig(
         defaultPhoneRegion = defaultPhoneRegion?.trim()?.uppercase()?.takeIf { it.isNotEmpty() }
         if (emailFooterText.isNullOrBlank()) emailFooterText = null
         if (sentryDsn.isNullOrBlank()) sentryDsn = null
+        if (alertWebhookUrl.isNullOrBlank()) alertWebhookUrl = null
         if (slackBotToken.isNullOrBlank()) slackBotToken = null
         if (slackChannelId.isNullOrBlank()) slackChannelId = null
         if (samayeApiKey.isNullOrBlank()) samayeApiKey = null

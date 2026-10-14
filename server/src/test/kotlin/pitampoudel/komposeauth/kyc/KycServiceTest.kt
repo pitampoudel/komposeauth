@@ -15,7 +15,7 @@ import org.mockito.kotlin.whenever
 import pitampoudel.core.data.EncodedData
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.storage.service.StorageService
-import pitampoudel.komposeauth.core.service.SlackNotifier
+import pitampoudel.komposeauth.core.service.AlertNotifier
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.data.PersonalInformation
@@ -56,7 +56,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<AlertNotifier>())
 
         val userId = ObjectId.get()
 
@@ -73,7 +73,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<AlertNotifier>())
 
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(null)
@@ -108,7 +108,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<AlertNotifier>())
 
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(null)
@@ -132,7 +132,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<AlertNotifier>())
 
         val userId = ObjectId.get()
         val existing = baseKyc(userId, status = KycResponse.Status.DRAFT)
@@ -189,7 +189,7 @@ class KycServiceTest {
             }
             on { download(any()) } doAnswer { call -> bucket[call.getArgument<String>(0)] }
         }
-        val service = KycService(repo, kycDocumentsOver(storage), mock(), mock(), mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), mock(), mock(), mock<AlertNotifier>())
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(baseKyc(userId))
         whenever(repo.replaceIfStatus(any(), any())).thenAnswer { it.arguments[1] }
@@ -229,7 +229,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<AlertNotifier>())
 
         val userId = ObjectId.get()
         whenever(repo.findByUserId(userId)).thenReturn(baseKyc(userId, status = KycResponse.Status.PENDING))
@@ -258,7 +258,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<AlertNotifier>())
 
         val userId = ObjectId.get()
         val existing = baseKyc(userId, status = KycResponse.Status.PENDING)
@@ -295,7 +295,7 @@ class KycServiceTest {
         val storage = mock<StorageService>()
         val email = mock<EmailService>()
         val userRepo = mock<UserRepository>()
-        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(storage), email, userRepo, mock<AlertNotifier>())
 
         val userId = ObjectId.get()
         val kyc = baseKyc(userId, status = KycResponse.Status.PENDING)
@@ -332,7 +332,7 @@ class KycServiceTest {
     fun `a KYC that is not waiting for review cannot be approved or rejected`() {
         val repo = mock<KycVerificationRepository>()
         val email = mock<EmailService>()
-        val service = KycService(repo, kycDocumentsOver(mock()), email, mock<UserRepository>(), mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(mock()), email, mock<UserRepository>(), mock<AlertNotifier>())
         val user = User(id = ObjectId.get(), firstName = "A", lastName = "B", email = "a@example.com", phoneNumber = null)
 
         listOf(KycResponse.Status.DRAFT, KycResponse.Status.APPROVED, KycResponse.Status.REJECTED).forEach { status ->
@@ -348,7 +348,7 @@ class KycServiceTest {
     fun `a decision another reviewer got to first is refused and mails nobody`() {
         val repo = mock<KycVerificationRepository>()
         val email = mock<EmailService>()
-        val service = KycService(repo, kycDocumentsOver(mock()), email, mock<UserRepository>(), mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(mock()), email, mock<UserRepository>(), mock<AlertNotifier>())
         val user = User(id = ObjectId.get(), firstName = "A", lastName = "B", email = "a@example.com", phoneNumber = null)
         // Read as waiting for review, decided by somebody else before this decision is stored.
         whenever(repo.findById(user.id)).thenReturn(Optional.of(baseKyc(user.id, status = KycResponse.Status.PENDING)))
@@ -363,7 +363,7 @@ class KycServiceTest {
     @Test
     fun `an edit read before a submission landed does not overwrite it`() {
         val repo = mock<KycVerificationRepository>()
-        val service = KycService(repo, kycDocumentsOver(mock()), mock(), mock<UserRepository>(), mock<SlackNotifier>())
+        val service = KycService(repo, kycDocumentsOver(mock()), mock(), mock<UserRepository>(), mock<AlertNotifier>())
         val userId = ObjectId.get()
         val draft = baseKyc(userId, status = KycResponse.Status.DRAFT)
         whenever(repo.findByUserId(userId)).thenReturn(draft)

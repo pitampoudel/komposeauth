@@ -93,6 +93,7 @@ class AppConfigProvider(
         samayeApiKey = samayeApiKey?.let(transform),
         sparrowApiToken = sparrowApiToken?.let(transform),
         whatsappAccessToken = whatsappAccessToken?.let(transform),
+        alertWebhookUrl = alertWebhookUrl?.let(transform),
         slackBotToken = slackBotToken?.let(transform),
         thirdFactorSecretKey = thirdFactorSecretKey?.let(transform),
         thirdFactorToken = thirdFactorToken?.let(transform),

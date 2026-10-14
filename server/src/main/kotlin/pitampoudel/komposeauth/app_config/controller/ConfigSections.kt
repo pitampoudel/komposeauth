@@ -262,24 +262,38 @@ object ConfigSections {
         ConfigSection(
             id = "alerts",
             kind = ConfigSection.Kind.CONNECTION,
-            title = "Slack alerts",
-            summary = "Posts to a channel when an admin role is granted or revoked and when identity documents are submitted.",
+            title = "Alerts",
+            summary = "Posts to your team's chat when an admin role is granted or revoked and when identity documents are submitted.",
             fields = listOf(
-                ConfigField("slackBotToken", "Bot token", type = ConfigField.Type.SECRET, placeholder = "xoxb-…"),
-                ConfigField("slackChannelId", "Channel ID", placeholder = "C0123456789"),
+                ConfigField(
+                    "alertWebhookUrl", "Webhook URL", type = ConfigField.Type.SECRET,
+                    placeholder = "https://hooks.slack.com/services/…",
+                    help = "An incoming webhook from Slack, Discord, Mattermost, Google Chat or Rocket.Chat."
+                ),
+                ConfigField(
+                    "slackBotToken", "Slack bot token", type = ConfigField.Type.SECRET, placeholder = "xoxb-…",
+                    help = "Only for a Slack app instead of a webhook. Alerts go to both when both are set."
+                ),
+                ConfigField("slackChannelId", "Slack channel ID", placeholder = "C0123456789"),
             ),
             status = { c ->
-                val gaps = required(c.slackBotToken to "a bot token", c.slackChannelId to "a channel ID")
-                when (gaps.size) {
-                    0 -> ConnectionStatus(ConnectionStatus.State.CONNECTED, "Channel ${c.slackChannelId}")
-                    2 -> ConnectionStatus(ConnectionStatus.State.OFF, "No alerts are sent")
-                    else -> ConnectionStatus(ConnectionStatus.State.INCOMPLETE, missing(gaps))
+                val slackGaps = required(c.slackBotToken to "a bot token", c.slackChannelId to "a channel ID")
+                val places = listOfNotNull(
+                    c.alertWebhookUrl?.takeIf(::set)?.let { url -> "Webhook" + (runCatching { URI(url).host }.getOrNull()?.let { " to $it" } ?: "") },
+                    c.slackChannelId.takeIf { slackGaps.isEmpty() }?.let { "Slack channel $it" }
+                )
+                when {
+                    slackGaps.size == 1 -> ConnectionStatus(ConnectionStatus.State.INCOMPLETE, "Slack app: ${missing(slackGaps)}")
+                    places.isNotEmpty() -> ConnectionStatus(ConnectionStatus.State.CONNECTED, places.joinToString(" and "))
+                    else -> ConnectionStatus(ConnectionStatus.State.OFF, "No alerts are sent")
                 }
             },
             test = ConfigSection.TestKind.ALERTS,
             guide = {
-                "Create a Slack app with the chat:write scope, install it to your workspace, and invite it " +
-                    "to the channel."
+                "Simplest is a webhook: in Slack, add an Incoming Webhook to the channel; in Discord, open the " +
+                    "channel's settings, then Integrations, then Webhooks; in Google Chat, Apps & integrations. " +
+                    "Paste its URL here. A Slack app works too: give it the chat:write scope, install it and " +
+                    "invite it to the channel."
             }
         ),
         ConfigSection(

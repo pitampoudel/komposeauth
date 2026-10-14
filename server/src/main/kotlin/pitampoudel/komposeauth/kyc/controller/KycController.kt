@@ -22,7 +22,7 @@ import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_DOCUMENTS
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_PENDING
 import pitampoudel.komposeauth.core.domain.ApiEndpoints.KYC_PERSONAL_INFO
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.SlackNotifier
+import pitampoudel.komposeauth.core.service.AlertNotifier
 import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.core.utils.imageMimeTypeOrNull
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
@@ -41,7 +41,7 @@ class KycController(
     private val userContextService: UserContextService,
     private val kycService: KycService,
     private val emailService: EmailService,
-    private val slackNotifier: SlackNotifier,
+    private val alertNotifier: AlertNotifier,
     private val serverUrl: ServerUrl
 ) {
     @Operation(
@@ -132,7 +132,7 @@ class KycController(
                 )
             )
         }
-        slackNotifier.send("📝 KYC documents submitted by ${user.fullName}")
+        alertNotifier.send("📝 KYC documents submitted by ${user.fullName}")
         return ResponseEntity.ok(result)
     }
 
@@ -151,7 +151,7 @@ class KycController(
             baseUrl = serverUrl.value,
             user = targetUser
         )
-        slackNotifier.send(
+        alertNotifier.send(
             "✅ KYC approved by ${admin.fullName} for ${targetUser.fullName}"
         )
         return ResponseEntity.ok(response)
@@ -175,7 +175,7 @@ class KycController(
             reason = reason
         )
         val reasonSuffix = reason?.takeIf { it.isNotBlank() }?.let { " Reason: $it" } ?: ""
-        slackNotifier.send(
+        alertNotifier.send(
             "⛔ KYC rejected by ${admin.fullName} for ${targetUser.fullName}. `$reasonSuffix`"
         )
         return ResponseEntity.ok(response)

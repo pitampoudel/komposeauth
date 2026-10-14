@@ -8,7 +8,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.SlackNotifier
+import pitampoudel.komposeauth.core.service.AlertNotifier
 import pitampoudel.komposeauth.storage.service.StorageService
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.dto.ThirdFactorModel
@@ -34,7 +34,7 @@ class ThirdFactorOverwriteTest {
     private val storage = mock<StorageService>()
     private val userRepo = mock<UserRepository>()
 
-    private val service = KycService(repo, kycDocumentsOver(storage), mock<EmailService>(), userRepo, mock<SlackNotifier>())
+    private val service = KycService(repo, kycDocumentsOver(storage), mock<EmailService>(), userRepo, mock<AlertNotifier>())
 
     /** Declared by the user: Nepali male. */
     private val declared = KycVerification(
