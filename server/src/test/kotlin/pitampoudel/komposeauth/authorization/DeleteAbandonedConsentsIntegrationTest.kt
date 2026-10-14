@@ -12,18 +12,16 @@ import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.test.context.ActiveProfiles
 import pitampoudel.komposeauth.TestConfig
-import pitampoudel.komposeauth.authorization.migration._0001__ExpireAbandonedConsentsChange
+import pitampoudel.komposeauth.authorization.migration._0001__DeleteAbandonedConsentsChange
 import java.time.Instant
 import java.util.Date
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
-/** A consent screen nobody answered, saved by the release before with no expiry, now goes. */
+/** A consent screen nobody answered, saved by the release before with no expiry, is deleted. */
 @SpringBootTest
 @ActiveProfiles("test")
 @Import(TestConfig::class)
-class ExpireAbandonedConsentsIntegrationTest {
+class DeleteAbandonedConsentsIntegrationTest {
 
     @Autowired
     private lateinit var mongoTemplate: MongoTemplate
@@ -43,8 +41,8 @@ class ExpireAbandonedConsentsIntegrationTest {
         return id
     }
 
-    private fun expiresAtOf(id: String): Date? =
-        mongoTemplate.getCollection(COLLECTION).find(Document("_id", id)).first()!!.getDate("expiresAt")
+    private fun stored(): Set<String> = mongoTemplate.getCollection(COLLECTION)
+        .find(Document("_id", Document("\$in", created))).map { it.getString("_id") }.toSet()
 
     @AfterEach
     fun tearDown() {
@@ -52,21 +50,18 @@ class ExpireAbandonedConsentsIntegrationTest {
     }
 
     @Test
-    fun `only an authorization holding no token is given an expiry`() {
+    fun `only an authorization holding no token and no expiry is deleted`() {
         val abandoned = authorization("state" to "state-${ObjectId.get()}")
         val withCode = authorization("authorizationCodeValue" to "code-${ObjectId.get()}")
         val signedIn = authorization("refreshTokenValue" to "refresh-${ObjectId.get()}")
-        val expiring = Date.from(Instant.parse("2026-11-01T00:00:00Z"))
-        val dated = authorization("state" to "state-${ObjectId.get()}", "expiresAt" to expiring)
+        val dated = authorization(
+            "state" to "state-${ObjectId.get()}",
+            "expiresAt" to Date.from(Instant.parse("2026-11-01T00:00:00Z"))
+        )
 
-        val before = Instant.now()
-        _0001__ExpireAbandonedConsentsChange().apply(mongoTemplate)
+        _0001__DeleteAbandonedConsentsChange().apply(mongoTemplate)
 
-        val expiry = expiresAtOf(abandoned)!!.toInstant()
-        assertTrue(expiry > before.plus(PENDING_CONSENT_TTL).minusSeconds(5) && expiry <= Instant.now().plus(PENDING_CONSENT_TTL))
-        assertNull(expiresAtOf(withCode), "a code is no abandoned consent, whatever its row says")
-        assertNull(expiresAtOf(signedIn))
-        assertEquals(expiring, expiresAtOf(dated))
+        assertEquals(setOf(withCode, signedIn, dated), stored(), "$abandoned goes, and only it")
     }
 
     private companion object {

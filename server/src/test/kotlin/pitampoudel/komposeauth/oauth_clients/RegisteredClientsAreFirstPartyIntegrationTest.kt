@@ -13,8 +13,8 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.test.context.ActiveProfiles
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.oauth_clients.migration._0001__RegisteredClientsAreFirstPartyChange
-import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** A client the console registered before February 2026 is read as this platform's own again. */
@@ -59,7 +59,7 @@ class RegisteredClientsAreFirstPartyIntegrationTest {
     }
 
     @Test
-    fun `clients saved asking for consent no longer do, except swagger-ui`() {
+    fun `clients saved asking for consent no longer do, and swagger-ui is deleted`() {
         val old = ObjectId()
         client(old, consent = true)
         val new = client(ObjectId(), consent = false)
@@ -72,7 +72,7 @@ class RegisteredClientsAreFirstPartyIntegrationTest {
 
         assertFalse(consentOf(old))
         assertFalse(consentOf(new))
-        assertEquals(true, consentOf(swaggerUi))
+        assertNull(clients.find(Filters.eq("_id", swaggerUi)).first())
         assertFalse(registeredClients.findByClientId(old.toHexString())!!.clientSettings.isRequireAuthorizationConsent)
     }
 }

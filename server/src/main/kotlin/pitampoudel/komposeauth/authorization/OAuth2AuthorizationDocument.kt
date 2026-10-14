@@ -55,4 +55,4 @@ data class OAuth2AuthorizationDocument(
         ?: state?.let { Instant.now().plus(PENDING_CONSENT_TTL) },
 )
 
-internal val PENDING_CONSENT_TTL: Duration = Duration.ofMinutes(10)
+private val PENDING_CONSENT_TTL: Duration = Duration.ofMinutes(10)

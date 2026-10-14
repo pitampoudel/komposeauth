@@ -22,8 +22,8 @@ import pitampoudel.komposeauth.core.config.FlamingockConfig
  * calls to this server on the first start of this release. Every client registered since was saved
  * without consent, and these are given the same.
  *
- * `swagger-ui` is left as it is: it was registered by the server itself for a Swagger sign-in that
- * was removed five days later, and nothing uses it.
+ * `swagger-ui` is deleted instead: the server registered it for itself, for a Swagger sign-in that
+ * was removed five days later, and nothing has used it since.
  */
 @Change(id = "registered-clients-are-first-party", author = "komposeauth", transactional = false)
 @TargetSystem(id = FlamingockConfig.TARGET_SYSTEM)
@@ -34,10 +34,9 @@ class _0001__RegisteredClientsAreFirstPartyChange {
     /** Safe to run again: a client that does not ask for consent is not touched. */
     @Apply
     fun apply(mongoTemplate: MongoTemplate) {
-        val changed = mongoTemplate.getCollection(CLIENTS).updateMany(
-            Filters.and(Filters.eq(CONSENT, true), Filters.ne("_id", SWAGGER_UI)),
-            Updates.set(CONSENT, false)
-        ).modifiedCount
+        val clients = mongoTemplate.getCollection(CLIENTS)
+        clients.deleteOne(Filters.eq("_id", SWAGGER_UI))
+        val changed = clients.updateMany(Filters.eq(CONSENT, true), Updates.set(CONSENT, false)).modifiedCount
         if (changed > 0) log.info("{} clients registered before February 2026 no longer ask for consent", changed)
     }
 
