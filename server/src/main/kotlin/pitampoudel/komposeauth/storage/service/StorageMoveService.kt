@@ -13,7 +13,6 @@ import org.springframework.data.mongodb.core.query.Update
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
-import pitampoudel.komposeauth.core.service.StoredObject
 import pitampoudel.komposeauth.storage.entity.StorageMove
 import pitampoudel.komposeauth.storage.entity.StorageMove.State
 import pitampoudel.komposeauth.storage.repository.StorageMoveRepository

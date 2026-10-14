@@ -9,7 +9,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import pitampoudel.komposeauth.core.service.EmailService
 import pitampoudel.komposeauth.core.service.SlackNotifier
-import pitampoudel.komposeauth.core.service.StorageService
+import pitampoudel.komposeauth.storage.service.StorageService
 import pitampoudel.komposeauth.kyc.data.KycResponse
 import pitampoudel.komposeauth.kyc.dto.ThirdFactorModel
 import pitampoudel.komposeauth.kyc.entity.KycVerification

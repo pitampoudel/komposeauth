@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.service
+package pitampoudel.komposeauth.storage.service
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
@@ -27,7 +27,7 @@ import java.time.Clock
  *
  * Which objects anyone can read is the bucket policy's business, as it is on GCS.
  */
-class S3StorageService(
+class S3BucketStore(
     val settings: Settings,
     private val clock: Clock = Clock.systemUTC()
 ) : BucketStore {

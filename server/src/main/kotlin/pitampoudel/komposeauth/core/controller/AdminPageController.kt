@@ -69,15 +69,6 @@ class AdminPageController(
         return "admin/clients"
     }
 
-    @GetMapping("/storage")
-    @PreAuthorize("hasRole('ADMIN')")
-    fun storage(model: Model, authentication: Authentication): String {
-        adminShell.apply(model)
-        // The same test `StorageController` puts on a write, so no button leads to a 403.
-        model.addAttribute("canManageStorage", authentication.authorities.any { it.authority == "ROLE_SUPER_ADMIN" })
-        return "admin/storage"
-    }
-
     /** The opening line of the overview: who can get in, and what can ask on their behalf. */
     private fun postureLine(userCount: Long, clientCount: Long): String {
         val people = "$userCount ${if (userCount == 1L) "person" else "people"}"

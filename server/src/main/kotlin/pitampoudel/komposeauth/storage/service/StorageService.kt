@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.service
+package pitampoudel.komposeauth.storage.service
 
 interface StorageService {
     fun upload(blobName: String, contentType: String?, bytes: ByteArray): String

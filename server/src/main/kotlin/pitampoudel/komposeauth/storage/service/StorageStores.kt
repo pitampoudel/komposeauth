@@ -3,10 +3,7 @@ package pitampoudel.komposeauth.storage.service
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
-import pitampoudel.komposeauth.core.service.BucketAddresses
-import pitampoudel.komposeauth.core.service.BucketStore
-import pitampoudel.komposeauth.core.service.GcpStorageService
-import pitampoudel.komposeauth.core.service.S3StorageService
+import pitampoudel.komposeauth.storage.service.S3BucketStore
 import pitampoudel.komposeauth.core.service.security.CryptoService
 import pitampoudel.komposeauth.storage.entity.StorageStore
 import pitampoudel.komposeauth.storage.repository.StorageStoreRepository
@@ -23,8 +20,8 @@ fun interface BucketStoreFactory {
 @Component
 class CloudBucketStores : BucketStoreFactory {
     override fun build(store: StorageStore): BucketStore = when (store.kind) {
-        StorageStore.Kind.GCS -> GcpStorageService(
-            GcpStorageService.Settings(
+        StorageStore.Kind.GCS -> GcsBucketStore(
+            GcsBucketStore.Settings(
                 projectId = store.projectId,
                 bucket = store.bucket,
                 publicBaseUrl = store.publicBaseUrl,
@@ -32,8 +29,8 @@ class CloudBucketStores : BucketStoreFactory {
             )
         )
 
-        StorageStore.Kind.S3 -> S3StorageService(
-            S3StorageService.Settings(
+        StorageStore.Kind.S3 -> S3BucketStore(
+            S3BucketStore.Settings(
                 bucket = store.bucket,
                 region = store.region ?: error("An S3 store needs a region"),
                 endpoint = store.endpoint,

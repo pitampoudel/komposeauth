@@ -15,7 +15,7 @@ import org.springframework.test.context.ActiveProfiles
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.app_config.entity.AppConfig
 import pitampoudel.komposeauth.app_config.service.AppConfigProvider
-import pitampoudel.komposeauth.core.service.StorageService
+import pitampoudel.komposeauth.storage.service.StorageService
 import pitampoudel.komposeauth.core.service.security.CryptoService
 import pitampoudel.komposeauth.storage.entity.StorageStore
 import pitampoudel.komposeauth.storage.migration.StorageStoresFromConfig

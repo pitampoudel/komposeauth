@@ -1,9 +1,9 @@
 package pitampoudel.komposeauth.storage
 
-import pitampoudel.komposeauth.core.service.BucketAddresses
-import pitampoudel.komposeauth.core.service.BucketStore
-import pitampoudel.komposeauth.core.service.OpenedObject
-import pitampoudel.komposeauth.core.service.StoredObject
+import pitampoudel.komposeauth.storage.service.BucketAddresses
+import pitampoudel.komposeauth.storage.service.BucketStore
+import pitampoudel.komposeauth.storage.service.OpenedObject
+import pitampoudel.komposeauth.storage.service.StoredObject
 import java.io.InputStream
 import java.time.Instant
 import java.util.TreeMap

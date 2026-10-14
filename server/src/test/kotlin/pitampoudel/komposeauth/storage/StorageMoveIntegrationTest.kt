@@ -16,7 +16,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.web.server.ResponseStatusException
 import pitampoudel.komposeauth.TestConfig
-import pitampoudel.komposeauth.core.service.RoutingStorageService
+import pitampoudel.komposeauth.storage.service.RoutingStorageService
 import pitampoudel.komposeauth.core.service.security.CryptoService
 import pitampoudel.komposeauth.storage.dto.CreateStoreRequest
 import pitampoudel.komposeauth.storage.entity.StorageMove

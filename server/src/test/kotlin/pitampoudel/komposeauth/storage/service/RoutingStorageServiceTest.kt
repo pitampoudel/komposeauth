@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.service
+package pitampoudel.komposeauth.storage.service
 
 import org.bson.types.ObjectId
 import org.mockito.kotlin.any
@@ -8,8 +8,6 @@ import pitampoudel.komposeauth.core.service.security.CryptoService
 import pitampoudel.komposeauth.storage.InMemoryBucket
 import pitampoudel.komposeauth.storage.entity.StorageStore
 import pitampoudel.komposeauth.storage.repository.StorageStoreRepository
-import pitampoudel.komposeauth.storage.service.BucketStoreFactory
-import pitampoudel.komposeauth.storage.service.StorageStores
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertContains

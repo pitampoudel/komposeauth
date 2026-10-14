@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.service
+package pitampoudel.komposeauth.storage.service
 
 import java.io.InputStream
 import java.time.Instant

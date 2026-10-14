@@ -5,9 +5,9 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.TypeAlias
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
-import pitampoudel.komposeauth.core.service.BucketAddresses
-import pitampoudel.komposeauth.core.service.GcsAddresses
-import pitampoudel.komposeauth.core.service.S3Addresses
+import pitampoudel.komposeauth.storage.service.BucketAddresses
+import pitampoudel.komposeauth.storage.service.GcsAddresses
+import pitampoudel.komposeauth.storage.service.S3Addresses
 import java.time.Instant
 
 /**

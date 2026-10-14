@@ -2,7 +2,7 @@ package pitampoudel.komposeauth.kyc
 
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import pitampoudel.komposeauth.StaticAppProperties
-import pitampoudel.komposeauth.core.service.StorageService
+import pitampoudel.komposeauth.storage.service.StorageService
 import pitampoudel.komposeauth.core.service.security.CryptoService
 import pitampoudel.komposeauth.core.utils.ServerUrl
 import pitampoudel.komposeauth.kyc.service.KycDocuments

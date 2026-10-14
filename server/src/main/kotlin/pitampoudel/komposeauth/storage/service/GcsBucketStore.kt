@@ -1,4 +1,4 @@
-package pitampoudel.komposeauth.core.service
+package pitampoudel.komposeauth.storage.service
 
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.storage.BlobId
@@ -14,7 +14,7 @@ import java.nio.channels.Channels
  *
  * The bucket has to exist; nothing here creates one.
  */
-class GcpStorageService(val settings: Settings) : BucketStore {
+class GcsBucketStore(val settings: Settings) : BucketStore {
 
     data class Settings(
         val projectId: String?,

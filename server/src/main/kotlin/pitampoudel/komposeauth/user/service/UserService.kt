@@ -23,7 +23,7 @@ import pitampoudel.komposeauth.core.domain.ErrorCode
 import pitampoudel.komposeauth.core.domain.Platform
 import pitampoudel.komposeauth.core.domain.Roles
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.StorageService
+import pitampoudel.komposeauth.storage.service.StorageService
 import pitampoudel.komposeauth.core.service.email.EmailVerificationService
 import pitampoudel.komposeauth.core.utils.googleProfileFrom
 import pitampoudel.komposeauth.core.utils.normalizedEmail

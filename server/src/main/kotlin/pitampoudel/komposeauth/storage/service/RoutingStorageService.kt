@@ -1,8 +1,7 @@
-package pitampoudel.komposeauth.core.service
+package pitampoudel.komposeauth.storage.service
 
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
-import pitampoudel.komposeauth.storage.service.StorageStores
 
 /**
  * The [StorageService] everything is handed: new files go to the primary store on the Storage page,

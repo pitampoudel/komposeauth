@@ -14,7 +14,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import pitampoudel.core.data.EncodedData
 import pitampoudel.komposeauth.core.service.EmailService
-import pitampoudel.komposeauth.core.service.StorageService
+import pitampoudel.komposeauth.storage.service.StorageService
 import pitampoudel.komposeauth.core.service.SlackNotifier
 import pitampoudel.komposeauth.kyc.data.DocumentInformation
 import pitampoudel.komposeauth.kyc.data.KycResponse
