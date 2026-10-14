@@ -83,31 +83,39 @@ Full-stack authentication and authorization solution for Kotlin Multiplatform (K
 
 ### 1. Run the Authorization Server (Docker)
 
-Generate an encryption key:
+The fastest way is Docker Compose, which starts the server and a MongoDB beside it:
+
 ```bash
-openssl rand -base64 32
+git clone https://github.com/pitampoudel/komposeauth && cd komposeauth
+cp .env.example .env
+echo "BASE64_ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
+docker compose up -d
 ```
 
-Run the server container:
+Open `http://localhost:8080/admin/config`, enter the key from `.env`, and create the first admin. Keep that key safe: it decrypts every secret the server stores.
+
+To run the image on its own against a MongoDB you already have:
 ```bash
-docker run -d -p 80:8080 \
+docker run -d -p 8080:8080 \
   --name komposeauth \
   -e MONGODB_URI="mongodb://your-mongo-host:27017" \
-  -e BASE64_ENCRYPTION_KEY="<paste-your-base64-key>" \
-  -e SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER="http://localhost" \
+  -e BASE64_ENCRYPTION_KEY="$(openssl rand -base64 32)" \
+  -e SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER="http://localhost:8080" \
   pitampoudel/komposeauth:latest
 ```
+
+To deploy it somewhere reachable, see [Deployment Guides](#4-deployment-guides).
 
 > **Note**: `MONGODB_URI`, `BASE64_ENCRYPTION_KEY`, and `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER` are required. The server will not start without them.
 
 ### 2. Configuration & Admin Console
 
 Once the container is running, navigate to the web administration console:
-- **URL**: `http://localhost/admin/config`
+- **URL**: `http://localhost:8080/admin/config`
 - **Initial Authentication**: Enter your `BASE64_ENCRYPTION_KEY` into the form, or provide it via the `X-Master-Key` header:
 
 ```bash
-curl -H "X-Master-Key: <paste-your-base64-key>" http://localhost/admin/config
+curl -H "X-Master-Key: <paste-your-base64-key>" http://localhost:8080/admin/config
 ```
 
 While nobody holds `SUPER_ADMIN`, the page opens with **Create the first admin**: enter an email and password (or the address of an account that already exists) and that account becomes a super admin. From then on, sign in at `/admin` with it instead of the master key; the form disappears once a super admin exists, and further roles are granted from the **Users** page.
@@ -187,6 +195,15 @@ curl https://your-auth-server/admin/client-ip -H "Cookie: <your-session-cookie>"
 
 ### 4. Deployment Guides
 
+Every option runs the same image and keeps everything in MongoDB, so moving between them is a matter of pointing the new one at the same database with the same key and issuer. Where there is no MongoDB alongside, a [MongoDB Atlas](https://www.mongodb.com/atlas) cluster works; the free M0 is enough to start. Allow the host's outbound addresses in Atlas's network access, or `0.0.0.0/0` on hosts whose addresses change.
+
+| Where | How | Scales to zero |
+|---|---|---|
+| Google Cloud Run | the `gcloud` command below | Yes |
+| Render | [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/pitampoudel/komposeauth) (`render.yaml`) | On the free plan |
+| AWS ECS Fargate | [`deploy/aws`](deploy/aws/README.md), one CloudFormation stack | No |
+| Any machine with Docker | `docker compose up -d` ([Quickstart](#1-run-the-authorization-server-docker)) | No |
+
 #### Google Cloud Run
 
 ```bash
@@ -199,6 +216,12 @@ gcloud run deploy komposeauth \
   --cpu-boost \
   --startup-probe httpGet.path=/actuator/health/readiness,httpGet.port=8080,initialDelaySeconds=4,periodSeconds=2,timeoutSeconds=2,failureThreshold=45
 ```
+
+#### Render
+
+The button creates a web service from the published image and generates `BASE64_ENCRYPTION_KEY`; it asks only for `MONGODB_URI`. With no issuer set, the server uses its own `onrender.com` address. To serve it from your own domain, add the domain in Render and set `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER` to it before any app starts using the server. The key Render generated is under the service's **Environment**; you need it to open the admin console the first time.
+
+The blueprint sets `BPL_JVM_THREAD_COUNT=50` and `JAVA_TOOL_OPTIONS=-XX:ReservedCodeCacheSize=64M` so the JVM fits in 512 MB. Set the same two on any other host with that little memory: the image sizes the JVM for 250 threads by default and won't start in less.
 
 ---
 

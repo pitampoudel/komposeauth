@@ -1,0 +1,38 @@
+# The whole server on one machine: komposeauth and the MongoDB it keeps everything in.
+#
+#   cp .env.example .env      # then put a key in it: openssl rand -base64 32
+#   docker compose up -d
+#
+# Then open http://localhost:8080/admin/config, enter the key, and create the first admin.
+services:
+  komposeauth:
+    image: ${KOMPOSEAUTH_IMAGE:-docker.io/pitampoudel/komposeauth:latest}
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      BASE64_ENCRYPTION_KEY: ${BASE64_ENCRYPTION_KEY:?Set BASE64_ENCRYPTION_KEY in .env (openssl rand -base64 32)}
+      SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER: ${ISSUER:-http://localhost:8080}
+      # Nothing sits in front of the container in this file, so no X-Forwarded-* header is ours.
+      # Put a reverse proxy in front and this becomes `framework`.
+      FORWARD_HEADERS_STRATEGY: ${FORWARD_HEADERS_STRATEGY:-none}
+    # No healthcheck: the image has no shell or HTTP client to run one with. Ready means
+    # http://localhost:8080/actuator/health/readiness answers {"status":"UP"}.
+
+  mongo:
+    image: mongo:8
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  mongo-data:

@@ -6,10 +6,11 @@ spring:
   # redirect URI are built from it. Required: the server refuses to start without it rather than read
   # it off a request's Host and X-Forwarded-* headers, which the caller writes. Usually set as
   # SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER.
-  # security:
-  #   oauth2:
-  #     authorizationserver:
-  #       issuer: https://auth.example.com
+  # On Render, with nothing set, it is the service's own onrender.com address.
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: ${RENDER_EXTERNAL_URL:}
   # Every outbound call (SMS providers, Twilio, Google, the KYC service) is made inside a sign-in
   # request, so a provider that stops answering must fail the request rather than hold it forever.
   http:

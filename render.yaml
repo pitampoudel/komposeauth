@@ -1,0 +1,28 @@
+# Render Blueprint: the "Deploy to Render" button in the README reads this file.
+# Render has no MongoDB of its own, so the database is a MongoDB Atlas cluster (the free M0 is enough
+# to start) whose connection string is asked for when the blueprint is applied.
+services:
+  - type: web
+    name: komposeauth
+    runtime: image
+    image:
+      url: docker.io/pitampoudel/komposeauth:latest
+    # Free spins down when idle and takes a few seconds to wake; choose Starter or above to keep it warm.
+    plan: free
+    healthCheckPath: /actuator/health/readiness
+    envVars:
+      # Render generates a random base64 256-bit value, which is exactly the key the server wants.
+      # Keep a copy somewhere safe: it opens the admin console and decrypts every stored secret.
+      - key: BASE64_ENCRYPTION_KEY
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      # No issuer here: the server falls back to the service's own onrender.com address
+      # (RENDER_EXTERNAL_URL). To use your own domain, add SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER
+      # before apps start using the server, since every token names it.
+      # Fits the JVM into 512 MB: the image's memory calculator otherwise reserves for 250 threads
+      # and a 240 MB code cache, which alone is more than the plan has.
+      - key: BPL_JVM_THREAD_COUNT
+        value: "50"
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:ReservedCodeCacheSize=64M"
