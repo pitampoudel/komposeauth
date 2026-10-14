@@ -1,0 +1,55 @@
+name: Bug report
+description: Something in the server, the admin console or the SDK doesn't work as described.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A security problem? Please report it privately instead: https://github.com/pitampoudel/komposeauth/security/advisories/new
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead. Include the exact error text.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open /admin/config
+        2. …
+    validations:
+      required: true
+  - type: dropdown
+    id: part
+    attributes:
+      label: Where
+      options:
+        - Server (sign-in, tokens, API)
+        - Admin console
+        - Client SDK
+        - Deployment (Docker, Compose, Render, Cloud Run, AWS)
+        - Docs
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The image tag or SDK version, or a commit.
+      placeholder: pitampoudel/komposeauth:0.2.9
+    validations:
+      required: true
+  - type: input
+    id: hosting
+    attributes:
+      label: Where it runs
+      placeholder: Cloud Run, MongoDB Atlas
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server log
+      description: The lines around the error. Remove tokens, keys and personal data first.
+      render: text

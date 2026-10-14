@@ -407,18 +407,13 @@ The authorization server enforces browser origin security using the `Sec-Fetch-S
 - KYC documents are served exclusively via authenticated endpoints (`GET /kyc/{userId}/documents/{front|back|selfie}`) requiring a user bearer token or administrative session.
 
 ### Security Disclosures
-If you discover a security vulnerability, please email the maintainers or open a private security advisory instead of creating a public issue.
+Please report vulnerabilities privately, as described in [SECURITY.md](SECURITY.md), rather than in a public issue.
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Please follow these steps:
-1. Fork the repository and create your branch (`feature/my-feature`).
-2. Run test suites locally before submitting: `./gradlew check`.
-3. Open a Pull Request describing your changes.
-
-For major architectural changes, please open an issue first to discuss the proposal.
+Contributions are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers running the server locally, the tests, and what a pull request needs. For changes that affect existing deployments, please open an issue first. What changed in each release is in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 

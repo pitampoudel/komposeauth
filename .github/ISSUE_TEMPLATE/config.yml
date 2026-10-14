@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/pitampoudel/komposeauth/security/advisories/new
+    about: Privately, so it can be fixed before it is public.
