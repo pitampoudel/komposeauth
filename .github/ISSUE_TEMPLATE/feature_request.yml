@@ -1,0 +1,21 @@
+name: Feature request
+description: Something komposeauth should do, or do differently.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you're trying to do
+      description: The situation and what gets in the way today. Describe the problem before the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+      description: How you'd like it to work, if you have an idea.
+  - type: textarea
+    id: workaround
+    attributes:
+      label: What you do now
+      description: Any workaround you use, and what it costs you.
