@@ -9,12 +9,6 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
-    # Each of these failed the server's tests; see the comments in server/build.gradle.kts.
-    ignore:
-      - dependency-name: org.springframework.boot
-        versions: [">= 4.1"]
-      - dependency-name: org.jetbrains.kotlinx:kotlinx-coroutines-*
-        versions: [">= 1.11"]
 
   - package-ecosystem: github-actions
     directory: /

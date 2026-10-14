@@ -125,6 +125,16 @@ private fun deserializeAttributes(encoded: String): Map<String, Any> {
     }
 }
 
+// Jackson writes a Date as epoch milliseconds, and every timestamp claim is read back as epoch seconds.
+@Suppress("UNCHECKED_CAST")
+private fun Map<String, Any>.withDatesAsInstants(): Map<String, Any> = mapValues { (_, value) ->
+    when (value) {
+        is Date -> value.toInstant()
+        is Map<*, *> -> (value as Map<String, Any>).withDatesAsInstants()
+        else -> value
+    }
+}
+
 fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: ObjectMapper): OAuth2AuthorizationDocument {
     val authCode = auth.getToken(OAuth2AuthorizationCode::class.java)
     val accessToken = auth.getToken(OAuth2AccessToken::class.java)
@@ -148,7 +158,7 @@ fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: Objec
         accessTokenValue = accessToken?.token?.tokenValue,
         accessTokenIssuedAt = accessToken?.token?.issuedAt,
         accessTokenExpiresAt = accessToken?.token?.expiresAt,
-        accessTokenMetadata = accessToken?.metadata?.let { objectMapper.writeValueAsString(it) },
+        accessTokenMetadata = accessToken?.metadata?.let { objectMapper.writeValueAsString(it.withDatesAsInstants()) },
         accessTokenType = accessToken?.token?.tokenType?.value,
         accessTokenScopes = accessToken?.token?.scopes,
 
@@ -160,8 +170,8 @@ fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: Objec
         oidcIdTokenValue = idToken?.token?.tokenValue,
         oidcIdTokenIssuedAt = idToken?.token?.issuedAt,
         oidcIdTokenExpiresAt = idToken?.token?.expiresAt,
-        oidcIdTokenMetadata = idToken?.metadata?.let { objectMapper.writeValueAsString(it) },
-        oidcIdTokenClaims = idToken?.token?.claims?.let { objectMapper.writeValueAsString(it) },
+        oidcIdTokenMetadata = idToken?.metadata?.let { objectMapper.writeValueAsString(it.withDatesAsInstants()) },
+        oidcIdTokenClaims = idToken?.token?.claims?.let { objectMapper.writeValueAsString(it.withDatesAsInstants()) },
     )
 }
 
