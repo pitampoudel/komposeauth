@@ -4,16 +4,11 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.OctetSequenceKey
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
+import org.springframework.security.oauth2.core.OAuth2Error
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm
-import org.springframework.security.oauth2.jwt.JwsHeader
-import org.springframework.security.oauth2.jwt.Jwt
-import org.springframework.security.oauth2.jwt.JwtClaimNames
-import org.springframework.security.oauth2.jwt.JwtClaimValidator
-import org.springframework.security.oauth2.jwt.JwtClaimsSet
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters
-import org.springframework.security.oauth2.jwt.JwtTimestampValidator
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder
+import org.springframework.security.oauth2.jwt.*
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.Instant
@@ -78,7 +73,10 @@ class JwtTokenService {
                 JwtTimestampValidator(),
                 // A token minted before this change carries no `exp`; the timestamp validator lets
                 // those through, so require the claim explicitly.
-                JwtClaimValidator<Instant?>(JwtClaimNames.EXP) { it != null }
+                { jwt ->
+                    if (jwt.expiresAt != null) OAuth2TokenValidatorResult.success()
+                    else OAuth2TokenValidatorResult.failure(OAuth2Error(OAuth2ErrorCodes.INVALID_TOKEN, "Missing exp claim", null))
+                }
             )
         )
         return decoder.decode(token)

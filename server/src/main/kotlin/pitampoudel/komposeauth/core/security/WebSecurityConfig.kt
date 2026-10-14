@@ -22,8 +22,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException
-import org.springframework.security.oauth2.jwt.JwtClaimNames
-import org.springframework.security.oauth2.jwt.JwtClaimValidator
+import org.springframework.security.oauth2.core.OAuth2Error
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtValidationException
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
@@ -206,15 +206,16 @@ class WebSecurityConfig {
      * check, so [AccessTokenShape] turns it away first.
      */
     private fun firstPartyJwtDecoder(decoder: JwtDecoder, clients: RegisteredClientRepository): JwtDecoder {
-        val firstParty = JwtClaimValidator<Collection<String>>(JwtClaimNames.AUD) { audience ->
-            audience.orEmpty().all { clients.findByClientId(it)?.clientSettings?.isRequireAuthorizationConsent == false }
-        }
+        // Not a JwtClaimValidator: that fails a token without the claim, and ours from /login have no audience.
+        val notFirstParty = OAuth2Error(OAuth2ErrorCodes.INVALID_TOKEN, "The aud claim is not valid", null)
         return JwtDecoder { token ->
             decoder.decode(token).also { jwt ->
                 val shape = AccessTokenShape.validate(jwt)
                 if (shape.hasErrors()) throw JwtValidationException("Not an access token", shape.errors)
-                val result = firstParty.validate(jwt)
-                if (result.hasErrors()) throw JwtValidationException("Not a token for this server's API", result.errors)
+                val firstParty = jwt.audience.orEmpty().all {
+                    clients.findByClientId(it)?.clientSettings?.isRequireAuthorizationConsent == false
+                }
+                if (!firstParty) throw JwtValidationException("Not a token for this server's API", listOf(notFirstParty))
             }
         }
     }

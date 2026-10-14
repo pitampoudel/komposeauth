@@ -27,7 +27,7 @@ class AppleTokenValidator(restTemplate: RestTemplate) {
         } catch (_: BadJwtException) {
             throw AccessDeniedException("Invalid credentials")
         }
-        if (clientId !in jwt.audience) throw AccessDeniedException("Invalid credentials")
+        if (clientId !in jwt.audience.orEmpty()) throw AccessDeniedException("Invalid credentials")
         return jwt
     }
 

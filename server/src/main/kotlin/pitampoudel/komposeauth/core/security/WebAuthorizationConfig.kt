@@ -144,7 +144,7 @@ class WebAuthorizationConfig {
             if (context.authorizationGrantType == AuthorizationGrantType.CLIENT_CREDENTIALS) {
                 return@OAuth2TokenCustomizer
             }
-            val principal = context.getPrincipal<UsernamePasswordAuthenticationToken>()
+            val principal = checkNotNull(context.getPrincipal<UsernamePasswordAuthenticationToken>())
             val user = userService.findByUserName(
                 principal.name
             ) ?: throw AccountNotFoundException(

@@ -17,6 +17,7 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.time.Instant
 import java.util.Base64
+import java.util.Date
 
 private val mapTypeRef = object : TypeReference<MutableMap<String, Any>>() {}
 
@@ -59,8 +60,12 @@ private fun String.toInstantClaimOrNull(): Instant? {
 }
 
 internal fun serializeOidcClaimTypes(claims: MutableMap<String, Any>): MutableMap<String, Any> {
-    claims.replaceAll { _, value ->
+    claims.replaceAll { key, value ->
         when (value) {
+            // Spring's JwtGenerator copies auth_time from the stored ID token on a refresh and
+            // casts it to Date; Nimbus writes a Date as epoch seconds.
+            is Instant if key == "auth_time" -> Date.from(value)
+            is Number if key == "auth_time" -> Date.from(Instant.ofEpochSecond(value.toLong()))
             // Keep claim maps JSON-friendly before token generation.
             is Instant -> value.epochSecond
             is Map<*, *> -> {
@@ -176,7 +181,8 @@ fun fromOAuth2AuthorizationDocument(
     doc.attributes?.let { builder.attributes { attrs -> attrs.putAll(deserializeAttributes(it)) } }
     doc.state?.let { builder.attribute(OAuth2ParameterNames.STATE, it) }
 
-    if (doc.authorizationCodeValue != null) {
+    // A code is always issued with both timestamps, and OAuth2AuthorizationCode now requires them.
+    if (doc.authorizationCodeValue != null && doc.authorizationCodeIssuedAt != null && doc.authorizationCodeExpiresAt != null) {
         val code = OAuth2AuthorizationCode(
             doc.authorizationCodeValue, doc.authorizationCodeIssuedAt, doc.authorizationCodeExpiresAt
         )
