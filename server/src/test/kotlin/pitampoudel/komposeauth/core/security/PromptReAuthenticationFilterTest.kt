@@ -9,10 +9,12 @@ import org.springframework.mock.web.MockHttpSession
 import org.springframework.security.authentication.AnonymousAuthenticationToken
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.AuthorityUtils
+import org.springframework.security.core.authority.FactorGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache
+import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -38,10 +40,16 @@ class PromptReAuthenticationFilterTest {
             session // force a session so the security context has somewhere to live
         }
 
-    private fun authenticate(request: MockHttpServletRequest) {
+    /** Signs the request's session in, recording the sign-in at [signedInAt] when there is one. */
+    private fun authenticate(request: MockHttpServletRequest, signedInAt: Instant? = Instant.now()) {
         val context = SecurityContextHolder.createEmptyContext()
+        val factors = listOfNotNull(
+            signedInAt?.let {
+                FactorGrantedAuthority.withAuthority(FactorGrantedAuthority.PASSWORD_AUTHORITY).issuedAt(it).build()
+            }
+        )
         context.authentication = UsernamePasswordAuthenticationToken(
-            "user-id", null, AuthorityUtils.createAuthorityList("ROLE_USER")
+            "user-id", null, AuthorityUtils.createAuthorityList("ROLE_USER") + factors
         )
         SecurityContextHolder.setContext(context)
         securityContextRepository.saveContext(context, request, MockHttpServletResponse())
@@ -100,6 +108,40 @@ class PromptReAuthenticationFilterTest {
         assertNull(response.redirectedUrl)
         assertNotNull(SecurityContextHolder.getContext().authentication)
         assertTrue(sessionHoldsAuthentication(request))
+    }
+
+    /**
+     * The ID token's `auth_time` is read off the time the sign-in recorded, and the token endpoint
+     * refuses to issue one without it — after the person has already been sent back to the app.
+     */
+    @Test
+    fun `a session that cannot say when it signed in is sent to sign in again`() {
+        val request = authorizeRequest(prompt = null)
+        authenticate(request, signedInAt = null)
+        val response = MockHttpServletResponse()
+
+        filter.doFilter(request, response, MockFilterChain())
+
+        assertEquals("/session-login", response.redirectedUrl)
+        assertFalse(sessionHoldsAuthentication(request))
+        assertNotNull(HttpSessionRequestCache().getRequest(request, response))
+    }
+
+    @Test
+    fun `a session that cannot say when it signed in is sent to sign in once per authorization request`() {
+        val session = MockHttpSession()
+        val first = authorizeRequest(prompt = null).apply { setSession(session) }
+        authenticate(first, signedInAt = null)
+        filter.doFilter(first, MockHttpServletResponse(), MockFilterChain())
+
+        // Whatever the sign-in recorded, its replay is not turned round again.
+        val replay = authorizeRequest(prompt = null).apply { setSession(session) }
+        authenticate(replay, signedInAt = null)
+        val response = MockHttpServletResponse()
+        filter.doFilter(replay, response, MockFilterChain())
+
+        assertNull(response.redirectedUrl, "the replay was sent out to sign in again")
+        assertTrue(sessionHoldsAuthentication(replay))
     }
 
     @Test

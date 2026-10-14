@@ -38,5 +38,9 @@ What changed for people running the server or using the SDK. Versions follow
   Spring Security, Jackson, Thymeleaf, Logback and others) and now have none.
 
 ### Fixed
+- Signing in with Google to an app that asks for an ID token failed at the last step: the server
+  threw `authenticationTime cannot be null` when the app exchanged its code, because a Google
+  sign-in did not record when it happened. It does now, and a session signed in before this fix is
+  asked to sign in once more rather than reaching that error.
 - The overview could call text messages "On" while the provider was missing a required key; it now
   shows the same status as the configuration page. (#68)

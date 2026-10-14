@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.authority.FactorGrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
@@ -14,6 +15,7 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.stereotype.Component
 import pitampoudel.komposeauth.core.utils.googleProfileFromClaims
 import pitampoudel.komposeauth.user.service.UserService
+import java.time.Instant
 
 /**
  * On successful Google OAuth2 login (OIDC), we:
@@ -85,8 +87,17 @@ class OAuth2LoginSuccessHandler(
 
         if (user.deactivated) return refuse(request, response, "locked")
 
-        // With the factor Spring recorded for this sign-in, which says when it happened.
-        val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") } + oauth.signInFactors()
+        // With the factor saying when this sign-in happened, which an ID token's auth_time is read
+        // off. Spring records one for a plain OAuth2 sign-in but none for an OIDC one, which
+        // Google's is, and without it the token endpoint refuses to issue the ID token.
+        val factors = oauth.signInFactors().ifEmpty {
+            listOf(
+                FactorGrantedAuthority.withAuthority(FactorGrantedAuthority.AUTHORIZATION_CODE_AUTHORITY)
+                    .issuedAt(Instant.now())
+                    .build()
+            )
+        }
+        val authorities = user.roles.map { SimpleGrantedAuthority("ROLE_$it") } + factors
 
         // Put our own authentication in the SecurityContext for the remainder of the request + session.
         val appAuth = UsernamePasswordAuthenticationToken(user.id.toHexString(), null, authorities)
