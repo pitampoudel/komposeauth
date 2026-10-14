@@ -11,15 +11,20 @@
       <option name="taskNames">
         <list>
           <option value=":server:check" />
-          <option value=":server:bootBuildImage --publishImage --imageName=docker.io/pitampoudel/komposeauth:main" />
+          <option value=":server:bootBuildImage" />
+          <option value="--publishImage" />
+          <option value="--imageName=docker.io/pitampoudel/komposeauth:main" />
         </list>
       </option>
       <option name="vmOptions" />
     </ExternalSystemSettings>
     <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
     <DebugAllEnabled>false</DebugAllEnabled>
     <RunAsTest>false</RunAsTest>
+    <GradleProfilingDisabled>false</GradleProfilingDisabled>
+    <GradleCoverageDisabled>false</GradleCoverageDisabled>
     <method v="2" />
   </configuration>
 </component>
