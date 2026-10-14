@@ -128,5 +128,7 @@ tasks.named<BootBuildImage>("bootBuildImage") {
     val effectiveTag = project.version.toString().takeIf { it.isNotBlank() && it != "unspecified" } ?: "latest"
     imageName.convention("docker.io/pitampoudel/komposeauth:$effectiveTag")
     environment.put("BP_SPRING_CLOUD_BINDINGS_DISABLED", "true")
+    // bootBuildImage has no command-line option for extra tags; full references, comma-separated.
+    tags.set(providers.gradleProperty("imageTags").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }.orElse(emptyList()))
 }
 

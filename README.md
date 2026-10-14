@@ -284,20 +284,21 @@ Version resolution works uniformly across both local builds and CI:
 
 ### 1. Server Docker Image
 
+CI publishes the image (`.github/workflows/docker-publish.yml`): a push to `main` publishes `main` and
+`latest`, and a GitHub release `vX.Y.Z` publishes `X.Y.Z` and `X.Y`. To publish again without a new
+commit, run the workflow by hand (**Actions → Publish Docker Image → Run workflow**).
+
 ```bash
 # Run tests
 ./gradlew :server:check
 
-# Build Docker image locally
+# Build the image into the local Docker daemon
 ./gradlew :server:bootBuildImage
 
-# Build and tag custom image
-./gradlew :server:bootBuildImage --imageName=docker.io/pitampoudel/komposeauth:0.2.8
-
-# Push to Docker Hub
-docker push docker.io/pitampoudel/komposeauth:0.2.8
-docker tag docker.io/pitampoudel/komposeauth:0.2.8 docker.io/pitampoudel/komposeauth:latest
-docker push docker.io/pitampoudel/komposeauth:latest
+# Build and push by hand, after `docker login` (what CI runs; -PimageTags adds tags to the same image)
+./gradlew :server:bootBuildImage --publishImage \
+  --imageName=docker.io/pitampoudel/komposeauth:0.2.8 \
+  -PimageTags=docker.io/pitampoudel/komposeauth:0.2
 ```
 
 ### 2. Client SDK (KMP / CMP)

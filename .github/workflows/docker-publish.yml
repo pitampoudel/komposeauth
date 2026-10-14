@@ -70,20 +70,10 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable={{is_default_branch}}
 
+      # Spring Boot builds and pushes every tag itself, signed in through the login above.
       - name: Build image with Buildpacks and push tags
-        shell: bash
-        run: |
-          ./gradlew :server:bootBuildImage --no-daemon
-
-          # Push generated tags from metadata-action
-          TAGS="${{ steps.meta.outputs.tags }}"
-          PRIMARY_TAG="$(printf '%s\n' "$TAGS" | head -n1)"
-
-          if [ -n "$PRIMARY_TAG" ]; then
-            # Tag Gradle build result to any additional metadata tags
-            printf '%s\n' "$TAGS" | while IFS= read -r tag; do
-              [ -z "$tag" ] && continue
-              docker tag "docker.io/${{ secrets.DOCKERHUB_USERNAME }}/komposeauth:latest" "$tag" 2>/dev/null || true
-              docker push "$tag"
-            done
-          fi
+        if: steps.meta.outputs.tags != ''
+        env:
+          IMAGE_NAME: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          IMAGE_TAGS: ${{ join(fromJSON(steps.meta.outputs.json).tags, ',') }}
+        run: ./gradlew :server:bootBuildImage --publishImage --imageName="$IMAGE_NAME" -PimageTags="$IMAGE_TAGS" --no-daemon
