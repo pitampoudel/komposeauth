@@ -352,45 +352,23 @@ Version resolution works uniformly across both local builds and CI:
 ### 1. Server Docker Image
 
 CI publishes the image (`.github/workflows/docker-publish.yml`): a push to `main` publishes `main` and
-`latest`, and a GitHub release `vX.Y.Z` publishes `X.Y.Z` and `X.Y`. To publish again without a new
-commit, run the workflow by hand (**Actions → Publish Docker Image → Run workflow**).
+`latest`, and a GitHub release `vX.Y.Z` publishes `X.Y.Z` and `X.Y`.
 
-```bash
-# Run tests
-./gradlew :server:check
+From IntelliJ, the shared run configurations in `.run/` run the same commands:
 
-# Build the image into the local Docker daemon
-./gradlew :server:bootBuildImage
-
-# Build and push by hand, after `docker login` (what CI runs; -PimageTags adds tags to the same image)
-./gradlew :server:bootBuildImage --publishImage \
-  --imageName=docker.io/pitampoudel/komposeauth:0.2.8 \
-  -PimageTags=docker.io/pitampoudel/komposeauth:0.2
-```
+- **Publish server image**: tests, then `bootBuildImage --publishImage` to `main` and `latest`. Sign
+  in to Docker Hub once (Docker Desktop, or `docker login`).
+- **Deploy to Cloud Run**: publishes, then rolls the existing `komposeauth` service onto the new
+  image, keeping its environment. It deploys to your `gcloud` default project and asks for a region
+  if `run/region` isn't set.
 
 ### 2. Client SDK (KMP / CMP)
 
-#### Publish Locally (`mavenLocal`)
-```bash
-./gradlew :shared:publishToMavenLocal :client:publishToMavenLocal
-```
-
-#### Publish to GitHub Packages
-```bash
-export GITHUB_ACTOR="pitampoudel"
-export GITHUB_TOKEN="<your-github-token>"
-
-./gradlew :client:publishAllPublicationsToGitHubPackagesRepository
-```
-
-#### Publish to Maven Central
-```bash
-# Publish snapshot
-./gradlew :client:publishAllPublicationsToMavenCentralRepository
-
-# Publish and release tagged release (e.g., v0.2.8)
-./gradlew :client:publishAndReleaseToMavenCentral --no-configuration-cache
-```
+CI publishes the SDK (`.github/workflows/library-publish.yml`) to GitHub Packages and Maven Central.
+From IntelliJ, **publishToMavenLocal** installs it into `~/.m2` for a local app, and **Release SDK
+to Maven Central** tests and releases the version of the tag you are on (`v0.2.8` → `0.2.8`), with
+`mavenCentralUsername`, `mavenCentralPassword` and the `signingInMemoryKey*` properties in
+`~/.gradle/gradle.properties`.
 
 ---
 
