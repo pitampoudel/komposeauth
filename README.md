@@ -7,11 +7,57 @@ Full-stack authentication and authorization solution for Kotlin Multiplatform (K
 [![Docker Hub](https://img.shields.io/badge/Docker%20Hub-komposeauth-blue?logo=docker)](https://hub.docker.com/r/pitampoudel/komposeauth)
 [![Compose Multiplatform](https://img.shields.io/badge/Compose-Multiplatform-42a5f5)](https://www.jetbrains.com/lp/compose-multiplatform/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/pitampoudel/komposeauth?style=social)](https://github.com/pitampoudel/komposeauth/stargazers)
+
+**Your own auth server and a Compose Multiplatform login SDK, in one repo.** Run one Docker image,
+add one Gradle dependency, and your Android, iOS, desktop and web apps sign users in with passwords,
+passkeys, Google, Apple or one-time codes, against a standard OAuth 2.1 / OpenID Connect server you
+host and own. No per-user pricing, and your users' data stays in your MongoDB.
+
+```bash
+git clone https://github.com/pitampoudel/komposeauth && cd komposeauth
+cp .env.example .env && echo "BASE64_ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
+docker compose up -d   # then open http://localhost:8080/admin/config
+```
+
+```kotlin
+// commonMain
+implementation("io.github.pitampoudel:komposeauth-client:<latest-version>")
+
+val httpClient = HttpClient {
+    installKomposeAuth(
+        authServerUrl = "https://auth.example.com",
+        resourceServerUrls = listOf("https://api.example.com") // your APIs get the bearer token
+    )
+}
+```
+
+If komposeauth is useful to you, a ⭐ helps other Kotlin developers find it.
+
+## Why komposeauth?
+
+Most auth options for a Kotlin Multiplatform app make you pick between a hosted service that bills
+per active user and a generic identity server you have to wire into Compose yourself. komposeauth
+gives you both halves, built for each other:
+
+| | komposeauth | Hosted auth (Firebase Auth, Auth0, Clerk) | Keycloak and similar |
+|---|---|---|---|
+| Who hosts it | You, from one Docker image | The vendor | You |
+| Cost as you grow | Your server and database | Grows with monthly active users on paid tiers | Your server and database |
+| Where user data lives | Your MongoDB | The vendor's cloud | Your database |
+| KMP / Compose Multiplatform SDK | Ktor plugin, ViewModels and Compose UI for Android, iOS, desktop and web | Mostly per-platform SDKs, or community wrappers | None; you write the client side |
+| Standards | OAuth 2.1, OpenID Connect, PKCE, JWKS | Proprietary APIs plus OIDC | OAuth 2.0, OpenID Connect, SAML |
+| Any backend can verify tokens | Yes: RS256 JWTs checked against `/oauth2/jwks` | Yes | Yes |
+
+Pick komposeauth when you are building a Kotlin Multiplatform or Compose Multiplatform app, want to
+own your users, and would rather not glue a generic identity server to your client by hand. Pick
+something else if you need SAML, enterprise federation, or a fully managed service you never operate.
 
 ---
 
 ## Table of Contents
 
+- [Why komposeauth?](#why-komposeauth)
 - [Overview](#overview)
 - [Features](#features)
 - [Architecture](#architecture)
@@ -45,7 +91,8 @@ Full-stack authentication and authorization solution for Kotlin Multiplatform (K
 
 ## Features
 
-- 🔐 **Authentication Flows**: Username/Password, Passkeys (WebAuthn / FIDO2), and Federated Sign-In (Google OAuth2).
+- 🔐 **Authentication Flows**: Email or phone with password, Passkeys (WebAuthn / FIDO2), Sign in with Google and Apple, and one-time codes by SMS, WhatsApp or email.
+- 🤖 **Works with MCP clients**: Client ID Metadata Documents let MCP clients such as Claude sign in to your APIs without being registered first.
 - 🛡️ **OAuth 2.1 & OpenID Connect**: PKCE, Client ID Metadata Documents (CIMD), and JWT token management.
 - 📱 **Multiplatform Client**: Compose Multiplatform UI components, Credential Manager, and automatic Ktor token interceptors.
 - ✉️ **Verification & Recovery**: Email verification codes and SMS OTP retriever support.
