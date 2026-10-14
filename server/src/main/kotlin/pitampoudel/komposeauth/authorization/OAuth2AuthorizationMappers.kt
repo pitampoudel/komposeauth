@@ -161,7 +161,7 @@ fun toOAuth2AuthorizationDocument(auth: OAuth2Authorization, objectMapper: Objec
         accessTokenValue = accessToken?.token?.tokenValue,
         accessTokenIssuedAt = accessToken?.token?.issuedAt,
         accessTokenExpiresAt = accessToken?.token?.expiresAt,
-        accessTokenMetadata = accessToken?.metadata?.let { objectMapper.writeValueAsString(it.withDatesAsInstants()) },
+        accessTokenMetadata = accessToken?.metadata?.let { objectMapper.writeValueAsString(it) },
         accessTokenType = accessToken?.token?.tokenType?.value,
         accessTokenScopes = accessToken?.token?.scopes,
 

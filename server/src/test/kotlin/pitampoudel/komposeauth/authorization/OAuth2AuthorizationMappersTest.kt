@@ -155,9 +155,8 @@ class OAuth2AuthorizationMappersTest {
         val objectMapper = SerializationConfig().objectMapper()
 
         repeat(3) {
-            authorization = assertNotNull(
+            authorization =
                 fromOAuth2AuthorizationDocument(toOAuth2AuthorizationDocument(authorization, objectMapper), client, objectMapper)
-            )
         }
 
         val idToken = assertNotNull(authorization.getToken(OidcIdToken::class.java))

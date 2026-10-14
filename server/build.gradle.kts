@@ -17,7 +17,7 @@ configurations.all {
 }
 
 extra["sentryVersion"] = "8.27.0"
-// Ahead of Spring Boot 4.1.1's managed versions, each for a published advisory; drop a line once Boot ships it.
+// Ahead of Spring Boot 4.0.8's managed versions, each for a published advisory; drop a line once Boot ships it.
 extra["tomcat.version"] = "11.0.25"
 extra["jackson-bom.version"] = "3.1.7"
 extra["jackson-2-bom.version"] = "2.21.7"
