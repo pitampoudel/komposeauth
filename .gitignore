@@ -13,3 +13,6 @@ xcuserdata
 *.gpg
 /server/.env
 /.env
+
+# Docker Compose secrets (see .env.example)
+.env
