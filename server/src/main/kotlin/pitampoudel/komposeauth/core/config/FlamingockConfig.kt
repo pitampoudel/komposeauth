@@ -24,7 +24,8 @@ import org.springframework.data.mongodb.core.MongoTemplate
  * `_NNNN__Description` (the number is its order within the stage, and the stages run in the order
  * listed here), with `@Change` and an `@Apply` method taking the `MongoTemplate`. It works on stored
  * documents rather than through a service, whose rules are the current release's and not the data's.
- * A feature's first change also adds its [Stage] here, and `FlamingockStagesTest` fails until it
+ * A change that deletes rows naming files also takes the `StorageService`, to delete the files with
+ * them. A feature's first change also adds its [Stage] here, and `FlamingockStagesTest` fails until it
  * does, because a stage nobody declares never runs.
  *
  * Indexes are not changes: Spring Data creates the ones the entities declare at every start
