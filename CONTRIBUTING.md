@@ -12,31 +12,28 @@ you write it.
 | `server/` | The authorization server: Spring Boot, Kotlin, MongoDB, and the admin console's Thymeleaf pages under `server/src/main/resources/templates/admin/`. |
 | `shared/` | Kotlin Multiplatform types used by both the server and the client SDK (requests, responses, validators). |
 | `client/` | The Kotlin/Compose Multiplatform client SDK. |
-| `deploy/` | Deployment recipes that need more than one file (AWS). Compose and Render live at the root. |
 
 The server is organised by feature (`user/`, `kyc/`, `storage/`, `app_config/`, …). A feature's
 controller, service, repository, page controller and tests stay in its own package.
 
-## Running it locally
+## Running the Server Locally
 
-You need JDK 25 and Docker.
+Prerequisites: **JDK 25** and **Docker**.
 
 ```bash
-# A MongoDB for development
+# 1. Start MongoDB for development
 docker run -d --name komposeauth-mongo -p 27017:27017 mongo:8
 
-# The server, against it
+# 2. Start the authorization server
 export MONGODB_URI=mongodb://localhost:27017
 export BASE64_ENCRYPTION_KEY="$(openssl rand -base64 32)"   # keep it while you keep the database
 export SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER=http://localhost:8080
 ./gradlew :server:bootRun
 ```
 
-Open `http://localhost:8080/admin/config`, enter the key, and create the first admin there.
+Open `http://localhost:8080/admin/config`, enter the `BASE64_ENCRYPTION_KEY`, and complete the first-time admin setup.
 
-The build includes the Android targets of `shared/` and `client/`, so Gradle needs Google's Maven
-repository and, for those modules, an Android SDK (Android Studio installs one; otherwise set
-`ANDROID_HOME`).
+The build includes Android targets for `shared/` and `client/`. Gradle will use Google's Maven repository and, for Android compilation, requires an Android SDK (configured via `ANDROID_HOME` or standard Android Studio installation).
 
 ## Tests
 

@@ -21,11 +21,11 @@ that shows it. You don't need a fix.
 - The fix ships in a release, and the advisory is published with credit to you unless you'd rather
   not be named.
 
-## Supported versions
+## Supported Versions
 
-Fixes go into the latest release and `main`. Run the newest release: the image is
-`pitampoudel/komposeauth:latest`, or pin `pitampoudel/komposeauth:X.Y` to stay on a minor line and
-still get its patch releases.
+Security updates and bug fixes are applied to the `main` branch and released in the latest version tags. We recommend running the latest official Docker image:
+- Latest release: `pitampoudel/komposeauth:latest`
+- Minor version pin: `pitampoudel/komposeauth:X.Y` (tracks patch updates for version `X.Y`)
 
 ## Out of scope
 

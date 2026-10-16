@@ -58,52 +58,32 @@ something else if you need SAML, enterprise federation, or a fully managed servi
 ## Table of Contents
 
 - [Why komposeauth?](#why-komposeauth)
-- [Overview](#overview)
+- [Overview & Architecture](#overview--architecture)
 - [Features](#features)
-- [Architecture](#architecture)
-- [Quickstart](#quickstart)
-  - [1. Run the Authorization Server (Docker)](#1-run-the-authorization-server-docker)
-  - [2. Configuration & Admin Console](#2-configuration--admin-console)
-  - [3. Environment Variables](#3-environment-variables)
-  - [4. Deployment Guides](#4-deployment-guides)
+- [Quickstart (Docker)](#quickstart-docker)
+- [Server Configuration & Deployments](#server-configuration--deployments)
+  - [Admin Console & Connections](#admin-console--connections)
+  - [File & Asset Storage](#file--asset-storage)
+  - [Environment Variables](#environment-variables)
+  - [Production Deployments](#production-deployments)
 - [Client SDK Setup](#client-sdk-setup)
   - [Installation](#installation)
   - [HTTP Client Configuration](#http-client-configuration)
   - [Usage Examples](#usage-examples)
 - [Integration Guide (LLMs & Backends)](#integration-guide-llms--backends)
-- [Versioning](#versioning)
-- [Building & Publishing](#building--publishing)
-- [Security](#security)
-- [Contributing](#contributing)
-- [License](#license)
+- [Security & Architecture Details](#security--architecture-details)
+- [Building, Publishing & Versioning](#building-publishing--versioning)
+- [Contributing & License](#contributing--license)
 
 ---
 
-## Overview
+## Overview & Architecture
 
 `komposeauth` provides a complete, modern authentication ecosystem across server and client platforms:
 
 - **Auth Server**: Spring Boot OAuth 2.1 & OpenID Connect Authorization Server with administrative management, rate limiting, and encrypted KYC storage.
 - **Shared SDK (`komposeauth-shared`)**: Cross-platform Kotlin Multiplatform data models, DTOs, and validation logic.
 - **Client SDK (`komposeauth-client`)**: Compose Multiplatform UI components, Ktor authentication plugins, Credential Manager integrations, and ViewModels for Android, iOS, Desktop, and Web.
-
----
-
-## Features
-
-- 🔐 **Authentication Flows**: Email or phone with password, Passkeys (WebAuthn / FIDO2), Sign in with Google and Apple, and one-time codes by SMS, WhatsApp or email.
-- 🤖 **Works with MCP clients**: Client ID Metadata Documents let MCP clients such as Claude sign in to your APIs without being registered first.
-- 🛡️ **OAuth 2.1 & OpenID Connect**: PKCE, Client ID Metadata Documents (CIMD), and JWT token management.
-- 📱 **Multiplatform Client**: Compose Multiplatform UI components, Credential Manager, and automatic Ktor token interceptors.
-- ✉️ **Verification & Recovery**: Email verification codes and SMS OTP retriever support.
-- 🪪 **KYC Document Management**: Client-side encryption before S3/GCS upload and restricted retrieval endpoints.
-- ⚙️ **Admin Console**: Web UI (`/admin/config`) for runtime configuration of OAuth clients, SMTP, SMS providers, CORS, and rate limits.
-- 🚦 **Abuse & Rate Limiting**: Distributed rate-limiting backed by MongoDB with configurable edge proxy awareness.
-- 📊 **Observability & Docs**: OpenAPI/Swagger UI, Sentry integration, and Actuator health endpoints.
-
----
-
-## Architecture
 
 ```text
 ┌────────────────────────────────────────────────────────┐
@@ -126,11 +106,23 @@ something else if you need SAML, enterprise federation, or a fully managed servi
 
 ---
 
-## Quickstart
+## Features
 
-### 1. Run the Authorization Server (Docker)
+- 🔐 **Authentication Flows**: Email or phone with password, Passkeys (WebAuthn / FIDO2), Sign in with Google and Apple, and one-time codes by SMS, WhatsApp or email.
+- 🤖 **Works with MCP clients**: Client ID Metadata Documents (CIMD) let MCP clients such as Claude sign in to your APIs without manual registration.
+- 🛡️ **OAuth 2.1 & OpenID Connect**: PKCE (S256), discovery (`/.well-known/openid-configuration`), and RS256 JWT token issuance validated via JWKS.
+- 📱 **Multiplatform Client**: Compose Multiplatform UI components, Credential Manager, and automatic Ktor token interceptors.
+- ✉️ **Verification & Recovery**: Email verification codes and SMS OTP retriever support.
+- 🪪 **KYC Document Management**: Client-side encryption before S3/GCS upload and restricted retrieval endpoints.
+- ⚙️ **Admin Console**: Web UI (`/admin/config`) for runtime configuration of OAuth clients, SMTP, SMS providers, CORS, and rate limits.
+- 🚦 **Abuse & Rate Limiting**: Distributed rate-limiting backed by MongoDB with configurable edge proxy awareness.
+- 📊 **Observability & Docs**: OpenAPI/Swagger UI, Sentry integration, and Actuator health endpoints.
 
-The fastest way is Docker Compose, which starts the server and a MongoDB beside it:
+---
+
+## Quickstart (Docker)
+
+The fastest way to get started is using Docker Compose, which starts the server alongside a MongoDB instance:
 
 ```bash
 git clone https://github.com/pitampoudel/komposeauth && cd komposeauth
@@ -139,9 +131,9 @@ echo "BASE64_ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
 docker compose up -d
 ```
 
-Open `http://localhost:8080/admin/config`, enter the key from `.env`, and create the first admin. Keep that key safe: it decrypts every secret the server stores.
+Open `http://localhost:8080/admin/config`, enter the `BASE64_ENCRYPTION_KEY` from `.env`, and create the initial super admin account. Keep this key safe: it encrypts every secret the server stores.
 
-To run the image on its own against a MongoDB you already have:
+To run the standalone Docker image against an existing MongoDB instance:
 ```bash
 docker run -d -p 8080:8080 \
   --name komposeauth \
@@ -151,11 +143,11 @@ docker run -d -p 8080:8080 \
   pitampoudel/komposeauth:latest
 ```
 
-To deploy it somewhere reachable, see [Deployment Guides](#4-deployment-guides).
+---
 
-> **Note**: `MONGODB_URI`, `BASE64_ENCRYPTION_KEY`, and `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER` are required. The server will not start without them.
+## Server Configuration & Deployments
 
-### 2. Configuration & Admin Console
+### Admin Console & Connections
 
 Once the container is running, navigate to the web administration console:
 - **URL**: `http://localhost:8080/admin/config`
@@ -165,53 +157,30 @@ Once the container is running, navigate to the web administration console:
 curl -H "X-Master-Key: <paste-your-base64-key>" http://localhost:8080/admin/config
 ```
 
-While nobody holds `SUPER_ADMIN`, the page opens with **Create the first admin**: enter an email and password (or the address of an account that already exists) and that account becomes a super admin. From then on, sign in at `/admin` with it instead of the master key; the form disappears once a super admin exists, and further roles are granted from the **Users** page.
+When no super admin exists yet (`SUPER_ADMIN`), the page opens with **Create the first admin**: enter an email and password (or the address of an account that already exists) to grant that account super admin privileges. Afterwards, sign in at `/admin` using your admin credentials instead of the master key. The initial setup form disappears once a super admin exists, and additional roles can be assigned from the **Users** management page.
 
-Use the Admin Console to connect email, SMS, Google and Apple sign-in, error reporting and alerts, and to set branding, CORS origins and rate limits. Every connection is optional.
+Use the Admin Console to configure email (SMTP), SMS providers (Twilio, Infobip, WhatsApp), Google and Apple sign-in, error reporting and chat alert webhooks, custom branding, CORS origins, and rate limits. All third-party integrations are optional.
 
-#### Where files are kept
+### File & Asset Storage
 
-Profile photos, organization logos and KYC documents are kept in a bucket listed on the admin
-console's **Storage** page (`/admin/storage`). Any admin can see it; a `SUPER_ADMIN` adds and
-changes buckets. Until one is listed, uploads fail, so add one once you have signed in as a
-`SUPER_ADMIN`.
+Profile photos, organization logos, and KYC documents are stored in buckets configured under **Storage** (`/admin/storage`) in the admin console. Any admin can view storage settings; only a `SUPER_ADMIN` can add or modify storage buckets. Note that asset uploads require an active storage bucket.
 
-A bucket is a Google Cloud Storage one or one on anything that speaks the S3 API: Amazon S3,
-Cloudflare R2, MinIO, Backblaze B2 and so on. For anything but AWS, give its endpoint; those buckets
-are addressed path-style (`{endpoint}/{bucket}/{name}`). Put a CDN or a domain of your own in front
-as the bucket's public address and new files are handed out under it. Leave the credentials empty to
-use the server's own identity (a Cloud Run service account, an ECS task role), or paste an access key
-or a service account key, which is stored encrypted like the configuration's secrets. **Test** writes,
-reads and deletes a small file, which is everything the server ever does in a bucket.
+Supported storage backends include Google Cloud Storage (GCS) and any S3-compatible provider (Amazon S3, Cloudflare R2, MinIO, Backblaze B2, etc.):
+- For non-AWS S3 providers, specify the custom endpoint URL. Path-style addressing (`{endpoint}/{bucket}/{name}`) is supported.
+- Set a custom CDN or domain in front of the bucket as its public URL if desired.
+- Leave credentials blank to use runtime ambient IAM credentials (e.g., Cloud Run service accounts, ECS task roles), or supply an API/service account key (stored securely with AES encryption).
+- Use the **Test** button in the console to verify write, read, and delete operations.
 
-Profile photos and organization logos are loaded by browsers straight from the bucket, so it has to
-let anyone read the `users/` and `organization_logos/` prefixes. KYC documents stay private (see
-[Encrypted KYC Documents](#encrypted-kyc-documents)).
+**Public vs. Private Access**:
+- Profile photos and organization logos are loaded directly by client browsers and require public read permissions on the `users/` and `organization_logos/` path prefixes.
+- KYC documents remain private and are accessible only via authenticated endpoints (see [Encrypted KYC Documents](#encrypted-kyc-documents)).
 
-One bucket takes new files. Every other file stays where it was written and opens from the address
-saved for it, so choosing another bucket for new files moves nothing already stored. The server
-copies no file itself; moving to another bucket, in the same cloud or another one, is:
+**Bucket Migration**:
+- Active uploads are directed to whichever bucket is designated as active ("Send new files here").
+- Existing files remain accessible at their original URLs without requiring automatic server-side data migration.
+- When migrating to a new bucket, use sync tools (`rclone`, `aws s3 sync`, or `gcloud storage rsync`) and link the old bucket entry using **Files copied to…** to preserve backward compatibility.
 
-1. Add the new bucket on the Storage page and test it.
-2. Press **Send new files here** on it, and wait a minute for every server to switch.
-3. Copy everything from the old bucket into the new one under the same names: `rclone copy` between
-   any two providers, or `gcloud storage rsync` / `aws s3 sync` within one. Run it once more after
-   that minute, so nothing written meanwhile is left behind.
-4. On the old bucket, press **Files copied to…** and choose the new one. From then on the old
-   bucket's saved addresses open the copies, so the old bucket needs no credentials any more. Open a
-   few old photos to check.
-
-Keep the old entry listed: it is how the server recognises the addresses saved for its files, which
-are never rewritten. **Open from its own bucket** undoes step 4. Going back is the same steps the
-other way, starting with that button on the bucket you return to.
-
-Upgrading from a release that set the buckets on the configuration page: the first start lists them
-on the Storage page, with the same choice of where new files go and, after a GCS-to-S3 copy, the
-same link between the two. If both a GCS and an S3 bucket were set and `storageProvider` named
-neither, no bucket takes new files until you choose one there. The old fields are left in the stored
-configuration so the release before can still be rolled back to, but nothing reads them.
-
-### 3. Environment Variables
+### Environment Variables
 
 | Variable | Required | Description | Default / Example |
 |---|---|---|---|
@@ -240,15 +209,42 @@ Verify your detected IP address at any time using:
 curl https://your-auth-server/admin/client-ip -H "Cookie: <your-session-cookie>"
 ```
 
-### 4. Deployment Guides
+### Production Deployments
 
 Every option runs the same image and keeps everything in MongoDB, so moving between them is a matter of pointing the new one at the same database with the same key and issuer. Where there is no MongoDB alongside, a [MongoDB Atlas](https://www.mongodb.com/atlas) cluster works; the free M0 is enough to start. Allow the host's outbound addresses in Atlas's network access, or `0.0.0.0/0` on hosts whose addresses change.
 
-| Where | How | Scales to zero |
-|---|---|---|
-| Google Cloud Run | the `gcloud` command below | Yes |
-| Render | [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/pitampoudel/komposeauth) (`render.yaml`) | On the free plan |
-| Any machine with Docker | `docker compose up -d` ([Quickstart](#1-run-the-authorization-server-docker)) | No |
+| Platform | Deployment Method | Scales to zero | Memory Profile |
+|---|---|---|---|
+| **Render** | [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/pitampoudel/komposeauth) (`render.yaml`) | Yes (Free plan) | 512 MB |
+| **Railway** | [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/deploy?template=https://github.com/pitampoudel/komposeauth) (`railway.json`) | Sleeps on idle (Hobby) | 512 MB |
+| **Fly.io** | `fly launch` / `fly deploy` (`fly.toml`) | Yes (auto stop/start) | 512 MB |
+| **Google Cloud Run** | `gcloud run deploy` command below | Yes | 1 GiB |
+| **Self-hosted Docker** | `docker compose up -d` ([Quickstart](#quickstart-docker)) | No | 512 MB+ |
+
+#### Render
+Deploy via the Blueprint button above or use `render.yaml`. The blueprint creates a web service from the published image and generates `BASE64_ENCRYPTION_KEY`; it asks only for `MONGODB_URI`. With no issuer set, the server uses its own `onrender.com` address. To serve it from your own domain, add the domain in Render and set `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER` to it.
+
+The blueprint sets `BPL_JVM_THREAD_COUNT=50` and `JAVA_TOOL_OPTIONS=-XX:ReservedCodeCacheSize=64M` so the JVM fits in 512 MB.
+
+#### Railway
+Deploy using the Railway button above or connect your GitHub repo using `railway.json`:
+1. Add a MongoDB plugin or connect an external MongoDB Atlas cluster (`MONGODB_URI`).
+2. Add environment variables:
+   - `BASE64_ENCRYPTION_KEY`: A 32-byte Base64 key (`openssl rand -base64 32`).
+   - `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER`: `https://${{RAILWAY_PUBLIC_DOMAIN}}` or your custom domain.
+3. Under `/admin/config` $\rightarrow$ **Rate Limiting**, set `clientIpHeader` to `X-Real-IP`.
+
+#### Fly.io
+Deploy to Fly.io using the included `fly.toml`:
+```bash
+fly launch --no-deploy
+fly secrets set \
+  MONGODB_URI="mongodb+srv://..." \
+  BASE64_ENCRYPTION_KEY="$(openssl rand -base64 32)" \
+  SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER="https://<your-app>.fly.dev"
+fly deploy
+```
+Under `/admin/config` $\rightarrow$ **Rate Limiting**, set `clientIpHeader` to `Fly-Client-IP`.
 
 #### Google Cloud Run
 
@@ -262,12 +258,7 @@ gcloud run deploy komposeauth \
   --cpu-boost \
   --startup-probe httpGet.path=/actuator/health/readiness,httpGet.port=8080,initialDelaySeconds=4,periodSeconds=2,timeoutSeconds=2,failureThreshold=45
 ```
-
-#### Render
-
-The button creates a web service from the published image and generates `BASE64_ENCRYPTION_KEY`; it asks only for `MONGODB_URI`. With no issuer set, the server uses its own `onrender.com` address. To serve it from your own domain, add the domain in Render and set `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER` to it before any app starts using the server. The key Render generated is under the service's **Environment**; you need it to open the admin console the first time.
-
-The blueprint sets `BPL_JVM_THREAD_COUNT=50` and `JAVA_TOOL_OPTIONS=-XX:ReservedCodeCacheSize=64M` so the JVM fits in 512 MB. Set the same two on any other host with that little memory: the image sizes the JVM for 250 threads by default and won't start in less.
+Under `/admin/config` $\rightarrow$ **Rate Limiting**, set `trustedProxyCount` to `1`.
 
 ---
 
