@@ -1,0 +1,40 @@
+spec:
+  name: komposeauth
+  services:
+    - name: komposeauth
+      image:
+        registry_type: DOCKER_HUB
+        repository: pitampoudel/komposeauth
+        tag: latest
+      http_port: 8080
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      health_check:
+        http_path: /actuator/health/readiness
+        initial_delay_seconds: 30
+        period_seconds: 15
+        timeout_seconds: 5
+      envs:
+        - key: PORT
+          value: "8080"
+        - key: MONGODB_URI
+          scope: RUN_TIME
+          type: SECRET
+          prompt:
+            description: "MongoDB connection string (e.g. mongodb+srv://user:pass@cluster.mongodb.net/komposeauth)"
+            required: true
+        - key: BASE64_ENCRYPTION_KEY
+          scope: RUN_TIME
+          type: SECRET
+          prompt:
+            description: "32-byte Base64 AES key (generate with: openssl rand -base64 32)"
+            required: true
+        - key: SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER
+          scope: RUN_TIME
+          prompt:
+            description: "Public origin URL of the auth server (leave blank to use DO app domain)"
+            required: false
+        - key: BPL_JVM_THREAD_COUNT
+          value: "50"
+        - key: JAVA_TOOL_OPTIONS
+          value: "-XX:ReservedCodeCacheSize=64M"

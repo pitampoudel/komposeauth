@@ -223,6 +223,7 @@ Every option runs the same image and keeps everything in MongoDB, so moving betw
 |---|---|---|---|
 | **Render** | [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/pitampoudel/komposeauth) (`render.yaml`) | Yes (Free plan) | 512 MB |
 | **Railway** | [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/deploy?template=https://github.com/pitampoudel/komposeauth) (`railway.json`) | Sleeps on idle (Hobby) | 512 MB |
+| **DigitalOcean** | [![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/pitampoudel/komposeauth/tree/main) (`.do/deploy.template.yaml`) | Configurable | 512 MB |
 | **Fly.io** | `fly launch` / `fly deploy` (`fly.toml`) | Yes (auto stop/start) | 512 MB |
 | **Google Cloud Run** | `gcloud run deploy` command below | Yes | 1 GiB |
 | **Self-hosted Docker** | `docker compose up -d` ([Quickstart](#quickstart-docker)) | No | 512 MB+ |
@@ -239,6 +240,12 @@ Deploy using the Railway button above or connect your GitHub repo using `railway
    - `BASE64_ENCRYPTION_KEY`: A 32-byte Base64 key (`openssl rand -base64 32`).
    - `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER`: `https://${{RAILWAY_PUBLIC_DOMAIN}}` or your custom domain.
 3. Under `/admin/config` $\rightarrow$ **Rate Limiting**, set `clientIpHeader` to `X-Real-IP`.
+
+#### DigitalOcean App Platform
+Deploy using the DigitalOcean button above or create a new App pointing to your repository (`.do/deploy.template.yaml` will be auto-detected):
+1. Set `MONGODB_URI` to a MongoDB Atlas connection string.
+2. `BASE64_ENCRYPTION_KEY` is generated automatically; keep a copy somewhere safe.
+3. Set `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER` to `https://<your-app>.ondigitalocean.app` or your custom domain.
 
 #### Fly.io
 Deploy to Fly.io using the included `fly.toml`:
