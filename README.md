@@ -66,6 +66,9 @@ something else if you need SAML, enterprise federation, or a fully managed servi
   - [File & Asset Storage](#file--asset-storage)
   - [Environment Variables](#environment-variables)
   - [Production Deployments](#production-deployments)
+- [Role of the Consumer Resource Server (Your APIs)](#role-of-the-consumer-resource-server-your-apis)
+  - [How Authentication & Verification Works](#how-authentication--verification-works)
+  - [Token Verification Examples](#token-verification-examples)
 - [Client SDK Setup](#client-sdk-setup)
   - [Installation](#installation)
   - [HTTP Client Configuration](#http-client-configuration)
@@ -86,22 +89,25 @@ something else if you need SAML, enterprise federation, or a fully managed servi
 - **Client SDK (`komposeauth-client`)**: Compose Multiplatform UI components, Ktor authentication plugins, Credential Manager integrations, and ViewModels for Android, iOS, Desktop, and Web.
 
 ```text
-┌────────────────────────────────────────────────────────┐
-│                   Client Applications                  │
-│       (Android, iOS, Desktop, Web / KMP & CMP)         │
-└───────────────────────────┬────────────────────────────┘
-                            │ (OAuth 2.1 / PKCE / Ktor)
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│            komposeauth Server (Spring Boot)            │
-│  - OAuth2 / OIDC Engine       - KYC & File Encryption  │
-│  - Admin Console (/admin)     - Rate Limiting Engine   │
-└──────────────┬───────────────────────────┬─────────────┘
-               │                           │
-               ▼                           ▼
-      ┌─────────────────┐         ┌──────────────────┐
-      │  MongoDB Store  │         │ S3 / GCS Storage │
-      └─────────────────┘         └──────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                          Client Applications                           │
+│                (Android, iOS, Desktop, Web / KMP & CMP)                │
+└──────────────┬──────────────────────────────────────────┬──────────────┘
+               │                                          │
+               │ 1. Sign in (OAuth 2.1 / PKCE / /login)   │ 3. API Requests with Bearer JWT
+               ▼                                          ▼
+┌────────────────────────────────────────┐     ┌─────────────────────────┐
+│    komposeauth Server (Auth Server)    │     │ Consumer Resource Server│
+│  - Issues RS256 JWTs                   │     │ (Your API Backend)      │
+│  - Hosted OIDC / Session Login         │     │ - Validates JWT locally │
+│  - Admin Console (/admin)              │     │ - Reads user roles/UID  │
+│  - KYC & File Encryption               │     └───────────┬─────────────┘
+└──────────────┬───────────┬─────────────┘                 │
+               │           │                               │ 2. Fetch JWKS public keys
+               ▼           ▼                               │    (cached automatically)
+      ┌─────────────────┐ ┌──────────────────┐             │
+      │  MongoDB Store  │ │ S3 / GCS Storage │◄────────────┘
+      └─────────────────┘ └──────────────────┘
 ```
 
 ---
@@ -259,6 +265,111 @@ gcloud run deploy komposeauth \
   --startup-probe httpGet.path=/actuator/health/readiness,httpGet.port=8080,initialDelaySeconds=4,periodSeconds=2,timeoutSeconds=2,failureThreshold=45
 ```
 Under `/admin/config` $\rightarrow$ **Rate Limiting**, set `trustedProxyCount` to `1`.
+
+---
+
+## Role of the Consumer Resource Server (Your APIs)
+
+In the `komposeauth` architecture, your backend application is the **OAuth 2.1 Resource Server**. It hosts your business logic and protected REST/GraphQL/gRPC endpoints (e.g. `https://api.example.com`), while `komposeauth` serves exclusively as the **Authorization Server** (e.g. `https://auth.example.com`).
+
+### How Authentication & Verification Works
+
+1. **Client Obtains Token**: The client application (Android, iOS, Desktop, Web) authenticates with `komposeauth` and receives an **RS256 JWT access token**.
+2. **Client Calls Your API**: When making HTTP calls to URLs listed in `resourceServerUrls`, the client SDK attaches the token: `Authorization: Bearer <jwt>`.
+3. **Stateless Local Verification**: Your backend validates the JWT **locally and cryptographically** using public keys fetched from `https://auth.example.com/oauth2/jwks` (or OIDC discovery at `/.well-known/openid-configuration`).
+   - ⚡ **Zero Per-Request Network Overhead**: Your backend does **not** call `komposeauth` for each incoming request. The public keys are fetched once and cached.
+   - 🔒 **Trust & Integrity**: The token's signature, issuer (`iss`), expiration (`exp`), and audience/scopes are verified by your backend framework's standard JWT validator.
+4. **Extract User & Claims**: Your API extracts the user ID (`sub`), email, roles (`roles`), and custom claims directly from the verified JWT payload.
+
+### Token Claims Structure
+
+Every access token issued by `komposeauth` contains standard JWT claims:
+
+```json
+{
+  "iss": "https://auth.example.com",
+  "sub": "66f1c0e4a1b2c3d4e5f60718",
+  "aud": ["https://api.example.com"],
+  "exp": 1729000000,
+  "iat": 1728999100,
+  "scope": ["openid", "profile", "email"],
+  "roles": ["USER"]
+}
+```
+
+### Token Verification Examples
+
+Any standard OAuth2/OIDC library can secure your backend:
+
+#### Ktor Server (Kotlin)
+
+```kotlin
+install(Authentication) {
+    jwt("auth-jwt") {
+        realm = "komposeauth"
+        verifier(
+            JwkProviderBuilder(URL("https://auth.example.com/oauth2/jwks"))
+                .cached(10, 24, TimeUnit.HOURS)
+                .rateLimited(10, 1, TimeUnit.MINUTES)
+                .build(),
+            issuer = "https://auth.example.com"
+        ) {
+            acceptLeeway(3)
+        }
+        validate { credential ->
+            if (credential.payload.subject.isNotEmpty()) {
+                JWTPrincipal(credential.payload)
+            } else null
+        }
+    }
+}
+
+routing {
+    authenticate("auth-jwt") {
+        get("/api/me") {
+            val principal = call.principal<JWTPrincipal>()
+            val userId = principal?.payload?.subject
+            call.respondText("Hello user: $userId")
+        }
+    }
+}
+```
+
+#### Spring Boot (Java / Kotlin)
+
+```yaml
+# application.yml
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth.example.com
+          jwk-set-uri: https://auth.example.com/oauth2/jwks
+```
+
+#### Node.js / Express (TypeScript)
+
+```typescript
+import { expressjwt } from "express-jwt";
+import jwksRsa from "jwks-rsa";
+
+const checkJwt = expressjwt({
+  secret: jwksRsa.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksUri: "https://auth.example.com/oauth2/jwks"
+  }) as any,
+  issuer: "https://auth.example.com",
+  algorithms: ["RS256"]
+});
+
+app.get("/api/me", checkJwt, (req, res) => {
+  res.json({ user: req.auth });
+});
+```
+
+For complete examples in Python, Go, Fastify, and other frameworks, see the [Full Integration Guide](docs/llms-full.txt).
 
 ---
 
