@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse
 import jakarta.servlet.http.HttpSession
 import org.springframework.security.authentication.AuthenticationTrustResolverImpl
 import org.springframework.security.authentication.InsufficientAuthenticationException
+import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.context.SecurityContextRepository
@@ -29,6 +30,12 @@ import org.springframework.web.filter.OncePerRequestFilter
  * which is the whole of what `prompt=login` asks for. Not recording it cost every first-time
  * sign-in a second one: the visitor signed in, the replay came back looking like an authorization
  * request that had never been through the page, and they were sent to sign in all over again.
+ *
+ * A session that cannot say when its holder signed in is sent through the login page the same way,
+ * `prompt` or not. The ID token's `auth_time` is read off the time the sign-in recorded, and Spring
+ * Authorization Server refuses to issue one without it, so a code issued to such a session fails at
+ * the token endpoint after the person has already been sent back to the app. Sessions from before
+ * Google sign-ins recorded the time are like that until they expire; signing in again fixes them.
  */
 class PromptReAuthenticationFilter(
     private val securityContextRepository: SecurityContextRepository,
@@ -43,14 +50,22 @@ class PromptReAuthenticationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        if (!carriesReAuthenticationPrompt(request) || alreadyHandled(request)) {
+        if (!isAuthorizationRequest(request) || alreadyHandled(request)) {
+            filterChain.doFilter(request, response)
+            return
+        }
+
+        val signedIn = signedIn()
+        val prompted = carriesReAuthenticationPrompt(request)
+        val unvouched = signedIn != null && signedIn.signedInAt() == null
+        if (!prompted && !unvouched) {
             filterChain.doFilter(request, response)
             return
         }
 
         rememberHandled(request)
 
-        if (!isSignedIn()) {
+        if (signedIn == null) {
             // Nothing to sign out of, and the login page is where the chain is taking them anyway.
             filterChain.doFilter(request, response)
             return
@@ -66,14 +81,17 @@ class PromptReAuthenticationFilter(
         loginEntryPoint.commence(
             request,
             response,
-            InsufficientAuthenticationException("prompt=${request.getParameter(PROMPT_PARAMETER)}")
+            InsufficientAuthenticationException(
+                if (prompted) "prompt=${request.getParameter(PROMPT_PARAMETER)}" else "no sign-in time"
+            )
         )
     }
 
+    private fun isAuthorizationRequest(request: HttpServletRequest): Boolean =
+        request.requestURI == request.contextPath + AUTHORIZATION_ENDPOINT
+
     /** An authorization request asking, one way or another, for a fresh sign-in. */
     private fun carriesReAuthenticationPrompt(request: HttpServletRequest): Boolean {
-        if (request.requestURI != request.contextPath + AUTHORIZATION_ENDPOINT) return false
-
         // `prompt` is a space-delimited list of values (OIDC Core 3.1.2.1). `none` is deliberately
         // left alone: Spring Authorization Server already implements it per spec.
         val prompt = request.getParameter(PROMPT_PARAMETER)?.split(" ").orEmpty()
@@ -86,10 +104,9 @@ class PromptReAuthenticationFilter(
         return promptKey(request) in handled(session)
     }
 
-    private fun isSignedIn(): Boolean {
-        val authentication = SecurityContextHolder.getContext().authentication ?: return false
-        return authentication.isAuthenticated && !trustResolver.isAnonymous(authentication)
-    }
+    private fun signedIn(): Authentication? =
+        SecurityContextHolder.getContext().authentication
+            ?.takeIf { it.isAuthenticated && !trustResolver.isAnonymous(it) }
 
     /**
      * The authorization requests already sent through the login page, most recent last.

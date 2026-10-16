@@ -2,6 +2,10 @@ package pitampoudel.komposeauth.security
 
 import com.sun.net.httpserver.HttpServer
 import jakarta.servlet.http.Cookie
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -27,6 +31,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.post
 import org.springframework.web.util.UriComponentsBuilder
 import pitampoudel.komposeauth.TestConfig
 import pitampoudel.komposeauth.oauth_clients.entity.OAuth2Client
@@ -41,6 +46,7 @@ import java.security.MessageDigest
 import java.time.Instant
 import java.util.Base64
 import java.util.UUID
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -114,7 +120,7 @@ class GoogleLoginReplayIntegrationTest {
 
     private fun authorizeQuery(clientId: String): String {
         val challenge = Base64.getUrlEncoder().withoutPadding().encodeToString(
-            MessageDigest.getInstance("SHA-256").digest("z".repeat(43).toByteArray())
+            MessageDigest.getInstance("SHA-256").digest(CODE_VERIFIER.toByteArray())
         )
         return listOf(
             "response_type=code",
@@ -127,23 +133,22 @@ class GoogleLoginReplayIntegrationTest {
         ).joinToString("&")
     }
 
-    @Test
-    fun `signing in through the provider replays the authorization request instead of looping to login`() {
-        val clientId = registerRelyingParty()
-
+    /** Signs in through the stub provider from a fresh authorization request and returns where the code went. */
+    private fun signInThroughProvider(clientId: String): String {
         // The handler provisions from the claims the OIDC filter has already verified, so this is
         // the method it reaches for — nothing here re-checks the token against Google.
-        whenever(userService.findOrCreateVerifiedGoogleUser(any(), any())).thenReturn(
-            User(
-                id = ObjectId.get(),
-                firstName = "Google",
-                lastName = "User",
-                email = "google-user@example.com",
-                emailVerified = true,
-                phoneNumber = null,
-                roles = listOf("USER")
-            )
+        val user = User(
+            id = ObjectId.get(),
+            firstName = "Google",
+            lastName = "User",
+            email = "google-user@example.com",
+            emailVerified = true,
+            phoneNumber = null,
+            roles = listOf("USER")
         )
+        whenever(userService.findOrCreateVerifiedGoogleUser(any(), any())).thenReturn(user)
+        // What the token endpoint describes the account from.
+        whenever(userService.findByUserName(user.id.toHexString())).thenReturn(user)
 
         // 1. The relying party sends the visitor to the authorization endpoint. No session yet.
         val start = follow("/oauth2/authorize?${authorizeQuery(clientId)}")
@@ -183,8 +188,41 @@ class GoogleLoginReplayIntegrationTest {
 
         // 4. The replay must produce a code, not another trip to the login page.
         val replay = follow(afterLogin)
-        val target = assertNotNull(replay.response.redirectedUrl, "replay returned ${replay.response.status}")
+        return assertNotNull(replay.response.redirectedUrl, "replay returned ${replay.response.status}")
+    }
+
+    @Test
+    fun `signing in through the provider replays the authorization request instead of looping to login`() {
+        val target = signInThroughProvider(registerRelyingParty())
         assertTrue(target.startsWith("$redirectUri?code="), "was $target")
+    }
+
+    /**
+     * Spring records when a sign-in happened as a factor on the authentication, and the ID token's
+     * `auth_time` is read off it; without one the token endpoint throws. Spring records it for a
+     * plain OAuth2 sign-in but not for an OIDC one, which Google's is.
+     */
+    @Test
+    fun `the code from a provider sign-in is exchanged for an ID token saying when they signed in`() {
+        val clientId = registerRelyingParty()
+        val before = Instant.now().epochSecond
+        val target = signInThroughProvider(clientId)
+        assertTrue(target.startsWith("$redirectUri?code="), "was $target")
+
+        val token = mockMvc.post("/oauth2/token") {
+            accept = MediaType.APPLICATION_JSON
+            param("grant_type", "authorization_code")
+            param("code", target.substringAfter("?code=").substringBefore("&"))
+            param("redirect_uri", redirectUri)
+            param("client_id", clientId)
+            param("code_verifier", CODE_VERIFIER)
+        }.andReturn().response
+        assertEquals(200, token.status, token.contentAsString)
+
+        val idToken = Json.parseToJsonElement(token.contentAsString).jsonObject.getValue("id_token").jsonPrimitive.content
+        val claims = Json.parseToJsonElement(String(Base64.getUrlDecoder().decode(idToken.split(".")[1]))).jsonObject
+        val signedInAt = assertNotNull(claims["auth_time"], "no auth_time in $claims").jsonPrimitive.long
+        assertTrue(signedInAt in before..Instant.now().epochSecond, "auth_time $signedInAt")
     }
 
     /**
@@ -297,5 +335,6 @@ class GoogleLoginReplayIntegrationTest {
 
     private companion object {
         const val SESSION_COOKIE = "SESSION"
+        val CODE_VERIFIER = "z".repeat(43)
     }
 }
