@@ -73,8 +73,8 @@ dependencies {
 
     // HTTP client
     implementation("org.apache.httpcomponents.client5:httpclient5:5.6.5")
-    implementation("org.apache.httpcomponents.core5:httpcore5:5.5-beta3")
-    implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.5-beta3")
+    implementation("org.apache.httpcomponents.core5:httpcore5:5.5-beta4")
+    implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.5-beta4")
 
 
     // Test
