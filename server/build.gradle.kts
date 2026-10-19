@@ -60,9 +60,9 @@ dependencies {
     implementation(project(":shared"))
 
     // Google Cloud Platform
-    implementation("com.google.cloud:spring-cloud-gcp-storage:8.2.3")
+    implementation("com.google.cloud:spring-cloud-gcp-storage:8.2.4")
     // The sync client only; the async Netty transport would be a second HTTP stack nothing calls.
-    implementation("software.amazon.awssdk:s3:2.55.14") {
+    implementation("software.amazon.awssdk:s3:2.56.0") {
         exclude(group = "software.amazon.awssdk", module = "netty-nio-client")
     }
 
