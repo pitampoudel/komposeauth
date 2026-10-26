@@ -7,7 +7,7 @@ plugins {
     // Flamingock's annotation processor only speaks JSR-269.
     kotlin("kapt")
     alias(libs.plugins.kotlin.spring)
-    id("org.springframework.boot") version "4.1.1"
+    id("org.springframework.boot") version "4.1.2"
     id("io.spring.dependency-management") version "1.1.7"
     alias(libs.plugins.kotlinx.serialization)
 }
@@ -60,15 +60,15 @@ dependencies {
     implementation(project(":shared"))
 
     // Google Cloud Platform
-    implementation("com.google.cloud:spring-cloud-gcp-storage:8.2.3")
+    implementation("com.google.cloud:spring-cloud-gcp-storage:8.2.4")
     // The sync client only; the async Netty transport would be a second HTTP stack nothing calls.
-    implementation("software.amazon.awssdk:s3:2.55.14") {
+    implementation("software.amazon.awssdk:s3:2.57.3") {
         exclude(group = "software.amazon.awssdk", module = "netty-nio-client")
     }
 
     // kotlinx
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.11.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.12.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
 
     // HTTP client
